@@ -591,14 +591,19 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
         {activeTab === "reports" && (
           <div style={S.tableCard}>
             <div style={S.tableHeader}>
-              <h2 style={S.tableTitle}>📊 Course Completion Reports</h2>
+                <h2 style={S.tableTitle}>
+                  <ChartBar size={28} weight="duotone" color="#6366f1" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Course Completion Reports
+                </h2>
               <span style={{fontSize:'13px', color:'#64748b'}}>{reports.length} report{reports.length !== 1 ? 's' : ''}</span>
             </div>
             {reportsLoading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading reports...</div>
             ) : reports.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📊</div>
+                <div style={{ marginBottom: '16px' }}>
+                  <ChartBar size={64} weight="duotone" color="#94a3b8" />
+                </div>
                 <p>No course reports yet. Reports are auto-generated when a teacher marks a course as complete.</p>
               </div>
             ) : (

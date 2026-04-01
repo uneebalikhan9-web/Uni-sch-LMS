@@ -7,7 +7,7 @@ import {
   List, ChalkboardTeacher, UserPlus, X, ClipboardText, Pulse, 
   PencilSimple, FileText, DotsThreeOutline, ChartLine, Users,
   Warning, Bell, Star, Download, Eye, EyeSlash, TrendUp, Chalkboard,
-  ChatCircle, ChartBar, WarningCircle
+  ChatCircle, ChartBar, WarningCircle, Flask, Buildings
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import ClassAttendance from './ClassAttendance';
@@ -420,6 +420,15 @@ function TeacherDashboard({ user, onLogout }) {
 
   return (
     <div style={S.container}>
+      <style>{`
+        .hidden-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hidden-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
       {/* Animated Background Orbs */}
       <div style={S.bgOrb1}></div>
       <div style={S.bgOrb2}></div>
@@ -435,7 +444,7 @@ function TeacherDashboard({ user, onLogout }) {
       </button>
 
       {/* SIDEBAR */}
-      <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+      <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
           <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
           <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
@@ -471,7 +480,7 @@ function TeacherDashboard({ user, onLogout }) {
       <main style={S.main} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>Faculty Hub</h1>
+            <h1 style={S.title}>{user.department_name || 'Faculty Hub'}</h1>
             <p style={S.subtitle}>Welcome back, <span style={S.teacherName}>Prof. {user.name}</span></p>
           </div>
           <div style={S.headerActions}>
@@ -490,7 +499,7 @@ function TeacherDashboard({ user, onLogout }) {
                 label="Total Courses" 
                 value={totalCourses} 
                 icon={<BookOpen weight="duotone" />} 
-                color="#4f46e5"
+                color="#7c3aed"
                 trend="+2 this month"
               />
               <MetricBox 
@@ -620,7 +629,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>🏫 My Classes</h2>
+                <h2 style={S.tableTitle}>
+                  <Buildings size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  My Classes
+                </h2>
                 <p style={S.tableSubtitle}>Classes assigned to you by the HOD</p>
               </div>
             </div>
@@ -735,7 +747,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>🎓 Student Performance</h2>
+                <h2 style={S.tableTitle}>
+                  <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Student Performance
+                </h2>
                 <p style={S.tableSubtitle}>Manage grades and exam results</p>
               </div>
               {selectedCourse && (
@@ -824,7 +839,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>📋 Assignments</h2>
+                <h2 style={S.tableTitle}>
+                  <ClipboardText size={28} weight="duotone" color="#0891b2" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Assignments
+                </h2>
                 <p style={S.tableSubtitle}>Create and manage assignments</p>
               </div>
               <button onClick={() => setShowCreateAssignmentModal(true)} style={S.addBtn}>
@@ -894,7 +912,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>🔬 Cloud Lab Analytics</h2>
+                <h2 style={S.tableTitle}>
+                  <Flask size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Cloud Lab Analytics
+                </h2>
                 <p style={S.tableSubtitle}>Track student engagement in cloud labs</p>
               </div>
             </div>
@@ -949,7 +970,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>📅 Academic Schedule</h2>
+                <h2 style={S.tableTitle}>
+                  <CalendarBlank size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Academic Schedule
+                </h2>
                 <p style={S.tableSubtitle}>Your weekly class timetable</p>
               </div>
             </div>
@@ -1094,7 +1118,7 @@ function TeacherDashboard({ user, onLogout }) {
                       >
                         <td style={S.tdName}>
                           <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                            <ChartBar size={18} color="#6366f1" />
+                            <ChartBar size={18} color="#7c3aed" />
                             {r.course_title}
                           </div>
                         </td>
@@ -1362,7 +1386,7 @@ function TeacherDashboard({ user, onLogout }) {
             <div style={S.modalHeader}>
               <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
                 <div style={{width:'48px', height:'48px', borderRadius:'16px', background:'#f5f3ff', display:'flex', alignItems:'center', justifyContent:'center', color:'#7c3aed'}}>
-                  <ChartLine size={24} weight="duotone" />
+                  <ChartLine size={24} weight="duotone" color="#7c3aed" />
                 </div>
                 <div>
                   <h2 style={S.modalTitle}>{selectedReport.course_title}</h2>
@@ -1396,7 +1420,7 @@ function TeacherDashboard({ user, onLogout }) {
 
                   <div style={{marginBottom:'24px', padding:'20px', borderRadius:'24px', background:'linear-gradient(135deg, #f5f3ff, #fdf4ff)', border:'1px solid #ddd6fe'}}>
                     <h3 style={{margin:'0 0 12px', fontSize:'16px', color:'#5b21b6', display:'flex', alignItems:'center', gap:'8px'}}>
-                      <UserCircle size={20} /> Teacher Progress: {selectedReport.teacher_name}
+                      <UserCircle size={20} color="#7c3aed" /> Teacher Progress: {selectedReport.teacher_name}
                     </h3>
                     <div style={{display:'flex', gap:'24px', flexWrap: 'wrap'}}>
                       <div>
@@ -1596,7 +1620,7 @@ const S = {
     width: '700px',
     height: '700px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle at 30% 30%, rgba(79, 70, 229, 0.12), transparent 70%)',
+    background: 'radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.12), transparent 70%)',
     top: '-250px',
     left: '-250px',
     zIndex: 0,
@@ -1608,7 +1632,7 @@ const S = {
     width: '550px',
     height: '550px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle at 70% 70%, rgba(99, 102, 241, 0.12), transparent 70%)',
+    background: 'radial-gradient(circle at 70% 70%, rgba(139, 92, 246, 0.12), transparent 70%)',
     bottom: '-200px',
     right: '-200px',
     zIndex: 0,
@@ -1620,7 +1644,7 @@ const S = {
     width: '400px',
     height: '400px',
     borderRadius: '50%',
-    background: 'radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.1), transparent 70%)',
+    background: 'radial-gradient(circle at 50% 50%, rgba(167, 139, 250, 0.12), transparent 70%)',
     top: '50%',
     left: '50%',
     transform: 'translate(-50%, -50%)',
@@ -1633,19 +1657,19 @@ const S = {
     top: '16px',
     left: '16px',
     zIndex: 1001,
-    background: '#4f46e5',
+    background: '#7c3aed',
     color: '#fff',
     border: 'none',
     borderRadius: '12px',
     padding: '12px',
     cursor: 'pointer',
     display: 'none',
-    boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)',
+    boxShadow: '0 10px 20px -5px rgba(124, 58, 237, 0.4)',
   },
 
   sidebar: {
     width: '280px',
-    background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%)',
+    background: 'linear-gradient(180deg, #2e1065 0%, #4c1d95 100%)',
     color: '#fff',
     display: 'flex',
     flexDirection: 'column',
@@ -1666,13 +1690,13 @@ const S = {
   },
 
   logoIcon: {
-    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
+    background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
     padding: '10px',
     borderRadius: '14px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)',
+    boxShadow: '0 10px 20px -5px rgba(124, 58, 237, 0.4)',
   },
 
   logoText: {
@@ -1682,17 +1706,17 @@ const S = {
   },
 
   logoAccent: {
-    color: '#818cf8',
+    color: '#c4b5fd',
     marginLeft: '2px',
   },
 
   teacherBadge: {
-    background: 'rgba(79, 70, 229, 0.2)',
+    background: 'rgba(124, 58, 237, 0.2)',
     borderRadius: '30px',
     padding: '8px 16px',
     margin: '0 8px 24px 8px',
     fontSize: '12px',
-    color: '#a5b4fc',
+    color: '#c4b5fd',
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -1728,7 +1752,7 @@ const S = {
     border: 'none',
     cursor: 'pointer',
     backgroundColor: 'transparent',
-    color: '#94a3b8',
+    color: '#c4b5fd',
     fontWeight: '600',
     textAlign: 'left',
     fontSize: '15px',
@@ -1737,13 +1761,13 @@ const S = {
   },
 
   navBtnActive: {
-    backgroundColor: 'rgba(79, 70, 229, 0.15)',
+    backgroundColor: 'rgba(124, 58, 237, 0.15)',
     color: '#fff',
     boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
   },
 
   navBadge: {
-    background: '#4f46e5',
+    background: '#7c3aed',
     color: '#fff',
     padding: '2px 8px',
     borderRadius: '30px',
@@ -1758,7 +1782,7 @@ const S = {
     top: '25%',
     width: '4px',
     height: '50%',
-    background: 'linear-gradient(180deg, #4f46e5, #818cf8)',
+    background: 'linear-gradient(180deg, #7c3aed, #a78bfa)',
     borderRadius: '0 4px 4px 0',
   },
 
@@ -1805,7 +1829,7 @@ const S = {
     fontSize: '2.2rem',
     fontWeight: '800',
     margin: 0,
-    background: 'linear-gradient(135deg, #0f172a, #1e1b4b)',
+    background: 'linear-gradient(135deg, #2e1065, #4c1d95)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     letterSpacing: '-0.02em',
@@ -1819,7 +1843,7 @@ const S = {
   },
 
   teacherName: {
-    color: '#4f46e5',
+    color: '#7c3aed',
     fontWeight: '700',
   },
 

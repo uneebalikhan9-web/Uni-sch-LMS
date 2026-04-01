@@ -196,7 +196,7 @@ function Chat() {
   }, [chatUsers, search])
 
   const getAvatarColor = (name) => {
-    const colors = ['#2563eb', '#3b82f6', '#0284c7', '#0891b2', '#0d9488', '#059669', '#4f46e5', '#7c3aed']
+    const colors = ['#7c3aed', '#8b5cf6', '#a78bfa', '#4c1d95', '#1e1b4b', '#c084fc', '#4f46e5', '#6366f1']
     let hash = 0
     for (let i = 0; i < name.length; i++) {
        hash = name.charCodeAt(i) + ((hash << 5) - hash)
@@ -208,7 +208,7 @@ function Chat() {
     if (!name) return '?'
     const parts = name.split(' ')
     if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-    return name.slice(0, 2).toUpperCase()
+    return name.slice(0, 2).toUpperCase().replace(' ', '')
   }
 
   if (!user) return null
@@ -218,15 +218,15 @@ function Chat() {
       <header className="chat-header">
         <div className="chat-header-left">
           <button className="chat-back-btn" onClick={() => navigate('/dashboard')} title="Back">
-            <ArrowLeft size={18} weight="bold" />
+            <ArrowLeft size={20} weight="bold" />
           </button>
           <div className="chat-title-group">
             <h1>LMS Connect</h1>
-            <p>{user.name} · {user.role}</p>
+            <p>{user.name} · {user.role.replace('_', ' ')}</p>
           </div>
         </div>
         <button className="chat-logout-btn" onClick={handleLogout}>
-          <SignOut size={16} weight="bold" /> Sign Out
+          <SignOut size={18} weight="bold" /> Sign Out
         </button>
       </header>
 
@@ -235,10 +235,10 @@ function Chat() {
           <div className="chat-sidebar-header">
             <span className="chat-sidebar-label">Recent Messages</span>
             <div className="chat-search-wrap">
-              <MagnifyingGlass size={16} weight="bold" />
+              <MagnifyingGlass size={18} weight="bold" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search conversations..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -255,15 +255,15 @@ function Chat() {
                   className={`chat-user-item ${selectedUser?.id === u.id ? 'active' : ''}`}
                   onClick={() => setSelectedUser(u)}
                 >
-                  <div 
-                    className="chat-avatar-circle" 
-                    style={{ backgroundColor: getAvatarColor(u.name) }}
+                  <div
+                    className="chat-avatar-circle"
+                    style={{ background: getAvatarColor(u.name) }}
                   >
                     {getInitials(u.name)}
                   </div>
                   <div className="chat-user-info-box">
                     <span className="name">{u.name}</span>
-                    <span className="meta">{u.last_message || u.role}</span>
+                    <span className="meta">{u.last_message || u.role?.replace('_', ' ') || 'New Conversation'}</span>
                   </div>
                   {u.unread_count > 0 && (
                     <span className="unread-count-pill">{u.unread_count}</span>
@@ -279,12 +279,12 @@ function Chat() {
 
         <main className="chat-main-area">
           {!selectedUser ? (
-            <div className="chat-empty-state">
+            <div className="chat-empty-state animate-fadeIn">
               <div className="empty-icon-box">
-                <ChatCircle size={48} weight="duotone" />
+                <ChatCircle size={56} weight="duotone" />
               </div>
               <h2>Secure Messaging</h2>
-              <p>Select a student or staff member from the list to start chatting.</p>
+              <p>Select a student or staff member from the list<br/>to start a professional conversation.</p>
             </div>
           ) : (
             <>
@@ -292,15 +292,15 @@ function Chat() {
                 <button className="conv-header-back-mobile" onClick={() => setSelectedUser(null)}>
                   <CaretLeft size={20} weight="bold" />
                 </button>
-                <div 
-                  className="chat-avatar-circle" 
-                  style={{ backgroundColor: getAvatarColor(selectedUser.name), width: 38, height: 38, borderRadius: 10 }}
+                <div
+                  className="chat-avatar-circle"
+                  style={{ background: getAvatarColor(selectedUser.name) }}
                 >
                   {getInitials(selectedUser.name)}
                 </div>
                 <div className="conv-header-info">
                   <h2>{selectedUser.name}</h2>
-                  <span>{selectedUser.role}</span>
+                  <span>{selectedUser.role?.replace('_', ' ')}</span>
                 </div>
               </div>
               

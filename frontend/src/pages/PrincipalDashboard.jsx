@@ -8,7 +8,7 @@ import {
   Pulse, GraduationCap, CalendarBlank, Users, ChartLine,
   CheckCircle, XCircle, DotsThreeOutline, Clock, Star,
   Warning, Bell, Gear, Eye, EyeSlash, SquaresFour,
-  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle
+  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask
 } from "@phosphor-icons/react";
 
 const API = "http://localhost:5000/api";
@@ -216,8 +216,18 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
 
   const handleDelete = async (id, type) => {
     if (!window.confirm(`Delete this ${type}?`)) return;
-    const endpointMap = { teacher: 'principal/teachers', student: 'principal/students', class: 'classes', course: 'courses', lab: 'labs' };
-    const res = await fetch(`${API}/${endpointMap[type]}/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+    const endpointMap = { 
+      teacher: 'principal/teachers', 
+      student: 'principal/students', 
+      class: 'classes', 
+      course: 'courses', 
+      lab: 'labs',
+      lab_report: 'labs/usage'
+    };
+    const res = await fetch(`${API}/${endpointMap[type]}/${id}`, { 
+      method: 'DELETE', 
+      headers: { Authorization: `Bearer ${token}` } 
+    });
     const data = await res.json();
     if (data.success) fetchData(); else alert('❌ ' + data.message);
   };
@@ -647,11 +657,16 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                 <table style={S.table}>
                   <thead>
                     <tr style={S.tableHeadRow}>
-                      <th style={S.th}>NAME / TITLE</th>
+                      <th style={S.th}>
+                        {activeTab === 'lab_reports' ? 'STUDENT / LAB' : 'NAME / TITLE'}
+                      </th>
                       {activeTab === 'students' && <th style={S.th}>ROLL NO</th>}
                       {activeTab === 'students' && <th style={S.th}>SEM</th>}
+                      {activeTab === 'lab_reports' && <th style={S.th}>DATE</th>}
                       {(activeTab === 'labs') && <th style={S.th}>URL</th>}
-                      <th style={S.th}>EMAIL / DETAIL</th>
+                      <th style={S.th}>
+                        {activeTab === 'lab_reports' ? 'DURATION' : 'EMAIL / DETAIL'}
+                      </th>
                       {(activeTab === 'classes' || activeTab === 'courses') && <th style={S.th}>TEACHER</th>}
                       {activeTab === 'courses' && <th style={S.th}>STATUS</th>}
                       <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -660,11 +675,27 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                   <tbody>
                     {getTableData().map(item => (
                       <tr key={item.id} style={S.tableRow}>
-                        <td style={S.tdName}>{item.name || item.title}</td>
+                        <td style={S.tdName}>
+                          {activeTab === 'lab_reports' ? (
+                            <>
+                              {item.student_name}
+                              <div style={{fontSize: '11px', color: '#64748b'}}>{item.lab_name}</div>
+                            </>
+                          ) : (
+                            item.name || item.title
+                          )}
+                        </td>
                         {activeTab === 'students' && <td style={S.td}>{item.roll_number || <span style={{color: '#94a3b8'}}>Pending</span>}</td>}
                         {activeTab === 'students' && <td style={S.td}>{item.semester || 1}</td>}
+                        {activeTab === 'lab_reports' && <td style={S.td}>{new Date(item.date).toLocaleDateString()}</td>}
                         {activeTab === 'labs' && <td style={S.td}>{item.url || '—'}</td>}
-                        <td style={S.td}>{item.email || item.section || (item.description || '').substring(0, 40)}</td>
+                        <td style={S.td}>
+                          {activeTab === 'lab_reports' ? (
+                            `${item.time_spent || 0} mins`
+                          ) : (
+                            item.email || item.section || (item.description || '').substring(0, 40)
+                          )}
+                        </td>
                         {(activeTab === 'classes' || activeTab === 'courses') && <td style={S.td}>{item.teacher_name || '—'}</td>}
                         {activeTab === 'courses' && (
                           <td style={S.td}>
@@ -766,7 +797,10 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>🔬 Cloud Lab Analytics</h2>
+                <h2 style={S.tableTitle}>
+                  <Flask size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Cloud Lab Analytics
+                </h2>
                 <p style={S.tableSubtitle}>Unified view of lab usage across departments</p>
               </div>
             </div>

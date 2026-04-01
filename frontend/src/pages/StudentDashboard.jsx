@@ -555,7 +555,10 @@ function StudentDashboard({ user, onLogout }) {
       case 'grades':
         return (
           <div className="animate-fadeIn">
-            <h2 style={S.sectionTitle}>🎓 Examination Results</h2>
+            <h2 style={S.sectionTitle}>
+              <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+              Examination Results
+            </h2>
             <div style={S.gradesSummary}>
               <div style={S.summaryItem}>
                 <span>GPA</span>
@@ -607,7 +610,10 @@ function StudentDashboard({ user, onLogout }) {
       case 'registration':
         return (
           <div className="animate-fadeIn">
-            <h2 style={S.sectionTitle}>📝 Registration Center</h2>
+            <h2 style={S.sectionTitle}>
+              <IdentificationCard size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+              Registration Center
+            </h2>
             
             {/* Tabs */}
             <div style={S.tabContainer}>
@@ -758,7 +764,10 @@ function StudentDashboard({ user, onLogout }) {
         return (
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
-              <h2 style={S.tableTitle}>📅 Class Schedule</h2>
+              <h2 style={S.tableTitle}>
+                <CalendarBlank size={28} weight="duotone" color="#3b82f6" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                Class Schedule
+              </h2>
             </div>
             <div style={S.timetableContainer}>
               {Object.entries(groupTimetableByDay()).map(([day, entries]) => (
@@ -787,7 +796,10 @@ function StudentDashboard({ user, onLogout }) {
         return (
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
-              <h2 style={S.tableTitle}>📋 My Assignments</h2>
+              <h2 style={S.tableTitle}>
+                <ClipboardText size={28} weight="duotone" color="#0891b2" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                My Assignments
+              </h2>
             </div>
             <div style={S.assignmentsList}>
               {assignments.length === 0 ? (

@@ -39,11 +39,11 @@ router.get('/teacher/my-classes', isTeacher, async (req, res) => {
   try {
     const teacherId = req.user.id;
     const [classes] = await pool.query(
-      `SELECT c.*, COUNT(DISTINCT sc.student_id) as student_count
+      `SELECT c.*, 
+       (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id) as student_count,
+       (SELECT COUNT(*) FROM courses WHERE class_id = c.id AND status = 'active') as course_count
        FROM classes c
-       LEFT JOIN student_classes sc ON c.id = sc.class_id
        WHERE c.teacher_id = ?
-       GROUP BY c.id
        ORDER BY c.name, c.section`,
       [teacherId]
     );

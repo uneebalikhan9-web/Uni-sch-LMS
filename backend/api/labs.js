@@ -180,12 +180,23 @@ router.put('/:id', verifyToken, async (req, res) => {
 });
 
 // Delete a lab
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
     try {
         await pool.query('DELETE FROM labs WHERE id = ?', [req.params.id]);
         res.json({ success: true, message: 'Lab deleted' });
     } catch (error) {
         console.error('Error deleting lab:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Delete a lab usage report entry
+router.delete('/usage/:id', verifyToken, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM lab_usage WHERE id = ?', [req.params.id]);
+        res.json({ success: true, message: 'Lab report deleted' });
+    } catch (error) {
+        console.error('Error deleting lab usage:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });

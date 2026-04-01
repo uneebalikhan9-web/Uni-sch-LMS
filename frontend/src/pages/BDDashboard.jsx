@@ -759,14 +759,19 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
         {activeTab === 'course_reports' && (
           <div style={S.tableCard}>
             <div style={{padding: '20px 24px', borderBottom: '1px solid #f1f5f9'}}>
-              <h2 style={{margin:0, fontSize:'18px', fontWeight:700, color:'#1e293b'}}>📊 Course Completion Reports</h2>
+              <h2 style={{margin:0, fontSize:'18px', fontWeight:700, color:'#1e293b'}}>
+                <ChartBar size={24} weight="duotone" color="#6366f1" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                Course Completion Reports
+              </h2>
               <p style={{margin:'4px 0 0', fontSize:'13px', color:'#64748b'}}>{allReports.length} completed course{allReports.length !== 1 ? 's' : ''} platform-wide</p>
             </div>
             {reportsLoading ? (
               <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading reports...</div>
             ) : allReports.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📊</div>
+                <div style={{ marginBottom: '16px' }}>
+                  <ChartBar size={64} weight="duotone" color="#94a3b8" />
+                </div>
                 <p>No course reports yet. Reports are auto-generated when a teacher marks a course as complete.</p>
               </div>
             ) : (

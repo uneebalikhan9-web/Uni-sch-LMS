@@ -312,7 +312,10 @@ router.post('/teacher/signin', async (req, res) => {
 
     // Check if teacher exists
     const [users] = await pool.query(
-      'SELECT * FROM users WHERE email = ? AND role = ?',
+      `SELECT u.*, c.name as department_name 
+       FROM users u 
+       LEFT JOIN campuses c ON u.campus_id = c.id 
+       WHERE u.email = ? AND u.role = ?`,
       [email, 'teacher']
     );
 
@@ -350,7 +353,8 @@ router.post('/teacher/signin', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
-        campus_id: user.campus_id
+        campus_id: user.campus_id,
+        department_name: user.department_name
       },
       token: token
     });
