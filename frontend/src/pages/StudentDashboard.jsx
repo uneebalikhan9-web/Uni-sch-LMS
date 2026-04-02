@@ -24,6 +24,7 @@ function StudentDashboard({ user, onLogout }) {
   const [progressReports, setProgressReports] = useState([])
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [availableClasses, setAvailableClasses] = useState([])
+  const [expandedClassId, setExpandedClassId] = useState(null)
   const [registering, setRegistering] = useState(false)
   const [availableCourses, setAvailableCourses] = useState([])
   const [enrolling, setEnrolling] = useState(false)
@@ -243,7 +244,12 @@ function StudentDashboard({ user, onLogout }) {
         body: JSON.stringify({ class_id: classId })
       })
       const data = await response.json()
-      if (data.success) { alert('✅ Successfully registered!'); fetchAvailableClasses(); }
+      if (data.success) { 
+        alert('✅ Successfully registered for class!'); 
+        fetchAvailableClasses(); 
+        setExpandedClassId(classId); // Auto-expand to show courses
+        fetchClassSubjects(classId);
+      }
     } catch (error) { alert('❌ Error'); } finally { setRegistering(false) }
   }
 
@@ -649,23 +655,126 @@ function StudentDashboard({ user, onLogout }) {
               ) : (
                 <div style={S.classesGrid}>
                   {availableClasses.map(cls => (
-                    <div key={cls.id} style={S.classCard}>
-                      <h3 style={S.className}>{cls.name}</h3>
-                      <p style={S.classInfo}>Section: {cls.section}</p>
+                    <div key={cls.id} style={{
+                      ...S.classCard,
+                      border: expandedClassId === cls.id ? '2px solid #4f46e5' : '1px solid #e2e8f0',
+                      transition: 'all 0.3s ease'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div>
+                          <h3 style={S.className}>{cls.name}</h3>
+                          <p style={S.classInfo}>Section: {cls.section}</p>
+                        </div>
+                        {cls.is_registered > 0 && (
+                          <span style={{ 
+                            background: '#dcfce7', 
+                            color: '#166534', 
+                            fontSize: '10px', 
+                            padding: '4px 8px', 
+                            borderRadius: '12px', 
+                            fontWeight: 700 
+                          }}>✓ REGISTERED</span>
+                        )}
+                      </div>
                       <p style={S.classTeacher}>
                         <User size={14} /> {cls.teacher_name || 'TBD'}
                       </p>
-                      <button 
-                        onClick={() => handleRegisterClass(cls.id)} 
-                        disabled={cls.is_registered || registering} 
-                        style={{
-                          ...S.registerBtn,
-                          opacity: (cls.is_registered || registering) ? 0.6 : 1,
-                          background: cls.is_registered ? '#10b981' : '#0f172a'
-                        }}
-                      >
-                        {cls.is_registered ? '✓ Enrolled' : 'Register Now'}
-                      </button>
+                      
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                        {!cls.is_registered ? (
+                          <button 
+                            onClick={() => handleRegisterClass(cls.id)} 
+                            disabled={registering} 
+                            style={{
+                              ...S.registerBtn,
+                              flex: 1,
+                              opacity: registering ? 0.6 : 1,
+                              background: '#0f172a'
+                            }}
+                          >
+                            {registering ? 'Processing...' : 'Register Now'}
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => {
+                              if (expandedClassId === cls.id) {
+                                setExpandedClassId(null);
+                              } else {
+                                setExpandedClassId(cls.id);
+                                fetchClassSubjects(cls.id);
+                              }
+                            }}
+                            style={{
+                              ...S.registerBtn,
+                              flex: 1,
+                              background: expandedClassId === cls.id ? '#4f46e5' : '#f1f5f9',
+                              color: expandedClassId === cls.id ? '#fff' : '#475569',
+                              border: expandedClassId === cls.id ? 'none' : '1px solid #e2e8f0'
+                            }}
+                          >
+                            {expandedClassId === cls.id ? 'Hide Courses' : 'View Courses'}
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Course List within a Class */}
+                      {expandedClassId === cls.id && (
+                        <div style={{ 
+                          marginTop: '16px', 
+                          paddingTop: '16px', 
+                          borderTop: '1px solid #f1f5f9',
+                          animation: 'fadeIn 0.3s ease'
+                        }}>
+                          <h4 style={{ fontSize: '0.8rem', fontWeight: 700, color: '#64748b', marginBottom: '12px', textTransform: 'uppercase' }}>
+                            Available Courses
+                          </h4>
+                          {myClassSubjects.length === 0 ? (
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8' }}>No courses found for this class.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {myClassSubjects.map(sub => (
+                                <div key={sub.id} style={{ 
+                                  background: '#f8fafc', 
+                                  padding: '10px', 
+                                  borderRadius: '8px',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  border: '1px solid #f1f5f9'
+                                }}>
+                                  <div>
+                                    <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{sub.title}</div>
+                                    <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{sub.teacher_name || 'Instructor TBD'}</div>
+                                  </div>
+                                  
+                                  {/* Enrollment Status Handler */}
+                                  {sub.enrollment_status === 'approved' ? (
+                                    <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 700 }}>✓ Enrolled</span>
+                                  ) : sub.enrollment_status === 'pending' ? (
+                                    <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, fontStyle: 'italic' }}>⏳ Pending</span>
+                                  ) : (
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); handleEnrollCourse(sub.id); }}
+                                      style={{
+                                        background: '#fff',
+                                        border: '1.5px solid #4f46e5',
+                                        color: '#4f46e5',
+                                        fontSize: '0.75rem',
+                                        padding: '4px 10px',
+                                        borderRadius: '6px',
+                                        fontWeight: 700,
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Apply
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

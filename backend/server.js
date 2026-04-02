@@ -22,6 +22,18 @@ io.on('connection', (socket) => {
       socket.join(`user_${userId}`);
     }
   });
+
+  socket.on('chat:typing', (data) => {
+    if (data.receiver_id) {
+      io.to(`user_${data.receiver_id}`).emit('chat:typing', { sender_id: data.sender_id });
+    }
+  });
+
+  socket.on('chat:stop_typing', (data) => {
+    if (data.receiver_id) {
+      io.to(`user_${data.receiver_id}`).emit('chat:stop_typing', { sender_id: data.sender_id });
+    }
+  });
   socket.on('disconnect', () => {});
 });
 

@@ -332,23 +332,30 @@ router.get('/:id/students', verifyToken, async (req, res) => {
   }
 });
 
-// Get Courses for a Class
+// Get Courses for a Class (with student enrollment status)
 router.get('/:id/courses', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.query;
+    const studentId = req.user.id;
     
-    let query = `SELECT * FROM courses WHERE class_id = ?`;
+    let query = `
+      SELECT c.*, e.status as enrollment_status, u.name as teacher_name
+      FROM courses c
+      LEFT JOIN enrollments e ON c.id = e.course_id AND e.student_id = ?
+      LEFT JOIN users u ON c.teacher_id = u.id
+      WHERE c.class_id = ?
+    `;
     
     if (status) {
-        query += ` AND status = '${status}'`;
+        query += ` AND c.status = '${status}'`;
     } else {
-        query += ` AND status = 'active'`;
+        query += ` AND c.status = 'active'`;
     }
     
-    query += ` ORDER BY title`;
+    query += ` ORDER BY c.title`;
 
-    const [courses] = await pool.query(query, [id]);
+    const [courses] = await pool.query(query, [studentId, id]);
     res.status(200).json({ success: true, courses });
   } catch (error) {
     console.error('Get class courses error:', error);

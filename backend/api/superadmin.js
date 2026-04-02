@@ -258,10 +258,11 @@ router.get('/principals/:id/details', async (req, res) => {
 router.get('/bds', async (req, res) => {
   try {
     const [bds] = await pool.query(`
-      SELECT id, name, email, created_at, is_approved
-      FROM users
-      WHERE role IN ('bd', 'bd_agent')
-      ORDER BY created_at DESC
+      SELECT u.id, u.name, u.email, u.created_at, u.is_approved, u.campus_id, c.name as campus_name
+      FROM users u
+      LEFT JOIN campuses c ON u.campus_id = c.id
+      WHERE u.role IN ('bd', 'bd_agent')
+      ORDER BY u.created_at DESC
     `);
     res.json({ success: true, bds });
   } catch (error) {
@@ -273,7 +274,7 @@ router.get('/bds', async (req, res) => {
 // Create a new BD User
 router.post('/bds', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, campus_id } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
@@ -286,14 +287,14 @@ router.post('/bds', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_approved) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'bd_agent', true]
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'bd_agent', true, campus_id || null]
     );
 
     res.status(201).json({
       success: true,
       message: 'BD user created successfully',
-      bd: { id: result.insertId, name, email, role: 'bd_agent' }
+      bd: { id: result.insertId, name, email, role: 'bd_agent', campus_id: campus_id || null }
     });
   } catch (error) {
     console.error('Create BD error:', error);
@@ -305,15 +306,15 @@ router.post('/bds', async (req, res) => {
 router.put('/bds/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, password } = req.body;
+    const { name, email, password, campus_id } = req.body;
 
     const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role IN ('bd', 'bd_agent')", [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'BD user not found' });
     }
 
-    let query = 'UPDATE users SET name = ?, email = ?';
-    let params = [name, email];
+    let query = 'UPDATE users SET name = ?, email = ?, campus_id = ?';
+    let params = [name, email, campus_id || null];
 
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -355,9 +356,10 @@ router.get('/bds/:id/details', async (req, res) => {
 
     // Get BD info
     const [bdData] = await pool.query(`
-      SELECT id, name, email, created_at, role, is_approved
-      FROM users
-      WHERE id = ? AND role IN ('bd', 'bd_agent')
+      SELECT u.id, u.name, u.email, u.created_at, u.role, u.is_approved, u.campus_id, c.name as campus_name
+      FROM users u
+      LEFT JOIN campuses c ON u.campus_id = c.id
+      WHERE u.id = ? AND u.role IN ('bd', 'bd_agent')
     `, [id]);
 
     if (bdData.length === 0) {

@@ -22,7 +22,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [newDepartment, setNewDepartment] = useState({ name: "", location: "", subscription_plan: "basic" });
   const [newHOD, setNewHOD] = useState({ name: "", email: "", password: "", campus_id: "" });
   const [bds, setBds] = useState([]);
-  const [newBD, setNewBD] = useState({ name: "", email: "", password: "" });
+  const [newBD, setNewBD] = useState({ name: "", email: "", password: "", campus_id: "" });
   const [reports, setReports] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -183,7 +183,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     const method = editingItem ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (data.success) { setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "" }); fetchData(); }
+    if (data.success) { setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
     else alert('❌ ' + data.message);
   };
 
@@ -543,6 +543,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                   <thead>
                     <tr>
                       <th style={S.th}>NAME</th>
+                      <th style={S.th}>DEPARTMENT</th>
                       <th style={S.th}>EMAIL</th>
                       <th style={S.th}>JOINED</th>
                       <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -552,6 +553,11 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                     {bds.map(bd => (
                       <tr key={bd.id} style={S.tr}>
                         <td style={S.tdName}>{bd.name}</td>
+                        <td style={S.td}>
+                          <span style={{...S.planBadge, background: '#f1f5f9', color: '#475569'}}>
+                            {bd.campus_name || "Global / Multi-Campus"}
+                          </span>
+                        </td>
                         <td style={S.td}>{bd.email}</td>
                         <td style={S.td}>{new Date(bd.created_at).toLocaleDateString()}</td>
                         <td style={{...S.td, textAlign: 'right'}}>
@@ -566,7 +572,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                             </button>
                             <button 
                               style={S.editBtn} 
-                              onClick={() => { setEditingItem(bd); setNewBD({ name: bd.name, email: bd.email, password: "" }); setShowAddModal(true); }}
+                              onClick={() => { setEditingItem(bd); setNewBD({ name: bd.name, email: bd.email, password: "", campus_id: bd.campus_id || "" }); setShowAddModal(true); }}
                               title="Edit BD User"
                             >
                               <PencilSimple size={16} />
@@ -1041,6 +1047,18 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                   onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewBD({...newBD, password: e.target.value})} 
                   style={S.input}
                 />
+              </div>
+
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>Assign to Department (Optional for Global)</label>
+                <select 
+                  value={editingItem ? (editingItem.campus_id || "") : newBD.campus_id} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewBD({...newBD, campus_id: e.target.value})} 
+                  style={S.input}
+                >
+                  <option value="">Global / No Specific Department</option>
+                  {departments.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
               </div>
               
               <div style={S.modalActions}>

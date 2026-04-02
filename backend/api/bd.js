@@ -99,18 +99,42 @@ router.use(isBDOrAdmin);
 
 router.get('/overview', async (req, res) => {
   try {
-    const [[{ totalLeads }]] = await pool.query('SELECT COUNT(*) as totalLeads FROM bd_campus_leads');
-    const [[{ wonLeads }]] = await pool.query("SELECT COUNT(*) as wonLeads FROM bd_campus_leads WHERE status = 'closed_won'");
-    const [[{ openJobs }]] = await pool.query("SELECT COUNT(*) as openJobs FROM bd_job_postings WHERE status = 'open'");
-    const [[{ totalApplicants }]] = await pool.query('SELECT COUNT(*) as totalApplicants FROM bd_applicants');
-    const [[{ hiredCount }]] = await pool.query("SELECT COUNT(*) as hiredCount FROM bd_applicants WHERE status = 'hired'");
-    const [[{ activeBatches }]] = await pool.query("SELECT COUNT(*) as activeBatches FROM bd_bulk_hires WHERE status NOT IN ('completed','cancelled')");
-    const [[{ totalDealValue }]] = await pool.query("SELECT COALESCE(SUM(deal_value),0) as totalDealValue FROM bd_campus_leads WHERE status = 'closed_won'");
+    // Filter by campus if not Super Admin
+    let leadFilter = '';
+    let jobFilter = '';
+    let applicantFilter = '';
+    let batchFilter = '';
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      leadFilter = ' WHERE campus_id = ?'; // Note: bd_campus_leads needs campus_id or we filter by assigned_to
+      // Actually, looking at bd.js for leads, it uses assigned_to in POST.
+      // But for overview, we might want to filter by campus if the lead is for a campus.
+      // Wait, bd_campus_leads doesn't have campus_id in the table? Let's check the schema logic.
+      // If it doesn't have campus_id, we filter by assigned_to or we join.
+      
+      // I will assume assigned_to for leads for now, or join if campus name is needed.
+      // For simplicity and since we just added campus_id to users, I'll use that.
+      
+      leadFilter = ' WHERE assigned_to IN (SELECT id FROM users WHERE campus_id = ?)';
+      jobFilter = ' WHERE campus_id = ?';
+      applicantFilter = ' WHERE job_id IN (SELECT id FROM bd_job_postings WHERE campus_id = ?)';
+      batchFilter = ' WHERE campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    const [[{ totalLeads }]] = await pool.query(`SELECT COUNT(*) as totalLeads FROM bd_campus_leads${leadFilter}`, params);
+    const [[{ wonLeads }]] = await pool.query(`SELECT COUNT(*) as wonLeads FROM bd_campus_leads${leadFilter ? leadFilter + " AND status = 'closed_won'" : " WHERE status = 'closed_won'"}`, params);
+    const [[{ openJobs }]] = await pool.query(`SELECT COUNT(*) as openJobs FROM bd_job_postings${jobFilter ? jobFilter + " AND status = 'open'" : " WHERE status = 'open'"}`, params);
+    const [[{ totalApplicants }]] = await pool.query(`SELECT COUNT(*) as totalApplicants FROM bd_applicants${applicantFilter}`, params);
+    const [[{ hiredCount }]] = await pool.query(`SELECT COUNT(*) as hiredCount FROM bd_applicants${applicantFilter ? applicantFilter + " AND status = 'hired'" : " WHERE status = 'hired'"}`, params);
+    const [[{ activeBatches }]] = await pool.query(`SELECT COUNT(*) as activeBatches FROM bd_bulk_hires${batchFilter ? batchFilter + " AND status NOT IN ('completed','cancelled')" : " WHERE status NOT IN ('completed','cancelled')" }`, params);
+    const [[{ totalDealValue }]] = await pool.query(`SELECT COALESCE(SUM(deal_value),0) as totalDealValue FROM bd_campus_leads${leadFilter ? leadFilter + " AND status = 'closed_won'" : " WHERE status = 'closed_won'"}`, params);
 
     // Pipeline breakdown
     const [pipeline] = await pool.query(`
-      SELECT status, COUNT(*) as count FROM bd_campus_leads GROUP BY status
-    `);
+      SELECT status, COUNT(*) as count FROM bd_campus_leads ${leadFilter} GROUP BY status
+    `, params);
 
     res.json({
       success: true,
@@ -130,7 +154,22 @@ router.get('/leads', async (req, res) => {
     const { status } = req.query;
     let query = `SELECT l.*, u.name as assigned_to_name FROM bd_campus_leads l LEFT JOIN users u ON l.assigned_to = u.id`;
     const params = [];
-    if (status && status !== 'all') { query += ' WHERE l.status = ?'; params.push(status); }
+    
+    const conditions = [];
+    if (status && status !== 'all') { 
+      conditions.push('l.status = ?'); 
+      params.push(status); 
+    }
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      conditions.push('u.campus_id = ?');
+      params.push(req.user.campus_id);
+    }
+
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
     query += ' ORDER BY l.created_at DESC';
     const [leads] = await pool.query(query, params);
     res.json({ success: true, leads });
@@ -182,13 +221,21 @@ const crypto = require('crypto');
 
 router.get('/jobs', async (req, res) => {
   try {
-    const [jobs] = await pool.query(`
+    let query = `
       SELECT j.*, c.name as campus_name,
         (SELECT COUNT(*) FROM bd_applicants a WHERE a.job_id = j.id) as applicant_count
       FROM bd_job_postings j
       LEFT JOIN campuses c ON j.campus_id = c.id
-      ORDER BY j.created_at DESC
-    `);
+    `;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' WHERE j.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY j.created_at DESC';
+    const [jobs] = await pool.query(query, params);
     res.json({ success: true, jobs });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching jobs' });
@@ -244,6 +291,12 @@ router.get('/applicants', async (req, res) => {
     const params = [];
     if (job_id) { query += ' AND a.job_id = ?'; params.push(job_id); }
     if (status && status !== 'all') { query += ' AND a.status = ?'; params.push(status); }
+    
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' AND j.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
     query += ' ORDER BY a.applied_at DESC';
     const [applicants] = await pool.query(query, params);
     res.json({ success: true, applicants });
@@ -297,11 +350,16 @@ router.delete('/applicants/:id', async (req, res) => {
 
 router.get('/bulk-hires', async (req, res) => {
   try {
-    const [batches] = await pool.query(`
-      SELECT b.*, c.name as campus_name FROM bd_bulk_hires b
-      LEFT JOIN campuses c ON b.campus_id = c.id
-      ORDER BY b.created_at DESC
-    `);
+    let query = `SELECT b.*, c.name as campus_name FROM bd_bulk_hires b LEFT JOIN campuses c ON b.campus_id = c.id`;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' WHERE b.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY b.created_at DESC';
+    const [batches] = await pool.query(query, params);
     res.json({ success: true, batches });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching bulk hires' });
@@ -350,11 +408,19 @@ router.delete('/bulk-hires/:id', async (req, res) => {
 // Global platform stats breakdown
 router.get('/global/stats', async (req, res) => {
   try {
-    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses');
-    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student'");
-    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'");
-    const [[{ totalClasses }]] = await pool.query('SELECT COUNT(*) as totalClasses FROM classes');
-    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(*) as totalCourses FROM courses');
+    // If not global BD, only show their campus stats
+    let filter = '';
+    const params = [];
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      filter = ' WHERE campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses' + (filter ? ' WHERE id = ?' : ''), params);
+    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student'" + (filter ? ' AND campus_id = ?' : ''), params);
+    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'" + (filter ? ' AND campus_id = ?' : ''), params);
+    const [[{ totalClasses }]] = await pool.query('SELECT COUNT(*) as totalClasses FROM classes' + (filter ? ' WHERE campus_id = ?' : ''), params);
+    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(*) as totalCourses FROM courses' + (filter ? ' WHERE campus_id = ?' : ''), params);
 
     res.json({
       success: true,
@@ -369,7 +435,7 @@ router.get('/global/stats', async (req, res) => {
 // Get all campuses with detailed metrics
 router.get('/global/campuses', async (req, res) => {
   try {
-    const [campuses] = await pool.query(`
+    let query = `
       SELECT 
         c.*,
         (SELECT COUNT(*) FROM users u WHERE u.campus_id = c.id AND u.role = 'student') as student_count,
@@ -377,8 +443,16 @@ router.get('/global/campuses', async (req, res) => {
         (SELECT COUNT(*) FROM classes cl WHERE cl.campus_id = c.id) as class_count,
         (SELECT name FROM users u WHERE u.campus_id = c.id AND u.role = 'principal' LIMIT 1) as hod_name
       FROM campuses c
-      ORDER BY c.name ASC
-    `);
+    `;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' WHERE c.id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY c.name ASC';
+    const [campuses] = await pool.query(query, params);
     res.json({ success: true, campuses });
   } catch (error) {
     console.error('Global campuses error:', error);
@@ -389,13 +463,21 @@ router.get('/global/campuses', async (req, res) => {
 // Get all teachers across all campuses
 router.get('/global/teachers', async (req, res) => {
   try {
-    const [teachers] = await pool.query(`
+    let query = `
       SELECT u.id, u.name, u.email, u.created_at, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
       WHERE u.role = 'teacher'
-      ORDER BY u.name ASC
-    `);
+    `;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' AND u.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY u.name ASC';
+    const [teachers] = await pool.query(query, params);
     res.json({ success: true, teachers });
   } catch (error) {
     console.error('Global teachers error:', error);
@@ -406,13 +488,21 @@ router.get('/global/teachers', async (req, res) => {
 // Get all students across all campuses
 router.get('/global/students', async (req, res) => {
   try {
-    const [students] = await pool.query(`
+    let query = `
       SELECT u.id, u.name, u.email, u.created_at, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
       WHERE u.role = 'student'
-      ORDER BY u.name ASC
-    `);
+    `;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' AND u.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY u.name ASC';
+    const [students] = await pool.query(query, params);
     res.json({ success: true, students });
   } catch (error) {
     console.error('Global students error:', error);
@@ -423,13 +513,21 @@ router.get('/global/students', async (req, res) => {
 // Get all classes across all campuses
 router.get('/global/classes', async (req, res) => {
   try {
-    const [classes] = await pool.query(`
+    let query = `
       SELECT cl.*, c.name as campus_name, u.name as teacher_name
       FROM classes cl
       LEFT JOIN campuses c ON cl.campus_id = c.id
       LEFT JOIN users u ON cl.teacher_id = u.id
-      ORDER BY cl.name, cl.section
-    `);
+    `;
+    const params = [];
+
+    if (req.user.role !== 'super_admin' && req.user.campus_id) {
+      query += ' WHERE cl.campus_id = ?';
+      params.push(req.user.campus_id);
+    }
+
+    query += ' ORDER BY cl.name, cl.section';
+    const [classes] = await pool.query(query, params);
     res.json({ success: true, classes });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching global classes' });

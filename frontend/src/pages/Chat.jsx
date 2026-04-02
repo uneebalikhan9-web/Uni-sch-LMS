@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft } from '@phosphor-icons/react'
+import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle } from '@phosphor-icons/react'
 import { io } from 'socket.io-client'
 import './Chat.css'
 
@@ -17,6 +17,8 @@ function Chat() {
   const [search, setSearch] = useState('') 
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const typingTimeoutRef = useRef(null)
   const socketRef = useRef(null)
   const messagesEndRef = useRef(null)
 
@@ -102,7 +104,26 @@ function Chat() {
       })
     }
     socket.on('chat:message', onMsg)
-    return () => socket.off('chat:message', onMsg)
+
+    const onTyping = ({ sender_id }) => {
+      if (selectedUser && sender_id === selectedUser.id) {
+        setIsTyping(true)
+      }
+    }
+    const onStopTyping = ({ sender_id }) => {
+      if (selectedUser && sender_id === selectedUser.id) {
+        setIsTyping(false)
+      }
+    }
+
+    socket.on('chat:typing', onTyping)
+    socket.on('chat:stop_typing', onStopTyping)
+
+    return () => {
+      socket.off('chat:message', onMsg)
+      socket.off('chat:typing', onTyping)
+      socket.off('chat:stop_typing', onStopTyping)
+    }
   }, [user?.id, selectedUser?.id])
 
   useEffect(() => {
@@ -129,6 +150,7 @@ function Chat() {
         )
       }).catch(() => {})
     }
+    setIsTyping(false) // Reset on user change
   }, [user, selectedUser])
 
   useEffect(() => {
@@ -205,10 +227,43 @@ function Chat() {
   }
 
   const getInitials = (name) => {
-    if (!name) return '?'
-    const parts = name.split(' ')
-    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase()
-    return name.slice(0, 2).toUpperCase().replace(' ', '')
+    if (!name || name === 'undefined') return '?'
+    const parts = name.trim().split(/\s+/).filter(Boolean)
+    if (parts.length >= 2) return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase()
+    return (name.slice(0, 2) || '?').toUpperCase()
+  }
+
+  const groupMessagesByDate = (msgs) => {
+    const groups = {}
+    msgs.forEach(m => {
+      const date = new Date(m.created_at).toLocaleDateString()
+      if (!groups[date]) groups[date] = []
+      groups[date].push(m)
+    })
+    return groups
+  }
+
+  const formatHeaderDate = (dateStr) => {
+    const d = new Date(dateStr)
+    const today = new Date()
+    const yesterday = new Date()
+    yesterday.setDate(today.getDate() - 1)
+
+    if (d.toDateString() === today.toDateString()) return 'Today'
+    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+    return d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  const handleTyping = (e) => {
+    setNewMessage(e.target.value)
+    if (!socketRef.current || !selectedUser) return
+
+    socketRef.current.emit('chat:typing', { sender_id: user.id, receiver_id: selectedUser.id })
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    typingTimeoutRef.current = setTimeout(() => {
+      socketRef.current.emit('chat:stop_typing', { sender_id: user.id, receiver_id: selectedUser.id })
+    }, 2000)
   }
 
   if (!user) return null
@@ -222,7 +277,7 @@ function Chat() {
           </button>
           <div className="chat-title-group">
             <h1>LMS Connect</h1>
-            <p>{user.name} · {user.role.replace('_', ' ')}</p>
+            <p>{user.name || 'Admin'} · {user.role?.replace('_', ' ') || 'Staff'}</p>
           </div>
         </div>
         <button className="chat-logout-btn" onClick={handleLogout}>
@@ -262,7 +317,7 @@ function Chat() {
                     {getInitials(u.name)}
                   </div>
                   <div className="chat-user-info-box">
-                    <span className="name">{u.name}</span>
+                    <span className="name">{u.name || 'User'}</span>
                     <span className="meta">{u.last_message || u.role?.replace('_', ' ') || 'New Conversation'}</span>
                   </div>
                   {u.unread_count > 0 && (
@@ -280,11 +335,15 @@ function Chat() {
         <main className="chat-main-area">
           {!selectedUser ? (
             <div className="chat-empty-state animate-fadeIn">
-              <div className="empty-icon-box">
-                <ChatCircle size={56} weight="duotone" />
+              <div className="premium-empty-icon-wrapper">
+                <ChatCircle size={64} weight="duotone" className="floating-icon" />
               </div>
-              <h2>Secure Messaging</h2>
-              <p>Select a student or staff member from the list<br/>to start a professional conversation.</p>
+              <h2 className="premium-title">LMS Connect</h2>
+              <p className="premium-subtitle">Ready to assist. Select a conversation to begin.</p>
+              <div className="chat-badge-group">
+                <div className="chat-badge"><ShieldCheck size={14} weight="fill" /> Secure</div>
+                <div className="chat-badge"><Pulse size={14} weight="fill" /> Active</div>
+              </div>
             </div>
           ) : (
             <>
@@ -299,23 +358,47 @@ function Chat() {
                   {getInitials(selectedUser.name)}
                 </div>
                 <div className="conv-header-info">
-                  <h2>{selectedUser.name}</h2>
-                  <span>{selectedUser.role?.replace('_', ' ')}</span>
+                  <h2>{selectedUser.name || 'User'}</h2>
+                  <div className="status-row">
+                    {isTyping ? (
+                      <span className="typing-indicator-text">is typing...</span>
+                    ) : (
+                      <span className="online-status"><span className="status-dot"></span> Active Now</span>
+                    )}
+                  </div>
                 </div>
               </div>
               
               <div className="message-viewport">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`msg-bubble ${m.sender_id === user.id ? 'sent' : 'received'}`}
-                  >
-                    <span className="msg-text">{m.message}</span>
-                    <span className="msg-time">
-                      {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                {Object.entries(groupMessagesByDate(messages)).map(([date, msgs]) => (
+                  <div key={date} className="msg-date-group">
+                    <div className="msg-date-divider">
+                      <span>{formatHeaderDate(date)}</span>
+                    </div>
+                    {msgs.map((m) => (
+                      <div
+                        key={m.id}
+                        className={`msg-bubble ${m.sender_id === user.id ? 'sent' : 'received'}`}
+                      >
+                        <span className="msg-text">{m.message}</span>
+                        <span className="msg-time">
+                          {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {m.sender_id === user.id && (
+                             <CheckCircle size={12} weight={m.read_at ? "fill" : "regular"} className="read-icon" />
+                          )}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ))}
+                
+                {isTyping && (
+                  <div className="msg-bubble received typing-bubble">
+                    <div className="typing-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -325,7 +408,7 @@ function Chat() {
                     type="text"
                     placeholder={`Message ${selectedUser.name.split(' ')[0]}...`}
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
+                    onChange={handleTyping}
                     disabled={sending}
                   />
                   <button type="submit" className="send-btn-circle" disabled={sending || !newMessage.trim()}>

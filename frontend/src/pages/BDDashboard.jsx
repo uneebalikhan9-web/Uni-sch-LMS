@@ -201,7 +201,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
 
         <div style={S.bdBadge}>
           <Briefcase size={14} weight="fill" />
-          <span>Business Development</span>
+          <span>{user.department_name || "Business Development"}</span>
           <div style={S.liveIndicator}></div>
         </div>
 
@@ -251,7 +251,10 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
                activeTab === 'lab_usage' ? 'Cloud Lab Analytics' :
                activeTab === 'course_reports' ? 'Course Completion Reports' : 'Global Classes'}
             </h1>
-            <p style={S.subtitle}>Welcome back, <span style={S.userName}>{user.name}</span></p>
+            <p style={S.subtitle}>
+              Welcome back, <span style={S.userName}>{user.name}</span>
+              {user.department_name && <span style={{marginLeft: '10px', padding: '4px 12px', background: 'rgba(79, 70, 229, 0.1)', color: '#4f46e5', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600}}>{user.department_name}</span>}
+            </p>
           </div>
           <div style={S.headerActions}>
             {!['overview', 'all_campuses', 'all_teachers', 'all_students', 'all_classes'].includes(activeTab) && (
