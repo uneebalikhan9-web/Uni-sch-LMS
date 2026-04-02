@@ -173,4 +173,37 @@ router.get('/class/:classId', verifyToken, async (req, res) => {
   }
 });
 
+// Admin/HOD: Get History of Classes Held (based on attendance records)
+router.get('/history', verifyToken, isAdmin, async (req, res) => {
+  try {
+    const campus_id = req.user.campus_id;
+    const role = req.user.role;
+
+    let query = `
+      SELECT DISTINCT a.date, a.class_id, a.course_id, a.teacher_id,
+             c.title as course_title, cl.name as class_name, cl.section,
+             u.name as teacher_name,
+             (SELECT COUNT(*) FROM attendance WHERE date = a.date AND class_id = a.class_id AND course_id = a.course_id) as student_count
+      FROM attendance a
+      JOIN courses c ON a.course_id = c.id
+      JOIN classes cl ON a.class_id = cl.id
+      JOIN users u ON a.teacher_id = u.id
+    `;
+    const params = [];
+
+    if (role !== 'super_admin') {
+      query += ` WHERE cl.campus_id = ?`;
+      params.push(campus_id);
+    }
+
+    query += ` ORDER BY a.date DESC LIMIT 50`;
+
+    const [history] = await pool.query(query, params);
+    res.status(200).json({ success: true, history });
+  } catch (error) {
+    console.error('Get timetable history error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching class history' });
+  }
+});
+
 module.exports = router;

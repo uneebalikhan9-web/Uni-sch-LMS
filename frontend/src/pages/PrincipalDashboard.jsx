@@ -32,6 +32,8 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const [newLab, setNewLab] = useState({ name: "", description: "", icon: "🔬", environment: "Python", classId: "", url: "" });
   const [editingItem, setEditingItem] = useState(null);
   const [timetables, setTimetables] = useState([]);
+  const [timetableHistory, setTimetableHistory] = useState([]);
+  const [timetableView, setTimetableView] = useState('schedule'); // 'schedule' or 'history'
   const [showTimetableModal, setShowTimetableModal] = useState(false);
   const [newTimetableEntry, setNewTimetableEntry] = useState({
     course_id: '',
@@ -77,13 +79,14 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const fetchData = async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [t, s, cl, co, ps, tt, lu, labsRes, logsRes, res7, res8, engRes] = await Promise.all([
+      const [t, s, cl, co, ps, tt, tth, lu, labsRes, logsRes, res7, res8, engRes] = await Promise.all([
         fetch(`${API}/principal/teachers`, { headers }).then(r => r.json()),
         fetch(`${API}/principal/students`, { headers }).then(r => r.json()),
         fetch(`${API}/classes`, { headers }).then(r => r.json()),
         fetch(`${API}/courses?status=all`, { headers }).then(r => r.json()),
         fetch(`${API}/pending-students`, { headers }).then(r => r.json()),
         fetch(`${API}/timetables`, { headers }).then(r => r.json()),
+        fetch(`${API}/timetables/history`, { headers }).then(r => r.json()),
         fetch(`${API}/labs/usage/all`, { headers }).then(r => r.json()),
         fetch(`${API}/labs`, { headers }).then(r => r.json()),
         fetch(`${API}/logs`, { headers }).then(r => r.json()),
@@ -98,6 +101,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
       if (co.success) setCourses(co.courses || []);
       if (ps.success) setPendingStudents(ps.students || []);
       if (tt.success) setTimetables(tt.timetables || []);
+      if (tth.success) setTimetableHistory(tth.history || []);
       if (lu.success) setLabUsage(lu.usage || []);
       if (labsRes.success) setLabs(labsRes.labs || []);
       if (logsRes.success) setLogs(logsRes.logs || []);
@@ -613,46 +617,99 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                   </button>
                 )}
                 {activeTab === 'timetable' && (
-                  <button onClick={() => setShowTimetableModal(true)} style={S.addBtn} className="add-btn">
-                    <Plus size={18} weight="bold" /> Add Entry
-                  </button>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <div style={S.tabToggle}>
+                      <button 
+                        onClick={() => setTimetableView('schedule')}
+                        style={{...S.toggleItem, ...(timetableView === 'schedule' ? S.toggleActive : {})}}
+                      >Schedule</button>
+                      <button 
+                        onClick={() => setTimetableView('history')}
+                        style={{...S.toggleItem, ...(timetableView === 'history' ? S.toggleActive : {})}}
+                      >History</button>
+                    </div>
+                    <button onClick={() => setShowTimetableModal(true)} style={S.addBtn} className="add-btn">
+                      <Plus size={18} weight="bold" /> Add Entry
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
             
             <div style={{ overflowX: 'auto' }}>
               {activeTab === 'timetable' ? (
-                <div style={S.timetableGrid}>
-                  {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-                    <div key={day} style={S.dayColumn}>
-                      <h4 style={S.dayTitle}>{day}</h4>
-                      <div style={S.dayEntries}>
-                        {timetables.filter(t => t.day_of_week === day).map(entry => (
-                          <div key={entry.id} style={S.timetableEntry}>
-                            <div style={S.entryMain}>
-                              <p style={S.entryCourse}>{entry.course_title}</p>
-                              <p style={S.entryMeta}>
-                                <Clock size={12} /> {entry.start_time} - {entry.end_time}
-                              </p>
-                              <p style={S.entryDetail}>Class: {entry.class_name} ({entry.section})</p>
-                              <p style={S.entryDetail}>Teacher: {entry.teacher_name}</p>
-                              <p style={S.entryDetail}>Room: {entry.room_number}</p>
+                timetableView === 'schedule' ? (
+                  <div style={S.timetableMatrixContainer}>
+                    <div style={S.timetableGrid}>
+                      {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+                        <div key={day} style={S.dayColumn}>
+                          <h4 style={S.dayTitle}>{day}</h4>
+                          <div style={S.dayEntries}>
+                            {timetables.filter(t => t.day_of_week === day).map(entry => (
+                              <div key={entry.id} style={{
+                                ...S.timetableEntry,
+                                borderLeft: `4px solid #7c3aed`,
+                                background: '#fff'
+                              }}>
+                                <div style={S.entryMain}>
+                                  <p style={S.entryCourse}>{entry.course_title}</p>
+                                  <p style={S.entryMeta}>
+                                    <Clock size={12} weight="fill" color="#7c3aed" /> {entry.start_time} - {entry.end_time}
+                                  </p>
+                                  <div style={S.entryBadgeContainer}>
+                                    <span style={S.entryMiniBadge}><Buildings size={10} /> {entry.class_name}</span>
+                                    <span style={S.entryMiniBadge}><ChalkboardTeacher size={10} /> {entry.teacher_name}</span>
+                                  </div>
+                                  <p style={{...S.entryDetail, marginTop: '4px'}}>Room: {entry.room_number || 'TBD'}</p>
+                                </div>
+                                <button 
+                                  style={S.entryDelete} 
+                                  onClick={() => handleDeleteTimetable(entry.id)}
+                                >
+                                  <Trash size={14} />
+                                </button>
+                              </div>
+                            ))}
+                            {timetables.filter(t => t.day_of_week === day).length === 0 && (
+                              <p style={S.noEntries}>Free Day</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={S.historyLogContainer}>
+                    {timetableHistory.length > 0 ? (
+                      <div style={S.historyList}>
+                        {timetableHistory.map((h, i) => (
+                          <div key={i} style={S.historyItem}>
+                            <div style={S.historyDateBadge}>
+                              <span style={S.hDateDay}>{new Date(h.date).getDate()}</span>
+                              <span style={S.hDateMonth}>{new Date(h.date).toLocaleString('default', { month: 'short' })}</span>
                             </div>
-                            <button 
-                              style={S.entryDelete} 
-                              onClick={() => handleDeleteTimetable(entry.id)}
-                            >
-                              <Trash size={14} />
-                            </button>
+                            <div style={S.historyContent}>
+                              <div style={S.hRow}>
+                                <h4 style={S.hTitle}>{h.course_title}</h4>
+                                <span style={S.hStatusBadge}>COMPLETED</span>
+                              </div>
+                              <p style={S.hSub}>Class: <strong>{h.class_name} ({h.section})</strong> • Instructor: <strong>{h.teacher_name}</strong></p>
+                              <div style={S.hMeta}>
+                                <span style={S.hMetaItem}><Users size={14} /> {h.student_count} students attended</span>
+                                <span style={S.hMetaItem}><Clock size={14} /> Session logged on {new Date(h.date).toLocaleDateString()}</span>
+                              </div>
+                            </div>
                           </div>
                         ))}
-                        {timetables.filter(t => t.day_of_week === day).length === 0 && (
-                          <p style={S.noEntries}>No classes</p>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ) : (
+                      <div style={S.emptyState}>
+                        <Clock size={48} weight="duotone" />
+                        <p>No class history found. History is generated when teachers mark attendance.</p>
+                      </div>
+                    )}
+                  </div>
+                )
               ) : (
                 <table style={S.table}>
                   <thead>
@@ -1628,57 +1685,58 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
               <button onClick={() => { setShowTimetableModal(false); resetForms(); }} style={S.modalClose}>×</button>
             </div>
             <form onSubmit={handleTimetableSubmit} style={S.modalForm}>
-              <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Class</label>
-                <select 
-                  required 
-                  value={newTimetableEntry.class_id} 
-                  onChange={e => {
-                    const classId = e.target.value;
-                    setNewTimetableEntry({...newTimetableEntry, class_id: classId, course_id: '', teacher_id: ''});
-                  }} 
-                  style={S.input}
-                >
-                  <option value="">Select Class...</option>
-                  {classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}
-                </select>
+              <div style={S.row}>
+                <div style={S.flex1}>
+                  <label style={S.inputLabel}><Buildings size={14} /> Target Class</label>
+                  <select 
+                    required 
+                    value={newTimetableEntry.class_id} 
+                    onChange={e => {
+                      const classId = e.target.value;
+                      setNewTimetableEntry({...newTimetableEntry, class_id: classId, course_id: '', teacher_id: ''});
+                    }} 
+                    style={S.input}
+                  >
+                    <option value="">Select Class...</option>
+                    {classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}
+                  </select>
+                </div>
+                <div style={S.flex1}>
+                  <label style={S.inputLabel}><BookOpen size={14} /> Subject / Course</label>
+                  <select 
+                    required 
+                    disabled={!newTimetableEntry.class_id}
+                    value={newTimetableEntry.course_id} 
+                    onChange={e => {
+                      const courseId = e.target.value;
+                      const course = courses.find(c => c.id === parseInt(courseId));
+                      setNewTimetableEntry({
+                        ...newTimetableEntry, 
+                        course_id: courseId, 
+                        teacher_id: course ? course.teacher_id : ''
+                      });
+                    }} 
+                    style={S.input}
+                  >
+                    <option value="">Select Course...</option>
+                    {courses.filter(c => c.class_id === parseInt(newTimetableEntry.class_id)).map(c => (
+                      <option key={c.id} value={c.id}>{c.title}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Course</label>
-                <select 
-                  required 
-                  disabled={!newTimetableEntry.class_id}
-                  value={newTimetableEntry.course_id} 
-                  onChange={e => {
-                    const courseId = e.target.value;
-                    const course = courses.find(c => c.id === parseInt(courseId));
-                    setNewTimetableEntry({
-                      ...newTimetableEntry, 
-                      course_id: courseId, 
-                      teacher_id: course ? course.teacher_id : ''
-                    });
-                  }} 
-                  style={S.input}
-                >
-                  <option value="">Select Course...</option>
-                  {courses.filter(c => c.class_id === parseInt(newTimetableEntry.class_id)).map(c => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assigned Teacher</label>
-                <select disabled value={newTimetableEntry.teacher_id} style={S.input}>
-                  <option value="">Teacher automatically selected</option>
+                <label style={S.inputLabel}><ChalkboardTeacher size={14} /> Assigned Instructor</label>
+                <select disabled value={newTimetableEntry.teacher_id} style={{...S.input, background: '#f8fafc', border: '1px dashed #e2e8f0'}}>
+                  <option value="">Teacher will be assigned automatically</option>
                   {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                 </select>
               </div>
 
               <div style={S.row}>
                 <div style={S.flex1}>
-                   <label style={S.inputLabel}>Day of Week</label>
+                   <label style={S.inputLabel}><CalendarBlank size={14} /> Scheduled Day</label>
                    <select 
                     style={S.input}
                     value={newTimetableEntry.day_of_week}
@@ -1690,9 +1748,9 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                   </select>
                 </div>
                 <div style={S.flex1}>
-                  <label style={S.inputLabel}>Room Number</label>
+                  <label style={S.inputLabel}><Flask size={14} /> Room / Lab</label>
                   <input 
-                    placeholder="e.g. 101" 
+                    placeholder="e.g. 101 or Lab A" 
                     style={S.input}
                     value={newTimetableEntry.room_number}
                     onChange={e => setNewTimetableEntry({...newTimetableEntry, room_number: e.target.value})}
@@ -1702,18 +1760,18 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
 
               <div style={S.row}>
                 <div style={S.flex1}>
-                  <label style={S.inputLabel}>Start Time</label>
+                  <label style={S.inputLabel}><Clock size={14} /> Start Time</label>
                   <input type="time" required value={newTimetableEntry.start_time} onChange={e => setNewTimetableEntry({...newTimetableEntry, start_time: e.target.value})} style={S.input} />
                 </div>
                 <div style={S.flex1}>
-                  <label style={S.inputLabel}>End Time</label>
+                  <label style={S.inputLabel}><Clock size={14} /> End Time</label>
                   <input type="time" required value={newTimetableEntry.end_time} onChange={e => setNewTimetableEntry({...newTimetableEntry, end_time: e.target.value})} style={S.input} />
                 </div>
               </div>
 
               <div style={S.modalActions}>
                 <button type="button" onClick={() => { setShowTimetableModal(false); resetForms(); }} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>Save Entry</button>
+                <button type="submit" style={S.saveBtn}>Publish Schedule</button>
               </div>
             </form>
           </div>
@@ -2611,22 +2669,51 @@ const S = {
     cursor: 'pointer',
   },
 
-  // Timetable Grid Styles
+  // Timetable Toggles
+  tabToggle: {
+    display: 'flex',
+    background: '#f1f5f9',
+    padding: '4px',
+    borderRadius: '12px',
+    border: '1px solid #e2e8f0',
+  },
+  toggleItem: {
+    padding: '6px 16px',
+    borderRadius: '8px',
+    border: 'none',
+    background: 'transparent',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+    color: '#64748b',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  toggleActive: {
+    background: '#fff',
+    color: '#7c3aed',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+  },
+
+  // Timetable Grid Matrix
+  timetableMatrixContainer: {
+    overflowX: 'auto',
+    padding: '10px 0',
+  },
   timetableGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(7, 1fr)',
     gap: '20px',
     padding: '20px',
-    background: '#f1f5f9',
+    background: '#f8fafc',
     borderRadius: '24px',
-    minWidth: '1200px', // Ensure it doesn't squash too much
+    minWidth: '1200px',
   },
 
   dayColumn: {
     display: 'flex',
     flexDirection: 'column',
     gap: '12px',
-    minWidth: '150px',
+    minWidth: '160px',
   },
 
   dayTitle: {
@@ -2634,30 +2721,30 @@ const S = {
     fontWeight: '800',
     color: '#1e293b',
     textAlign: 'center',
-    padding: '8px',
+    padding: '10px',
     background: '#fff',
-    borderRadius: '12px',
+    borderRadius: '16px',
     boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
+    border: '1px solid #f1f5f9',
   },
 
   dayEntries: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '12px',
   },
 
   timetableEntry: {
     background: '#fff',
-    padding: '12px',
-    borderRadius: '16px',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
-    border: '1px solid #e2e8f0',
+    padding: '14px',
+    borderRadius: '20px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+    border: '1px solid #f1f5f9',
     position: 'relative',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.3s ease',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'space-between',
-    minHeight: '100px',
+    minHeight: '120px',
   },
 
   entryMain: {
@@ -2665,46 +2752,149 @@ const S = {
   },
 
   entryCourse: {
-    fontSize: '0.85rem',
-    fontWeight: '700',
-    color: '#7c3aed',
-    margin: '0 0 6px 0',
+    fontSize: '0.9rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: '0 0 8px 0',
     lineHeight: '1.2',
   },
 
   entryMeta: {
     fontSize: '0.75rem',
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#7c3aed',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    margin: '0 0 10px 0',
+  },
+
+  entryBadgeContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+  },
+
+  entryMiniBadge: {
+    fontSize: '0.7rem',
     color: '#64748b',
+    background: '#f1f5f9',
+    padding: '2px 8px',
+    borderRadius: '6px',
     display: 'flex',
     alignItems: 'center',
     gap: '4px',
-    margin: '0 0 4px 0',
+    width: 'fit-content',
+    fontWeight: '600',
   },
 
   entryDetail: {
     fontSize: '0.7rem',
     color: '#94a3b8',
     margin: '0',
-    display: 'block',
+    fontWeight: '500',
+  },
+
+  // History Log Styles
+  historyLogContainer: {
+    padding: '20px',
+  },
+  historyList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+    maxWidth: '900px',
+    margin: '0 auto',
+  },
+  historyItem: {
+    display: 'flex',
+    gap: '20px',
+    padding: '20px',
+    background: '#fff',
+    borderRadius: '24px',
+    border: '1px solid #f1f5f9',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+  },
+  historyDateBadge: {
+    width: '60px',
+    height: '60px',
+    background: '#f5f3ff',
+    borderRadius: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#7c3aed',
+    flexShrink: 0,
+  },
+  hDateDay: {
+    fontSize: '1.2rem',
+    fontWeight: '800',
+    lineHeight: '1',
+  },
+  hDateMonth: {
+    fontSize: '0.7rem',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  historyContent: {
+    flex: 1,
+  },
+  hRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '6px',
+  },
+  hTitle: {
+    fontSize: '1.05rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: 0,
+  },
+  hStatusBadge: {
+    fontSize: '0.7rem',
+    fontWeight: '800',
+    background: '#dcfce7',
+    color: '#166534',
+    padding: '4px 10px',
+    borderRadius: '20px',
+  },
+  hSub: {
+    fontSize: '0.9rem',
+    color: '#64748b',
+    margin: '0 0 12px 0',
+  },
+  hMeta: {
+    display: 'flex',
+    gap: '20px',
+  },
+  hMetaItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '0.8rem',
+    color: '#94a3b8',
+    fontWeight: '600',
   },
 
   entryDelete: {
     position: 'absolute',
-    top: '8px',
-    right: '8px',
+    top: '12px',
+    right: '12px',
     background: '#fee2e2',
     color: '#ef4444',
     border: 'none',
-    width: '24px',
-    height: '24px',
-    borderRadius: '6px',
+    width: '28px',
+    height: '28px',
+    borderRadius: '8px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     cursor: 'pointer',
     opacity: 0,
-    transition: 'opacity 0.2s ease',
+    transition: 'all 0.2s ease',
   },
 
   noEntries: {
@@ -2713,6 +2903,10 @@ const S = {
     textAlign: 'center',
     fontStyle: 'italic',
     marginTop: '10px',
+    padding: '20px',
+    background: '#f8fafc',
+    borderRadius: '16px',
+    border: '1px dashed #e2e8f0',
   },
 
   // Modal Styles
