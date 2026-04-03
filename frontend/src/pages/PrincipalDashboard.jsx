@@ -29,7 +29,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const [newPerson, setNewPerson] = useState({ name: "", email: "", password: "", semester: "1" });
   const [newClass, setNewClass] = useState({ name: "", section: "", academic_year: "2024-2025", teacher_id: "" });
   const [newCourse, setNewCourse] = useState({ title: "", description: "", teacher_id: "", class_id: "" });
-  const [newLab, setNewLab] = useState({ name: "", description: "", icon: "🔬", environment: "Python", classId: "", url: "" });
+  const [newLab, setNewLab] = useState({ name: "", description: "", icon: "Flask", environment: "Python", classId: "", url: "" });
   const [editingItem, setEditingItem] = useState(null);
   const [timetables, setTimetables] = useState([]);
   const [timetableHistory, setTimetableHistory] = useState([]);
@@ -59,7 +59,10 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportDetails, setReportDetails] = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
-  const [engagementData, setEngagementData] = useState([7, 9.5, 4, 6, 3, 1.5, 10.7]); // Fallback
+  const [engagementData, setEngagementData] = useState({ 
+    data: [7, 9.5, 4, 6, 3, 1.5, 10.7], 
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
+  }); // Fallback
   
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
@@ -94,7 +97,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
         fetch(`${API}/feedback/analytics/labs`, { headers }).then(r => r.json()),
         fetch(`${API}/principal/engagement-stats`, { headers }).then(r => r.json()),
       ]);
-      if (engRes.success) setEngagementData(engRes.data);
+      if (engRes.success) setEngagementData({ data: engRes.data, labels: engRes.labels });
       if (t.success) setTeachers(t.teachers || []);
       if (s.success) setStudents(s.students || []);
       if (cl.success) setClasses(cl.classes || []);
@@ -164,13 +167,12 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     if (chartRef.current && activeTab === "overview") {
       if (chartInstance.current) chartInstance.current.destroy();
       
-      // Real-time activity data from backend
-      const activityData = engagementData;
+      const activityData = engagementData.data;
 
       chartInstance.current = new Chart(chartRef.current.getContext('2d'), {
         type: 'line',
         data: {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          labels: engagementData.labels,
           datasets: [
             { 
               label: 'Activity', 
@@ -263,16 +265,27 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     
     let url = `${API}/${endpointMap[activeTab]}`;
     let method = 'POST';
+    let body = editingItem || bodyMap[activeTab];
 
     if (editingItem) {
       url = `${API}/${endpointMap[activeTab]}/${editingItem.id}`;
       method = 'PUT';
+      
+      // Sanitize body for teachers/students to avoid sending extra fields
+      if (activeTab === 'teachers' || activeTab === 'students') {
+        body = {
+          name: editingItem.name,
+          email: editingItem.email,
+          semester: editingItem.semester
+        };
+        if (newPerson.password) body.password = newPerson.password;
+      }
     }
 
     const res = await fetch(url, {
       method,
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingItem || bodyMap[activeTab])
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (data.success) { 
@@ -286,7 +299,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     setNewPerson({ name: "", email: "", password: "", semester: "1" });
     setNewClass({ name: "", section: "", academic_year: "2024-2025", teacher_id: "" });
     setNewCourse({ title: "", description: "", teacher_id: "", class_id: "" });
-    setNewLab({ name: "", description: "", icon: "🔬", environment: "Python", classId: "", url: "" });
+    setNewLab({ name: "", description: "", icon: "Flask", environment: "Python", classId: "", url: "" });
     setNewTimetableEntry({
       course_id: '',
       class_id: '',
@@ -304,8 +317,11 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const handleTimetableSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${API}/timetables`, {
-        method: 'POST',
+      const method = editingItem ? 'PUT' : 'POST';
+      const url = editingItem ? `${API}/timetables/${editingItem.id}` : `${API}/timetables`;
+      
+      const res = await fetch(url, {
+        method,
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(newTimetableEntry)
       });
@@ -314,7 +330,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
         setShowTimetableModal(false);
         fetchData();
         resetForms();
-        alert('✅ Timetable added!');
+        alert(`✅ Timetable ${editingItem ? 'updated' : 'added'}!`);
       } else alert('❌ ' + data.message);
     } catch (e) { console.error(e); }
   };
@@ -350,6 +366,19 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     } catch (e) {
       console.error(e);
       alert('❌ Error updating course status');
+    }
+  };
+
+  const renderLabIcon = (iconName) => {
+    switch (iconName) {
+      case 'Flask': return <Flask size={18} weight="duotone" />;
+      case 'Pulse': return <Pulse size={18} weight="duotone" />;
+      case 'Code': return <FileText size={18} weight="duotone" />;
+      case 'Database': return <SquaresFour size={18} weight="duotone" />;
+      case 'Shield': return <WarningCircle size={18} weight="duotone" />;
+      case 'Globe': return <ChartBar size={18} weight="duotone" />;
+      case 'Layout': return <SquaresFour size={18} weight="duotone" />;
+      default: return <Flask size={18} weight="duotone" />;
     }
   };
 
@@ -662,12 +691,42 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                                   </div>
                                   <p style={{...S.entryDetail, marginTop: '4px'}}>Room: {entry.room_number || 'TBD'}</p>
                                 </div>
-                                <button 
-                                  style={S.entryDelete} 
-                                  onClick={() => handleDeleteTimetable(entry.id)}
-                                >
-                                  <Trash size={14} />
-                                </button>
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '12px',
+                                  right: '12px',
+                                  display: 'flex',
+                                  gap: '4px',
+                                  opacity: 0,
+                                  transition: 'all 0.2s ease',
+                                }} className="entry-actions-overlay">
+                                  <button 
+                                    style={{...S.entryDelete, position: 'static', opacity: 1, background: '#f0f9ff', color: '#0369a1'}} 
+                                    onClick={() => {
+                                      setEditingItem(entry);
+                                      setNewTimetableEntry({
+                                        course_id: entry.course_id,
+                                        class_id: entry.class_id,
+                                        teacher_id: entry.teacher_id,
+                                        day_of_week: entry.day_of_week,
+                                        start_time: entry.start_time,
+                                        end_time: entry.end_time,
+                                        room_number: entry.room_number || '',
+                                        academic_year: entry.academic_year || '2024-2025',
+                                        semester: entry.semester || 'Fall'
+                                      });
+                                      setShowTimetableModal(true);
+                                    }}
+                                  >
+                                    <PencilSimple size={14} />
+                                  </button>
+                                  <button 
+                                    style={{...S.entryDelete, position: 'static', opacity: 1}} 
+                                    onClick={() => handleDeleteTimetable(entry.id)}
+                                  >
+                                    <Trash size={14} />
+                                  </button>
+                                </div>
                               </div>
                             ))}
                             {timetables.filter(t => t.day_of_week === day).length === 0 && (
@@ -733,14 +792,17 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                     {getTableData().map(item => (
                       <tr key={item.id} style={S.tableRow}>
                         <td style={S.tdName}>
-                          {activeTab === 'lab_reports' ? (
-                            <>
-                              {item.student_name}
-                              <div style={{fontSize: '11px', color: '#64748b'}}>{item.lab_name}</div>
-                            </>
-                          ) : (
-                            item.name || item.title
-                          )}
+                          <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                            {activeTab === 'labs' && renderLabIcon(item.icon)}
+                            {activeTab === 'lab_reports' ? (
+                              <>
+                                {item.student_name}
+                                <div style={{fontSize: '11px', color: '#64748b'}}>{item.lab_name}</div>
+                              </>
+                            ) : (
+                              item.name || item.title
+                            )}
+                          </div>
                         </td>
                         {activeTab === 'students' && <td style={S.td}>{item.roll_number || <span style={{color: '#94a3b8'}}>Pending</span>}</td>}
                         {activeTab === 'students' && <td style={S.td}>{item.semester || 1}</td>}
@@ -1138,7 +1200,10 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
           <div style={S.tableCard} className="animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>📊 Course Completion Reports</h2>
+                <h2 style={S.tableTitle}>
+                  <ChartBar size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  Course Completion Reports
+                </h2>
                 <p style={S.tableSubtitle}>{campusReports.length} report{campusReports.length !== 1 ? 's' : ''} for your department</p>
               </div>
             </div>
@@ -1146,7 +1211,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
               <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading reports...</div>
             ) : campusReports.length === 0 ? (
               <div style={S.emptyState}>
-                <div style={{ fontSize: '40px', marginBottom: '12px' }}>📊</div>
+                <ChartBar size={48} weight="duotone" color="#94a3b8" style={{marginBottom:'12px'}} />
                 <p>No reports yet. Reports auto-generate when a teacher marks a course complete.</p>
               </div>
             ) : (
@@ -1197,10 +1262,10 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                           </span>
                         </td>
                         <td style={S.td}>
-                          <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-                            <span style={{color:'#166534', fontWeight:700}}>{r.pass_count}✓</span>
+                          <div style={{display:'flex', alignItems:'center', gap:'10px', fontSize: '13px', fontWeight: 700}}>
+                            <span style={{color:'#166534', display: 'flex', alignItems: 'center', gap: '4px'}}><Check size={14} weight="bold" /> {r.pass_count}</span>
                             <span style={{color:'#94a3b8'}}>|</span>
-                            <span style={{color:'#ef4444', fontWeight:700}}>{r.fail_count}✗</span>
+                            <span style={{color:'#ef4444', display: 'flex', alignItems: 'center', gap: '4px'}}><X size={14} weight="bold" /> {r.fail_count}</span>
                           </div>
                         </td>
                         <td style={S.td}>{r.total_assignments}</td>
@@ -1415,8 +1480,8 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                   </div>
                 </>
               ) : (
-                <div style={{textAlign:'center', padding:'60px 20px'}}>
-                  <div style={{fontSize:'48px', marginBottom:'16px'}}>📊</div>
+                <div style={S.emptyState}>
+                  <ChartBar size={48} weight="duotone" color="#94a3b8" style={{marginBottom:'16px'}} />
                   <h3 style={{color:'#1e293b', marginBottom:'8px'}}>No detailed records found</h3>
                   <p style={{color:'#64748b', fontSize:'14px', maxWidth:'400px', margin:'0 auto 24px'}}>
                     We couldn't find student-wise breakdowns or teacher feedback for this course report.
@@ -1553,9 +1618,13 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                       onChange={e => editingItem ? setEditingItem({...editingItem, icon: e.target.value}) : setNewLab({...newLab, icon: e.target.value})} 
                       style={S.input}
                     >
-                      {['🔬', '🐧', '⚛️', '🗄️', '🛡️', '💻', '🐍', '🚀'].map(icon => (
-                        <option key={icon} value={icon}>{icon}</option>
-                      ))}
+                      <option value="Flask">🧪 Chemistry Lab</option>
+                      <option value="Pulse">⚡ Physics Lab</option>
+                      <option value="Code">💻 Programming</option>
+                      <option value="Database">🗄️ Database Lab</option>
+                      <option value="Shield">🛡️ Security Lab</option>
+                      <option value="Globe">🌍 Web Tech</option>
+                      <option value="Layout">⚛️ UI/UX Lab</option>
                     </select>
                   </div>
                   <div style={S.inputGroup}>
@@ -3118,7 +3187,7 @@ style.textContent = `
     background: #f8fafc;
   }
 
-  .timetableEntry:hover .entryDelete {
+  .timetableEntry:hover .entry-actions-overlay {
     opacity: 1;
   }
 

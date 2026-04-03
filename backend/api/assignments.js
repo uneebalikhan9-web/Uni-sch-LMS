@@ -14,6 +14,11 @@ router.post('/', verifyToken, isTeacher, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
+    const today = new Date().toISOString().split('T')[0];
+    if (due_date < today) {
+      return res.status(400).json({ success: false, message: 'Due date cannot be in the past' });
+    }
+
     const [result] = await pool.query(
       'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks) VALUES (?, ?, ?, ?, ?, ?)',
       [title, description, course_id, teacher_id, due_date, max_marks || 100]
@@ -74,6 +79,34 @@ router.get('/course/:courseId', verifyToken, async (req, res) => {
   } catch (error) {
     console.error('Get course assignments error:', error);
     res.status(500).json({ success: false, message: 'Error fetching assignments' });
+  }
+});
+
+// Teacher: Update Assignment
+router.put('/:id', verifyToken, isTeacher, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description, due_date, max_marks } = req.body;
+    const teacher_id = req.user.id;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (due_date && due_date < today) {
+      return res.status(400).json({ success: false, message: 'Due date cannot be in the past' });
+    }
+
+    const [result] = await pool.query(
+      'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ? WHERE id = ? AND teacher_id = ?',
+      [title, description, due_date, max_marks, id, teacher_id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Assignment not found or unauthorized' });
+    }
+
+    res.status(200).json({ success: true, message: 'Assignment updated successfully' });
+  } catch (error) {
+    console.error('Update assignment error:', error);
+    res.status(500).json({ success: false, message: 'Error updating assignment' });
   }
 });
 

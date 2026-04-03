@@ -111,7 +111,7 @@ router.get('/', verifyToken, isAdmin, async (req, res) => {
 router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { day_of_week, start_time, end_time, room_number } = req.body;
+    const { course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester } = req.body;
 
     // Verify role
     if (req.user.role !== 'principal' && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
@@ -120,15 +120,15 @@ router.put('/:id', verifyToken, async (req, res) => {
 
     await pool.query(
       `UPDATE timetables 
-       SET day_of_week = ?, start_time = ?, end_time = ?, room_number = ?
+       SET course_id = ?, class_id = ?, teacher_id = ?, day_of_week = ?, start_time = ?, end_time = ?, room_number = ?, academic_year = ?, semester = ?
        WHERE id = ?`,
-      [day_of_week, start_time, end_time, room_number, id]
+      [course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester, id]
     );
 
     res.status(200).json({ success: true, message: 'Timetable updated successfully' });
   } catch (error) {
     console.error('Update timetable error:', error);
-    res.status(500).json({ success: false, message: 'Error updating timetable' });
+    res.status(500).json({ success: false, message: 'Error updating timetable: ' + error.message });
   }
 });
 

@@ -8,7 +8,9 @@ function ClassAttendance({ user, onBack }) {
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [students, setStudents] = useState([]);
-  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const localNow = new Date();
+  const today = `${localNow.getFullYear()}-${String(localNow.getMonth() + 1).padStart(2, '0')}-${String(localNow.getDate()).padStart(2, '0')}`;
+  const [attendanceDate, setAttendanceDate] = useState(today);
   const [attendanceData, setAttendanceData] = useState({});
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState([]);
@@ -93,30 +95,34 @@ function ClassAttendance({ user, onBack }) {
   // Fetch existing attendance when date changes
   useEffect(() => {
     const fetchExistingAttendance = async () => {
-      if (!selectedClass || !attendanceDate) return;
+      if (!selectedClass || !attendanceDate || !selectedCourse) return;
       
       let url = `http://localhost:5000/api/attendance/class/${selectedClass.id}/date/${attendanceDate}`;
-      if(selectedCourse) url += `?course_id=${selectedCourse}`;
+      url += `?course_id=${selectedCourse}`;
 
       try {
         const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await response.json();
         
+        const initialData = {};
+        students.forEach(s => initialData[s.id] = 'present');
+
         if (data.success && data.records && data.records.length > 0) {
-          const existingData = {};
+          const existingData = { ...initialData };
           data.records.forEach(record => existingData[record.student_id] = record.status);
-          setAttendanceData(prev => ({ ...prev, ...existingData }));
+          setAttendanceData(existingData);
         } else {
-          if(students.length > 0) {
-            const initialData = {};
-            students.forEach(s => initialData[s.id] = 'present');
-            setAttendanceData(initialData);
-          }
+          setAttendanceData(initialData);
         }
-      } catch (error) { console.error(error); }
+      } catch (error) { 
+        console.error(error);
+        const initialData = {};
+        students.forEach(s => initialData[s.id] = 'present');
+        setAttendanceData(initialData);
+      }
     };
     fetchExistingAttendance();
-  }, [attendanceDate, selectedClass, selectedCourse]);
+  }, [attendanceDate, selectedClass, selectedCourse, students]);
 
   const handleStatusChange = (studentId, status) => {
     setAttendanceData(prev => ({ ...prev, [studentId]: status }));
@@ -197,18 +203,24 @@ function ClassAttendance({ user, onBack }) {
 
   // ── SHEET VIEW (Enhanced with Calendar) ──
   if (showSheetView) {
-    const allDatesInMonth = getAllDatesInMonth(selectedYear, selectedMonth);
-    const sortedDates = allDatesInMonth; // Use all dates in month
-    
     const statusMap = {};
     const studentMeta = {};
+    
+    // Only show dates that have records!
+    const markedDates = [...new Set(historyRecords.map(r => r.date))].sort();
+    const sortedDates = markedDates; 
+    
+    // Use the comprehensive students state to ensure everyone is listed
+    const studentIds = students.map(s => s.id);
+    students.forEach(s => {
+      studentMeta[s.id] = { name: s.name, email: s.email };
+    });
+    
+    // Link existing history records to the meta map
     historyRecords.forEach(r => {
       if (!statusMap[r.student_id]) statusMap[r.student_id] = {};
       statusMap[r.student_id][r.date] = r.status;
-      studentMeta[r.student_id] = { name: r.student_name, email: r.student_email };
     });
-
-    const studentIds = [...new Set(historyRecords.map(r => r.student_id))];
     const courseName = classCourses.find(c => c.id === parseInt(selectedCourse))?.title || '';
 
     // Available years (last 5 years to current year)
@@ -301,8 +313,8 @@ function ClassAttendance({ user, onBack }) {
               ) : studentIds.map((sid, idx) => {
                 const meta = studentMeta[sid] || {};
                 const sMap = statusMap[sid] || {};
-                const sTotal = sortedDates.length;
-                const sPres = sortedDates.filter(d => sMap[d] === 'present').length;
+                const sTotal = historyDates.length;
+                const sPres = historyDates.filter(d => sMap[d] === 'present' || sMap[d] === 'late').length;
                 const sPct = sTotal > 0 ? Math.round((sPres / sTotal) * 100) : 0;
                 const rowBg = idx % 2 === 0 ? '#fff' : '#f9f9f9';
 

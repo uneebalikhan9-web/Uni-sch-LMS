@@ -92,7 +92,7 @@ router.get('/course/:courseId', verifyToken, isTeacher, async (req, res) => {
 router.put('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
-    const { marks_obtained, max_marks, remarks } = req.body;
+    const { marks_obtained, max_marks, remarks, exam_type, exam_date } = req.body;
     const teacher_id = req.user.id;
 
     // Verify teacher owns this grade
@@ -108,7 +108,10 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
     }
 
     const finalMaxMarks = max_marks || grades[0].max_marks;
+    const finalExamType = exam_type || grades[0].exam_type;
+    const finalExamDate = exam_date || grades[0].exam_date;
     const percentage = (marks_obtained / finalMaxMarks) * 100;
+    
     let gradeLetter = 'F';
     if (percentage >= 90) gradeLetter = 'A+';
     else if (percentage >= 80) gradeLetter = 'A';
@@ -118,9 +121,9 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
     else if (percentage >= 40) gradeLetter = 'D';
 
     await pool.query(
-      `UPDATE grades SET marks_obtained = ?, max_marks = ?, grade_letter = ?, percentage = ?, remarks = ?
+      `UPDATE grades SET marks_obtained = ?, max_marks = ?, exam_type = ?, exam_date = ?, grade_letter = ?, percentage = ?, remarks = ?
        WHERE id = ?`,
-      [marks_obtained, finalMaxMarks, gradeLetter, percentage, remarks, id]
+      [marks_obtained, finalMaxMarks, finalExamType, finalExamDate, gradeLetter, percentage, remarks, id]
     );
 
     res.status(200).json({ success: true, message: 'Grade updated successfully' });

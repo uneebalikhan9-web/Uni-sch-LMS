@@ -30,6 +30,7 @@ function TeacherDashboard({ user, onLogout }) {
   const [newGrade, setNewGrade] = useState({ student_id: '', exam_type: 'midterm', marks_obtained: '', max_marks: 100, exam_date: '', remarks: '' })
   const [pendingEnrollments, setPendingEnrollments] = useState([])
   const [loadingPending, setLoadingPending] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
   
   // Assignment State
   const [assignments, setAssignments] = useState([])
@@ -333,16 +334,22 @@ function TeacherDashboard({ user, onLogout }) {
   const handleCreateAssignment = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch('http://localhost:5000/api/assignments', {
-        method: 'POST',
+      const method = editingItem ? 'PUT' : 'POST';
+      const url = editingItem 
+        ? `http://localhost:5000/api/assignments/${editingItem.id}` 
+        : 'http://localhost:5000/api/assignments';
+
+      const response = await fetch(url, {
+        method,
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(newAssignment)
-      })
-      const data = await response.json()
+      });
+      const data = await response.json();
       if (data.success) {
-        alert('✅ Assignment created!');
+        alert(`✅ Assignment ${editingItem ? 'updated' : 'created'}!`);
         setShowCreateAssignmentModal(false);
         setNewAssignment({ title: '', description: '', course_id: '', due_date: '', max_marks: 100 });
+        setEditingItem(null);
         fetchAssignments();
       } else { alert('❌ ' + data.message) }
     } catch (error) { console.error(error) }
@@ -458,17 +465,17 @@ function TeacherDashboard({ user, onLogout }) {
 
         <nav style={S.nav}>
           <SidebarBtn active={false} onClick={() => navigate('/chat')} icon={<ChatCircle size={20} />} label="Chat" count={null} />
-          <SidebarBtn active={activePage === 'overview'} onClick={() => setActivePage('overview')} icon={<House size={20} />} label="Overview" count={null} />
-          <SidebarBtn active={activePage === 'classes'} onClick={() => setActivePage('classes')} icon={<BookOpen size={20} />} label="My Classes" count={totalClasses} />
-          <SidebarBtn active={activePage === 'class-attendance'} onClick={() => setActivePage('class-attendance')} icon={<ClipboardText size={20} />} label="Class Attendance" count={null} />
-          <SidebarBtn active={activePage === 'grades'} onClick={() => setActivePage('grades')} icon={<GraduationCap size={20} />} label="Grades" count={grades.length} />
-          <SidebarBtn active={activePage === 'assignments'} onClick={() => setActivePage('assignments')} icon={<FileText size={20} />} label="Assignments" count={totalAssignments} />
-          <SidebarBtn active={activePage === 'timetable'} onClick={() => setActivePage('timetable')} icon={<Clock size={20} />} label="Time Table" count={timetable.length} />
-          <SidebarBtn active={activePage === 'whiteboard'} onClick={() => setActivePage('whiteboard')} icon={<Chalkboard size={20} />} label="Live Whiteboard" count={null} />
-          <SidebarBtn active={activePage === 'lab-usage'} onClick={() => setActivePage('lab-usage')} icon={<Pulse size={20} weight="duotone" />} label="Lab Analytics" count={null} />
-          <SidebarBtn active={activePage === 'pending'} onClick={() => setActivePage('pending')} icon={<UserPlus size={20} />} label="Pending Requests" count={pendingCount} />
-          <SidebarBtn active={activePage === 'reports'} onClick={() => setActivePage('reports')} icon={<ChartLine size={20} weight="duotone" />} label="My Reports" count={myReports.length || null} />
-          <SidebarBtn active={activePage === 'profile'} onClick={() => setActivePage('profile')} icon={<UserCircle size={20} />} label="My Profile" count={null} />
+          <SidebarBtn active={activePage === 'overview'} onClick={() => { setActivePage('overview'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Overview" count={null} />
+          <SidebarBtn active={activePage === 'classes'} onClick={() => { setActivePage('classes'); setMobileMenuOpen(false); }} icon={<BookOpen size={20} />} label="My Classes" count={totalClasses} />
+          <SidebarBtn active={activePage === 'class-attendance'} onClick={() => { setActivePage('class-attendance'); setMobileMenuOpen(false); }} icon={<ClipboardText size={20} />} label="Class Attendance" count={null} />
+          <SidebarBtn active={activePage === 'grades'} onClick={() => { setActivePage('grades'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Grades" count={grades.length} />
+          <SidebarBtn active={activePage === 'assignments'} onClick={() => { setActivePage('assignments'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Assignments" count={totalAssignments} />
+          <SidebarBtn active={activePage === 'timetable'} onClick={() => { setActivePage('timetable'); setMobileMenuOpen(false); }} icon={<Clock size={20} />} label="Time Table" count={timetable.length} />
+          <SidebarBtn active={activePage === 'whiteboard'} onClick={() => { setActivePage('whiteboard'); setMobileMenuOpen(false); }} icon={<Chalkboard size={20} />} label="Whiteboard" count={null} />
+          <SidebarBtn active={activePage === 'lab-usage'} onClick={() => { setActivePage('lab-usage'); setMobileMenuOpen(false); }} icon={<Pulse size={20} weight="duotone" />} label="Analytics" count={null} />
+          <SidebarBtn active={activePage === 'pending'} onClick={() => { setActivePage('pending'); setMobileMenuOpen(false); }} icon={<UserPlus size={20} />} label="Requests" count={pendingCount} />
+          <SidebarBtn active={activePage === 'reports'} onClick={() => { setActivePage('reports'); setMobileMenuOpen(false); }} icon={<ChartLine size={20} weight="duotone" />} label="Reports" count={myReports.length || null} />
+          <SidebarBtn active={activePage === 'profile'} onClick={() => { setActivePage('profile'); setMobileMenuOpen(false); }} icon={<UserCircle size={20} />} label="Profile" count={null} />
         </nav>
 
         <button onClick={onLogout} style={S.logoutBtn} className="logout-btn">
@@ -818,7 +825,23 @@ function TeacherDashboard({ user, onLogout }) {
                         <td style={S.td}><span style={S.gradeBadge}>{g.grade_letter}</span></td>
                         <td style={S.td}>{new Date(g.exam_date).toLocaleDateString()}</td>
                         <td style={{ ...S.td, textAlign: 'right' }}>
-                          <button style={S.iconBtn}><PencilSimple size={16} /></button>
+                          <button 
+                            style={S.iconBtn}
+                            onClick={() => {
+                              setEditingItem(g);
+                              setNewGrade({
+                                student_id: g.student_id,
+                                exam_type: g.exam_type,
+                                marks_obtained: g.marks_obtained,
+                                max_marks: g.max_marks,
+                                exam_date: new Date(g.exam_date).toISOString().split('T')[0],
+                                remarks: g.remarks || ''
+                              });
+                              setShowGradeModal(true);
+                            }}
+                          >
+                            <PencilSimple size={16} />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -891,7 +914,22 @@ function TeacherDashboard({ user, onLogout }) {
                       </td>
                       <td style={{...S.td, textAlign:'right'}}>
                         <div style={S.actionGroup}>
-                          <button style={S.iconBtn}><PencilSimple size={16} /></button>
+                          <button 
+                            style={S.iconBtn}
+                            onClick={() => {
+                              setEditingItem(a);
+                              setNewAssignment({
+                                title: a.title,
+                                description: a.description || '',
+                                course_id: a.course_id,
+                                due_date: new Date(a.due_date).toISOString().split('T')[0],
+                                max_marks: a.max_marks
+                              });
+                              setShowCreateAssignmentModal(true);
+                            }}
+                          >
+                            <PencilSimple size={16} />
+                          </button>
                           <button onClick={() => handleDeleteAssignment(a.id)} style={S.deleteIconBtn}><Trash size={16} /></button>
                         </div>
                       </td>
@@ -1083,7 +1121,10 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>📊 My Course Reports</h2>
+                <h2 style={S.tableTitle}>
+                  <ChartBar size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                  My Course Reports
+                </h2>
                 <p style={S.tableSubtitle}>{myReports.length} completed course{myReports.length !== 1 ? 's' : ''}</p>
               </div>
             </div>
@@ -1140,10 +1181,10 @@ function TeacherDashboard({ user, onLogout }) {
                           </span>
                         </td>
                         <td style={S.td}>
-                          <div style={{display:'flex', alignItems:'center', gap:'6px'}}>
-                            <span style={{color:'#166534', fontWeight:700}}>{r.pass_count}✓</span>
+                          <div style={{display:'flex', alignItems:'center', gap:'12px', fontSize: '13px', fontWeight: 700}}>
+                            <span style={{color:'#166534', display: 'flex', alignItems: 'center', gap: '4px'}}><Check size={14} weight="bold" /> {r.pass_count}</span>
                             <span style={{color:'#94a3b8'}}>|</span>
-                            <span style={{color:'#ef4444', fontWeight:700}}>{r.fail_count}✗</span>
+                            <span style={{color:'#ef4444', display: 'flex', alignItems: 'center', gap: '4px'}}><X size={14} weight="bold" /> {r.fail_count}</span>
                           </div>
                         </td>
                         <td style={S.td}>{r.total_assignments}</td>
@@ -1336,7 +1377,10 @@ function TeacherDashboard({ user, onLogout }) {
       {showCreateAssignmentModal && (
         <div style={S.modalOverlay} onClick={() => setShowCreateAssignmentModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
-            <h3 style={S.modalTitle}>Create Assignment</h3>
+            <h3 style={S.modalTitle}>
+              <ClipboardText size={24} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'8px'}} />
+              {editingItem ? 'Edit Assignment' : 'Create Assignment'}
+            </h3>
             <form onSubmit={handleCreateAssignment} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Course</label>
@@ -1359,7 +1403,14 @@ function TeacherDashboard({ user, onLogout }) {
               <div style={S.row}>
                 <div style={S.flex1}>
                   <label style={S.inputLabel}>Due Date</label>
-                  <input type="date" required value={newAssignment.due_date} onChange={e => setNewAssignment({...newAssignment, due_date: e.target.value})} style={S.input} />
+                  <input 
+                    type="date" 
+                    required 
+                    value={newAssignment.due_date} 
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={e => setNewAssignment({...newAssignment, due_date: e.target.value})} 
+                    style={S.input} 
+                  />
                 </div>
                 <div style={S.flex1}>
                   <label style={S.inputLabel}>Max Marks</label>
@@ -1368,8 +1419,8 @@ function TeacherDashboard({ user, onLogout }) {
               </div>
               
               <div style={S.modalActions}>
-                <button type="button" onClick={() => setShowCreateAssignmentModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>Create Assignment</button>
+                <button type="button" onClick={() => { setShowCreateAssignmentModal(false); setEditingItem(null); setNewAssignment({ title: '', description: '', course_id: '', due_date: '', max_marks: 100 }); }} style={S.cancelBtn}>Cancel</button>
+                <button type="submit" style={S.saveBtn}>{editingItem ? 'Update Assignment' : 'Create Assignment'}</button>
               </div>
             </form>
           </div>
@@ -1447,7 +1498,9 @@ function TeacherDashboard({ user, onLogout }) {
                     </div>
                   </div>
 
-                  <h3 style={{marginBottom:'16px', fontSize:'16px', color:'#1e293b'}}>🎓 Student-wise Performance</h3>
+                  <h3 style={{marginBottom:'16px', fontSize:'16px', color:'#1e293b', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <GraduationCap size={20} color="#7c3aed" /> Student-wise Performance
+                  </h3>
                   <div style={{border:'1px solid #e2e8f0', borderRadius:'20px', overflow:'hidden'}}>
                     <div style={{overflowX: 'auto'}}>
                       <table style={{width:'100%', borderCollapse:'collapse', minWidth:'500px'}}>
@@ -1484,9 +1537,9 @@ function TeacherDashboard({ user, onLogout }) {
                   </div>
                 </>
               ) : (
-                <div style={{textAlign:'center', padding:'60px 20px'}}>
-                  <div style={{fontSize:'48px', marginBottom:'16px'}}>📊</div>
-                  <h3 style={{color:'#1e293b', marginBottom:'8px'}}>No detailed records found</h3>
+                <div style={{...S.emptyState, padding: '40px'}}>
+                  <ChartBar size={48} weight="duotone" color="#94a3b8" />
+                  <h3 style={{color:'#1e293b', marginBottom:'8px', marginTop: '16px'}}>No detailed records found</h3>
                   <p style={{color:'#64748b', fontSize:'14px', maxWidth:'400px', margin:'0 auto 24px'}}>
                     We couldn't find student-wise breakdowns or teacher feedback for this course report.
                   </p>
@@ -1509,7 +1562,7 @@ function TeacherDashboard({ user, onLogout }) {
       )}
 
       {showGradeModal && (
-        <div style={S.modalOverlay} onClick={() => setShowGradeModal(false)}>
+        <div style={S.modalOverlay} onClick={() => { setShowGradeModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <h3 style={S.modalTitle}>Record Grade</h3>
             <p style={S.modalSubtitle}>Course: <strong>{selectedCourse?.title}</strong></p>
@@ -1521,8 +1574,13 @@ function TeacherDashboard({ user, onLogout }) {
                 return;
               }
               try {
-                const response = await fetch('http://localhost:5000/api/grades', {
-                  method: 'POST',
+                const method = editingItem ? 'PUT' : 'POST';
+                const url = editingItem 
+                  ? `http://localhost:5000/api/grades/${editingItem.id}` 
+                  : 'http://localhost:5000/api/grades';
+
+                const response = await fetch(url, {
+                  method,
                   headers: { 
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -1539,9 +1597,10 @@ function TeacherDashboard({ user, onLogout }) {
                 });
                 const data = await response.json();
                 if (data.success) {
-                  alert('Grade saved successfully!');
+                  alert(`Grade ${editingItem ? 'updated' : 'saved'} successfully!`);
                   setShowGradeModal(false);
                   setNewGrade({ student_id: '', exam_type: 'midterm', marks_obtained: '', max_marks: 100, exam_date: '', remarks: '' });
+                  setEditingItem(null);
                   fetchCourseGrades(selectedCourse.id);
                 } else {
                   alert('Error: ' + data.message);
@@ -1566,6 +1625,7 @@ function TeacherDashboard({ user, onLogout }) {
                   <option value="final">Final Exam</option>
                   <option value="quiz">Quiz</option>
                   <option value="assignment">Assignment</option>
+                  <option value="presentation">Presentation</option>
                 </select>
               </div>
               
@@ -1591,7 +1651,7 @@ function TeacherDashboard({ user, onLogout }) {
               </div>
               
               <div style={S.modalActions}>
-                <button type="button" onClick={() => setShowGradeModal(false)} style={S.cancelBtn}>Cancel</button>
+                <button type="button" onClick={() => { setShowGradeModal(false); setEditingItem(null); }} style={S.cancelBtn}>Cancel</button>
                 <button type="submit" style={S.saveBtn}>Save Grade</button>
               </div>
             </form>

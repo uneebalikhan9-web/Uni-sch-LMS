@@ -90,7 +90,7 @@ router.get('/class/:class_id/date/:date', isTeacher, async (req, res) => {
     const { class_id, date } = req.params;
     const { course_id } = req.query; // Support filtering by course
     
-    let query = 'SELECT student_id, status, course_id FROM attendance WHERE class_id = ? AND date = ?';
+    let query = "SELECT student_id, status, course_id, DATE_FORMAT(date, '%Y-%m-%d') as date FROM attendance WHERE class_id = ? AND date = ?";
     let params = [class_id, date];
 
     if (course_id) {
@@ -225,7 +225,7 @@ router.get('/history/all', isTeacher, async (req, res) => {
         a.student_id,
         u.name   AS student_name,
         u.email  AS student_email,
-        a.date,
+        DATE_FORMAT(a.date, '%Y-%m-%d') as date,
         a.status
       FROM attendance a
       JOIN users u ON a.student_id = u.id
@@ -248,17 +248,13 @@ router.get('/history/all', isTeacher, async (req, res) => {
     const [records] = await pool.query(query, params);
 
     // Build unique date list (sorted DESC)
-    const dateSet = new Set();
-    records.forEach(r => {
-      const d = typeof r.date === 'string' ? r.date.slice(0, 10) : new Date(r.date).toISOString().slice(0, 10);
-      dateSet.add(d);
-    });
-
     // Normalise dates inside records
     const normalised = records.map(r => ({
       ...r,
-      date: typeof r.date === 'string' ? r.date.slice(0, 10) : new Date(r.date).toISOString().slice(0, 10),
+      date: r.date
     }));
+
+    const dateSet = new Set(normalised.map(r => r.date));
 
     res.json({
       success: true,

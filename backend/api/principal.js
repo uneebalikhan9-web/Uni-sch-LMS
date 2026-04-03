@@ -21,26 +21,37 @@ router.get('/engagement-stats', async (req, res) => {
     // Query last 7 days of activity from system_logs
     const [stats] = await pool.query(`
       SELECT 
-        DATE_FORMAT(created_at, '%a') as day,
+        DATE(created_at) as date,
         COUNT(*) as count
       FROM system_logs
-      WHERE campus_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-      GROUP BY day
-      ORDER BY created_at ASC
+      WHERE campus_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
     `, [campusId]);
 
-    // Format for Chart.js (ensuring all days are present)
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const dataMap = {};
-    stats.forEach(s => dataMap[s.day] = s.count);
-    
-    const finalData = days.map(day => dataMap[day] || 0);
+    // Generate the last 7 days including today
+    const data = [];
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      const stat = stats.find(s => {
+        // Handle both Date objects and strings depending on MySQL driver config
+        const sDate = s.date instanceof Date ? s.date.toISOString().split('T')[0] : s.date;
+        return sDate === dateStr;
+      });
+      
+      data.push(stat ? stat.count : 0);
+      labels.push(dayLabel);
+    }
 
-    res.status(200).json({ success: true, data: finalData });
+    res.status(200).json({ success: true, data, labels });
   } catch (error) {
     console.error('Get engagement stats error:', error);
-    // Fallback to something non-zero for visual if no logs yet
-    res.status(200).json({ success: true, data: [2, 5, 3, 8, 4, 6, 9] });
+    res.status(200).json({ success: true, data: [0, 0, 0, 0, 0, 0, 0], labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] });
   }
 });
 
