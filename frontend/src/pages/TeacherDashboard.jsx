@@ -55,8 +55,10 @@ function TeacherDashboard({ user, onLogout }) {
   const [labUsage, setLabUsage] = useState([])
   const [loadingLabs, setLoadingLabs] = useState(false)
 
-  // Timetable State
-  const [showTimetableModal, setShowTimetableModal] = useState(false)
+  // Bulk Grading State
+  const [showBulkGradeModal, setShowBulkGradeModal] = useState(false)
+  const [bulkGradeHeader, setBulkGradeHeader] = useState({ exam_type: 'midterm', max_marks: 100, exam_date: new Date().toISOString().split('T')[0] })
+  const [bulkGrades, setBulkGrades] = useState([]) // Array of { student_id, student_name, marks_obtained, remarks }
 
   // Chart references
   const chartRef = useRef(null)
@@ -761,9 +763,24 @@ function TeacherDashboard({ user, onLogout }) {
                 <p style={S.tableSubtitle}>Manage grades and exam results</p>
               </div>
               {selectedCourse && (
-                <button onClick={() => setShowGradeModal(true)} style={S.addBtn}>
-                  <PlusCircle size={18} /> Add Grade
-                </button>
+                <div style={{display:'flex', gap:'10px'}}>
+                  <button onClick={() => {
+                    // Initialize bulk grades with all students
+                    const initialBulk = students.map(s => ({
+                      student_id: s.id,
+                      student_name: s.name,
+                      marks_obtained: '',
+                      remarks: ''
+                    }));
+                    setBulkGrades(initialBulk);
+                    setShowBulkGradeModal(true);
+                  }} style={{...S.addBtn, background: '#1e293b'}}>
+                    <List size={18} weight="bold" /> Bulk Grade
+                  </button>
+                  <button onClick={() => setShowGradeModal(true)} style={S.addBtn}>
+                    <PlusCircle size={18} /> Add Grade
+                  </button>
+                </div>
               )}
             </div>
             
@@ -1653,6 +1670,123 @@ function TeacherDashboard({ user, onLogout }) {
               <div style={S.modalActions}>
                 <button type="button" onClick={() => { setShowGradeModal(false); setEditingItem(null); }} style={S.cancelBtn}>Cancel</button>
                 <button type="submit" style={S.saveBtn}>Save Grade</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showBulkGradeModal && (
+        <div style={S.modalOverlay} onClick={() => setShowBulkGradeModal(false)}>
+          <div style={{...S.modal, width: '900px', maxWidth: '95vw'}} onClick={e => e.stopPropagation()}>
+            <h3 style={S.modalTitle}>Bulk Batch Grading</h3>
+            <p style={S.modalSubtitle}>Excel-style grading for <strong>{selectedCourse?.title}</strong></p>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              try {
+                const response = await fetch('http://localhost:5000/api/grades/bulk', {
+                  method: 'POST',
+                  headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    course_id: selectedCourse.id,
+                    exam_type: bulkGradeHeader.exam_type,
+                    max_marks: bulkGradeHeader.max_marks,
+                    exam_date: bulkGradeHeader.exam_date,
+                    grades: bulkGrades.filter(g => g.marks_obtained !== '').map(g => ({
+                      student_id: g.student_id,
+                      marks_obtained: parseFloat(g.marks_obtained),
+                      remarks: g.remarks
+                    }))
+                  })
+                });
+                const data = await response.json();
+                if (data.success) {
+                  alert(`✅ Successfully saved ${data.message}`);
+                  setShowBulkGradeModal(false);
+                  fetchCourseGrades(selectedCourse.id);
+                } else {
+                  alert('❌ ' + data.message);
+                }
+              } catch (err) {
+                console.error(err);
+                alert('Network error');
+              }
+            }}>
+              {/* Common Header Fields */}
+              <div style={{display:'flex', gap:'20px', marginBottom:'24px', padding:'20px', background:'#f8fafc', borderRadius:'16px', border:'1px solid #e2e8f0'}}>
+                <div style={{flex:1}}>
+                  <label style={S.inputLabel}>Exam Type</label>
+                  <select required value={bulkGradeHeader.exam_type} onChange={e => setBulkGradeHeader({...bulkGradeHeader, exam_type: e.target.value})} style={S.input}>
+                    <option value="midterm">Midterm Exam</option>
+                    <option value="final">Final Exam</option>
+                    <option value="quiz">Quiz</option>
+                    <option value="assignment">Assignment</option>
+                    <option value="presentation">Presentation</option>
+                  </select>
+                </div>
+                <div style={{flex:1}}>
+                  <label style={S.inputLabel}>Max Marks</label>
+                  <input type="number" required value={bulkGradeHeader.max_marks} onChange={e => setBulkGradeHeader({...bulkGradeHeader, max_marks: e.target.value})} style={S.input} />
+                </div>
+                <div style={{flex:1}}>
+                  <label style={S.inputLabel}>Exam Date</label>
+                  <input type="date" required value={bulkGradeHeader.exam_date} onChange={e => setBulkGradeHeader({...bulkGradeHeader, exam_date: e.target.value})} style={S.input} />
+                </div>
+              </div>
+
+              {/* Student Entry Table */}
+              <div style={{maxHeight:'400px', overflowY:'auto', border:'1px solid #e2e8f0', borderRadius:'12px', marginBottom:'24px'}} className="hidden-scrollbar">
+                <table style={{width:'100%', borderCollapse:'collapse'}}>
+                  <thead style={{position:'sticky', top:0, background:'#fff', zIndex:1, boxShadow:'0 1px 0 #e2e8f0'}}>
+                    <tr>
+                      <th style={{padding:'12px 20px', textAlign:'left', fontSize:'12px', color:'#64748b'}}>STUDENT NAME</th>
+                      <th style={{padding:'12px 20px', textAlign:'left', fontSize:'12px', color:'#64748b', width:'150px'}}>MARKS OBTAINED</th>
+                      <th style={{padding:'12px 20px', textAlign:'left', fontSize:'12px', color:'#64748b'}}>REMARKS (OPTIONAL)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bulkGrades.map((bg, index) => (
+                      <tr key={bg.student_id} style={{borderTop:'1px solid #f1f5f9'}}>
+                        <td style={{padding:'12px 20px', fontSize:'14px', fontWeight:600, color:'#0f172a'}}>{bg.student_name}</td>
+                        <td style={{padding:'8px 20px'}}>
+                          <input 
+                            type="number" 
+                            placeholder="Marks"
+                            value={bg.marks_obtained}
+                            onChange={(e) => {
+                              const newList = [...bulkGrades];
+                              newList[index].marks_obtained = e.target.value;
+                              setBulkGrades(newList);
+                            }}
+                            style={{...S.input, padding:'8px 12px', margin:0}}
+                          />
+                        </td>
+                        <td style={{padding:'8px 20px'}}>
+                          <input 
+                            type="text" 
+                            placeholder="Add remarks..."
+                            value={bg.remarks}
+                            onChange={(e) => {
+                              const newList = [...bulkGrades];
+                              newList[index].remarks = e.target.value;
+                              setBulkGrades(newList);
+                            }}
+                            style={{...S.input, padding:'8px 12px', margin:0}}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style={S.modalActions}>
+                <button type="button" onClick={() => setShowBulkGradeModal(false)} style={S.cancelBtn}>Cancel</button>
+                <button type="submit" style={S.saveBtn}>Save All Grades</button>
               </div>
             </form>
           </div>

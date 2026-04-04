@@ -56,6 +56,63 @@ router.post('/', verifyToken, isTeacher, async (req, res) => {
   }
 });
 
+// Teacher: Bulk Add Grades
+router.post('/bulk', verifyToken, isTeacher, async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { course_id, exam_type, max_marks, exam_date, grades } = req.body;
+    const teacher_id = req.user.id;
+
+    if (!course_id || !exam_type || !exam_date || !grades || !Array.isArray(grades)) {
+      return res.status(400).json({ success: false, message: 'Missing required bulk data' });
+    }
+
+    // Verify teacher owns this course
+    const [courses] = await connection.query(
+      'SELECT id FROM courses WHERE id = ? AND teacher_id = ?',
+      [course_id, teacher_id]
+    );
+
+    if (courses.length === 0) {
+      return res.status(403).json({ success: false, message: 'Access denied to this course' });
+    }
+
+    await connection.beginTransaction();
+
+    const finalMaxMarks = max_marks || 100;
+
+    for (const g of grades) {
+      const { student_id, marks_obtained, remarks } = g;
+      
+      // Calculate percentage and grade letter
+      const percentage = (marks_obtained / finalMaxMarks) * 100;
+      let gradeLetter = 'F';
+      if (percentage >= 90) gradeLetter = 'A+';
+      else if (percentage >= 80) gradeLetter = 'A';
+      else if (percentage >= 70) gradeLetter = 'B+';
+      else if (percentage >= 60) gradeLetter = 'B';
+      else if (percentage >= 50) gradeLetter = 'C';
+      else if (percentage >= 40) gradeLetter = 'D';
+
+      await connection.query(
+        `INSERT INTO grades (student_id, course_id, teacher_id, exam_type, marks_obtained, max_marks, grade_letter, percentage, exam_date, remarks)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [student_id, course_id, teacher_id, exam_type, marks_obtained, finalMaxMarks, gradeLetter, percentage, exam_date, remarks]
+      );
+    }
+
+    await connection.commit();
+    res.status(201).json({ success: true, message: `Successfully saved ${grades.length} grades` });
+
+  } catch (error) {
+    await connection.rollback();
+    console.error('Bulk grade error:', error);
+    res.status(500).json({ success: false, message: 'Error processing bulk grades' });
+  } finally {
+    connection.release();
+  }
+});
+
 // Teacher: Get all grades for a course
 router.get('/course/:courseId', verifyToken, isTeacher, async (req, res) => {
   try {
