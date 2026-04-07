@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config/api';
+import { useToast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 import './Dashboard.css';
 
 const PendingStudents = () => {
@@ -7,6 +10,14 @@ const PendingStudents = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const { showToast } = useToast();
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isDanger: false
+  });
 
   useEffect(() => {
     fetchPendingStudents();
@@ -16,7 +27,7 @@ const PendingStudents = () => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/pending-students', {
+      const response = await axios.get(`${API_BASE_URL}/api/pending-students`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -31,53 +42,57 @@ const PendingStudents = () => {
     }
   };
 
-  const handleApprove = async (studentId, studentName) => {
-    if (!window.confirm(`Approve student: ${studentName}?`)) return;
+  const handleApprove = (studentId, studentName) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Approve Student",
+      message: `Approve registration for ${studentName}?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const token = sessionStorage.getItem('token');
+          const response = await axios.put(
+            `${API_BASE_URL}/api/pending-students/${studentId}/approve`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
 
-    try {
-      const token = sessionStorage.getItem('token');
-      const response = await axios.put(
-        `http://localhost:5000/api/pending-students/${studentId}/approve`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        setSuccessMessage(`${studentName} approved successfully!`);
-        setTimeout(() => setSuccessMessage(''), 3000);
-        
-        // Remove from pending list
-        setPendingStudents(prev => prev.filter(s => s.id !== studentId));
-      }
-    } catch (err) {
-      console.error('Error approving student:', err);
-      setError('Failed to approve student');
-      setTimeout(() => setError(''), 3000);
-    }
+          if (response.data.success) {
+            showToast(`${studentName} approved successfully!`, "success");
+            setPendingStudents(prev => prev.filter(s => s.id !== studentId));
+          }
+        } catch (err) {
+          showToast("Failed to approve student", "error");
+        }
+      },
+      isDanger: false
+    });
   };
 
-  const handleReject = async (studentId, studentName) => {
-    if (!window.confirm(`Reject and delete student: ${studentName}? This action cannot be undone.`)) return;
+  const handleReject = (studentId, studentName) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Reject Student",
+      message: `Reject and delete registration for ${studentName}? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const token = sessionStorage.getItem('token');
+          const response = await axios.delete(
+            `${API_BASE_URL}/api/pending-students/${studentId}/reject`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
 
-    try {
-      const token = sessionStorage.getItem('token');
-      const response = await axios.delete(
-        `http://localhost:5000/api/pending-students/${studentId}/reject`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        setSuccessMessage(`${studentName} rejected and removed`);
-        setTimeout(() => setSuccessMessage(''), 3000);
-        
-        // Remove from pending list
-        setPendingStudents(prev => prev.filter(s => s.id !== studentId));
-      }
-    } catch (err) {
-      console.error('Error rejecting student:', err);
-      setError('Failed to reject student');
-      setTimeout(() => setError(''), 3000);
-    }
+          if (response.data.success) {
+            showToast(`${studentName} rejected and removed`, "info");
+            setPendingStudents(prev => prev.filter(s => s.id !== studentId));
+          }
+        } catch (err) {
+          showToast("Failed to reject student", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
   if (loading) {
@@ -90,6 +105,14 @@ const PendingStudents = () => {
 
   return (
     <div className="admin-container">
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
       <div className="admin-header">
         <h1>Pending Student Approvals</h1>
         <p className="subtitle">Review and approve new student registrations</p>

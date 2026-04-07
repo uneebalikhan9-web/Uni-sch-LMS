@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Envelope, Lock, GraduationCap, ArrowRight, Eye, EyeSlash, ChartLineUp, Users } from "@phosphor-icons/react";
 import './SignIn.css'
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function SignIn() {
   const navigate = useNavigate()
@@ -12,6 +14,7 @@ function SignIn() {
   const [showPassword, setShowPassword] = useState(false) // Eye toggle state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const { showToast } = useToast()
 
   const handleChange = (e) => {
     setFormData({
@@ -27,7 +30,7 @@ function SignIn() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:5000/api/signin', {
+      const response = await fetch(`${API_BASE_URL}/api/signin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)

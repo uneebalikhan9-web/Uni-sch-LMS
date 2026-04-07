@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
 function Analytics() {
@@ -31,7 +32,7 @@ function Analytics() {
     
     // Fetch enrolled courses
     try {
-      const coursesRes = await fetch('http://localhost:5000/api/courses/my-enrollments', {
+      const coursesRes = await fetch(`${API_BASE_URL}/api/courses/my-enrollments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const coursesData = await coursesRes.json()
@@ -48,7 +49,7 @@ function Analytics() {
         
         for (const course of coursesData.enrollments) {
           try {
-            const assignRes = await fetch(`http://localhost:5000/api/submissions/course/${course.id}`, {
+            const assignRes = await fetch(`${API_BASE_URL}/api/submissions/course/${course.id}`, {
               headers: { 'Authorization': `Bearer ${token}` }
             })
             const assignData = await assignRes.json()

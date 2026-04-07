@@ -1,6 +1,8 @@
 import {useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import './SignIn.css'
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function TeacherSignIn() {
   const navigate = useNavigate()
@@ -10,6 +12,7 @@ function TeacherSignIn() {
   })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const { showToast } = useToast()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,7 +20,7 @@ function TeacherSignIn() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5000/api/teacher/signin', {
+      const response = await fetch(`${API_BASE_URL}/api/teacher/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

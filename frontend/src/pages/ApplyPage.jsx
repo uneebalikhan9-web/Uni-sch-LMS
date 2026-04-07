@@ -1,17 +1,29 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import axios from 'axios';
+import API_BASE_URL from "../config/api";
+import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
 
-const API = "http://localhost:5000/api/bd";
+const API = `${API_BASE_URL}/api/bd`;
 
 function ApplyPage() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isDanger: false
+  });
   const [form, setForm] = useState({ name: "", email: "", phone: "", experience_years: "", subjects: "", notes: "" });
 
   useEffect(() => {
@@ -25,10 +37,12 @@ function ApplyPage() {
   const fetchAllJobs = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch(`${API}/public/jobs`);
-      const data = await res.json();
-      if (data.success) setJobs(data.jobs || []);
-    } catch (e) { console.error(e); }
+      const res = await axios.get(`${API}/public/jobs`);
+      if (res.data.success) setJobs(res.data.jobs || []);
+    } catch (e) { 
+      showToast("Failed to load jobs", "error");
+      console.error(e); 
+    }
     setIsLoading(false);
   };
 
@@ -40,38 +54,54 @@ function ApplyPage() {
         ? `${API}/public/job-by-token/${idOrToken}`
         : `${API}/public/jobs/${idOrToken}`;
 
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.success) setSelectedJob(data.job);
-      else setError(data.message);
-    } catch (e) { setError("Failed to load job details"); }
+      const res = await axios.get(url);
+      if (res.data.success) setSelectedJob(res.data.job);
+      else setError(res.data.message);
+    } catch (e) { 
+      showToast("Failed to load job details", "error");
+      setError("Failed to load job details"); 
+    }
     setIsLoading(false);
   };
 
   const handleApply = async (e) => {
     e.preventDefault();
-    setSubmitting(true);
-    setError("");
-    try {
-      const res = await fetch(`${API}/public/apply`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job_id: selectedJob.id, ...form })
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSubmitted(true);
-      } else {
-        setError(data.message);
+    setConfirmModal({
+      isOpen: true,
+      title: "Confirm Application",
+      message: "Are you sure you want to submit your application?",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setSubmitting(true);
+        setError("");
+        try {
+          const res = await axios.post(`${API}/public/apply`, { job_id: selectedJob.id, ...form });
+          if (res.data.success) {
+            setSubmitted(true);
+            showToast("Application submitted successfully!", "success");
+          } else {
+            showToast(res.data.message, "error");
+            setError(res.data.message);
+          }
+        } catch (e) {
+          showToast("Failed to submit application", "error");
+          setError("Failed to submit application. Please try again.");
+        }
+        setSubmitting(false);
       }
-    } catch (e) {
-      setError("Failed to submit application. Please try again.");
-    }
-    setSubmitting(false);
+    });
   };
 
   if (isLoading) return (
     <div style={S.page}>
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
       <div style={S.loadingBox}>
         <div style={S.spinner}></div>
         <p style={{ color: '#64748b', marginTop: '16px' }}>Loading...</p>

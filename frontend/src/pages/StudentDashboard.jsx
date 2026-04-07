@@ -10,6 +10,10 @@ import {
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import LabPlayer from './LabPlayer';
+import { useToast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
+import LoadingSpinner from '../components/LoadingSpinner';
+import API_BASE_URL from '../config/api';
 
 function StudentDashboard({ user, onLogout }) {
   const navigate = useNavigate()
@@ -45,6 +49,15 @@ function StudentDashboard({ user, onLogout }) {
   const [submissionFile, setSubmissionFile] = useState(null)
   const [selectedLab, setSelectedLab] = useState(null)
   const [availableLabs, setAvailableLabs] = useState([])
+  const { showToast } = useToast()
+  const [globalLoading, setGlobalLoading] = useState(false)
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    isDanger: false
+  })
 
   const token = sessionStorage.getItem('token')
 
@@ -57,7 +70,7 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchLabs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/labs', { headers: { 'Authorization': `Bearer ${token}` } });
+      const response = await fetch(`${API_BASE_URL}/api/labs`, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await response.json();
       if (data.success) setAvailableLabs(data.labs || []);
     } catch (error) { console.error('Error fetching labs:', error); }
@@ -134,14 +147,14 @@ function StudentDashboard({ user, onLogout }) {
   // --- API Functions (Logic Preserved) ---
   const fetchCourses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/courses/my-enrollments', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/courses/my-enrollments`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setCourses(data.enrollments || [])
     } catch (error) { console.error(error) }
   }
 
   const fetchAttendance = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/attendance/my-attendance', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/attendance/my-attendance`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); 
       if (data.success) { 
         setAttendanceStats(data.stats || { total: 0, present: 0, absent: 0, late: 0, percentage: 0 }); 
@@ -152,7 +165,7 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchGrades = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/grades/my-grades', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/grades/my-grades`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setGrades(data.grades || [])
     } catch (error) { console.error(error) }
   }
@@ -160,21 +173,21 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchTimetable = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/timetables/student-timetable', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/timetables/student-timetable`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setTimetable(data.timetable || [])
     } catch (error) { console.error(error) }
   }
 
   const fetchProgressReports = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/progress/my-progress', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/progress/my-progress`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setProgressReports(data.reports || [])
     } catch (error) { console.error(error) }
   }
 
   const fetchAvailableClasses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/classes/available', { headers: { 'Authorization': `Bearer ${token}` } })
+      const response = await fetch(`${API_BASE_URL}/api/classes/available`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setAvailableClasses(data.classes || [])
       
       // Auto-detect compatibility: if registered in a class, fetch its courses
@@ -190,7 +203,7 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchClassSubjects = async (classId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/classes/${classId}/courses`, {
+      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/courses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -200,7 +213,7 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchAvailableCourses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/courses', {
+      const response = await fetch(`${API_BASE_URL}/api/courses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -213,44 +226,55 @@ function StudentDashboard({ user, onLogout }) {
     } catch (error) { console.error(error) }
   }
 
-  const handleEnrollCourse = async (courseId) => {
-    if (!window.confirm('Enroll in this course?')) return
-    setEnrolling(true)
-    try {
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/enroll`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      if (data.success) {
-        alert('✅ Successfully enrolled in course!')
-        fetchCourses()  // Refresh enrolled courses
-      } else {
-        alert('❌ ' + data.message)
-      }
-    } catch (error) {
-      alert('❌ Enrollment failed')
-      console.error(error)
-    } finally {
-      setEnrolling(false)
-    }
+  const handleEnrollCourse = (courseId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Enroll in Course',
+      message: 'Are you sure you want to enroll in this course? Your request will be sent to the instructor for approval.',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        setEnrolling(true)
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/courses/${courseId}/enroll`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const data = await response.json()
+          if (data.success) {
+            showToast('Enrollment request sent successfully!', 'success')
+            fetchCourses()
+          } else {
+            showToast(data.message || 'Enrollment failed', 'error')
+          }
+        } catch (error) {
+          showToast('Enrollment failed', 'error')
+        } finally {
+          setEnrolling(false)
+        }
+      },
+      isDanger: false
+    });
   }
 
   const handleRegisterClass = async (classId) => {
     setRegistering(true)
     try {
-      const response = await fetch('http://localhost:5000/api/classes/register', {
+      const response = await fetch(`${API_BASE_URL}/api/classes/register`, {
         method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ class_id: classId })
       })
       const data = await response.json()
       if (data.success) { 
-        alert('✅ Successfully registered for class!'); 
+        showToast('Successfully registered for class!', 'success'); 
         fetchAvailableClasses(); 
         setExpandedClassId(classId); // Auto-expand to show courses
         fetchClassSubjects(classId);
+      } else {
+        showToast(data.message || 'Registration failed', 'error');
       }
-    } catch (error) { alert('❌ Error'); } finally { setRegistering(false) }
+    } catch (error) { 
+      showToast('Registration failed', 'error'); 
+    } finally { setRegistering(false) }
   }
 
   // --- ASSIGNMENT FUNCTIONS ---
@@ -260,7 +284,7 @@ function StudentDashboard({ user, onLogout }) {
     let allAssignments = [];
     for (const course of courses) {
       try {
-        const response = await fetch(`http://localhost:5000/api/submissions/course/${course.id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/submissions/course/${course.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         const data = await response.json()
@@ -287,22 +311,24 @@ function StudentDashboard({ user, onLogout }) {
     if(submissionFile) formData.append('file', submissionFile);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/${selectedAssignment.id}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/${selectedAssignment.id}/submit`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
       const data = await response.json();
       if(data.success) {
-        alert('✅ Assignment Submitted!');
+        showToast('Assignment Submitted!', 'success');
         setShowSubmitModal(false);
         setSubmissionText('');
         setSubmissionFile(null);
         fetchStudentAssignments(); // Refresh status
       } else {
-        alert('❌ ' + data.message);
+        showToast(data.message || 'Submission failed', 'error');
       }
-    } catch(err) { console.error(err); alert('failed'); }
+    } catch(err) { 
+      showToast('Submission failed', 'error');
+    }
   }
 
   const groupTimetableByDay = () => {
@@ -1036,7 +1062,18 @@ function StudentDashboard({ user, onLogout }) {
       </button>
 
       {/* SIDEBAR */}
-      <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+      {globalLoading && <LoadingSpinner fullPage size="large" />}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
+
+      <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
           <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
           <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
@@ -1049,18 +1086,19 @@ function StudentDashboard({ user, onLogout }) {
         </div>
 
         <nav style={S.nav}>
-          <SidebarBtn active={false} onClick={() => navigate('/chat')} icon={<ChatCircle size={20} />} label="Chat" count={null} />
-          <p style={S.navLabel}>ACADEMICS</p>
-          <SidebarBtn active={activePage === 'courses'} onClick={() => setActivePage('courses')} icon={<House size={20} />} label="Dashboard" count={null} />
-          <SidebarBtn active={activePage === 'registration'} onClick={() => setActivePage('registration')} icon={<Buildings size={20} />} label="Registration" count={availableClasses.length} />
-          <SidebarBtn active={activePage === 'assignments'} onClick={() => setActivePage('assignments')} icon={<FileText size={20} />} label="Assignments" count={pendingAssignments} />
-          <SidebarBtn active={activePage === 'timetable'} onClick={() => setActivePage('timetable')} icon={<Clock size={20} />} label="Schedule" count={timetable.length} />
+          <SidebarBtn active={false} onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} icon={<ChatCircle size={20} />} label="Chat" count={null} />
+          <p style={S.navLabel}>ACADEMIC</p>
+          <SidebarBtn active={activePage === 'courses'} onClick={() => { setActivePage('courses'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Dashboard" count={null} />
+          <SidebarBtn active={activePage === 'registration'} onClick={() => { setActivePage('registration'); setMobileMenuOpen(false); }} icon={<Buildings size={20} />} label="Registration" count={availableClasses.length} />
+          <SidebarBtn active={activePage === 'assignments'} onClick={() => { setActivePage('assignments'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Assignments" count={pendingAssignments} />
+          <SidebarBtn active={activePage === 'timetable'} onClick={() => { setActivePage('timetable'); setMobileMenuOpen(false); }} icon={<Clock size={20} />} label="Schedule" count={timetable.length} />
           
-          <SidebarBtn active={activePage === 'labs'} onClick={() => setSelectedLab(null) || setActivePage('labs')} icon={<Pulse size={20} weight="duotone" />} label="Cloud Labs" count={null} />
+          <p style={{...S.navLabel, marginTop:'20px'}}>RESOURCES</p>
+          <SidebarBtn active={activePage === 'labs'} onClick={() => { setSelectedLab(null); setActivePage('labs'); setMobileMenuOpen(false); }} icon={<Pulse size={20} weight="duotone" />} label="Cloud Labs" count={null} />
 
           <p style={{...S.navLabel, marginTop:'20px'}}>PERFORMANCE</p>
-          <SidebarBtn active={activePage === 'attendance'} onClick={() => setActivePage('attendance')} icon={<CheckCircle size={20} />} label="Attendance" count={attendanceStats.percentage ? attendanceStats.percentage + '%' : null} />
-          <SidebarBtn active={activePage === 'grades'} onClick={() => setActivePage('grades')} icon={<GraduationCap size={20} />} label="Results" count={grades.length} />
+          <SidebarBtn active={activePage === 'attendance'} onClick={() => { setActivePage('attendance'); setMobileMenuOpen(false); }} icon={<CheckCircle size={20} />} label="Attendance" count={attendanceStats.percentage ? attendanceStats.percentage + '%' : null} />
+          <SidebarBtn active={activePage === 'grades'} onClick={() => { setActivePage('grades'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Results" count={grades.length} />
 
         </nav>
 

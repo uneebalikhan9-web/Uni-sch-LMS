@@ -2,10 +2,13 @@ import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle } from '@phosphor-icons/react'
 import { io } from 'socket.io-client'
+import API_BASE_URL from '../config/api'
+import ConfirmModal from '../components/ConfirmModal'
+import { useToast } from '../components/Toast'
 import './Chat.css'
 
-const API = 'http://localhost:5000/api'
-const SOCKET_URL = 'http://localhost:5000'
+const API = `${API_BASE_URL}/api`
+const SOCKET_URL = API_BASE_URL
 
 function Chat() {
   const navigate = useNavigate()
@@ -18,6 +21,13 @@ function Chat() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const { showToast } = useToast()
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  })
   const typingTimeoutRef = useRef(null)
   const socketRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -193,10 +203,10 @@ function Chat() {
         })
         setNewMessage('')
       } else {
-        alert(data.message || 'Failed to send')
+        showToast(data.message || 'Failed to send', 'error')
       }
     } catch (err) {
-      alert('Failed to send message')
+      showToast('Failed to send message', 'error')
     }
     setSending(false)
   }
@@ -270,6 +280,14 @@ function Chat() {
 
   return (
     <div className="chat-page">
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={true}
+      />
       <header className="chat-header">
         <div className="chat-header-left">
           <button className="chat-back-btn" onClick={() => navigate('/dashboard')} title="Back">

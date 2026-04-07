@@ -4,6 +4,9 @@ import axios from 'axios';
 import FeedbackModal from '../components/FeedbackModal';
 import Editor from '@monaco-editor/react';
 import { FileCode, X, FloppyDisk, TerminalWindow, ArrowLeft } from '@phosphor-icons/react';
+import API_BASE_URL from '../config/api';
+import { useToast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 
 const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, environment: propEnvironment, user: propUser, onBack }) => {
     const { labId: paramLabId } = useParams();
@@ -12,6 +15,14 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
     const [loading, setLoading] = useState(true);
     const [submissionText, setSubmissionText] = useState('');
     const [showSubmission, setShowSubmission] = useState(false);
+    const { showToast } = useToast();
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => {},
+        isDanger: false
+    });
     
     // Resolve labId and user info
     const labId = propLabId || paramLabId;
@@ -29,7 +40,7 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
         labUrl += (labUrl.includes('?') ? '&' : '?') + 'theme=dark';
     }
 
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const API_BASE = `${API_BASE_URL}/api`;
 
     useEffect(() => {
         const startLabSession = async () => {
@@ -67,13 +78,24 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
 
     const [showFeedback, setShowFeedback] = useState(false);
 
-    const handleFinish = async () => {
+    const handleFinish = () => {
         if (!submissionText.trim()) {
-            if (!window.confirm("You have not submitted any code. Are you sure you want to terminate the session without saving?")) {
-                return;
-            }
+            setConfirmModal({
+                isOpen: true,
+                title: "Terminate Session",
+                message: "You have not submitted any code. Are you sure you want to terminate the session without saving?",
+                onConfirm: async () => {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    await executeFinish();
+                },
+                isDanger: true
+            });
+        } else {
+            executeFinish();
         }
+    };
 
+    const executeFinish = async () => {
         if (logId) {
             try {
                 await axios.post(`${API_BASE}/labs/log-end`, {
@@ -97,8 +119,10 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            showToast("Feedback submitted successfully", "success");
         } catch (error) {
             console.error('Error submitting feedback:', error);
+            showToast("Failed to submit feedback", "error");
         } finally {
             navigate(-1);
         }
@@ -146,6 +170,14 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
             border: '1px solid #1e293b'
         }}>
+            <ConfirmModal 
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                isDanger={confirmModal.isDanger}
+            />
             {/* Lab Toolbar */}
             <header style={{
                 padding: '12px 24px', 

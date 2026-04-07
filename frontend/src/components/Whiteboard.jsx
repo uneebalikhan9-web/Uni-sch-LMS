@@ -1,24 +1,46 @@
 import { Tldraw } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { Eraser } from '@phosphor-icons/react'
+import { useState } from 'react'
+import ConfirmModal from './ConfirmModal'
 
 export default function Whiteboard() {
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
+
   const handleMount = (editor) => {
-    // Save editor instance to window for debugging or future features if needed
     window.editor = editor
   }
 
   const handleClear = () => {
     if (window.editor) {
-      if (window.confirm('Are you sure you want to clear the entire whiteboard?')) {
-        const shapeIds = Array.from(window.editor.getCurrentPageShapeIds())
-        window.editor.deleteShapes(shapeIds)
-      }
+      setConfirmModal({
+        isOpen: true,
+        title: "Clear Whiteboard",
+        message: "Are you sure you want to clear the entire whiteboard? This action cannot be undone.",
+        onConfirm: () => {
+          const shapeIds = Array.from(window.editor.getCurrentPageShapeIds())
+          window.editor.deleteShapes(shapeIds)
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
+      });
     }
   }
 
   return (
     <div className="whiteboard-wrapper animate-fadeIn" style={{ height: '75vh', position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)', backgroundColor: '#fff' }}>
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={true}
+      />
       <div style={{ position: 'absolute', top: '16px', right: '16px', zIndex: 1000, display: 'flex', gap: '10px' }}>
         <button 
           onClick={handleClear}

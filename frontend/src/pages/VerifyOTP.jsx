@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Lock, ArrowRight, ShieldCheck, ArrowsCounterClockwise, GraduationCap } from "@phosphor-icons/react";
 import './VerifyOTP.css'
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function VerifyOTP() {
   const navigate = useNavigate()
@@ -11,6 +13,7 @@ function VerifyOTP() {
   const [resending, setResending] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const { showToast } = useToast()
   
   const email = location.state?.email
 
@@ -41,7 +44,7 @@ function VerifyOTP() {
     e.preventDefault()
     const otpValue = otp.join('')
     if (otpValue.length < 6) {
-      setError('Please enter the full 6-digit code')
+      showToast('Please enter the full 6-digit code', 'error')
       return
     }
 
@@ -49,7 +52,7 @@ function VerifyOTP() {
     setError('')
 
     try {
-      const response = await fetch('http://localhost:5000/api/verify-otp', {
+      const response = await fetch(`${API_BASE_URL}/api/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: otpValue })
@@ -60,19 +63,20 @@ function VerifyOTP() {
       if (data.success) {
         sessionStorage.setItem('user', JSON.stringify(data.user))
         sessionStorage.setItem('token', data.token)
+        showToast('Verification successful!', 'success')
         
         if (data.user.role === 'superadmin' || data.user.role === 'super_admin') {
-          navigate('/dashboard') // Or superadmin dashboard
+          navigate('/dashboard')
         } else if (data.user.role === 'teacher') {
           navigate('/teacher/dashboard')
         } else {
           navigate('/dashboard')
         }
       } else {
-        setError(data.message || 'Verification failed')
+        showToast(data.message || 'Verification failed', 'error')
       }
     } catch (err) {
-      setError('Connection error')
+      showToast('Connection error', 'error')
     } finally {
       setLoading(false)
     }
@@ -84,21 +88,14 @@ function VerifyOTP() {
     setMessage('')
 
     try {
-      // Re-use sign-in logic just for OTP generation if we had a dedicated endpoint, 
-      // but for now we'll just hit the login again or a specific resend endpoint.
-      // Since we don't have a specific resend-otp endpoint yet, I'll assume 
-      // the signin handles it if we send email/password, but wait, we don't have password here.
-      // Let's create a quick resend endpoint in backend later if needed, 
-      // but for now I'll just simulate success or implement if I have time.
-      const response = await fetch('http://localhost:5000/api/signin', {
+      const response = await fetch(`${API_BASE_URL}/api/signin`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ email, resend_only: true }) // Backend needs to handle this
+         body: JSON.stringify({ email, resend_only: true })
       })
-      // NOTE: I'll need to update backend signin to handle resend_only
-      setMessage('New code sent to your email!')
+      showToast('New code sent to your email!', 'success')
     } catch (err) {
-      setError('Failed to resend code')
+      showToast('Failed to resend code', 'error')
     } finally {
       setResending(false)
     }

@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
+import ConfirmModal from '../components/ConfirmModal'
 import './Dashboard.css'
 
 function Courses() {
@@ -10,6 +13,8 @@ function Courses() {
   const [selectedCourse, setSelectedCourse] = useState(null)
   const [showCoursePopup, setShowCoursePopup] = useState(false)
   const [assignments, setAssignments] = useState([])
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null })
+  const { showToast } = useToast()
 
   useEffect(() => {
     const userData = sessionStorage.getItem('user')
@@ -28,7 +33,7 @@ function Courses() {
   const fetchEnrolledCourses = async () => {
     const token = sessionStorage.getItem('token')
     try {
-      const response = await fetch('http://localhost:5000/api/courses/my-enrollments', {
+      const response = await fetch(`${API_BASE_URL}/api/courses/my-enrollments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -42,7 +47,7 @@ function Courses() {
 
   const fetchAllCourses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/courses')
+      const response = await fetch(`${API_BASE_URL}/api/courses`)
       const data = await response.json()
       if (data.success) {
         setAllCourses(data.courses)
@@ -55,7 +60,7 @@ function Courses() {
   const fetchCourseAssignments = async (courseId) => {
     const token = sessionStorage.getItem('token')
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/course/${courseId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/course/${courseId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -70,17 +75,17 @@ function Courses() {
   const handleEnroll = async (courseId) => {
     const token = sessionStorage.getItem('token')
     try {
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/enroll`, {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${courseId}/enroll`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
       if (data.success) {
-        alert('Successfully enrolled!')
+        showToast('Successfully enrolled!', 'success')
         fetchEnrolledCourses()
         setShowCoursePopup(false)
       } else {
-        alert(data.message)
+        showToast(data.message, 'error')
       }
     } catch (error) {
       console.error('Error:', error)
@@ -91,6 +96,14 @@ function Courses() {
 
   return (
     <div className="dashboard-container">
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={true}
+      />
       {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">

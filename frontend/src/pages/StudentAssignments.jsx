@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 import './Dashboard.css'
 
 function StudentAssignments() {
@@ -12,6 +14,7 @@ function StudentAssignments() {
   const [selectedAssignment, setSelectedAssignment] = useState(null)
   const [submissionText, setSubmissionText] = useState('')
   const [submissionFile, setSubmissionFile] = useState(null)
+  const { showToast } = useToast()
 
   useEffect(() => {
     const userData = sessionStorage.getItem('user')
@@ -29,7 +32,7 @@ function StudentAssignments() {
 
   const fetchEnrolledCourses = async (token) => {
     try {
-      const response = await fetch('http://localhost:5000/api/courses/my-enrollments', {
+      const response = await fetch(`${API_BASE_URL}/api/courses/my-enrollments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -44,7 +47,7 @@ function StudentAssignments() {
   const fetchAssignments = async (courseId) => {
     const token = sessionStorage.getItem('token')
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/course/${courseId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/course/${courseId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -63,7 +66,7 @@ function StudentAssignments() {
 
   const handleDownloadAssignment = (assignmentId) => {
     const token = sessionStorage.getItem('token')
-    window.open(`http://localhost:5000/api/assignments/${assignmentId}/download?token=${token}`, '_blank')
+    window.open(`${API_BASE_URL}/api/assignments/${assignmentId}/download?token=${token}`, '_blank')
   }
 
   const handleSubmit = async (e) => {
@@ -77,7 +80,7 @@ function StudentAssignments() {
         formData.append('file', submissionFile)
       }
       
-      const response = await fetch(`http://localhost:5000/api/submissions/${selectedAssignment.id}/submit`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/${selectedAssignment.id}/submit`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -87,17 +90,17 @@ function StudentAssignments() {
       
       const data = await response.json()
       if (data.success) {
-        alert('Submission uploaded successfully!')
+        showToast('Submission uploaded successfully!', 'success')
         setShowSubmitForm(false)
         setSubmissionText('')
         setSubmissionFile(null)
         fetchAssignments(selectedCourse.id)
       } else {
-        alert(data.message || 'Submission failed')
+        showToast(data.message || 'Submission failed', 'error')
       }
     } catch (error) {
       console.error('Error submitting:', error)
-      alert('Error submitting assignment')
+      showToast('Error submitting assignment', 'error')
     }
   }
 

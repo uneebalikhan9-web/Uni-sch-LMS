@@ -3,6 +3,8 @@ import {
   ArrowLeft, CalendarBlank, Users, BookOpen, ChalkboardTeacher, 
   PaperPlaneTilt, WarningCircle, Table, ArrowsClockwise, Calendar
 } from "@phosphor-icons/react";
+import API_BASE_URL from '../config/api';
+import { useToast } from '../components/Toast';
 
 function ClassAttendance({ user, onBack }) {
   const [classes, setClasses] = useState([]);
@@ -19,18 +21,19 @@ function ClassAttendance({ user, onBack }) {
   
   // Class Course Management
   const [classCourses, setClassCourses] = useState([]);
+  const { showToast } = useToast();
 
   const token = sessionStorage.getItem('token');
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/classes/teacher/my-classes', {
+    fetch(`${API_BASE_URL}/api/classes/teacher/my-classes`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
       .then(data => { if (data.success) setClasses(data.classes || []); })
       .catch(err => console.error(err));
 
-    fetch('http://localhost:5000/api/courses', {
+    fetch(`${API_BASE_URL}/api/courses`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -48,7 +51,7 @@ function ClassAttendance({ user, onBack }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/classes/${classId}/courses`, {
+      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/courses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -62,7 +65,7 @@ function ClassAttendance({ user, onBack }) {
     
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/students?classId=${selectedClass.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${courseId}/students?classId=${selectedClass.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -75,7 +78,7 @@ function ClassAttendance({ user, onBack }) {
         if(attendanceDate) {
           try {
             const attendanceResponse = await fetch(
-              `http://localhost:5000/api/attendance/class/${selectedClass.id}/date/${attendanceDate}?course_id=${courseId}`,
+              `${API_BASE_URL}/api/attendance/class/${selectedClass.id}/date/${attendanceDate}?course_id=${courseId}`,
               { headers: { 'Authorization': `Bearer ${token}` } }
             );
             const attendanceDataRes = await attendanceResponse.json();
@@ -97,7 +100,7 @@ function ClassAttendance({ user, onBack }) {
     const fetchExistingAttendance = async () => {
       if (!selectedClass || !attendanceDate || !selectedCourse) return;
       
-      let url = `http://localhost:5000/api/attendance/class/${selectedClass.id}/date/${attendanceDate}`;
+      let url = `${API_BASE_URL}/api/attendance/class/${selectedClass.id}/date/${attendanceDate}`;
       url += `?course_id=${selectedCourse}`;
 
       try {
@@ -130,7 +133,7 @@ function ClassAttendance({ user, onBack }) {
 
   const handleSubmitAttendance = async () => {
     if (!selectedCourse || !selectedClass) { 
-      alert('⚠️ Please select class and course first!'); 
+      showToast('Please select class and course first!', 'error'); 
       return; 
     }
 
@@ -141,7 +144,7 @@ function ClassAttendance({ user, onBack }) {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/attendance/mark', {
+      const response = await fetch(`${API_BASE_URL}/api/attendance/mark`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,10 +158,10 @@ function ClassAttendance({ user, onBack }) {
       const data = await response.json();
       
       if (data.success) { 
-        alert(`✅ Attendance Saved!`);
+        showToast('Attendance Saved!', 'success');
         doFetchHistory(selectedYear, selectedMonth);
-      } else { alert(`❌ Failed: ${data.message}`); }
-    } catch (error) { alert(`❌ Network Error`); } finally { setLoading(false); }
+      } else { showToast(`Failed: ${data.message}`, 'error'); }
+    } catch (error) { showToast('Network Error', 'error'); } finally { setLoading(false); }
   };
 
   // ── History Sheet State ──
@@ -182,7 +185,7 @@ function ClassAttendance({ user, onBack }) {
       const courseId = selectedCourse;
       if (!classId || !courseId) return;
 
-      const url = `http://localhost:5000/api/attendance/history/all?class_id=${classId}&course_id=${courseId}&year=${year}&month=${month}`;
+      const url = `${API_BASE_URL}/api/attendance/history/all?class_id=${classId}&course_id=${courseId}&year=${year}&month=${month}`;
       const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       const data = await res.json();
       if (data.success && data.records) {

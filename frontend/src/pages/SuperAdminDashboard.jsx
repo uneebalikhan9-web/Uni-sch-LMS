@@ -8,7 +8,11 @@ import {
   Gear, Bell, Warning, Star, ChatCircle, ArrowLeft
 } from "@phosphor-icons/react";
 
-const API = "http://localhost:5000/api";
+import API_BASE_URL from "../config/api";
+import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+
+const API = `${API_BASE_URL}/api`;
 
 function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -36,6 +40,14 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportDetails, setReportDetails] = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
+  const { showToast } = useToast();
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isDanger: false
+  });
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const token = sessionStorage.getItem("token");
@@ -132,18 +144,58 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     }
   }, [activeTab, departmentStats]);
 
-  const handleDeleteDepartment = async (id) => {
-    if (!window.confirm("Delete this department? All users will be unassigned.")) return;
-    const res = await fetch(`${API}/superadmin/campuses/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (data.success) fetchData(); else alert('❌ ' + data.message);
+  const handleDeleteDepartment = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Department",
+      message: "Are you sure you want to delete this department? All users will be unassigned.",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/superadmin/campuses/${id}`, { 
+            method: 'DELETE', 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast("Department deleted successfully!", "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error deleting department", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting department", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
-  const handleDeleteHOD = async (id) => {
-    if (!window.confirm("Delete this HOD?")) return;
-    const res = await fetch(`${API}/superadmin/principals/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (data.success) fetchData(); else alert('❌ ' + data.message);
+  const handleDeleteHOD = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete HOD",
+      message: "Are you sure you want to delete this HOD?",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/superadmin/principals/${id}`, { 
+            method: 'DELETE', 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast("HOD deleted successfully!", "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error deleting HOD", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting HOD", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
   const handleAddDepartment = async (e) => {
@@ -153,8 +205,14 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     const method = editingItem ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (data.success) { setShowAddModal(false); setEditingItem(null); setNewDepartment({ name: "", location: "", subscription_plan: "basic" }); fetchData(); }
-    else alert('❌ ' + data.message);
+    if (data.success) { 
+      showToast(editingItem ? "Department updated!" : "Department created!", "success");
+      setShowAddModal(false); 
+      setEditingItem(null); 
+      setNewDepartment({ name: "", location: "", subscription_plan: "basic" }); 
+      fetchData(); 
+    }
+    else showToast(data.message || "Error saving department", "error");
   };
 
   const handleAddHOD = async (e) => {
@@ -165,15 +223,40 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       body: JSON.stringify(newHOD)
     });
     const data = await res.json();
-    if (data.success) { setShowAddModal(false); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
-    else alert('❌ ' + data.message);
+    if (data.success) { 
+      showToast("HOD created successfully!", "success");
+      setShowAddModal(false); 
+      setNewHOD({ name: "", email: "", password: "", campus_id: "" }); 
+      fetchData(); 
+    }
+    else showToast(data.message || "Error creating HOD", "error");
   };
 
-  const handleDeleteBD = async (id) => {
-    if (!window.confirm("Delete this BD User?")) return;
-    const res = await fetch(`${API}/superadmin/bds/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (data.success) fetchData(); else alert('❌ ' + data.message);
+  const handleDeleteBD = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete BD User",
+      message: "Are you sure you want to delete this BD User?",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/superadmin/bds/${id}`, { 
+            method: 'DELETE', 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast("BD User deleted successfully!", "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error deleting BD User", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting BD User", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
   const handleAddBD = async (e) => {
@@ -183,8 +266,14 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     const method = editingItem ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (data.success) { setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
-    else alert('❌ ' + data.message);
+    if (data.success) { 
+      showToast(editingItem ? "BD User updated!" : "BD User created!", "success");
+      setShowAddModal(false); 
+      setEditingItem(null); 
+      setNewBD({ name: "", email: "", password: "", campus_id: "" }); 
+      fetchData(); 
+    }
+    else showToast(data.message || "Error saving BD User", "error");
   };
 
   const handleViewHODDetails = async (id) => {
@@ -198,12 +287,11 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       if (data.success) {
         setSelectedHODDetails(data.details);
       } else {
-        alert('❌ ' + data.message);
+        showToast(data.message || "Error fetching details", "error");
         setShowHODModal(false);
       }
     } catch (e) {
-      console.error(e);
-      alert('❌ Error fetching HOD details');
+      showToast("Error fetching HOD details", "error");
       setShowHODModal(false);
     }
     setIsHODDetailsLoading(false);
@@ -220,12 +308,11 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       if (data.success) {
         setSelectedBDDetails(data.details);
       } else {
-        alert('❌ ' + data.message);
+        showToast(data.message || "Error fetching details", "error");
         setShowBDModal(false);
       }
     } catch (e) {
-      console.error(e);
-      alert('❌ Error fetching BD details');
+      showToast("Error fetching BD details", "error");
       setShowBDModal(false);
     }
     setIsBDDetailsLoading(false);
@@ -240,6 +327,14 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   return (
     <div style={S.container}>
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
       {/* Animated Background Elements */}
       <div style={S.bgOrb1}></div>
       <div style={S.bgOrb2}></div>
@@ -274,7 +369,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           ].map(([tab, label, icon]) => (
             <button 
               key={tab} 
-              onClick={() => setActiveTab(tab)} 
+              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} 
               style={{...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {})}}
               className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
             >

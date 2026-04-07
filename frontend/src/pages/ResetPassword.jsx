@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Lock, ShieldCheck, GraduationCap, ArrowRight, CheckCircle, XCircle, ArrowLeft } from "@phosphor-icons/react";
 import "./ResetPassword.css";
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function ResetPassword() {
   const { token } = useParams();
@@ -17,6 +19,7 @@ function ResetPassword() {
   const [userEmail, setUserEmail] = useState("");
   const [error, setError] = useState("");
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const { showToast } = useToast()
 
   useEffect(() => {
     verifyToken();
@@ -24,7 +27,7 @@ function ResetPassword() {
 
   const verifyToken = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/verify-reset-token/${token}`);
+      const response = await fetch(`${API_BASE_URL}/api/verify-reset-token/${token}`);
       const data = await response.json();
       if (data.success) {
         setTokenValid(true);
@@ -72,14 +75,14 @@ function ResetPassword() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/reset-password", {
+      const response = await fetch(`${API_BASE_URL}/api/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: token, newPassword: formData.newPassword }),
       });
       const data = await response.json();
       if (data.success) {
-        alert("✅ " + data.message);
+        showToast(data.message || 'Password reset successfully!', 'success');
         navigate("/signin");
       } else {
         setError(data.message || "Failed to reset password");

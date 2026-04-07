@@ -6,6 +6,7 @@ import SuperAdminDashboard from './SuperAdminDashboard'
 import BDDashboard from './BDDashboard'
 import StudentDashboard from './StudentDashboard'
 import TeacherDashboard from './TeacherDashboard'
+import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
 function Dashboard() {
@@ -25,7 +26,7 @@ function Dashboard() {
     // Verify token with backend for real privacy
     const verifyToken = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/verify-token', {
+        const response = await fetch(`${API_BASE_URL}/api/verify-token`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
         const data = await response.json()

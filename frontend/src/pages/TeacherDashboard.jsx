@@ -7,11 +7,15 @@ import {
   List, ChalkboardTeacher, UserPlus, X, ClipboardText, Pulse, 
   PencilSimple, FileText, DotsThreeOutline, ChartLine, Users,
   Warning, Bell, Star, Download, Eye, EyeSlash, TrendUp, Chalkboard,
-  ChatCircle, ChartBar, WarningCircle, Flask, Buildings
+  ChatCircle, ChartBar, WarningCircle, Flask, Buildings, Check
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import ClassAttendance from './ClassAttendance';
 import Whiteboard from '../components/Whiteboard';
+import { useToast } from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
+import LoadingSpinner from '../components/LoadingSpinner';
+import API_BASE_URL from '../config/api';
 
 function TeacherDashboard({ user, onLogout }) {
   const navigate = useNavigate()
@@ -64,6 +68,16 @@ function TeacherDashboard({ user, onLogout }) {
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
   const token = sessionStorage.getItem('token')
+  const { showToast } = useToast()
+  
+  // Custom Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    isDanger: false
+  })
   
   useEffect(() => {
     fetchTeacherCourses()
@@ -85,7 +99,7 @@ function TeacherDashboard({ user, onLogout }) {
   const fetchGlobalLabUsage = async () => {
     setLoadingLabs(true)
     try {
-      const response = await fetch('http://localhost:5000/api/labs/usage/all', {
+      const response = await fetch(`${API_BASE_URL}/api/labs/usage/all`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -97,7 +111,7 @@ function TeacherDashboard({ user, onLogout }) {
   const fetchMyReports = async () => {
     setReportsLoading(true)
     try {
-      const res = await fetch('http://localhost:5000/api/reports/my', {
+      const res = await fetch(`${API_BASE_URL}/api/reports/my`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await res.json()
@@ -106,24 +120,32 @@ function TeacherDashboard({ user, onLogout }) {
     setReportsLoading(false)
   }
 
-  const handleGenerateReport = async (courseId, courseTitle) => {
-    if (!window.confirm(`Mark "${courseTitle}" as complete and generate its report?`)) return
-    try {
-      const res = await fetch(`http://localhost:5000/api/reports/generate/${courseId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await res.json()
-      if (data.success) {
-        alert(`✅ Report generated for "${courseTitle}"!\n\nSummary:\n• Students: ${data.summary.total_students}\n• Avg Marks: ${data.summary.avg_marks}%\n• Avg Attendance: ${data.summary.avg_attendance}%\n• Pass: ${data.summary.pass_count} | Fail: ${data.summary.fail_count}`)
-        fetchTeacherCourses()
-        fetchStats()
-      } else {
-        alert('❌ ' + data.message)
-      }
-    } catch (e) {
-      alert('❌ Error generating report')
-    }
+  const handleGenerateReport = (courseId, courseTitle) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Complete Course',
+      message: `Mark "${courseTitle}" as complete and generate its report?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/reports/generate/${courseId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const data = await res.json()
+          if (data.success) {
+            showToast(`Report generated for "${courseTitle}"!`, 'success');
+            fetchTeacherCourses()
+            fetchStats()
+          } else {
+            showToast(data.message || 'Error generating report', 'error');
+          }
+        } catch (e) {
+          showToast('Error generating report', 'error');
+        }
+      },
+      isDanger: false
+    });
   }
 
   // Chart initialization for overview
@@ -188,7 +210,7 @@ function TeacherDashboard({ user, onLogout }) {
   // --- API Functions (Aapka Original Logic - Unchanged) ---
   const fetchTeacherCourses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/teachers/courses', {
+      const response = await fetch(`${API_BASE_URL}/api/teachers/courses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -198,7 +220,7 @@ function TeacherDashboard({ user, onLogout }) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/teachers/stats', {
+      const response = await fetch(`${API_BASE_URL}/api/teachers/stats`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -208,7 +230,7 @@ function TeacherDashboard({ user, onLogout }) {
 
   const fetchTimetable = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/timetables/my-timetable', {
+      const response = await fetch(`${API_BASE_URL}/api/timetables/my-timetable`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -219,7 +241,7 @@ function TeacherDashboard({ user, onLogout }) {
 
   const fetchTeacherClasses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/classes/teacher/my-classes', {
+      const response = await fetch(`${API_BASE_URL}/api/classes/teacher/my-classes`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -230,7 +252,7 @@ function TeacherDashboard({ user, onLogout }) {
   const fetchPendingEnrollments = async () => {
     setLoadingPending(true)
     try {
-      const response = await fetch('http://localhost:5000/api/teachers/pending-enrollments', {
+      const response = await fetch(`${API_BASE_URL}/api/teachers/pending-enrollments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -239,29 +261,62 @@ function TeacherDashboard({ user, onLogout }) {
     finally { setLoadingPending(false) }
   }
 
-  const handleApproveEnrollment = async (enrollmentId) => {
-    if (!window.confirm('Approve this enrollment request?')) return
-    try {
-      const response = await fetch(`http://localhost:5000/api/teachers/enrollments/${enrollmentId}/approve`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      if (data.success) { alert('✅ Enrollment Approved'); fetchPendingEnrollments(); fetchStats(); }
-      else { alert('❌ ' + data.message); }
-    } catch (error) { alert('❌ Error approving enrollment') }
+  const handleApproveEnrollment = (enrollmentId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Approve Enrollment',
+      message: 'Are you sure you want to approve this enrollment request?',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/teachers/enrollments/${enrollmentId}/approve`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const data = await response.json()
+          if (data.success) { 
+            showToast('Enrollment Approved', 'success'); 
+            fetchPendingEnrollments(); 
+            fetchStats(); 
+          }
+          else { 
+            showToast(data.message || 'Error approving enrollment', 'error'); 
+          }
+        } catch (error) { 
+          showToast('Error approving enrollment', 'error'); 
+        }
+      },
+      isDanger: false
+    });
   }
 
-  const handleRejectEnrollment = async (enrollmentId) => {
-    if (!window.confirm('Reject this enrollment request?')) return
-    try {
-      const response = await fetch(`http://localhost:5000/api/teachers/enrollments/${enrollmentId}/reject`, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await response.json()
-      if (data.success) { alert('✅ Enrollment Rejected'); fetchPendingEnrollments(); fetchStats(); }
-      else { alert('❌ ' + data.message); }
-    } catch (error) { alert('❌ Error rejecting enrollment') }
+  const handleRejectEnrollment = (enrollmentId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Reject Enrollment',
+      message: 'Are you sure you want to reject this enrollment request?',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/teachers/enrollments/${enrollmentId}/reject`, {
+            method: 'POST', 
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const data = await response.json()
+          if (data.success) { 
+            showToast('Enrollment Rejected', 'success'); 
+            fetchPendingEnrollments(); 
+            fetchStats(); 
+          }
+          else { 
+            showToast(data.message || 'Error rejecting enrollment', 'error'); 
+          }
+        } catch (error) { 
+          showToast('Error rejecting enrollment', 'error'); 
+        }
+      },
+      isDanger: true
+    });
   }
 
   const handleCourseSelect = async (courseId) => {
@@ -269,8 +324,8 @@ function TeacherDashboard({ user, onLogout }) {
     setSelectedCourse(course)
     try {
       const url = selectedClassId
-        ? `http://localhost:5000/api/courses/${courseId}/students?classId=${selectedClassId}`
-        : `http://localhost:5000/api/courses/${courseId}/students`;
+        ? `${API_BASE_URL}/api/courses/${courseId}/students?classId=${selectedClassId}`
+        : `${API_BASE_URL}/api/courses/${courseId}/students`;
 
       const response = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json()
@@ -287,7 +342,7 @@ function TeacherDashboard({ user, onLogout }) {
 
   const fetchCourseGrades = async (courseId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/grades/course/${courseId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/course/${courseId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -305,7 +360,7 @@ function TeacherDashboard({ user, onLogout }) {
     }
     
     try {
-      const response = await fetch(`http://localhost:5000/api/courses/${courseId}/students`, {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${courseId}/students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -325,7 +380,7 @@ function TeacherDashboard({ user, onLogout }) {
   // --- ASSIGNMENT FUNCTIONS ---
   const fetchAssignments = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/assignments/my-assignments', {
+      const response = await fetch(`${API_BASE_URL}/api/assignments/my-assignments`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -338,8 +393,7 @@ function TeacherDashboard({ user, onLogout }) {
     try {
       const method = editingItem ? 'PUT' : 'POST';
       const url = editingItem 
-        ? `http://localhost:5000/api/assignments/${editingItem.id}` 
-        : 'http://localhost:5000/api/assignments';
+        ? `${API_BASE_URL}/api/assignments/${editingItem.id}` : `${API_BASE_URL}/api/assignments`;
 
       const response = await fetch(url, {
         method,
@@ -348,18 +402,22 @@ function TeacherDashboard({ user, onLogout }) {
       });
       const data = await response.json();
       if (data.success) {
-        alert(`✅ Assignment ${editingItem ? 'updated' : 'created'}!`);
+        showToast(`Assignment ${editingItem ? 'updated' : 'created'}!`, 'success');
         setShowCreateAssignmentModal(false);
         setNewAssignment({ title: '', description: '', course_id: '', due_date: '', max_marks: 100 });
         setEditingItem(null);
         fetchAssignments();
-      } else { alert('❌ ' + data.message) }
-    } catch (error) { console.error(error) }
+      } else { 
+        showToast(data.message || 'Error saving assignment', 'error');
+      }
+    } catch (error) { 
+      showToast('Error saving assignment', 'error');
+    }
   }
 
   const fetchSubmissions = async (assignmentId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/assignment/${assignmentId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/assignment/${assignmentId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       const data = await response.json()
@@ -372,28 +430,48 @@ function TeacherDashboard({ user, onLogout }) {
   const handleGradeSubmission = async (e) => {
     e.preventDefault()
     try {
-      const response = await fetch(`http://localhost:5000/api/submissions/${gradingSubmission.id}/grade`, {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/${gradingSubmission.id}/grade`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(gradeData)
       })
       const data = await response.json()
       if (data.success) {
-        alert('✅ Graded successfully!');
+        showToast('Graded successfully!', 'success');
         setGradingSubmission(null);
         fetchSubmissions(selectedAssignment.id);
+      } else {
+        showToast(data.message || 'Error grading submission', 'error');
       }
-    } catch (error) { console.error(error) }
+    } catch (error) { 
+      showToast('Error grading submission', 'error');
+    }
   }
 
-  const handleDeleteAssignment = async (id) => {
-    if(!window.confirm('Delete this assignment?')) return;
-    try {
-      const response = await fetch(`http://localhost:5000/api/assignments/${id}`, {
-        method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if(response.ok) { fetchAssignments(); alert('Deleted'); }
-    } catch(err) { console.error(err); }
+  const handleDeleteAssignment = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Assignment',
+      message: 'Are you sure you want to delete this assignment?',
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/assignments/${id}`, {
+            method: 'DELETE', 
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          if(response.ok) { 
+            fetchAssignments(); 
+            showToast('Assignment Deleted', 'success'); 
+          } else {
+            showToast('Error deleting assignment', 'error');
+          }
+        } catch(err) { 
+          showToast('Error deleting assignment', 'error'); 
+        }
+      },
+      isDanger: true
+    });
   }
 
   const handleAttendanceChange = (studentId, status) => {
@@ -402,7 +480,7 @@ function TeacherDashboard({ user, onLogout }) {
 
   const fetchClassCourses = async (classId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/classes/${classId}/courses`, {
+      const response = await fetch(`${API_BASE_URL}/api/classes/${classId}/courses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -466,7 +544,7 @@ function TeacherDashboard({ user, onLogout }) {
         </div>
 
         <nav style={S.nav}>
-          <SidebarBtn active={false} onClick={() => navigate('/chat')} icon={<ChatCircle size={20} />} label="Chat" count={null} />
+          <SidebarBtn active={false} onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} icon={<ChatCircle size={20} />} label="Chat" count={null} />
           <SidebarBtn active={activePage === 'overview'} onClick={() => { setActivePage('overview'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Overview" count={null} />
           <SidebarBtn active={activePage === 'classes'} onClick={() => { setActivePage('classes'); setMobileMenuOpen(false); }} icon={<BookOpen size={20} />} label="My Classes" count={totalClasses} />
           <SidebarBtn active={activePage === 'class-attendance'} onClick={() => { setActivePage('class-attendance'); setMobileMenuOpen(false); }} icon={<ClipboardText size={20} />} label="Class Attendance" count={null} />
@@ -796,7 +874,7 @@ function TeacherDashboard({ user, onLogout }) {
               >
                 <option value="">Select a course to view grades</option>
                 {courses.map(c => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
+                  <option key={c.id} value={c.title}>{c.title}</option>
                 ))}
               </select>
             </div>
@@ -1066,7 +1144,7 @@ function TeacherDashboard({ user, onLogout }) {
 
         {/* PENDING ENROLLMENT REQUESTS PAGE */}
         {activePage === 'pending' && (
-          <div style={S.tableCard} className="animate-fadeIn">
+          <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
                 <h2 style={S.tableTitle}>📋 Pending Enrollment Requests</h2>
@@ -1135,7 +1213,7 @@ function TeacherDashboard({ user, onLogout }) {
 
         {/* MY REPORTS PAGE */}
         {activePage === 'reports' && (
-          <div style={S.tableCard} className="animate-fadeIn">
+          <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
                 <h2 style={S.tableTitle}>
@@ -1301,7 +1379,7 @@ function TeacherDashboard({ user, onLogout }) {
                         {sub.file_path ? (
                           <span onClick={async () => {
                             try {
-                              const response = await fetch(`http://localhost:5000/api/submissions/${sub.id}/download`, {
+                              const response = await fetch(`${API_BASE_URL}/api/submissions/${sub.id}/download`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                               });
                               const blob = await response.blob();
@@ -1311,7 +1389,7 @@ function TeacherDashboard({ user, onLogout }) {
                               a.download = 'submission_file';
                               a.click();
                             } catch (err) {
-                              alert('Download failed');
+                              showToast('Download failed', 'error');
                             }
                           }} style={S.downloadLink}>
                             Download
@@ -1587,14 +1665,14 @@ function TeacherDashboard({ user, onLogout }) {
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!selectedCourse) {
-                alert('Please select a course first!');
+                showToast('Please select a course first!', 'warning');
                 return;
               }
               try {
                 const method = editingItem ? 'PUT' : 'POST';
                 const url = editingItem 
-                  ? `http://localhost:5000/api/grades/${editingItem.id}` 
-                  : 'http://localhost:5000/api/grades';
+                  ? `${API_BASE_URL}/api/grades/${editingItem.id}` 
+                  : `${API_BASE_URL}/api/grades`;
 
                 const response = await fetch(url, {
                   method,
@@ -1612,19 +1690,18 @@ function TeacherDashboard({ user, onLogout }) {
                     remarks: newGrade.remarks
                   })
                 });
-                const data = await response.json();
-                if (data.success) {
-                  alert(`Grade ${editingItem ? 'updated' : 'saved'} successfully!`);
+                const resData = await response.json();
+                if (resData.success) {
+                  showToast(`Grade ${editingItem ? 'updated' : 'saved'} successfully!`, 'success');
                   setShowGradeModal(false);
                   setNewGrade({ student_id: '', exam_type: 'midterm', marks_obtained: '', max_marks: 100, exam_date: '', remarks: '' });
                   setEditingItem(null);
                   fetchCourseGrades(selectedCourse.id);
                 } else {
-                  alert('Error: ' + data.message);
+                  showToast(resData.message || 'Error saving grade', 'error');
                 }
               } catch (error) {
-                console.error('Grade submission error:', error);
-                alert('Network error');
+                showToast('Error saving grade', 'error');
               }
             }} style={S.modalForm}>
               <div style={S.inputGroup}>
@@ -1685,7 +1762,7 @@ function TeacherDashboard({ user, onLogout }) {
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
-                const response = await fetch('http://localhost:5000/api/grades/bulk', {
+                const response = await fetch(`${API_BASE_URL}/api/grades/bulk`, {
                   method: 'POST',
                   headers: { 
                     'Authorization': `Bearer ${token}`,
@@ -1703,17 +1780,16 @@ function TeacherDashboard({ user, onLogout }) {
                     }))
                   })
                 });
-                const data = await response.json();
-                if (data.success) {
-                  alert(`✅ Successfully saved ${data.message}`);
+                const resData = await response.json();
+                if (resData.success) {
+                  showToast(`Successfully saved ${resData.message}`, 'success');
                   setShowBulkGradeModal(false);
                   fetchCourseGrades(selectedCourse.id);
                 } else {
-                  alert('❌ ' + data.message);
+                  showToast(resData.message || 'Error saving bulk grades', 'error');
                 }
               } catch (err) {
-                console.error(err);
-                alert('Network error');
+                showToast('Error saving bulk grades', 'error');
               }
             }}>
               {/* Common Header Fields */}

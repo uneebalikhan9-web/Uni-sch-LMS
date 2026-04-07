@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, MapPin, User, CalendarBlank } from "@phosphor-icons/react";
+import API_BASE_URL from '../config/api';
 
 function ClassTimetable({ user, onBack, classId = null, viewMode = 'student' }) {
   const [timetable, setTimetable] = useState([]);
@@ -19,7 +20,7 @@ function ClassTimetable({ user, onBack, classId = null, viewMode = 'student' }) 
 
   const fetchClasses = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/classes', {
+      const response = await fetch(`${API_BASE_URL}/api/classes`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -39,11 +40,11 @@ function ClassTimetable({ user, onBack, classId = null, viewMode = 'student' }) 
     try {
       let endpoint = '';
       if (viewMode === 'student') {
-        endpoint = 'http://localhost:5000/api/timetables/student-timetable';
+        endpoint = `${API_BASE_URL}/api/timetables/student-timetable`;
       } else if (viewMode === 'teacher') {
-        endpoint = 'http://localhost:5000/api/timetables/my-timetable';
+        endpoint = `${API_BASE_URL}/api/timetables/my-timetable`;
       } else if (viewMode === 'admin' && selectedClass) {
-        endpoint = `http://localhost:5000/api/timetables/class/${selectedClass}`;
+        endpoint = `${API_BASE_URL}/api/timetables/class/${selectedClass}`;
       }
 
       if (!endpoint) {

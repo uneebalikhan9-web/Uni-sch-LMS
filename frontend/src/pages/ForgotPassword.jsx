@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Envelope, ArrowRight, GraduationCap, ShieldCheck, ArrowLeft, PaperPlaneTilt } from "@phosphor-icons/react";
 import "./ForgotPassword.css";
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -13,6 +15,7 @@ function ForgotPassword() {
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [countdown, setCountdown] = useState(3);
   const [redirecting, setRedirecting] = useState(false);
+  const { showToast } = useToast()
 
   // Countdown and auto-redirect effect
   useEffect(() => {
@@ -36,7 +39,7 @@ function ForgotPassword() {
     setCountdown(3);
 
     try {
-      const response = await fetch("http://localhost:5000/api/forgot-password", {
+      const response = await fetch(`${API_BASE_URL}/api/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

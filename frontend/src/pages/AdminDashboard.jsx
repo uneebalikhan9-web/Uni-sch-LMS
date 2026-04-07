@@ -7,6 +7,9 @@
     CalendarBlank, CaretDown, Plus, SignOut, Trash, Phone, VideoCamera, 
     DotsThreeVertical, PencilSimple, BookOpen, TrendUp, Pulse, UserPlus, GraduationCap, DotsThreeOutline, ChatCircle
   } from "@phosphor-icons/react";
+  import { useToast } from "../components/Toast";
+  import ConfirmModal from "../components/ConfirmModal";
+  import API_BASE_URL from "../config/api";
 
   function AdminDashboard({ user = { name: "Margaret" }, onLogout }) {
     const navigate = useNavigate();
@@ -28,6 +31,14 @@
     const [editingCourse, setEditingCourse] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+    const { showToast } = useToast();
+    const [confirmModal, setConfirmModal] = useState({
+      isOpen: false,
+      title: "",
+      message: "",
+      onConfirm: () => {},
+      isDanger: false
+    });
 
     const token = sessionStorage.getItem("token");
     const chartRef = useRef(null);
@@ -40,14 +51,14 @@
     const fetchAdminData = async () => {
       setIsLoading(true);
       try {
-        const [teachersRes, studentsRes, classesRes, coursesRes, logsRes, pendingRes] = await Promise.all([
-          fetch("http://localhost:5000/api/admin/teachers", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/admin/students", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/classes", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/courses?status=all", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/logs?limit=50", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/pending-students", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("http://localhost:5000/api/campuses"), // public endpoint
+        const [teachersRes, studentsRes, classesRes, coursesRes, logsRes, pendingRes, campusesRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/admin/teachers`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/admin/students`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/classes`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/courses?status=all`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/logs?limit=50`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/pending-students`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/campuses`), // public endpoint
         ]);
         const tData = await teachersRes.json();
         const sData = await studentsRes.json();
@@ -84,111 +95,135 @@
     const handleUpdateClass = async (e) => {
       e.preventDefault();
       try {
-        const res = await fetch(`http://localhost:5000/api/classes/${editingClass.id}`, {
+        const res = await fetch(`${API_BASE_URL}/api/classes/${editingClass.id}`, {
           method: "PUT",
           headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify(editingClass)
         });
         const data = await res.json();
         if (data.success) {
+          showToast("Class updated successfully!", "success");
           setShowEditModal(false);
           setEditingClass(null);
           fetchAdminData();
         } else {
-          alert("❌ Error: " + data.message);
+          showToast(data.message || "Error updating class", "error");
         }
       } catch (error) {
-        alert("❌ Error updating class");
+        showToast("Error updating class", "error");
       }
     };
 
-    const handleDelete = async (id, entityType) => {
-      if (!window.confirm(`Are you sure you want to delete this ${entityType}?`)) return;
-      
-      // Fix: Use correct endpoints
-      let endpoint;
-      if (entityType === "classe") {
-        // When activeTab is "classes", slice(0,-1) gives "classe", but we need "classes"
-        endpoint = `classes/${id}`;
-      } else if (entityType === "course") {
-        endpoint = `courses/${id}`;
-      } else {
-        endpoint = `admin/${entityType}s/${id}`;
-      }
-      
-      console.log('Delete endpoint:', endpoint);
-      
-      try {
-        const res = await fetch(`http://localhost:5000/api/${endpoint}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) { fetchAdminData(); } else { alert("❌ Error: " + data.message); }
-      } catch (error) { 
-        console.error('Delete error:', error);
-        alert("❌ Error deleting"); 
-      }
-    };
-
-    const handleApprove = async (studentId, studentName) => {
-      if (!window.confirm(`Approve student: ${studentName}?`)) return;
-
-      try {
-        const res = await fetch(`http://localhost:5000/api/pending-students/${studentId}/approve`, {
-          method: "PUT",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert(`✅ ${studentName} approved successfully!`);
-          fetchAdminData(); // Refresh all data
-        } else {
-          alert("❌ Error: " + data.message);
-        }
-      } catch (error) {
-        console.error('Approve error:', error);
-        alert("❌ Error approving student");
-      }
-    };
-
-    const handleReject = async (studentId, studentName) => {
-      if (!window.confirm(`Reject and delete student: ${studentName}? This action cannot be undone.`)) return;
-
-      try {
-        const res = await fetch(`http://localhost:5000/api/pending-students/${studentId}/reject`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert(`✅ ${studentName} rejected and removed`);
-          fetchAdminData(); // Refresh all data
-        } else {
-          alert("❌ Error: " + data.message);
-        }
-      } catch (error) {
-        console.error('Reject error:', error);
-        alert("❌ Error rejecting student");
-      }
-    };
-
-    const handleReactivateCourse = async (courseId) => {
-      if (!window.confirm("Are you sure you want to reactivate this course? It will reappear on the teacher's dashboard.")) return;
-      try {
-          const res = await fetch(`http://localhost:5000/api/courses/${courseId}/status`, {
-              method: 'PATCH',
-              headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({ status: 'active' })
-          });
-          const data = await res.json();
-          if(data.success) {
-              alert("✅ Course Reactivated!");
-              fetchAdminData();
-          } else {
-              alert("❌ Error: " + data.message);
+    const handleDelete = (id, entityType) => {
+      setConfirmModal({
+        isOpen: true,
+        title: `Delete ${entityType}`,
+        message: `Are you sure you want to delete this ${entityType}? This action cannot be undone.`,
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          let endpoint;
+          if (entityType === "classe") endpoint = `classes/${id}`;
+          else if (entityType === "course") endpoint = `courses/${id}`;
+          else endpoint = `admin/${entityType}s/${id}`;
+          
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) { 
+              showToast(`${entityType} deleted`, "success");
+              fetchAdminData(); 
+            } else { 
+              showToast(data.message || "Error deleting", "error");
+            }
+          } catch (error) { 
+            showToast("Error deleting", "error");
           }
-      } catch (error) { console.error(error); alert("❌ Network Error"); }
+        },
+        isDanger: true
+      });
+    };
+
+    const handleApprove = (studentId, studentName) => {
+      setConfirmModal({
+        isOpen: true,
+        title: "Approve Student",
+        message: `Approve student: ${studentName}?`,
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/pending-students/${studentId}/approve`, {
+              method: "PUT",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+              showToast(`${studentName} approved successfully!`, "success");
+              fetchAdminData();
+            } else {
+              showToast(data.message || "Error approving student", "error");
+            }
+          } catch (error) {
+            showToast("Error approving student", "error");
+          }
+        },
+        isDanger: false
+      });
+    };
+
+    const handleReject = (studentId, studentName) => {
+      setConfirmModal({
+        isOpen: true,
+        title: "Reject Student",
+        message: `Reject and delete student: ${studentName}? This action cannot be undone.`,
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/pending-students/${studentId}/reject`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+              showToast(`${studentName} rejected and removed`, "success");
+              fetchAdminData();
+            } else {
+              showToast(data.message || "Error rejecting student", "error");
+            }
+          } catch (error) {
+            showToast("Error rejecting student", "error");
+          }
+        },
+        isDanger: true
+      });
+    };
+
+    const handleReactivateCourse = (courseId) => {
+      setConfirmModal({
+        isOpen: true,
+        title: "Reactivate Course",
+        message: "Are you sure you want to reactivate this course? It will reappear on the teacher's dashboard.",
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/courses/${courseId}/status`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'active' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                showToast("Course Reactivated!", "success");
+                fetchAdminData();
+            } else {
+                showToast(data.message || "Error reactivating course", "error");
+            }
+          } catch (error) { showToast("Network Error", "error"); }
+        },
+        isDanger: false
+      });
     };
 
     const handleAddSubmit = async (e) => {
@@ -206,20 +241,23 @@
         body = newPerson;
       }
       try {
-        const res = await fetch(`http://localhost:5000/api/${endpoint}`, {
+        const res = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
         const data = await res.json();
         if (data.success) {
+          showToast(`${activeTab.slice(0, -1)} added successfully!`, "success");
           setShowAddModal(false);
           setNewPerson({ name: "", email: "", password: "", campus_id: "", semester: "1" });
           setNewClass({ name: "", section: "", academic_year: "2024-2025", teacher_id: "" });
           setNewCourse({ title: "", description: "", teacher_id: "" });
           fetchAdminData();
+        } else {
+          showToast(data.message || "Error adding item", "error");
         }
-      } catch (error) { console.error(error); }
+      } catch (error) { showToast("Error adding item", "error"); }
     };
 
     useEffect(() => {
@@ -255,6 +293,14 @@
 
     return (
       <div style={containerStyle}>
+        <ConfirmModal 
+          isOpen={confirmModal.isOpen}
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          isDanger={confirmModal.isDanger}
+        />
         {/* Mobile Menu Button */}
         <button 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -284,13 +330,13 @@
           </div>
 
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <SidebarBtn active={false} onClick={() => navigate('/chat')} icon={<ChatCircle size={20} />} label="Chat" />
-            <SidebarBtn active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<House size={20} />} label="Overview" />
-            <SidebarBtn active={activeTab === 'teachers'} onClick={() => setActiveTab('teachers')} icon={<ChalkboardTeacher size={20} />} label="Teachers" />
-            <SidebarBtn active={activeTab === 'students'} onClick={() => setActiveTab('students')} icon={<UserCircle size={20} />} label="Students" />
-            <SidebarBtn active={activeTab === 'classes'} onClick={() => setActiveTab('classes')} icon={<Buildings size={20} />} label="Classes" />
-            <SidebarBtn active={activeTab === 'courses'} onClick={() => setActiveTab('courses')} icon={<BookOpen size={20} />} label="Courses" />
-            <SidebarBtn active={activeTab === 'pending'} onClick={() => setActiveTab('pending')} icon={<UserPlus size={20} />} label="Pending Students" />
+            <SidebarBtn active={false} onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} icon={<ChatCircle size={20} />} label="Chat" />
+            <SidebarBtn active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Overview" />
+            <SidebarBtn active={activeTab === 'teachers'} onClick={() => { setActiveTab('teachers'); setMobileMenuOpen(false); }} icon={<ChalkboardTeacher size={20} />} label="Teachers" />
+            <SidebarBtn active={activeTab === 'students'} onClick={() => { setActiveTab('students'); setMobileMenuOpen(false); }} icon={<UserCircle size={20} />} label="Students" />
+            <SidebarBtn active={activeTab === 'classes'} onClick={() => { setActiveTab('classes'); setMobileMenuOpen(false); }} icon={<Buildings size={20} />} label="Classes" />
+            <SidebarBtn active={activeTab === 'courses'} onClick={() => { setActiveTab('courses'); setMobileMenuOpen(false); }} icon={<BookOpen size={20} />} label="Courses" />
+            <SidebarBtn active={activeTab === 'pending'} onClick={() => { setActiveTab('pending'); setMobileMenuOpen(false); }} icon={<UserPlus size={20} />} label="Pending Students" />
           </nav>
 
           <button onClick={onLogout} style={logoutBtnStyle} className="logout-btn">

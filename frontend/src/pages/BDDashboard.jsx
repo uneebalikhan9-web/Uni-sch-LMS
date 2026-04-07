@@ -8,7 +8,11 @@ import {
   ChalkboardTeacher, BookOpen, ChartBar, WarningCircle, X, ChartLine, UserCircle
 } from "@phosphor-icons/react";
 
-const API = "http://localhost:5000/api/bd";
+import API_BASE_URL from "../config/api";
+import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+
+const API = `${API_BASE_URL}/api/bd`;
 
 const LEAD_STATUSES = ['prospect', 'contacted', 'proposal', 'negotiation', 'closed_won', 'closed_lost'];
 const LEAD_COLORS = { prospect: '#94a3b8', contacted: '#60a5fa', proposal: '#a78bfa', negotiation: '#f59e0b', closed_won: '#22c55e', closed_lost: '#ef4444' };
@@ -43,6 +47,14 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [form, setForm] = useState({});
+  const { showToast } = useToast();
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isDanger: false
+  });
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
   const token = sessionStorage.getItem("token");
@@ -64,7 +76,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
         fetch(`${API}/global/teachers`, { headers }).then(r => r.json()),
         fetch(`${API}/global/students`, { headers }).then(r => r.json()),
         fetch(`${API}/global/classes`, { headers }).then(r => r.json()),
-        fetch(`http://localhost:5000/api/labs/usage/all`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/labs/usage/all`, { headers }).then(r => r.json()),
       ]);
       if (ov.success) { setStats(ov.stats || {}); setPipeline(ov.pipeline || []); }
       if (l.success) setLeads(l.leads || []);
@@ -78,7 +90,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
       if (gcl.success) setGlobalClasses(gcl.classes || []);
       if (ov.success) setLabUsage(Array.isArray(ov) ? ov : (ov.usage || [])); // Fallback logic
       // Fix for multi-fetch assignment
-      const labsData = await fetch(`http://localhost:5000/api/labs/usage/all`, { headers }).then(r => r.json());
+      const labsData = await fetch(`${API_BASE_URL}/api/labs/usage/all`, { headers }).then(r => r.json());
       if (labsData.success) setLabUsage(labsData.usage || []);
     } catch (e) { console.error(e); }
     setIsLoading(false);
@@ -87,7 +99,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
   const fetchReports = async () => {
     setReportsLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/reports', { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE_URL}/api/reports`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (data.success) setAllReports(data.reports || []);
     } catch (e) { console.error(e); }
@@ -99,7 +111,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
     setShowReportModal(true);
     setIsReportDetailsLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/reports/${report.id}/details`, { 
+      const res = await fetch(`${API_BASE_URL}/api/reports/${report.id}/details`, { 
         headers: { Authorization: `Bearer ${token}` } 
       });
       const data = await res.json();
@@ -151,22 +163,43 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
     const method = editingItem ? 'PUT' : 'POST';
     const res = await fetch(url, { method, headers, body: JSON.stringify(form) });
     const data = await res.json();
-    if (data.success) { setShowModal(false); fetchAll(); } else alert('❌ ' + data.message);
+    if (data.success) { 
+      showToast(editingItem ? "Updated successfully!" : "Created successfully!", "success");
+      setShowModal(false); 
+      fetchAll(); 
+    } else showToast(data.message || "Error saving item", "error");
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this item?')) return;
-    const endpointMap = { leads: 'leads', jobs: 'jobs', applicants: 'applicants', bulkhires: 'bulk-hires' };
-    const tabKey = activeTab === 'bulkhires' ? 'bulkhires' : activeTab;
-    const res = await fetch(`${API}/${endpointMap[tabKey]}/${id}`, { method: 'DELETE', headers });
-    const data = await res.json();
-    if (data.success) fetchAll(); else alert('❌ ' + data.message);
+  const handleDelete = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Item",
+      message: "Are you sure you want to delete this item? This action cannot be undone.",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const endpointMap = { leads: 'leads', jobs: 'jobs', applicants: 'applicants', bulkhires: 'bulk-hires' };
+          const tabKey = activeTab === 'bulkhires' ? 'bulkhires' : activeTab;
+          const res = await fetch(`${API}/${endpointMap[tabKey]}/${id}`, { method: 'DELETE', headers });
+          const data = await res.json();
+          if (data.success) {
+            showToast("Item deleted successfully", "success");
+            fetchAll();
+          } else {
+            showToast(data.message || "Error deleting", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting item", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
   const handleApplicantStatus = async (id, status) => {
     const res = await fetch(`${API}/applicants/${id}/status`, { method: 'PUT', headers, body: JSON.stringify({ status }) });
     const data = await res.json();
-    if (data.success) fetchAll(); else alert('❌ ' + data.message);
+    if (data.success) fetchAll(); else showToast(data.message, 'error');
   };
 
   if (isLoading) return (
@@ -178,6 +211,14 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
 
   return (
     <div style={S.container}>
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
       {/* Animated Background Orbs - Indigo theme */}
       <div style={S.bgOrb1}></div>
       <div style={S.bgOrb2}></div>
@@ -222,7 +263,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             <SidebarBtn
               key={tab}
               active={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
               icon={icon}
               label={label}
               count={count}
@@ -438,7 +479,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
               <div style={S.bannerActions}>
                 <code style={S.bannerCode}>{window.location.origin}/apply</code>
                 <button
-                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply`); alert('✅ Link copied!'); }}
+                  onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply`); showToast('Link copied to clipboard!', 'success'); }}
                   style={S.bannerCopyBtn}
                 >
                   Copy
@@ -466,7 +507,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
                         <td style={S.tdName}>
                           {j.title}
                           <button
-                            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply/${j.invite_token || j.id}`); alert('✅ Link copied!'); }}
+                            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply/${j.invite_token || j.id}`); showToast('Application link copied!', 'success'); }}
                             style={S.copyLinkBtn}
                           >
                             🔗 Copy apply link
@@ -891,7 +932,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
           <p style={S.shareText}>Send this link to candidates:</p>
           <code style={S.shareCode}>{window.location.origin}/apply</code>
           <button
-            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply`); alert('✅ Copied!'); }}
+            onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply`); showToast('Copied to clipboard!', 'success'); }}
             style={S.shareBtn}
             className="share-btn"
           >

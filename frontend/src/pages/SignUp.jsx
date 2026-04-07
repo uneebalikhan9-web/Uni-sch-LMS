@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 // Eye aur EyeSlash icons add kiye hain
 import { User, Envelope, Lock, ShieldCheck, GraduationCap, ArrowRight, CheckCircle, Eye, EyeSlash, Buildings, ListNumbers } from "@phosphor-icons/react";
 import "./SignUp.css";
+import API_BASE_URL from '../config/api'
+import { useToast } from '../components/Toast'
 
 function SignUp() {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ function SignUp() {
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { showToast } = useToast()
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [campuses, setCampuses] = useState([]);
 
@@ -28,7 +31,7 @@ function SignUp() {
 
   const fetchCampuses = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/campuses");
+      const response = await fetch(`${API_BASE_URL}/api/campuses`);
       const data = await response.json();
       if (data.success) {
         setCampuses(data.campuses);
@@ -63,7 +66,7 @@ function SignUp() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
+      const response = await fetch(`${API_BASE_URL}/api/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -79,8 +82,8 @@ function SignUp() {
       if (data.success) {
         if (data.pending) {
           setError(""); 
-          alert("✅ Registration submitted successfully!\n\nYour account is pending teacher approval.");
-          setTimeout(() => navigate("/signin"), 2000);
+          showToast("Registration submitted successfully! Your account is pending teacher approval.", "success");
+          setTimeout(() => navigate("/signin"), 3000);
         } else {
           sessionStorage.setItem("user", JSON.stringify(data.user));
           sessionStorage.setItem("token", data.token);

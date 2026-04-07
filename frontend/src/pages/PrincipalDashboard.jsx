@@ -11,7 +11,11 @@ import {
   Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask
 } from "@phosphor-icons/react";
 
-const API = "http://localhost:5000/api";
+import API_BASE_URL from "../config/api";
+import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+
+const API = `${API_BASE_URL}/api`;
 
 function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const navigate = useNavigate();
@@ -59,6 +63,14 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportDetails, setReportDetails] = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
+  const { showToast } = useToast();
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    isDanger: false
+  });
   const [engagementData, setEngagementData] = useState({ 
     data: [7, 9.5, 4, 6, 3, 1.5, 10.7], 
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] 
@@ -139,24 +151,32 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     setIsReportDetailsLoading(false);
   };
 
-  const handleGenerateReport = async (courseId, courseTitle) => {
-    if (!window.confirm(`Mark "${courseTitle}" as complete and generate its report?`)) return;
-    try {
-      const res = await fetch(`${API}/reports/generate/${courseId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ Report generated for "${courseTitle}"!\n\nSummary:\n• Students: ${data.summary.total_students}\n• Avg Marks: ${data.summary.avg_marks}%\n• Avg Attendance: ${data.summary.avg_attendance}%\n• Pass: ${data.summary.pass_count} | Fail: ${data.summary.fail_count}`);
-        fetchData();
-        fetchCampusReports();
-      } else {
-        alert('❌ ' + data.message);
-      }
-    } catch (e) {
-      alert('❌ Error generating report');
-    }
+  const handleGenerateReport = (courseId, courseTitle) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Generate Course Report",
+      message: `Mark "${courseTitle}" as complete and generate its final performance report? This will move the course to history.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/reports/generate/${courseId}`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`Report generated for ${courseTitle}!`, "success");
+            fetchData();
+            fetchCampusReports();
+          } else {
+            showToast(data.message || "Error generating report", "error");
+          }
+        } catch (e) {
+          showToast("Error generating report", "error");
+        }
+      },
+      isDanger: false
+    });
   };
 
   useEffect(() => { if (activeTab === 'course_reports') fetchCampusReports(); }, [activeTab]);
@@ -220,42 +240,87 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     return tab.slice(0, -1);
   };
 
-  const handleDelete = async (id, type) => {
-    if (!window.confirm(`Delete this ${type}?`)) return;
-    const endpointMap = { 
-      teacher: 'principal/teachers', 
-      student: 'principal/students', 
-      class: 'classes', 
-      course: 'courses', 
-      lab: 'labs',
-      lab_report: 'labs/usage'
-    };
-    const res = await fetch(`${API}/${endpointMap[type]}/${id}`, { 
-      method: 'DELETE', 
-      headers: { Authorization: `Bearer ${token}` } 
+  const handleDelete = (id, type) => {
+    setConfirmModal({
+      isOpen: true,
+      title: `Delete ${type}`,
+      message: `Are you sure you want to delete this ${type}? This action cannot be undone.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        const endpointMap = { 
+          teacher: 'principal/teachers', 
+          student: 'principal/students', 
+          class: 'classes', 
+          course: 'courses', 
+          lab: 'labs',
+          lab_report: 'labs/usage'
+        };
+        try {
+          const res = await fetch(`${API}/${endpointMap[type]}/${id}`, { 
+            method: 'DELETE', 
+            headers: { Authorization: `Bearer ${token}` } 
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`${type} deleted successfully`, "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error deleting", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting", "error");
+        }
+      },
+      isDanger: true
     });
-    const data = await res.json();
-    if (data.success) fetchData(); else alert('❌ ' + data.message);
   };
 
-  const handleApprove = async (id, name) => {
-    if (!window.confirm(`Approve ${name}?`)) return;
-    const res = await fetch(`${API}/pending-students/${id}/approve`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (data.success) { 
-      alert('✅ Approved!'); 
-      fetchData(); 
-    } else alert('❌ ' + data.message);
+  const handleApprove = (id, name) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Approve Student",
+      message: `Approve enrollment for ${name}?`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/pending-students/${id}/approve`, { method: 'PUT', headers: { Authorization: `Bearer ${token}` } });
+          const data = await res.json();
+          if (data.success) { 
+            showToast(`${name} approved!`, "success"); 
+            fetchData(); 
+          } else {
+            showToast(data.message || "Error approving", "error");
+          }
+        } catch (e) {
+          showToast("Error approving", "error");
+        }
+      },
+      isDanger: false
+    });
   };
 
-  const handleReject = async (id, name) => {
-    if (!window.confirm(`Reject ${name}?`)) return;
-    const res = await fetch(`${API}/pending-students/${id}/reject`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
-    const data = await res.json();
-    if (data.success) { 
-      alert('✅ Rejected'); 
-      fetchData(); 
-    } else alert('❌ ' + data.message);
+  const handleReject = (id, name) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Reject Student",
+      message: `Reject enrollment for ${name}? This will remove their application.`,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/pending-students/${id}/reject`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+          const data = await res.json();
+          if (data.success) { 
+            showToast(`${name} application rejected`, "success"); 
+            fetchData(); 
+          } else {
+            showToast(data.message || "Error rejecting", "error");
+          }
+        } catch (e) {
+          showToast("Error rejecting", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
   const handleAddSubmit = async (e) => {
@@ -289,10 +354,13 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
     });
     const data = await res.json();
     if (data.success) { 
+      showToast(`${editingItem ? singularTab(activeTab) : activeTab.slice(0, -1)} ${editingItem ? 'updated' : 'added'}!`, "success");
       setShowAddModal(false); 
       fetchData(); 
       resetForms(); 
-    } else alert('❌ ' + data.message);
+    } else {
+      showToast(data.message || "Error adding item", "error");
+    }
   };
 
   const resetForms = () => {
@@ -330,43 +398,69 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
         setShowTimetableModal(false);
         fetchData();
         resetForms();
-        alert(`✅ Timetable ${editingItem ? 'updated' : 'added'}!`);
-      } else alert('❌ ' + data.message);
-    } catch (e) { console.error(e); }
+        showToast(`Timetable ${editingItem ? 'updated' : 'added'}!`, "success");
+      } else showToast(data.message || "Error saving timetable", "error");
+    } catch (e) { showToast("Error saving timetable", "error"); }
   };
 
-  const handleDeleteTimetable = async (id) => {
-    if (!window.confirm('Delete this timetable entry?')) return;
-    try {
-      const res = await fetch(`${API}/timetables/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) fetchData(); else alert('❌ ' + data.message);
-    } catch (e) { console.error(e); }
+  const handleDeleteTimetable = (id) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Timetable Entry",
+      message: "Are you sure you want to delete this timetable entry?",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/timetables/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast("Timetable entry deleted", "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error deleting entry", "error");
+          }
+        } catch (e) {
+          showToast("Error deleting timetable entry", "error");
+        }
+      },
+      isDanger: true
+    });
   };
 
-  const handleUpdateCourseStatus = async (id, status) => {
-    if (!window.confirm(`Mark this course as ${status}?`)) return;
-    try {
-      const res = await fetch(`${API}/courses/${id}/status`, {
-        method: 'PATCH',
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({ status })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ Course ${status === 'completed' ? 'moved to history' : 're-activated'}!`);
-        fetchData();
-      } else alert('❌ ' + data.message);
-    } catch (e) {
-      console.error(e);
-      alert('❌ Error updating course status');
-    }
+  const handleUpdateCourseStatus = (id, status) => {
+    setConfirmModal({
+      isOpen: true,
+      title: status === 'completed' ? "Complete Course" : "Re-activate Course",
+      message: status === 'completed' 
+        ? "Mark this course as completed? It will be moved to history."
+        : "Re-activate this course? It will be moved back to active status.",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const res = await fetch(`${API}/courses/${id}/status`, {
+            method: 'PATCH',
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ status })
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast(`Course ${status === 'completed' ? 'moved to history' : 're-activated'}!`, "success");
+            fetchData();
+          } else {
+            showToast(data.message || "Error updating status", "error");
+          }
+        } catch (e) {
+          showToast("Error updating course status", "error");
+        }
+      },
+      isDanger: status === 'completed' ? false : false // Not necessarily dangerous
+    });
   };
 
   const renderLabIcon = (iconName) => {
@@ -405,6 +499,14 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
 
   return (
     <div style={S.container} className="dashboard-wrapper">
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
       <style>{`
         .hidden-scrollbar::-webkit-scrollbar {
           display: none;
@@ -442,7 +544,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
         </div>
 
         <nav style={S.nav}>
-          <button type="button" onClick={() => navigate('/chat')} style={S.navBtn} className="nav-btn">
+          <button type="button" onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} style={S.navBtn} className="nav-btn">
             <ChatCircle size={20} /><span style={{ flex: 1, textAlign: 'left' }}>Chat</span>
           </button>
           {[
@@ -461,7 +563,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
           ].map(([tab, label, icon, count]) => (
             <button 
               key={tab} 
-              onClick={() => setActiveTab(tab)} 
+              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }} 
               style={{...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {})}}
               className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
             >
