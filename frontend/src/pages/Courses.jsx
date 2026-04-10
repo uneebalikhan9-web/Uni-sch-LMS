@@ -47,7 +47,10 @@ function Courses() {
 
   const fetchAllCourses = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/courses`)
+      const token = sessionStorage.getItem('token')
+      const response = await fetch(`${API_BASE_URL}/api/courses`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
       const data = await response.json()
       if (data.success) {
         setAllCourses(data.courses)

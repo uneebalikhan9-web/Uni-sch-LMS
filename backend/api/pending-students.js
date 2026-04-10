@@ -12,13 +12,20 @@ router.use(isAdmin);
 // Get All Pending Students
 router.get('/', async (req, res) => {
   try {
-    const [students] = await pool.query(
-      `SELECT u.id, u.name, u.email, u.created_at, u.semester, c.name as department_name, c.dept_code
+    const { role, campus_id: adminCampusId } = req.user;
+    let query = `SELECT u.id, u.name, u.email, u.created_at, u.semester, c.name as department_name, u.campus_id
        FROM users u
        LEFT JOIN campuses c ON u.campus_id = c.id
-       WHERE u.role = 'student' AND u.is_approved = FALSE
-       ORDER BY u.created_at DESC`
-    );
+       WHERE u.role = 'student' AND u.is_approved = FALSE`;
+    const params = [];
+
+    if (role !== 'super_admin') {
+      query += ` AND u.campus_id = ?`;
+      params.push(adminCampusId);
+    }
+
+    query += ` ORDER BY u.created_at DESC`;
+    const [students] = await pool.query(query, params);
 
     res.status(200).json({ 
       success: true, 
@@ -29,46 +36,68 @@ router.get('/', async (req, res) => {
     console.error('Get pending students error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error fetching pending students' 
+      message: 'Error fetching pending students',
+      error: error.message
     });
   }
 });
 
 // Approve Student
 router.put('/:id/approve', async (req, res) => {
+  const { id } = req.params;
+  console.log(`[PendingStudents] Approval attempt for ID: ${id}`);
+  
   try {
     const { role, campus_id: adminCampusId } = req.user;
 
-    // Check if student exists and is pending
-    let query = `SELECT id, name, email, campus_id, semester 
-                 FROM users 
-                 WHERE id = ? AND role = ? AND is_approved = FALSE`;
-    const params = [id, 'student'];
+    // 1. Fetch student data first without strict filtering to diagnose
+    const [studentCheck] = await pool.query(
+      'SELECT id, name, email, campus_id, role, is_approved, semester FROM users WHERE id = ?', 
+      [id]
+    );
 
+    if (studentCheck.length === 0) {
+      return res.status(404).json({ success: false, message: 'Student record not found in database' });
+    }
+
+    const student = studentCheck[0];
+
+    // 2. Validate student state
+    if (student.role !== 'student') {
+      return res.status(400).json({ success: false, message: `Invalid user role: ${student.role}` });
+    }
+    if (student.is_approved) {
+      return res.status(400).json({ success: false, message: 'Student is already approved' });
+    }
+
+    // 3. Authorization check (Department scope)
     if (role !== 'super_admin') {
-      query += ` AND campus_id = ?`;
-      params.push(adminCampusId);
+       // Using loose comparison for IDs (compensating for string vs number)
+       if (String(student.campus_id) !== String(adminCampusId)) {
+          console.warn(`[PendingStudents] Auth mismatch: student campus ${student.campus_id} vs admin campus ${adminCampusId}`);
+          return res.status(403).json({ 
+            success: false, 
+            message: 'You are not authorized to approve students from other departments',
+            debug: { student_campus: student.campus_id, your_campus: adminCampusId }
+          });
+       }
     }
 
-    const [students] = await pool.query(query, params);
-
-    if (students.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pending student not found' 
-      });
+    // 4. Generate Roll Number
+    let rollNumber = null;
+    try {
+      rollNumber = await generateRollNumber(student.campus_id, student.semester);
+    } catch (rollErr) {
+      console.error('[PendingStudents] Roll generation failed:', rollErr);
     }
 
-    const student = students[0];
-    const rollNumber = await generateRollNumber(student.campus_id, student.semester);
-
-    // Approve the student and assign roll number
+    // 5. Final Approval
     await pool.query(
       'UPDATE users SET is_approved = TRUE, roll_number = ? WHERE id = ?',
       [rollNumber, id]
     );
 
-    console.log(`✅ Admin approved student: ${student.email}${rollNumber ? ` with Roll No: ${rollNumber}` : ''}`);
+    console.log(`✅ Admin approved student: ${student.email} (ID: ${id})`);
 
     res.status(200).json({ 
       success: true, 
@@ -79,50 +108,29 @@ router.put('/:id/approve', async (req, res) => {
     console.error('Approve student error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Error approving student' 
+      message: 'Error approving student',
+      error: error.message
     });
   }
 });
 
 // Reject/Delete Student
 router.delete('/:id/reject', async (req, res) => {
+  const { id } = req.params;
   try {
     const { role, campus_id: adminCampusId } = req.user;
 
-    // Check if student exists and is pending
-    let query = 'SELECT id, name, email FROM users WHERE id = ? AND role = ? AND is_approved = FALSE';
-    const params = [id, 'student'];
+    const [students] = await pool.query('SELECT id, campus_id FROM users WHERE id = ?', [id]);
+    if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found' });
 
-    if (role !== 'super_admin') {
-      query += ` AND campus_id = ?`;
-      params.push(adminCampusId);
+    if (role !== 'super_admin' && String(students[0].campus_id) !== String(adminCampusId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    const [students] = await pool.query(query, params);
-
-    if (students.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Pending student not found' 
-      });
-    }
-
-    // Delete the student account
     await pool.query('DELETE FROM users WHERE id = ?', [id]);
-
-    console.log(`❌ Admin rejected student: ${students[0].email}`);
-
-    res.status(200).json({ 
-      success: true, 
-      message: `Student ${students[0].name} rejected and removed`,
-      student: students[0]
-    });
+    res.status(200).json({ success: true, message: 'Student rejected successfully' });
   } catch (error) {
-    console.error('Reject student error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error rejecting student' 
-    });
+    res.status(500).json({ success: false, message: 'Error rejecting student' });
   }
 });
 

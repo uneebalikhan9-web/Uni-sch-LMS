@@ -7,21 +7,16 @@ const router = express.Router();
 // Teacher: Create Assignment
 router.post('/', verifyToken, isTeacher, async (req, res) => {
   try {
-    const { title, description, course_id, due_date, max_marks } = req.body;
+    const { title, description, course_id, due_date, max_marks, status, assignment_type, academic_period } = req.body;
     const teacher_id = req.user.id;
 
     if (!title || !course_id || !due_date) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    const today = new Date().toISOString().split('T')[0];
-    if (due_date < today) {
-      return res.status(400).json({ success: false, message: 'Due date cannot be in the past' });
-    }
-
     const [result] = await pool.query(
-      'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks) VALUES (?, ?, ?, ?, ?, ?)',
-      [title, description, course_id, teacher_id, due_date, max_marks || 100]
+      'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, description, course_id, teacher_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027']
     );
 
     res.status(201).json({
@@ -86,17 +81,12 @@ router.get('/course/:courseId', verifyToken, async (req, res) => {
 router.put('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, due_date, max_marks } = req.body;
+    const { title, description, due_date, max_marks, status, assignment_type, academic_period } = req.body;
     const teacher_id = req.user.id;
 
-    const today = new Date().toISOString().split('T')[0];
-    if (due_date && due_date < today) {
-      return res.status(400).json({ success: false, message: 'Due date cannot be in the past' });
-    }
-
     const [result] = await pool.query(
-      'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ? WHERE id = ? AND teacher_id = ?',
-      [title, description, due_date, max_marks, id, teacher_id]
+      'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ?, status = ?, assignment_type = ?, academic_period = ? WHERE id = ? AND teacher_id = ?',
+      [title, description, due_date, max_marks, status, assignment_type, academic_period, id, teacher_id]
     );
 
     if (result.affectedRows === 0) {

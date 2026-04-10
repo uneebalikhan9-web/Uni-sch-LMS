@@ -7,7 +7,8 @@ import {
   List, ChalkboardTeacher, UserPlus, X, ClipboardText, Pulse, 
   PencilSimple, FileText, DotsThreeOutline, ChartLine, Users,
   Warning, Bell, Star, Download, Eye, EyeSlash, TrendUp, Chalkboard,
-  ChatCircle, ChartBar, WarningCircle, Flask, Buildings, Check
+  ChatCircle, ChartBar, WarningCircle, Flask, Buildings, Check,
+  ArrowLeft, Circle
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import ClassAttendance from './ClassAttendance';
@@ -43,8 +44,20 @@ function TeacherDashboard({ user, onLogout }) {
   const [showSubmissionModal, setShowSubmissionModal] = useState(false)
   const [selectedAssignment, setSelectedAssignment] = useState(null)
   const [gradingSubmission, setGradingSubmission] = useState(null)
-  const [newAssignment, setNewAssignment] = useState({ title: '', description: '', course_id: '', due_date: '', max_marks: 100 })
+  const [newAssignment, setNewAssignment] = useState({ 
+    title: '', 
+    description: '', 
+    course_id: '', 
+    due_date: '', 
+    max_marks: 100,
+    status: 'published',
+    assignment_type: 'Homework',
+    academic_period: '2026-2027'
+  })
   const [gradeData, setGradeData] = useState({ marks_obtained: '', feedback: '' })
+  const [assignmentFilter, setAssignmentFilter] = useState('all')
+  const [assignmentViewMode, setAssignmentViewMode] = useState('list') // 'list', 'submissions', 'create'
+  const [selectedSubmissionStudent, setSelectedSubmissionStudent] = useState(null)
   const [stats, setStats] = useState({ total_courses: 0, total_students: 0, total_classes: 0, total_assignments: 0, total_graded: 0, total_pending: 0, recent_students: [] })
 
   // Reports State
@@ -403,8 +416,11 @@ function TeacherDashboard({ user, onLogout }) {
       const data = await response.json();
       if (data.success) {
         showToast(`Assignment ${editingItem ? 'updated' : 'created'}!`, 'success');
-        setShowCreateAssignmentModal(false);
-        setNewAssignment({ title: '', description: '', course_id: '', due_date: '', max_marks: 100 });
+        setAssignmentViewMode('list');
+        setNewAssignment({ 
+          title: '', description: '', course_id: '', due_date: '', max_marks: 100,
+          status: 'draft', assignment_type: 'Homework', academic_period: '2026-2027' 
+        });
         setEditingItem(null);
         fetchAssignments();
       } else { 
@@ -423,11 +439,26 @@ function TeacherDashboard({ user, onLogout }) {
       const data = await response.json()
       if (data.success) {
         setAssignmentSubmissions(data.submissions || [])
+        setAssignmentViewMode('submissions')
+        if (data.submissions && data.submissions.length > 0) {
+          setSelectedSubmissionStudent(data.submissions[0])
+          setGradeData({
+            marks_obtained: data.submissions[0].marks_obtained || '',
+            feedback: data.submissions[0].feedback || ''
+          })
+        }
       }
     } catch (error) { console.error(error) }
   }
 
+  const handleBackToAssignments = () => {
+    setAssignmentViewMode('list')
+    setSelectedAssignment(null)
+    setSelectedSubmissionStudent(null)
+  }
+
   const handleGradeSubmission = async (e) => {
+
     e.preventDefault()
     try {
       const response = await fetch(`${API_BASE_URL}/api/submissions/${gradingSubmission.id}/grade`, {
@@ -952,94 +983,489 @@ function TeacherDashboard({ user, onLogout }) {
           </div>
         )}
 
-        {/* ASSIGNMENTS PAGE */}
+        {/* REDESIGNED ASSIGNMENTS PAGE */}
         {activePage === 'assignments' && (
-          <div style={S.tableCard} className="table-container animate-fadeIn">
-            <div style={S.tableHeader}>
-              <div>
-                <h2 style={S.tableTitle}>
-                  <ClipboardText size={28} weight="duotone" color="#0891b2" style={{verticalAlign:'middle', marginRight:'12px'}} />
-                  Assignments
-                </h2>
-                <p style={S.tableSubtitle}>Create and manage assignments</p>
-              </div>
-              <button onClick={() => setShowCreateAssignmentModal(true)} style={S.addBtn}>
-                <PlusCircle size={18} /> New Assignment
-              </button>
-            </div>
-            
-            <table style={S.table}>
-              <thead>
-                <tr style={S.tableHeadRow}>
-                  <th style={S.th}>TITLE</th>
-                  <th style={S.th}>COURSE</th>
-                  <th style={S.th}>DUE DATE</th>
-                  <th style={S.th}>SUBMISSIONS</th>
-                  <th style={S.th}>STATUS</th>
-                  <th style={{...S.th, textAlign:'right'}}>ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map(a => {
-                  const dueDate = new Date(a.due_date);
-                  const today = new Date();
-                  const isOverdue = dueDate < today;
-                  
-                  return (
-                    <tr key={a.id} style={S.tableRow}>
-                      <td style={S.tdName}>{a.title}</td>
-                      <td style={S.td}>{a.course_title}</td>
-                      <td style={S.td}>
-                        <span style={{...S.dueDate, color: isOverdue ? '#ef4444' : '#166534'}}>
-                          {dueDate.toLocaleDateString()}
-                        </span>
-                      </td>
-                      <td style={S.td}>
-                        <button 
-                          onClick={() => { setSelectedAssignment(a); fetchSubmissions(a.id); setShowSubmissionModal(true); }}
-                          style={S.submissionBtn}
-                        >
-                          View ({a.submission_count || 0})
-                        </button>
-                      </td>
-                      <td style={S.td}>
-                        <span style={{...S.statusBadge, background: isOverdue ? '#fee2e2' : '#dcfce7', color: isOverdue ? '#991b1b' : '#166534'}}>
-                          {isOverdue ? 'Overdue' : 'Active'}
-                        </span>
-                      </td>
-                      <td style={{...S.td, textAlign:'right'}}>
-                        <div style={S.actionGroup}>
+          <div className="animate-fadeIn" style={{ padding: '0 24px' }}>
+            {assignmentViewMode === 'list' ? (
+              <div style={S.tableCard} className="table-container">
+                <div style={S.tableHeader}>
+                  <div>
+                    <h2 style={S.tableTitle}>
+                      <FileText size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                      Assignments
+                    </h2>
+                    <p style={S.tableSubtitle}>Manage and track your course assignments</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setNewAssignment({ 
+                        title: '', description: '', course_id: '', due_date: '', max_marks: 100, 
+                        status: 'draft', assignment_type: 'Homework', academic_period: '2026-2027' 
+                      });
+                      setEditingItem(null);
+                      setAssignmentViewMode('create');
+                    }} 
+                    style={S.addBtn} 
+                    className="add-btn"
+                  >
+                    <PlusCircle size={18} /> Create Assignment
+                  </button>
+                </div>
+
+                {/* Tabs Filter */}
+                <div style={{ padding: '0 28px 24px', display: 'flex', gap: '8px', borderBottom: '1px solid #f1f5f9' }}>
+                  {['all', 'draft', 'published', 'closed'].map(tab => (
+                    <button 
+                      key={tab}
+                      onClick={() => setAssignmentFilter(tab)}
+                      style={{
+                        padding: '10px 20px',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: assignmentFilter === tab ? '#4f46e5' : 'transparent',
+                        color: assignmentFilter === tab ? '#fff' : '#64748b',
+                        fontWeight: '700',
+                        fontSize: '0.85rem',
+                        textTransform: 'capitalize',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={S.assignmentGrid}>
+                  {assignments
+                    .filter(a => {
+                      if (assignmentFilter === 'all') return true;
+                      if (assignmentFilter === 'draft') return a.status === 'draft';
+                      if (assignmentFilter === 'published') return a.status === 'published';
+                      if (assignmentFilter === 'closed') {
+                        const dueDate = new Date(a.due_date);
+                        const now = new Date();
+                        return dueDate < now;
+                      }
+                      return true;
+                    })
+                    .map(a => {
+                    const dueDate = new Date(a.due_date);
+                    const today = new Date();
+                    const isOverdue = dueDate < today;
+                    
+                    return (
+                      <div key={a.id} style={S.assignmentCard} className="metric-card" onClick={() => { setSelectedAssignment(a); fetchSubmissions(a.id); }}>
+                        <div style={S.assignmentCardHeader}>
+                          <div style={S.assignmentTags}>
+                            <div style={S.tagHomework}>
+                              <PencilSimple size={14} weight="bold" /> {a.assignment_type || 'Homework'}
+                            </div>
+                            <div style={{
+                              ...S.tagPublished,
+                              background: a.status === 'draft' ? '#f1f5f9' : '#dcfce7',
+                              color: a.status === 'draft' ? '#64748b' : '#166534'
+                            }}>
+                              <Circle size={8} weight="fill" color={a.status === 'draft' ? '#94a3b8' : '#22c55e'} /> 
+                              {(a.status || 'published').toUpperCase()}
+                            </div>
+                          </div>
+                          <h3 style={S.assignmentCardTitle}>{a.title}</h3>
+                          <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>
+                            Course: {a.course_title}
+                          </p>
+                        </div>
+
+                        <div style={S.assignmentCardInfo}>
+                          <div style={S.dueInfo}>
+                            <div style={S.dueIconWrapper}>
+                              <CalendarBlank size={16} weight="bold" />
+                            </div>
+                            <div>
+                              <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8' }}>
+                                {isOverdue ? "Overdue" : "Due Date"}
+                              </p>
+                              <strong style={{ color: isOverdue ? '#ef4444' : '#1e293b' }}>
+                                {dueDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </strong>
+                            </div>
+                          </div>
+
+                          <div style={S.submissionCounterBox}>
+                            {a.submission_count || 0} Submissions
+                          </div>
+                        </div>
+
+                        <div style={S.assignmentCardActions}>
                           <button 
-                            style={S.iconBtn}
-                            onClick={() => {
+                            onClick={(e) => { e.stopPropagation(); setSelectedAssignment(a); fetchSubmissions(a.id); }}
+                            style={S.viewSubBtn}
+                          >
+                            <FileText size={18} /> View Submissions
+                          </button>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setEditingItem(a);
                               setNewAssignment({
                                 title: a.title,
                                 description: a.description || '',
                                 course_id: a.course_id,
                                 due_date: new Date(a.due_date).toISOString().split('T')[0],
-                                max_marks: a.max_marks
+                                max_marks: a.max_marks,
+                                status: a.status || 'published',
+                                assignment_type: a.assignment_type || 'Homework',
+                                academic_period: a.academic_period || '2026-2027'
                               });
-                              setShowCreateAssignmentModal(true);
+                              setAssignmentViewMode('create');
                             }}
+                            style={S.editAssignBtn}
                           >
-                            <PencilSimple size={16} />
+                            <PencilSimple size={18} /> Edit
                           </button>
-                          <button onClick={() => handleDeleteAssignment(a.id)} style={S.deleteIconBtn}><Trash size={16} /></button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {assignments.length === 0 && (
-                  <tr>
-                    <td colSpan="6" style={S.emptyTableCell}>No assignments created yet</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      </div>
+                    );
+                  })}
+                  
+                  {assignments.length === 0 && (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px' }}>
+                      <p style={{ color: '#94a3b8' }}>No assignments found.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : assignmentViewMode === 'submissions' ? (
+              /* SPLIT VIEW SUBMISSIONS */
+              <div className="animate-fadeIn">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+                  <button 
+                    onClick={handleBackToAssignments}
+                    style={{ ...S.iconBtn, background: '#fff', border: '1px solid #e2e8f0', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ArrowLeft size={20} weight="bold" />
+                  </button>
+                  <div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Assignment Submissions</h2>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: '600', margin: 0 }}>{selectedAssignment?.title}</p>
+                  </div>
+                </div>
+
+                <div style={S.submissionSplitView}>
+                  {/* Left Pane: Student List */}
+                  <div style={S.studentListPane} className="hidden-scrollbar">
+                    <div style={S.paneHeader}>
+                      <h3 style={S.paneTitle}>Students ({assignmentSubmissions.length})</h3>
+                    </div>
+                    
+                    <div style={S.studentList}>
+                      {assignmentSubmissions.map(sub => (
+                        <div 
+                          key={sub.id} 
+                          style={S.studentItem(selectedSubmissionStudent?.id === sub.id)}
+                          onClick={() => {
+                            setSelectedSubmissionStudent(sub);
+                            setGradeData({
+                              marks_obtained: sub.marks_obtained || '',
+                              feedback: sub.feedback || ''
+                            });
+                          }}
+                        >
+                          <div style={S.studentItemInfo}>
+                            <span style={S.studentItemName}>{sub.student_name}</span>
+                            <span style={S.studentItemId}>{sub.student_id_number || sub.student_email.split('@')[0]}</span>
+                            <span style={S.studentItemDate}>
+                              {new Date(sub.submitted_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                            </span>
+                          </div>
+                          <span style={{
+                            ...S.statusBadge,
+                            background: sub.marks_obtained ? '#dcfce7' : '#fef3c7',
+                            color: sub.marks_obtained ? '#166534' : '#92400e',
+                            padding: '4px 8px',
+                            fontSize: '10px'
+                          }}>
+                            {sub.marks_obtained ? 'Graded' : 'Pending'}
+                          </span>
+                        </div>
+                      ))}
+                      {assignmentSubmissions.length === 0 && (
+                        <p style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No submissions yet</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Right Pane: Grading Details */}
+                  <div style={S.gradingPane} className="hidden-scrollbar">
+                    {selectedSubmissionStudent ? (
+                      <div style={S.submissionContent}>
+                        <div style={S.gradingHeader}>
+                          <div style={S.gradableInfo}>
+                            <h2 style={S.gradableName}>{selectedSubmissionStudent.student_name}</h2>
+                            <p style={S.gradableSubText}>
+                              Student ID: {selectedSubmissionStudent.student_id_number || "HIT-" + selectedSubmissionStudent.student_id} • {selectedSubmissionStudent.student_email}
+                            </p>
+                          </div>
+                          <div style={S.statusText}>
+                            Submitted<br/>
+                            {new Date(selectedSubmissionStudent.submitted_at).toLocaleString('en-GB', { 
+                              day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                            })}
+                          </div>
+                        </div>
+
+                        {selectedSubmissionStudent.submission_text && (
+                          <div style={S.contentSection}>
+                            <label style={S.sectionLabel}><FileText size={18} /> Student Submission</label>
+                            <div style={S.textSubmission}>{selectedSubmissionStudent.submission_text}</div>
+                          </div>
+                        )}
+
+                        {selectedSubmissionStudent.file_path && (
+                          <div style={S.contentSection}>
+                            <label style={S.sectionLabel}><Flask size={18} /> Attachments</label>
+                            <div style={S.attachmentCard}>
+                              <div style={S.fileIcon}>
+                                <FileText size={24} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <p style={{ margin: 0, fontWeight: '700', fontSize: '0.9rem' }}>{selectedSubmissionStudent.submitted_file_name || "Attachment"}</p>
+                                <p style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>Submission File</p>
+                              </div>
+                              <button 
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(`${API_BASE_URL}/api/submissions/${selectedSubmissionStudent.id}/download`, {
+                                      headers: { 'Authorization': `Bearer ${token}` }
+                                    });
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = selectedSubmissionStudent.submitted_file_name || 'submission';
+                                    a.click();
+                                  } catch (err) { showToast('Download failed', 'error'); }
+                                }}
+                                style={{ ...S.iconBtn, color: '#4f46e5' }}
+                              >
+                                <Download size={18} />
+                              </button>
+                            </div>
+
+                            {/* Image Preview */}
+                            {(selectedSubmissionStudent.file_path.toLowerCase().endsWith('.png') || 
+                              selectedSubmissionStudent.file_path.toLowerCase().endsWith('.jpg') || 
+                              selectedSubmissionStudent.file_path.toLowerCase().endsWith('.jpeg')) && (
+                              <div style={S.filePreview}>
+                                <img 
+                                  src={`${API_BASE_URL}/${selectedSubmissionStudent.file_path.replace(/\\/g, '/')}`} 
+                                  alt="Submission Preview" 
+                                  style={S.previewImg} 
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Grading Form */}
+                        <form onSubmit={(e) => {
+                          e.preventDefault();
+                          setGradingSubmission(selectedSubmissionStudent);
+                          handleGradeSubmission(e);
+                        }} style={S.gradingForm}>
+                          <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#1e293b' }}>Grade Submission</h4>
+                          <div style={S.row}>
+                            <div style={{ ...S.inputGroup, flex: 1 }}>
+                              <label style={S.inputLabel}>Score (out of {selectedAssignment?.max_marks || 100})</label>
+                              <input 
+                                type="number" 
+                                placeholder="Enter score" 
+                                style={S.input}
+                                value={gradeData.marks_obtained}
+                                onChange={(e) => setGradeData({ ...gradeData, marks_obtained: e.target.value })}
+                                max={selectedAssignment?.max_marks}
+                                min={0}
+                                required
+                              />
+                            </div>
+                          </div>
+                          <div style={S.inputGroup}>
+                            <label style={S.inputLabel}>Feedback</label>
+                            <textarea 
+                              placeholder="Enter feedback for the student..." 
+                              style={{ ...S.input, minHeight: '120px', resize: 'vertical' }}
+                              value={gradeData.feedback}
+                              onChange={(e) => setGradeData({ ...gradeData, feedback: e.target.value })}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '12px', marginTop: '12px' }}>
+                            <button type="submit" style={S.saveBtn} className="save-btn">Submit Grade</button>
+                            <button type="button" onClick={handleBackToAssignments} style={S.cancelBtn} className="cancel-btn">Back to List</button>
+                          </div>
+                        </form>
+                      </div>
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '100px 40px', color: '#94a3b8' }}>
+                        <FileText size={64} weight="duotone" />
+                        <p style={{ marginTop: '20px', fontSize: '1.1rem', fontWeight: '600' }}>Select a student from the left to view and grade their submission.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* CREATE / EDIT ASSIGNMENT PAGE (Mirroring Screenshot) */
+              <div className="animate-fadeIn">
+                <button 
+                  onClick={() => setAssignmentViewMode('list')}
+                  style={S.backToLink}
+                >
+                  <ArrowLeft size={16} /> Back to Assignments
+                </button>
+                
+                <h2 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#0f172a', marginBottom: '8px' }}>
+                  {editingItem ? 'Edit Assignment' : 'Create New Assignment'}
+                </h2>
+                <p style={{ color: '#64748b', marginBottom: '32px', fontWeight: '500' }}>
+                  Fill in the details below to {editingItem ? 'update your' : 'create a new'} assignment
+                </p>
+
+                <div style={S.createFormContainer}>
+                  {/* Course Selection */}
+                  <div style={S.formSection}>
+                    <h3 style={S.sectionTitle}><Flask size={20} weight="fill" color="#4f46e5" /> Course Selection</h3>
+                    <div style={S.inputGroup}>
+                      <label style={S.inputLabel}>Select Course</label>
+                      <select 
+                        style={S.input}
+                        value={newAssignment.course_id}
+                        onChange={(e) => setNewAssignment({ ...newAssignment, course_id: e.target.value })}
+                        required
+                      >
+                        <option value="">Select a course</option>
+                        {courses.map(c => (
+                          <option key={c.id} value={c.id}>{c.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Basic Information */}
+                  <div style={S.formSection}>
+                    <h3 style={S.sectionTitle}><FileText size={20} weight="fill" color="#4f46e5" /> Basic Information</h3>
+                    <div style={S.formGrid}>
+                      <div style={{ ...S.inputGroup, ...S.fullWidth }}>
+                        <label style={S.inputLabel}>Assignment Name *</label>
+                        <input 
+                          type="text" 
+                          placeholder="Enter assignment name" 
+                          style={S.input}
+                          value={newAssignment.title}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, title: e.target.value })}
+                          required
+                        />
+                      </div>
+                      
+                      <div style={S.inputGroup}>
+                        <label style={S.inputLabel}>Assignment Type *</label>
+                        <select 
+                          style={S.input}
+                          value={newAssignment.assignment_type}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, assignment_type: e.target.value })}
+                        >
+                          <option value="Homework">Homework</option>
+                          <option value="Project">Project</option>
+                          <option value="Quiz">Quiz</option>
+                          <option value="Lab">Lab</option>
+                        </select>
+                      </div>
+
+                      <div style={S.inputGroup}>
+                        <label style={S.inputLabel}>Status *</label>
+                        <select 
+                          style={S.input}
+                          value={newAssignment.status}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, status: e.target.value })}
+                        >
+                          <option value="draft">Draft</option>
+                          <option value="published">Published</option>
+                        </select>
+                      </div>
+
+                      <div style={S.inputGroup}>
+                        <label style={S.inputLabel}>Academic Period *</label>
+                        <select 
+                          style={S.input}
+                          value={newAssignment.academic_period}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, academic_period: e.target.value })}
+                        >
+                          <option value="2026-2027">2026-2027</option>
+                          <option value="2027-2028">2027-2028</option>
+                        </select>
+                      </div>
+
+                      <div style={S.inputGroup}>
+                        <label style={S.inputLabel}>Maximum Marks *</label>
+                        <input 
+                          type="number" 
+                          style={S.input}
+                          value={newAssignment.max_marks}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, max_marks: e.target.value })}
+                        />
+                      </div>
+
+                      <div style={S.inputGroup}>
+                        <label style={S.inputLabel}>Due Date & Time *</label>
+                        <input 
+                          type="datetime-local" 
+                          style={S.input}
+                          value={newAssignment.due_date}
+                          onChange={(e) => setNewAssignment({ ...newAssignment, due_date: e.target.value })}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div style={S.formSection}>
+                    <h3 style={S.sectionTitle}><List size={20} weight="fill" color="#4f46e5" /> Description</h3>
+                    <div style={S.inputGroup}>
+                      <label style={S.inputLabel}>Text Description *</label>
+                      <textarea 
+                        placeholder="Enter description and details..." 
+                        style={S.richTextPlaceholder}
+                        value={newAssignment.description}
+                        onChange={(e) => setNewAssignment({ ...newAssignment, description: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '16px', marginTop: '40px' }}>
+                    <button 
+                      onClick={handleCreateAssignment} 
+                      style={S.saveBtn} 
+                      className="save-btn"
+                    >
+                      {editingItem ? 'Update Assignment' : 'Create Assignment'}
+                    </button>
+                    <button 
+                      onClick={() => setAssignmentViewMode('list')} 
+                      style={{ ...S.cancelBtn, flex: 1 }} 
+                      className="cancel-btn"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+
+
+
         {/* LAB USAGE ANALYTICS PAGE */}
         {activePage === 'lab-usage' && (
           <div style={S.tableCard} className="table-container animate-fadeIn">
@@ -1166,24 +1592,41 @@ function TeacherDashboard({ user, onLogout }) {
                     <th style={S.th}>COURSE</th>
                     <th style={S.th}>CLASS</th>
                     <th style={S.th}>REQUESTED</th>
-                    <th style={{ ...S.th, textAlign: 'right' }}>ACTIONS</th>
+                    <th style={S.th}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pendingEnrollments.map(enrollment => (
                     <tr key={enrollment.enrollment_id} style={S.tableRow}>
-                      <td style={S.tdName}>{enrollment.student_name}</td>
+                      <td style={S.td}>
+                        <div style={S.studentInfo}>
+                          <div style={S.avatarPlaceholder}>{enrollment.student_name.charAt(0)}</div>
+                          <span style={S.studentName}>{enrollment.student_name}</span>
+                        </div>
+                      </td>
                       <td style={S.td}>{enrollment.student_email}</td>
-                      <td style={S.td}><span style={S.examType}>{enrollment.course_title}</span></td>
-                      <td style={S.td}>{enrollment.class_name} {enrollment.class_section ? `(${enrollment.class_section})` : ''}</td>
+                      <td style={S.td}>
+                        <span style={S.courseBadge}>{enrollment.course_title}</span>
+                      </td>
+                      <td style={S.td}>
+                        <span style={S.classBadge}>{enrollment.class_name} ({enrollment.class_section})</span>
+                      </td>
                       <td style={S.td}>{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
-                      <td style={{ ...S.td, textAlign: 'right' }}>
-                        <div style={S.pendingActions}>
-                          <button onClick={() => handleApproveEnrollment(enrollment.enrollment_id)} style={S.approveBtn} className="approve-btn">
-                            <CheckCircle size={14} /> Approve
+                      <td style={S.td}>
+                        <div style={S.actionGroup}>
+                          <button 
+                            onClick={() => handleApproveEnrollment(enrollment.enrollment_id)} 
+                            style={S.approveBtn} 
+                            className="approve-btn"
+                          >
+                            <span style={S.btnIcon}>✓</span> Approve
                           </button>
-                          <button onClick={() => handleRejectEnrollment(enrollment.enrollment_id)} style={S.rejectBtn} className="reject-btn">
-                            <X size={14} /> Reject
+                          <button 
+                            onClick={() => handleRejectEnrollment(enrollment.enrollment_id)} 
+                            style={S.rejectBtn} 
+                            className="reject-btn"
+                          >
+                            <span style={S.btnIcon}>✕</span> Reject
                           </button>
                         </div>
                       </td>
@@ -2409,6 +2852,62 @@ const S = {
     color: '#64748b',
   },
 
+  timetableContainer: {
+    padding: '24px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '32px',
+  },
+  daySection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
+  },
+  dayHeading: {
+    fontSize: '1.1rem',
+    fontWeight: '800',
+    color: '#1e293b',
+    borderLeft: '4px solid #4f46e5',
+    paddingLeft: '12px',
+    margin: '0 0 4px 0',
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+  },
+  timetableSlot: {
+    background: '#f8fafc',
+    borderRadius: '20px',
+    padding: '20px 24px',
+    border: '1px solid #e2e8f0',
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    transition: 'all 0.2s ease',
+  },
+  courseTitle: {
+    fontSize: '1.05rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    display: 'block',
+    marginBottom: '6px',
+  },
+  roomInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    fontSize: '0.85rem',
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  classBadge: {
+    background: '#e0e7ff',
+    color: '#4338ca',
+    padding: '6px 14px',
+    borderRadius: '12px',
+    fontSize: '0.8rem',
+    fontWeight: '800',
+    boxShadow: '0 2px 4px rgba(79, 70, 229, 0.1)',
+  },
+
   addBtn: {
     background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
     color: '#fff',
@@ -2570,11 +3069,6 @@ const S = {
     textAlign: 'center',
   },
 
-  actionGroup: {
-    display: 'flex',
-    gap: '8px',
-    justifyContent: 'flex-end',
-  },
 
   iconBtn: {
     background: 'none',
@@ -2648,14 +3142,6 @@ const S = {
     textTransform: 'capitalize',
   },
 
-  gradeBadge: {
-    background: '#e0e7ff',
-    color: '#4338ca',
-    padding: '4px 10px',
-    borderRadius: '12px',
-    fontWeight: '800',
-    fontSize: '0.8rem',
-  },
 
   emptyTableCell: {
     padding: '40px',
@@ -2663,145 +3149,324 @@ const S = {
     color: '#94a3b8',
   },
 
-  // Assignments
-  dueDate: {
-    fontWeight: '600',
-    fontSize: '0.9rem',
+  // Redesigned Assignments
+  assignmentGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gap: '24px',
+    padding: '24px',
   },
-
-  statusBadge: {
-    padding: '4px 10px',
-    borderRadius: '30px',
-    fontSize: '0.7rem',
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    display: 'inline-block',
-  },
-
-  submissionBtn: {
-    background: '#e0e7ff',
-    color: '#4338ca',
-    border: 'none',
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontWeight: '700',
-    fontSize: '0.7rem',
+  assignmentCard: {
+    background: '#fff',
+    borderRadius: '24px',
+    border: '1px solid #e2e8f0',
+    borderTop: '6px solid #4f46e5',
+    padding: '28px',
+    boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    position: 'relative',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '16px',
     cursor: 'pointer',
+    overflow: 'hidden',
+  },
+  assignmentCardHeader: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  assignmentTags: {
+    display: 'flex',
+    gap: '8px',
+    alignItems: 'center',
+    marginBottom: '8px',
+  },
+  tagHomework: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 14px',
+    borderRadius: '12px',
+    background: '#f1f5f9',
+    color: '#64748b',
+    fontSize: '0.75rem',
+    fontWeight: '800',
+  },
+  tagPublished: {
+    padding: '6px 14px',
+    borderRadius: '12px',
+    background: '#dcfce7',
+    color: '#166534',
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  },
+  assignmentCardTitle: {
+    fontSize: '1.25rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: 0,
+    lineHeight: '1.4',
+  },
+  assignmentCardInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    padding: '16px 0',
+  },
+  dueInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    color: '#64748b',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+  },
+  dueIconWrapper: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '10px',
+    background: '#fef2f2',
+    color: '#ef4444',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submissionCounterBox: {
+    background: '#fffbeb',
+    padding: '12px 16px',
+    borderRadius: '16px',
+    border: '1px solid #fef3c7',
+    color: '#92400e',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+  },
+  assignmentCardActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    marginTop: 'auto',
+  },
+  viewSubBtn: {
+    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
+    color: '#fff',
+    border: 'none',
+    padding: '14px',
+    borderRadius: '18px',
+    fontWeight: '800',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    transition: 'all 0.3s ease',
+    boxShadow: '0 8px 15px -4px rgba(79, 70, 229, 0.4)',
+  },
+  editAssignBtn: {
+    background: '#f8fafc',
+    color: '#334155',
+    border: '1px solid #e2e8f0',
+    padding: '14px',
+    borderRadius: '18px',
+    fontWeight: '800',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
     transition: 'all 0.2s ease',
   },
 
-  // Timetable
-  timetableContainer: {
-    padding: '0 32px 32px',
-  },
-
-  daySection: {
-    marginBottom: '28px',
-  },
-
-  dayHeading: {
-    fontSize: '0.9rem',
-    fontWeight: '800',
-    color: '#1e293b',
-    marginBottom: '16px',
-    paddingBottom: '8px',
-    borderBottom: '2px solid #f1f5f9',
-  },
-
-  timetableSlot: {
-    background: '#f8fafc',
-    padding: '16px 24px',
-    borderRadius: '18px',
+  // Split View Submissions
+  submissionSplitView: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    background: '#fff',
+    borderRadius: '32px',
+    overflow: 'hidden',
+    height: 'auto',
+    minHeight: 'calc(100vh - 180px)',
+    boxShadow: '0 20px 50px -15px rgba(0,0,0,0.08)',
     border: '1px solid #e2e8f0',
+  },
+  studentListPane: {
+    flex: '1 1 350px',
+    borderRight: '1px solid #f1f5f9',
+    maxHeight: 'calc(100vh - 180px)',
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    background: '#f8fafc',
+  },
+  paneHeader: {
+    padding: '24px 28px',
+    borderBottom: '1px solid #f1f5f9',
+    background: '#fff',
+    position: 'sticky',
+    top: 0,
+    zIndex: 5,
+  },
+  paneTitle: {
+    fontSize: '1rem',
+    fontWeight: '800',
+    color: '#0f172a',
+    margin: 0,
+  },
+  studentList: {
+    padding: '16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  studentItem: (active) => ({
+    padding: '20px',
+    borderRadius: '20px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    background: active ? '#fff' : 'transparent',
+    border: '1px solid',
+    borderColor: active ? '#e2e8f0' : 'transparent',
+    boxShadow: active ? '0 10px 15px -5px rgba(0,0,0,0.05)' : 'none',
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '12px',
-  },
-
-  courseTitle: {
-    fontWeight: '700',
-    color: '#0f172a',
-    display: 'block',
-    marginBottom: '4px',
-  },
-
-  roomInfo: {
-    fontSize: '0.8rem',
-    color: '#64748b',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-  },
-
-  classBadge: {
-    background: '#0f172a',
-    color: '#fff',
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontSize: '0.7rem',
-    fontWeight: '700',
-  },
-
-  // Pending
-  loadingContainer: {
+  }),
+  studentItemInfo: {
     display: 'flex',
     flexDirection: 'column',
+    gap: '4px',
+  },
+  studentItemName: {
+    fontWeight: '700',
+    color: '#0f172a',
+    fontSize: '0.95rem',
+  },
+  studentItemId: {
+    fontSize: '0.75rem',
+    color: '#4f46e5',
+    fontWeight: '700',
+  },
+  studentItemDate: {
+    fontSize: '0.7rem',
+    color: '#94a3b8',
+    marginTop: '4px',
+  },
+  gradingPane: {
+    flex: 1,
+    padding: '40px',
+    overflowY: 'auto',
+    background: '#fff',
+  },
+  gradingHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '32px',
+    paddingBottom: '24px',
+    borderBottom: '1px solid #f1f5f9',
+  },
+  gradableInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  gradableName: {
+    fontSize: '1.5rem',
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  gradableSubText: {
+    color: '#64748b',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+  },
+  statusText: {
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    color: '#64748b',
+    textAlign: 'right',
+  },
+  submissionContent: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '32px',
+  },
+  contentSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+  },
+  sectionLabel: {
+    fontSize: '0.9rem',
+    fontWeight: '800',
+    color: '#1e293b',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  textSubmission: {
+    background: '#f8fafc',
+    padding: '24px',
+    borderRadius: '24px',
+    border: '1px solid #e2e8f0',
+    fontSize: '0.95rem',
+    lineHeight: '1.6',
+    color: '#334155',
+    whiteSpace: 'pre-wrap',
+  },
+  attachmentCard: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '16px',
+    padding: '16px 24px',
+    background: '#fff',
+    borderRadius: '20px',
+    border: '1px solid #e2e8f0',
+    marginBottom: '16px',
+  },
+  fileIcon: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '14px',
+    background: '#eff6ff',
+    color: '#3b82f6',
+    display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '60px',
-    gap: '16px',
   },
-
-  loadingSpinner: {
-    width: '40px',
-    height: '40px',
-    border: '3px solid #e2e8f0',
-    borderTop: '3px solid #4f46e5',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
+  filePreview: {
+    marginTop: '16px',
+    borderRadius: '24px',
+    overflow: 'hidden',
+    border: '1px solid #e2e8f0',
+    background: '#f8fafc',
+    padding: '12px',
   },
-
-  pendingActions: {
+  previewImg: {
+    width: '100%',
+    height: 'auto',
+    borderRadius: '16px',
+    display: 'block',
+  },
+  gradingForm: {
+    marginTop: '40px',
+    padding: '32px',
+    background: '#f8fafc',
+    borderRadius: '32px',
+    border: '1px solid #e2e8f0',
     display: 'flex',
-    gap: '8px',
-    justifyContent: 'flex-end',
-  },
-
-  approveBtn: {
-    background: '#22c55e',
-    color: '#fff',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '30px',
-    fontWeight: '700',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 4px 10px -2px rgba(34, 197, 94, 0.3)',
-  },
-
-  rejectBtn: {
-    background: '#ef4444',
-    color: '#fff',
-    border: 'none',
-    padding: '8px 16px',
-    borderRadius: '30px',
-    fontWeight: '700',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
-    transition: 'all 0.2s ease',
-    boxShadow: '0 4px 10px -2px rgba(239, 68, 68, 0.3)',
+    flexDirection: 'column',
+    gap: '24px',
   },
 
   // Profile
   profileCard: {
+
     background: '#fff',
     borderRadius: '32px',
     border: '1px solid #e2e8f0',
@@ -3026,6 +3691,133 @@ const S = {
     fontSize: '0.95rem',
     transition: 'all 0.3s ease',
     boxShadow: '0 10px 20px -8px rgba(79, 70, 229, 0.5)',
+  },
+
+  createFormContainer: {
+    background: '#fff',
+    borderRadius: '24px',
+    border: '1px solid #e2e8f0',
+    padding: 'min(40px, 5vw)',
+    maxWidth: '1000px',
+    margin: '0 auto',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.03)',
+  },
+  formGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+    gap: '24px',
+  },
+  fullWidth: {
+    gridColumn: '1 / -1',
+  },
+  richTextPlaceholder: {
+    minHeight: '300px',
+    border: '2px solid #f1f5f9',
+    borderRadius: '20px',
+    padding: '20px',
+    fontSize: '1rem',
+    width: '100%',
+    fontFamily: 'inherit',
+    resize: 'vertical',
+  },
+  attachmentArea: {
+    border: '2px dashed #e2e8f0',
+    borderRadius: '20px',
+    padding: '32px',
+    textAlign: 'center',
+    background: '#f8fafc',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  backToLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    color: '#64748b',
+    textDecoration: 'none',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    marginBottom: '12px',
+    cursor: 'pointer',
+    background: 'none',
+    border: 'none',
+  },
+
+  // Premium Table UI
+  studentInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
+  avatarPlaceholder: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
+    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '0.85rem',
+    fontWeight: '700',
+  },
+  studentName: {
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  courseBadge: {
+    background: '#eef2ff',
+    color: '#4f46e5',
+    padding: '4px 12px',
+    borderRadius: '20px',
+    fontSize: '0.75rem',
+    fontWeight: '600',
+    border: '1px solid #e0e7ff',
+  },
+  classBadge: {
+    background: '#f8fafc',
+    color: '#64748b',
+    padding: '4px 10px',
+    borderRadius: '6px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    border: '1px solid #e2e8f0',
+  },
+  actionGroup: {
+    display: 'flex',
+    gap: '10px',
+  },
+  approveBtn: {
+    padding: '8px 16px',
+    background: '#10b981',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '30px',
+    cursor: 'pointer',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 6px -1px rgba(16, 185, 129, 0.2)',
+  },
+  rejectBtn: {
+    padding: '8px 16px',
+    background: '#fff',
+    color: '#ef4444',
+    border: '1px solid #fee2e2',
+    borderRadius: '30px',
+    cursor: 'pointer',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    transition: 'all 0.2s ease',
+  },
+  btnIcon: {
+    fontSize: '0.9rem',
   },
 
   // Submission modal extras
