@@ -8,7 +8,7 @@ import {
   Pulse, GraduationCap, CalendarBlank, Users, ChartLine,
   CheckCircle, XCircle, DotsThreeOutline, Clock, Star,
   Warning, Bell, Gear, Eye, EyeSlash, SquaresFour,
-  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask
+  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask, X
 } from "@phosphor-icons/react";
 
 import API_BASE_URL from "../config/api";
@@ -533,8 +533,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
       {/* Sidebar */}
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-          <span style={S.logoText}>Department<span style={S.logoAccent}>Hub</span></span>
+          <span style={S.logoText}>HITech</span>
         </div>
 
         <div style={S.principalBadge}>
@@ -2039,17 +2038,17 @@ const S = {
   },
 
   logoIcon: {
-    background: 'linear-gradient(135deg, #7c3aed, #a78bfa)',
-    padding: '10px',
-    borderRadius: '14px',
+    width: '70px',
+    height: '70px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 20px -5px rgba(124, 58, 237, 0.4)',
+    overflow: 'hidden',
+    borderRadius: '12px',
   },
 
   logoText: {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: '800',
     letterSpacing: '-0.02em',
   },

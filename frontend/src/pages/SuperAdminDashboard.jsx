@@ -350,8 +350,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       {/* Sidebar */}
       <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
-          <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
+          <span style={S.logoText}>HITech</span>
         </div>
         
         <div style={S.globalBadge}>
@@ -1587,17 +1586,17 @@ const S = {
   },
   
   logoIcon: {
-    background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-    padding: '10px',
-    borderRadius: '14px',
+    width: '70px',
+    height: '70px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)',
+    overflow: 'hidden',
+    borderRadius: '12px',
   },
   
   logoText: {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: '800',
     letterSpacing: '-0.02em',
   },

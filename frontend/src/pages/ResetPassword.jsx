@@ -136,7 +136,6 @@ function ResetPassword() {
         {/* Left Side Branding */}
         <div className="branding-section">
           <div className="brand-header">
-            <div className="logo-wrapper"><GraduationCap size={32} weight="duotone" /></div>
             <span className="brand-name">HITech</span>
           </div>
           <div className="branding-body">

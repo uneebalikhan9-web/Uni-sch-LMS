@@ -111,9 +111,11 @@ function StudentAssignments() {
   return (
     <div className="dashboard-container">
       <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>HITech</h2>
-          <p className="sidebar-subtitle">Student Portal</p>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#1A1D1F' }}>HITech</h2>
+            <p className="sidebar-subtitle" style={{ margin: 0, fontSize: '12px', color: '#6F767E', fontWeight: '500' }}>Student Portal</p>
+          </div>
         </div>
         
         <div className="sidebar-section">

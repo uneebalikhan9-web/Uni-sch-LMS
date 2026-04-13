@@ -100,9 +100,11 @@ function Analytics() {
     <div className="dashboard-container">
       {/* Sidebar */}
       <div className="sidebar">
-        <div className="sidebar-header">
-          <h2>HITech</h2>
-          <p className="sidebar-subtitle">Learning Portal</p>
+        <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#1A1D1F' }}>HITech</h2>
+            <p className="sidebar-subtitle" style={{ margin: 0, fontSize: '12px', color: '#6F767E', fontWeight: '500' }}>Learning Portal</p>
+          </div>
         </div>
         
         <div className="sidebar-section">

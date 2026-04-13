@@ -325,7 +325,6 @@
         <ResponsiveStyles />
         <aside style={sidebarStyle} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <div style={logoAreaStyle}>
-            <div style={logoIconStyle}><GraduationCap size={20} weight="fill" /></div>
             <span>HITech</span>
           </div>
 
@@ -613,8 +612,8 @@
   // --- STYLES (Wahi hain jo humne set kiye thay) ---
   const containerStyle = { display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc', color: '#0f172a', fontFamily: "'Plus Jakarta Sans', sans-serif" };
   const sidebarStyle = { width: '280px', backgroundColor: '#0f172a', color: '#fff', display: 'flex', flexDirection: 'column', padding: '32px 20px' };
-  const logoAreaStyle = { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px', fontWeight: '800', fontSize: '20px' };
-  const logoIconStyle = { background: '#4f46e5', padding: '8px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' };
+  const logoAreaStyle = { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '48px', fontWeight: '800', fontSize: '24px', letterSpacing: '-0.5px' };
+  const logoIconStyle = { width: '70px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', borderRadius: '12px' };
   const SidebarBtn = ({ active, icon, label, onClick }) => (
     <button 
       onClick={onClick} 

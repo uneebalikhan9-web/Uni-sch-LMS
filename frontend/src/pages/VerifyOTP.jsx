@@ -111,9 +111,6 @@ function VerifyOTP() {
       <div className="otp-glass-card animate-fadeIn">
         <div className="otp-branding">
           <div className="brand-header">
-            <div className="logo-wrapper">
-              <GraduationCap size={32} weight="duotone" />
-            </div>
             <span className="brand-name">HITech</span>
           </div>
           <div className="branding-body">

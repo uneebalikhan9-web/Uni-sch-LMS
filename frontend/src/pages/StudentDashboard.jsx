@@ -6,7 +6,7 @@ import {
   ChartLineUp, SignOut, CalendarBlank,
   ArrowLeft, User, Phone, VideoCamera, DotsThreeVertical, Buildings, 
   CaretRight, IdentificationCard, DotsThreeOutline, PlusCircle, ClipboardText, FileText, Upload, X,
-  ChartLine, Users, Star, Warning, Bell, TrendUp, Pulse, ChatCircle
+  ChartLine, Users, Star, Warning, Bell, TrendUp, Pulse, ChatCircle, Flask, TerminalWindow
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import LabPlayer from './LabPlayer';
@@ -1021,8 +1021,8 @@ function StudentDashboard({ user, onLogout }) {
                      availableLabs.map(lab => (
                        <div key={lab.id} style={S.courseCard}>
                           <div style={S.courseCardHeader}>
-                            <div style={{...S.courseIcon, fontSize: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px'}}>
-                              {lab.icon || '🔗'}
+                            <div style={{...S.courseIcon, fontSize: '32px', background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', width: '48px', height: '48px', color: '#4f46e5'}}>
+                              {lab.icon === 'Flask' ? <Flask weight="duotone" /> : lab.icon === 'Terminal' ? <TerminalWindow weight="duotone" /> : '🔗'}
                             </div>
                             <span style={S.availableTag}>Ready</span>
                           </div>
@@ -1075,8 +1075,7 @@ function StudentDashboard({ user, onLogout }) {
 
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-          <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
+          <span style={S.logoText}>HITech</span>
         </div>
 
         <div style={S.studentBadge}>
@@ -1330,17 +1329,17 @@ const S = {
   },
 
   logoIcon: {
-    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
-    padding: '10px',
-    borderRadius: '14px',
+    width: '70px',
+    height: '70px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)',
+    overflow: 'hidden',
+    borderRadius: '12px',
   },
 
   logoText: {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: '800',
     letterSpacing: '-0.02em',
   },

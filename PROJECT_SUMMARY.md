@@ -1,6 +1,6 @@
-# Hitech LMS - Technical Project Overview
+# HITech LMS - Technical Project Overview
 
-This document provides a detailed technical summary of the **Hitech LMS** (Learning Management System). It serves as a "Cheat Sheet" for understanding the architecture, features, and implementation details of the platform.
+This document provides a detailed technical summary of the **HITech LMS** (Learning Management System). It serves as a "Cheat Sheet" for understanding the architecture, features, and implementation details of the platform.
 
 ---
 

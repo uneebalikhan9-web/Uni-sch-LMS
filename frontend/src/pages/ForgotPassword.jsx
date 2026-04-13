@@ -77,9 +77,6 @@ function ForgotPassword() {
         {/* Left Branding Side */}
         <div className="branding-section">
           <div className="brand-header">
-            <div className="logo-wrapper">
-              <GraduationCap size={32} weight="duotone" />
-            </div>
             <span className="brand-name">HITech</span>
           </div>
           
