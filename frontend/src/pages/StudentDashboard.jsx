@@ -270,7 +270,7 @@ function StudentDashboard({ user, onLogout }) {
         setExpandedClassId(classId); // Auto-expand to show courses
         fetchClassSubjects(classId);
       } else {
-        showToast(data.message || 'Registration failed', 'error');
+        showToast(data.sqlError || data.message || 'Registration failed', 'error');
       }
     } catch (error) { 
       showToast('Registration failed', 'error'); 

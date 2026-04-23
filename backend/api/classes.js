@@ -112,8 +112,19 @@ router.post('/register', isStudent, async (req, res) => {
 
     res.status(201).json({ success: true, message: 'Successfully registered for class' });
   } catch (error) {
-    console.error('Class registration error:', error);
-    res.status(500).json({ success: false, message: 'Error registering for class' });
+    console.error('CRITICAL: Class registration error details:', {
+      message: error.message,
+      code: error.code,
+      sql: error.sql,
+      sqlMessage: error.sqlMessage,
+      student_id: req.user.id,
+      class_id: req.body.class_id
+    });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error registering for class',
+      sqlError: error.sqlMessage // Sending this will help us see the error in the frontend
+    });
   }
 });
 
