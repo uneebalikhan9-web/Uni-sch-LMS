@@ -236,8 +236,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
       {/* Sidebar - Navy blue gradient */}
       <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><Briefcase size={24} weight="fill" /></div>
-          <span style={S.logoText}>BD<span style={S.logoAccent}>Portal</span></span>
+          <span style={S.logoText}>HITech</span>
         </div>
 
         <div style={S.bdBadge}>
@@ -1366,17 +1365,17 @@ const S = {
   },
 
   logoIcon: {
-    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
-    padding: '10px',
-    borderRadius: '14px',
+    width: '70px',
+    height: '70px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 10px 20px -5px rgba(79, 70, 229, 0.4)',
+    overflow: 'hidden',
+    borderRadius: '12px',
   },
 
   logoText: {
-    fontSize: '1.4rem',
+    fontSize: '1.6rem',
     fontWeight: '800',
     letterSpacing: '-0.02em',
   },

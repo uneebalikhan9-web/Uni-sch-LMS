@@ -1,4 +1,4 @@
-# University LMS - Learning Management System
+# HITech LMS - Learning Management System
 
 A comprehensive, modern Learning Management System designed for universities with role-based access for Admins, Teachers, and Students.
 
@@ -41,7 +41,7 @@ A comprehensive, modern Learning Management System designed for universities wit
 - Clean and intuitive navigation
 - Real-time updates
 
-## 🛠️ Tech Stack
+## 🛠️ HITech LMS Tech Stack
 
 **Frontend:**
 - React 18 with Vite
