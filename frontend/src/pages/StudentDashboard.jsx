@@ -1076,7 +1076,7 @@ function StudentDashboard({ user, onLogout }) {
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
           <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-          <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
+          <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
         </div>
 
         <div style={S.studentBadge}>

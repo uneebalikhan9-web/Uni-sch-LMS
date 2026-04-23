@@ -8,7 +8,7 @@ import {
   Pulse, GraduationCap, CalendarBlank, Users, ChartLine,
   CheckCircle, XCircle, DotsThreeOutline, Clock, Star,
   Warning, Bell, Gear, Eye, EyeSlash, SquaresFour,
-  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask
+  Check, ArrowsCounterClockwise, Download, ChatCircle, FileText, ChartBar, WarningCircle, Flask, X
 } from "@phosphor-icons/react";
 
 import API_BASE_URL from "../config/api";
@@ -63,6 +63,8 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
   const [selectedReport, setSelectedReport] = useState(null);
   const [reportDetails, setReportDetails] = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
+  const [showClassCoursesModal, setShowClassCoursesModal] = useState(false);
+  const [selectedClassForCourses, setSelectedClassForCourses] = useState(null);
   const { showToast } = useToast();
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -177,6 +179,11 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
       },
       isDanger: false
     });
+  };
+
+  const openClassCoursesModal = (classItem) => {
+    setSelectedClassForCourses(classItem);
+    setShowClassCoursesModal(true);
   };
 
   useEffect(() => { if (activeTab === 'course_reports') fetchCampusReports(); }, [activeTab]);
@@ -515,6 +522,10 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
           -ms-overflow-style: none;
           scrollbar-width: none;
         }
+        .timetable-entry-card:hover .entry-actions-overlay {
+          opacity: 1 !important;
+          transform: translateY(0) !important;
+        }
       `}</style>
       {/* Animated Background Orbs */}
       <div style={S.bgOrb1}></div>
@@ -777,7 +788,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                           <h4 style={S.dayTitle}>{day}</h4>
                           <div style={S.dayEntries}>
                             {timetables.filter(t => t.day_of_week === day).map(entry => (
-                              <div key={entry.id} style={{
+                              <div key={entry.id} className="timetable-entry-card" style={{
                                 ...S.timetableEntry,
                                 borderLeft: `4px solid #7c3aed`,
                                 background: '#fff'
@@ -800,7 +811,8 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                                   display: 'flex',
                                   gap: '4px',
                                   opacity: 0,
-                                  transition: 'all 0.2s ease',
+                                  transform: 'translateY(-10px)',
+                                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                 }} className="entry-actions-overlay">
                                   <button 
                                     style={{...S.entryDelete, position: 'static', opacity: 1, background: '#f0f9ff', color: '#0369a1'}} 
@@ -902,7 +914,18 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                                 <div style={{fontSize: '11px', color: '#64748b'}}>{item.lab_name}</div>
                               </>
                             ) : (
-                              item.name || item.title
+                              <div 
+                                style={{display:'flex', flexDirection:'column', cursor: 'pointer'}} 
+                                onClick={() => activeTab === 'classes' ? openClassCoursesModal(item) : null}
+                                className={activeTab === 'classes' ? "class-name-clickable" : ""}
+                              >
+                                <span>{item.name || item.title}</span>
+                                {activeTab === 'classes' && (
+                                  <span style={{fontSize: '10px', color: '#7c3aed', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px'}}>
+                                    <BookOpen size={10} weight="fill" /> {item.course_count || 0} Courses
+                                  </span>
+                                )}
+                              </div>
                             )}
                           </div>
                         </td>
@@ -1601,6 +1624,78 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
             <div style={S.modalFooter}>
               <button style={S.cancelBtn} onClick={() => { setShowReportModal(false); setReportDetails(null); }}>Close Report</button>
               <button style={{...S.submitBtn, background:'#4f46e5', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.3)'}} onClick={() => window.print()}>🖨️ Export as PDF</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLASS COURSES POPUP */}
+      {showClassCoursesModal && selectedClassForCourses && (
+        <div style={S.modalOverlay} onClick={() => setShowClassCoursesModal(false)} className="modal-overlay">
+          <div style={{...S.modal, width: '550px'}} onClick={e => e.stopPropagation()} className="modal animate-slideUp">
+            <div style={S.modalHeader}>
+              <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                <div style={{width:'48px', height:'48px', borderRadius:'16px', background:'#f5f3ff', display:'flex', alignItems:'center', justifyContent:'center', color:'#7c3aed'}}>
+                  <Buildings size={24} weight="duotone" />
+                </div>
+                <div>
+                  <h2 style={S.modalTitle}>{selectedClassForCourses.name}</h2>
+                  <p style={{margin:0, fontSize:'14px', color:'#64748b'}}>{selectedClassForCourses.section} • Active Courses</p>
+                </div>
+              </div>
+              <button style={S.modalClose} onClick={() => setShowClassCoursesModal(false)}>×</button>
+            </div>
+
+            <div style={{padding: '24px', maxHeight: '60vh', overflowY: 'auto'}} className="hidden-scrollbar">
+              <div style={{display:'flex', flexDirection:'column', gap:'16px'}}>
+                {courses.filter(c => c.class_id === selectedClassForCourses.id).length > 0 ? (
+                  courses.filter(c => c.class_id === selectedClassForCourses.id).map(course => (
+                    <div key={course.id} style={{
+                      padding: '20px',
+                      borderRadius: '24px',
+                      background: '#fff',
+                      border: '1px solid #f1f5f9',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
+                    }}>
+                      <div style={{display:'flex', alignItems:'center', gap:'16px'}}>
+                        <div style={{width:'40px', height:'40px', borderRadius:'12px', background: 'rgba(124, 58, 237, 0.1)', display:'flex', alignItems:'center', justifyContent:'center', color:'#7c3aed'}}>
+                          <BookOpen size={20} weight="duotone" />
+                        </div>
+                        <div>
+                          <h4 style={{margin:0, fontSize:'15px', color:'#0f172a', fontWeight:700}}>{course.title}</h4>
+                          <p style={{margin:'2px 0 0', fontSize:'13px', color:'#64748b'}}>Teacher: <strong>{course.teacher_name || 'Not assigned'}</strong></p>
+                        </div>
+                      </div>
+                      <span style={{
+                        ...S.statusBadge,
+                        background: course.status === 'active' ? '#dcfce7' : '#fee2e2',
+                        color: course.status === 'active' ? '#166534' : '#991b1b',
+                        fontSize: '11px',
+                        padding: '4px 10px'
+                      }}>
+                        {course.status.toUpperCase()}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{...S.emptyState, padding: '40px 20px'}}>
+                    <BookOpen size={48} weight="duotone" color="#94a3b8" />
+                    <p style={{marginTop:'12px', color:'#64748b'}}>No courses assigned to this class yet.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div style={S.modalFooter}>
+              <button 
+                style={{...S.submitBtn, width: '100%', background: 'linear-gradient(135deg, #7c3aed, #a78bfa)', height: '48px'}} 
+                onClick={() => setShowClassCoursesModal(false)}
+              >
+                Close View
+              </button>
             </div>
           </div>
         </div>

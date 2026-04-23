@@ -239,22 +239,17 @@ router.get('/my-enrollments', verifyToken, async (req, res) => {
 router.get('/:courseId/students', verifyToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const { classId } = req.query;
 
-    let query = `
-      SELECT u.id, u.name, u.email, e.enrolled_at, e.status
-      FROM enrollments e
-      JOIN users u ON e.student_id = u.id
-      WHERE e.course_id = ? AND e.status = 'approved'
+    // Fetch all students who are in the class assigned to this course
+    const query = `
+      SELECT u.id, u.name, u.email
+      FROM users u
+      JOIN student_classes sc ON u.id = sc.student_id
+      JOIN courses c ON sc.class_id = c.class_id
+      WHERE c.id = ?
+      ORDER BY u.name
     `;
-    let params = [courseId];
-
-    if (classId) {
-      query += ` AND e.student_id IN (SELECT student_id FROM student_classes WHERE class_id = ?)`;
-      params.push(classId);
-    }
-
-    query += ` ORDER BY e.enrolled_at DESC`;
+    const params = [courseId];
 
     const [students] = await pool.query(query, params);
 

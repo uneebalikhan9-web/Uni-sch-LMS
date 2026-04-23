@@ -185,7 +185,7 @@ function ApplyPage() {
     <div style={S.page}>
       <div style={{ maxWidth: '860px', margin: '0 auto', padding: '0 20px' }}>
         <div style={S.heroSection}>
-          <div style={S.heroBadge}>🎓 HITech LMS</div>
+          <div style={S.heroBadge}>🎓 Lancers Tech LMS</div>
           <h1 style={S.heroTitle}>Join Our Teaching Team</h1>
           <p style={S.heroSubtitle}>We're looking for passionate educators to shape the future of learning. Browse open positions below.</p>
         </div>

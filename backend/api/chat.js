@@ -9,28 +9,63 @@ router.use(isChatUser);
 
 // Chat allowed for: admin, principal, teacher, student, bd_agent. NOT super_admin.
 
-// List users that current user can chat with (same department, exclude self and super_admin)
+// Helper function to get the visibility subquery/condition for a given user
+const getChatVisibilityFilter = (user) => {
+  const { id: myId, role, campus_id: campusId } = user;
+  
+  if (role === 'student') {
+    // Students see HOD/Admin of their campus + Teachers of their enrolled courses/classes. NO other students.
+    return {
+      condition: `
+        u.id != ? AND u.role != 'super_admin' AND (
+          (u.role IN ('admin', 'principal') AND u.campus_id = ?)
+          OR
+          (u.role = 'teacher' AND u.id IN (
+            SELECT c.teacher_id FROM courses c 
+            JOIN enrollments e ON c.id = e.course_id 
+            WHERE e.student_id = ? AND e.status = 'approved'
+            UNION
+            SELECT cl.teacher_id FROM classes cl 
+            JOIN student_classes sc ON cl.id = sc.class_id 
+            WHERE sc.student_id = ? AND sc.status = 'approved'
+          ))
+        )
+      `,
+      params: [myId, campusId, myId, myId]
+    };
+  } else if (role === 'teacher') {
+    // Teachers see HOD/Admin of their campus + Students in their campus.
+    return {
+      condition: `
+        u.id != ? AND u.role != 'super_admin' AND (
+          (u.role IN ('admin', 'principal') AND u.campus_id = ?)
+          OR
+          (u.role = 'student' AND u.campus_id = ?)
+        )
+      `,
+      params: [myId, campusId, campusId]
+    };
+  } else {
+    // Admins/Principals/BD see everyone in their campus (except super_admin)
+    return {
+      condition: `u.id != ? AND u.role != 'super_admin' AND u.campus_id = ?`,
+      params: [myId, campusId]
+    };
+  }
+};
+
+// List users that current user can chat with
 router.get('/users', async (req, res) => {
   try {
-    const myId = req.user.id;
-    const campusId = req.user.campus_id;
-
-    let query = `
-      SELECT id, name, email, role, campus_id, created_at
-      FROM users
-      WHERE id != ? AND role != 'super_admin'
+    const filter = getChatVisibilityFilter(req.user);
+    const query = `
+      SELECT u.id, u.name, u.email, u.role, u.campus_id, u.created_at
+      FROM users u
+      WHERE ${filter.condition}
+      ORDER BY u.name ASC
     `;
-    const params = [myId];
 
-    // Filter by campus if current user belongs to one
-    if (campusId) {
-      query += ` AND campus_id = ?`;
-      params.push(campusId);
-    }
-
-    query += ` ORDER BY name ASC`;
-
-    const [users] = await pool.query(query, params);
+    const [users] = await pool.query(query, filter.params);
     res.json({ success: true, users });
   } catch (err) {
     console.error('Chat users error:', err);
@@ -42,9 +77,9 @@ router.get('/users', async (req, res) => {
 router.get('/conversations', async (req, res) => {
   try {
     const myId = req.user.id;
-    const campusId = req.user.campus_id;
+    const filter = getChatVisibilityFilter(req.user);
 
-    let query = `
+    const query = `
       SELECT 
         u.id,
         u.name,
@@ -73,22 +108,12 @@ router.get('/conversations', async (req, res) => {
             (sender_id = u.id AND receiver_id = ?) OR
             (sender_id = ? AND receiver_id = u.id)
         )
-      WHERE 
-        u.id != ?
-        AND u.role != 'super_admin'
-    `;
-    const params = [myId, myId, myId, myId, myId, myId];
-
-    if (campusId) {
-      query += ` AND u.campus_id = ?`;
-      params.push(campusId);
-    }
-
-    query += `
+      WHERE ${filter.condition}
       ORDER BY 
         COALESCE(lm.created_at, '1970-01-01') DESC,
         u.name ASC
     `;
+    const params = [myId, myId, myId, myId, myId, ...filter.params];
 
     const [rows] = await pool.query(query, params);
 
@@ -180,10 +205,15 @@ router.post('/messages', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Cannot send message to this user' });
     }
 
-    // Department check: if sender has a campusId, receiver must match
-    const senderCampusId = req.user.campus_id;
-    if (senderCampusId && receiver.campus_id !== senderCampusId) {
-      return res.status(403).json({ success: false, message: 'Cannot chat with users from other departments' });
+    // Final validation: Ensure receiver is visible to sender based on new rules
+    const filter = getChatVisibilityFilter(req.user);
+    const [visibilityCheck] = await pool.query(
+      `SELECT id FROM users u WHERE u.id = ? AND (${filter.condition})`,
+      [receiverId, ...filter.params]
+    );
+
+    if (visibilityCheck.length === 0) {
+      return res.status(403).json({ success: false, message: 'Message delivery restricted: Recipient not in your permitted contact list.' });
     }
 
     const [result] = await pool.query(

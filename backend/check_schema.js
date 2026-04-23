@@ -1,18 +1,9 @@
-require('dotenv').config();
 const { pool } = require('./config/database');
 
 async function checkSchema() {
   try {
-    const tables = ['classes', 'courses', 'labs', 'users'];
-    for (const table of tables) {
-      console.log(`\n--- Schema for table: ${table} ---`);
-      try {
-        const [columns] = await pool.query(`DESCRIBE ${table}`);
-        console.table(columns);
-      } catch (err) {
-        console.error(`Error describing ${table}: ${err.message}`);
-      }
-    }
+    const [rows] = await pool.query('SHOW COLUMNS FROM student_classes');
+    console.log('Columns in student_classes:', rows.map(r => r.Field));
     process.exit(0);
   } catch (err) {
     console.error(err);

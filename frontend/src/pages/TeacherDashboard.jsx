@@ -8,7 +8,7 @@ import {
   PencilSimple, FileText, DotsThreeOutline, ChartLine, Users,
   Warning, Bell, Star, Download, Eye, EyeSlash, TrendUp, Chalkboard,
   ChatCircle, ChartBar, WarningCircle, Flask, Buildings, Check,
-  ArrowLeft, Circle
+  ArrowLeft, Circle, Table
 } from "@phosphor-icons/react";
 import { Chart } from "chart.js/auto";
 import ClassAttendance from './ClassAttendance';
@@ -77,6 +77,12 @@ function TeacherDashboard({ user, onLogout }) {
   const [bulkGradeHeader, setBulkGradeHeader] = useState({ exam_type: 'midterm', max_marks: 100, exam_date: new Date().toISOString().split('T')[0] })
   const [bulkGrades, setBulkGrades] = useState([]) // Array of { student_id, student_name, marks_obtained, remarks }
 
+  // Student Management State
+  const [campusStudents, setCampusStudents] = useState([])
+  const [loadingStudents, setLoadingStudents] = useState(false)
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false)
+  const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '', semester: '1' })
+
   // Chart references
   const chartRef = useRef(null)
   const chartInstance = useRef(null)
@@ -107,7 +113,42 @@ function TeacherDashboard({ user, onLogout }) {
     if (activePage === 'reports') {
       fetchMyReports()
     }
+    if (activePage === 'students') {
+      fetchCampusStudents()
+    }
   }, [activePage])
+
+  const fetchCampusStudents = async () => {
+    setLoadingStudents(true)
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/teachers/students`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (data.success) setCampusStudents(data.students || [])
+    } catch (e) { console.error(e) }
+    setLoadingStudents(false)
+  }
+
+  const handleAddStudent = async (e) => {
+    e.preventDefault()
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/teachers/students`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudent)
+      })
+      const data = await res.json()
+      if (data.success) {
+        showToast('Student added successfully!', 'success')
+        setShowAddStudentModal(false)
+        setNewStudent({ name: '', email: '', password: '', semester: '1' })
+        fetchCampusStudents()
+      } else {
+        showToast(data.message || 'Error adding student', 'error')
+      }
+    } catch (e) { showToast('Network error', 'error') }
+  }
 
   const fetchGlobalLabUsage = async () => {
     setLoadingLabs(true)
@@ -364,13 +405,15 @@ function TeacherDashboard({ user, onLogout }) {
   }
 
   const handleGradesCourseSelect = async (courseId) => {
-    const course = courses.find(c => c.id === parseInt(courseId))
-    setSelectedCourse(course)
-    
     if (!courseId) {
+      setSelectedCourse(null)
       setStudents([])
+      setGrades([])
       return
     }
+
+    const course = courses.find(c => c.id === parseInt(courseId))
+    setSelectedCourse(course)
     
     try {
       const response = await fetch(`${API_BASE_URL}/api/courses/${courseId}/students`, {
@@ -381,13 +424,31 @@ function TeacherDashboard({ user, onLogout }) {
       if (data.success) {
         setStudents(data.students || [])
       } else {
-        console.error('Failed to fetch students:', data.message);
         setStudents([])
       }
     } catch (error) { 
       console.error('Fetch students error for grades:', error)
       setStudents([])
     }
+  }
+
+  const handleManageGrades = async (course) => {
+    setSelectedCourse(course);
+    setActivePage('grades');
+    
+    // Fetch students
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/courses/${course.id}/students`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      const data = await response.json()
+      if (data.success) {
+        setStudents(data.students || [])
+      }
+    } catch (error) { console.error(error) }
+
+    // Fetch grades
+    fetchCourseGrades(course.id);
   }
 
   // --- ASSIGNMENT FUNCTIONS ---
@@ -565,7 +626,7 @@ function TeacherDashboard({ user, onLogout }) {
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
           <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-          <span style={S.logoText}>HI<span style={S.logoAccent}>Tech</span></span>
+          <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
         </div>
 
         <div style={S.teacherBadge}>
@@ -579,12 +640,12 @@ function TeacherDashboard({ user, onLogout }) {
           <SidebarBtn active={activePage === 'overview'} onClick={() => { setActivePage('overview'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Overview" count={null} />
           <SidebarBtn active={activePage === 'classes'} onClick={() => { setActivePage('classes'); setMobileMenuOpen(false); }} icon={<BookOpen size={20} />} label="My Classes" count={totalClasses} />
           <SidebarBtn active={activePage === 'class-attendance'} onClick={() => { setActivePage('class-attendance'); setMobileMenuOpen(false); }} icon={<ClipboardText size={20} />} label="Class Attendance" count={null} />
-          <SidebarBtn active={activePage === 'grades'} onClick={() => { setActivePage('grades'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Grades" count={grades.length} />
           <SidebarBtn active={activePage === 'assignments'} onClick={() => { setActivePage('assignments'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Assignments" count={totalAssignments} />
           <SidebarBtn active={activePage === 'timetable'} onClick={() => { setActivePage('timetable'); setMobileMenuOpen(false); }} icon={<Clock size={20} />} label="Time Table" count={timetable.length} />
           <SidebarBtn active={activePage === 'whiteboard'} onClick={() => { setActivePage('whiteboard'); setMobileMenuOpen(false); }} icon={<Chalkboard size={20} />} label="Whiteboard" count={null} />
           <SidebarBtn active={activePage === 'lab-usage'} onClick={() => { setActivePage('lab-usage'); setMobileMenuOpen(false); }} icon={<Pulse size={20} weight="duotone" />} label="Analytics" count={null} />
-          <SidebarBtn active={activePage === 'pending'} onClick={() => { setActivePage('pending'); setMobileMenuOpen(false); }} icon={<UserPlus size={20} />} label="Requests" count={pendingCount} />
+          <SidebarBtn active={activePage === 'students'} onClick={() => { setActivePage('students'); setMobileMenuOpen(false); }} icon={<Users size={20} />} label="Students" count={campusStudents.length || null} />
+          <SidebarBtn active={activePage === 'pending'} onClick={() => { setActivePage('pending'); setMobileMenuOpen(false); }} icon={<UserPlus size={20} />} label="Requests" count={pendingEnrollments.length || null} />
           <SidebarBtn active={activePage === 'reports'} onClick={() => { setActivePage('reports'); setMobileMenuOpen(false); }} icon={<ChartLine size={20} weight="duotone" />} label="Reports" count={myReports.length || null} />
           <SidebarBtn active={activePage === 'profile'} onClick={() => { setActivePage('profile'); setMobileMenuOpen(false); }} icon={<UserCircle size={20} />} label="Profile" count={null} />
         </nav>
@@ -820,10 +881,7 @@ function TeacherDashboard({ user, onLogout }) {
                           <td style={{ ...S.td, textAlign: 'right' }}>
                             <div style={S.actionGroup}>
                               <button 
-                                onClick={() => {
-                                  setSelectedCourse(course);
-                                  setActivePage('grades');
-                                }}
+                                onClick={() => handleManageGrades(course)}
                                 style={S.iconBtn}
                                 title="Manage Grades"
                               >
@@ -865,29 +923,34 @@ function TeacherDashboard({ user, onLogout }) {
           <div style={S.tableCard} className="table-container animate-fadeIn">
             <div style={S.tableHeader}>
               <div>
-                <h2 style={S.tableTitle}>
-                  <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
-                  Student Performance
-                </h2>
-                <p style={S.tableSubtitle}>Manage grades and exam results</p>
+                <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px'}}>
+                   <button onClick={() => setActivePage('classes')} style={{...S.iconBtn, background: '#fff', border: '1px solid #e2e8f0', width: '32px', height: '32px'}}>
+                      <ArrowLeft size={16} weight="bold" />
+                   </button>
+                   <h2 style={{...S.tableTitle, margin: 0}}>
+                    <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                    Student Performance
+                  </h2>
+                </div>
+                <p style={S.tableSubtitle}>Manage grades and exam results {selectedCourse ? `for ${selectedCourse.title}` : ''}</p>
               </div>
               {selectedCourse && (
                 <div style={{display:'flex', gap:'10px'}}>
                   <button onClick={() => {
                     // Initialize bulk grades with all students
-                    const initialBulk = students.map(s => ({
-                      student_id: s.id,
-                      student_name: s.name,
-                      marks_obtained: '',
-                      remarks: ''
-                    }));
+                    const initialBulk = students.map(s => {
+                      const existing = grades.find(g => g.student_id === s.id);
+                      return {
+                        student_id: s.id,
+                        student_name: s.name,
+                        marks_obtained: existing ? existing.marks_obtained : '',
+                        remarks: existing ? existing.remarks : ''
+                      };
+                    });
                     setBulkGrades(initialBulk);
                     setShowBulkGradeModal(true);
-                  }} style={{...S.addBtn, background: '#1e293b'}}>
-                    <List size={18} weight="bold" /> Bulk Grade
-                  </button>
-                  <button onClick={() => setShowGradeModal(true)} style={S.addBtn}>
-                    <PlusCircle size={18} /> Add Grade
+                  }} style={S.addBtn} className="add-btn">
+                    <Table size={18} weight="bold" /> Bulk Grade
                   </button>
                 </div>
               )}
@@ -905,7 +968,7 @@ function TeacherDashboard({ user, onLogout }) {
               >
                 <option value="">Select a course to view grades</option>
                 {courses.map(c => (
-                  <option key={c.id} value={c.title}>{c.title}</option>
+                  <option key={c.id} value={c.id}>{c.title}</option>
                 ))}
               </select>
             </div>
@@ -939,21 +1002,17 @@ function TeacherDashboard({ user, onLogout }) {
                       <th style={S.th}>MARKS</th>
                       <th style={S.th}>GRADE</th>
                       <th style={S.th}>DATE</th>
-                      <th style={{ ...S.th, textAlign: 'right' }}>ACTIONS</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {grades.map(g => (
-                      <tr key={g.id} style={S.tableRow}>
-                        <td style={S.tdName}>{g.student_name}</td>
-                        <td style={S.td}><span style={S.examType}>{g.exam_type}</span></td>
-                        <td style={S.td}>{g.marks_obtained}/{g.max_marks}</td>
-                        <td style={S.td}><span style={S.gradeBadge}>{g.grade_letter}</span></td>
-                        <td style={S.td}>{new Date(g.exam_date).toLocaleDateString()}</td>
-                        <td style={{ ...S.td, textAlign: 'right' }}>
-                          <button 
-                            style={S.iconBtn}
-                            onClick={() => {
+                    {students.map(s => {
+                      const g = grades.find(grade => grade.student_id === s.id);
+                      return (
+                        <tr 
+                          key={s.id} 
+                          style={{...S.tableRow, cursor: 'pointer'}}
+                          onClick={() => {
+                            if (g) {
                               setEditingItem(g);
                               setNewGrade({
                                 student_id: g.student_id,
@@ -963,17 +1022,32 @@ function TeacherDashboard({ user, onLogout }) {
                                 exam_date: new Date(g.exam_date).toISOString().split('T')[0],
                                 remarks: g.remarks || ''
                               });
-                              setShowGradeModal(true);
-                            }}
-                          >
-                            <PencilSimple size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {grades.length === 0 && (
+                            } else {
+                              setEditingItem(null);
+                              setNewGrade({ ...newGrade, student_id: s.id, exam_date: new Date().toISOString().split('T')[0] });
+                            }
+                            setShowGradeModal(true);
+                          }}
+                        >
+                          <td style={{...S.tdName, color: '#4f46e5'}}>{s.name}</td>
+                          <td style={S.td}>
+                            {g ? <span style={S.examType}>{g.exam_type}</span> : <span style={{color: '#94a3b8'}}>—</span>}
+                          </td>
+                          <td style={S.td}>
+                            {g ? `${g.marks_obtained}/${g.max_marks}` : <span style={{color: '#94a3b8', fontSize: '0.8rem'}}>Not Graded</span>}
+                          </td>
+                          <td style={S.td}>
+                            {g ? <span style={S.gradeBadge}>{g.grade_letter}</span> : <span style={{color: '#94a3b8'}}>—</span>}
+                          </td>
+                          <td style={S.td}>
+                            {g ? new Date(g.exam_date).toLocaleDateString() : <span style={{color: '#94a3b8'}}>—</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {students.length === 0 && (
                       <tr>
-                        <td colSpan="6" style={S.emptyTableCell}>No grades recorded yet</td>
+                        <td colSpan="6" style={S.emptyTableCell}>No students enrolled in this course yet</td>
                       </tr>
                     )}
                   </tbody>
@@ -1203,7 +1277,7 @@ function TeacherDashboard({ user, onLogout }) {
                           <div style={S.gradableInfo}>
                             <h2 style={S.gradableName}>{selectedSubmissionStudent.student_name}</h2>
                             <p style={S.gradableSubText}>
-                              Student ID: {selectedSubmissionStudent.student_id_number || "HIT-" + selectedSubmissionStudent.student_id} • {selectedSubmissionStudent.student_email}
+                              Student ID: {selectedSubmissionStudent.student_id_number || "LT-" + selectedSubmissionStudent.student_id} • {selectedSubmissionStudent.student_email}
                             </p>
                           </div>
                           <div style={S.statusText}>
@@ -1568,6 +1642,71 @@ function TeacherDashboard({ user, onLogout }) {
           </div>
         )}
 
+        {/* STUDENT DIRECTORY PAGE */}
+        {activePage === 'students' && (
+          <div style={S.tableCard} className="table-container animate-fadeIn">
+            <div style={S.tableHeader}>
+              <div>
+                <h2 style={S.tableTitle}>👥 Student Directory</h2>
+                <p style={S.tableSubtitle}>Manage and view students in your department</p>
+              </div>
+              <button 
+                onClick={() => setShowAddStudentModal(true)} 
+                style={S.addBtn}
+                className="add-btn"
+              >
+                <PlusCircle size={20} weight="bold" /> Add Student
+              </button>
+            </div>
+
+            {loadingStudents ? (
+              <div style={S.loadingContainer}>
+                <div style={S.loadingSpinner}></div>
+                <p>Loading students...</p>
+              </div>
+            ) : (
+              <div style={{overflowX: 'auto'}}>
+                <table style={S.table}>
+                  <thead>
+                    <tr style={S.tableHeadRow}>
+                      <th style={S.th}>STUDENT NAME</th>
+                      <th style={S.th}>ROLL NUMBER</th>
+                      <th style={S.th}>EMAIL</th>
+                      <th style={S.th}>SEMESTER</th>
+                      <th style={S.th}>JOINED ON</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {campusStudents.map(student => (
+                      <tr key={student.id} style={S.tableRow}>
+                        <td style={S.td}>
+                          <div style={S.studentInfo}>
+                            <div style={{...S.avatarPlaceholder, background: '#f1f5f9', color: '#64748b'}}>{student.name.charAt(0)}</div>
+                            <span style={S.studentName}>{student.name}</span>
+                          </div>
+                        </td>
+                        <td style={S.td}>
+                          <span style={{fontWeight: 700, color: '#0f172a'}}>{student.roll_number || 'N/A'}</span>
+                        </td>
+                        <td style={S.td}>{student.email}</td>
+                        <td style={S.td}>
+                          <span style={{padding:'4px 8px', background:'#e0f2fe', color:'#0369a1', borderRadius:'6px', fontSize:'12px', fontWeight:700}}>Sem {student.semester}</span>
+                        </td>
+                        <td style={S.td}>{new Date(student.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                    {campusStudents.length === 0 && (
+                      <tr>
+                        <td colSpan="5" style={S.emptyTableCell}>No students found in your department</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* PENDING ENROLLMENT REQUESTS PAGE */}
         {activePage === 'pending' && (
           <div style={S.tableCard} className="table-container animate-fadeIn">
@@ -1597,32 +1736,53 @@ function TeacherDashboard({ user, onLogout }) {
                 </thead>
                 <tbody>
                   {pendingEnrollments.map(enrollment => (
-                    <tr key={enrollment.enrollment_id} style={S.tableRow}>
+                    <tr key={`${enrollment.type}-${enrollment.request_id}`} style={S.tableRow}>
                       <td style={S.td}>
                         <div style={S.studentInfo}>
                           <div style={S.avatarPlaceholder}>{enrollment.student_name.charAt(0)}</div>
-                          <span style={S.studentName}>{enrollment.student_name}</span>
+                          <div>
+                            <div style={S.studentName}>{enrollment.student_name}</div>
+                            <div style={{fontSize:'10px', color:'#94a3b8', background:'#f1f5f9', padding:'2px 6px', borderRadius:'4px', display:'inline-block'}}>
+                              {enrollment.type === 'class' ? 'Class Join Request' : 'Course Enroll Request'}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td style={S.td}>{enrollment.student_email}</td>
                       <td style={S.td}>
-                        <span style={S.courseBadge}>{enrollment.course_title}</span>
+                        <span style={{...S.courseBadge, background: enrollment.type === 'class' ? '#e0f2fe' : '#e0e7ff', color: enrollment.type === 'class' ? '#0369a1' : '#4338ca'}}>
+                          {enrollment.label}
+                        </span>
                       </td>
                       <td style={S.td}>
-                        <span style={S.classBadge}>{enrollment.class_name} ({enrollment.class_section})</span>
+                        <span style={S.classBadgeLight}>{enrollment.class_name} ({enrollment.class_section})</span>
                       </td>
                       <td style={S.td}>{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
                       <td style={S.td}>
                         <div style={S.actionGroup}>
                           <button 
-                            onClick={() => handleApproveEnrollment(enrollment.enrollment_id)} 
+                            onClick={async () => {
+                              const endpoint = enrollment.type === 'class' ? `class-requests/${enrollment.request_id}/approve` : `enrollments/${enrollment.request_id}/approve`;
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/teachers/${endpoint}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                                const data = await res.json();
+                                if (data.success) { showToast('Request approved!', 'success'); fetchPendingEnrollments(); }
+                              } catch (e) { showToast('Error', 'error'); }
+                            }} 
                             style={S.approveBtn} 
                             className="approve-btn"
                           >
                             <span style={S.btnIcon}>✓</span> Approve
                           </button>
                           <button 
-                            onClick={() => handleRejectEnrollment(enrollment.enrollment_id)} 
+                            onClick={async () => {
+                              const endpoint = enrollment.type === 'class' ? `class-requests/${enrollment.request_id}/reject` : `enrollments/${enrollment.request_id}/reject`;
+                              try {
+                                const res = await fetch(`${API_BASE_URL}/api/teachers/${endpoint}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                                const data = await res.json();
+                                if (data.success) { showToast('Request rejected!', 'success'); fetchPendingEnrollments(); }
+                              } catch (e) { showToast('Error', 'error'); }
+                            }} 
                             style={S.rejectBtn} 
                             className="reject-btn"
                           >
@@ -1763,7 +1923,7 @@ function TeacherDashboard({ user, onLogout }) {
             <div style={S.profileInfoGrid}>
               <div style={S.infoItem}>
                 <span>Email Address</span>
-                <p>{user.email || 'teacher@hitech.com'}</p>
+                <p>{user.email || 'teacher@lancerstech.com'}</p>
               </div>
               <div style={S.infoItem}>
                 <span>Designation</span>
@@ -2312,6 +2472,81 @@ function TeacherDashboard({ user, onLogout }) {
         </div>
       )}
 
+      {/* ADD STUDENT MODAL */}
+      {showAddStudentModal && (
+        <div style={S.modalOverlay} onClick={() => setShowAddStudentModal(false)}>
+          <div style={{...S.modal, width:'420px'}} onClick={e => e.stopPropagation()}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px'}}>
+              <h3 style={S.modalTitle}>Add New Student</h3>
+              <button onClick={() => setShowAddStudentModal(false)} style={S.closeBtn}><X size={20} /></button>
+            </div>
+            <form onSubmit={handleAddStudent} style={S.modalForm}>
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>Full Name</label>
+                <input 
+                  type="text" 
+                  placeholder="Enter student name"
+                  value={newStudent.name}
+                  onChange={e => setNewStudent({...newStudent, name:e.target.value})}
+                  style={S.input}
+                  required
+                />
+              </div>
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>Email Address</label>
+                <input 
+                  type="email" 
+                  placeholder="student@example.com"
+                  value={newStudent.email}
+                  onChange={e => setNewStudent({...newStudent, email:e.target.value})}
+                  style={S.input}
+                  required
+                />
+              </div>
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>Temporary Password</label>
+                <input 
+                  type="password" 
+                  placeholder="Set student password"
+                  value={newStudent.password}
+                  onChange={e => setNewStudent({...newStudent, password:e.target.value})}
+                  style={S.input}
+                  required
+                />
+              </div>
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>Semester</label>
+                <select 
+                  value={newStudent.semester}
+                  onChange={e => setNewStudent({...newStudent, semester:e.target.value})}
+                  style={S.input}
+                  required
+                >
+                  {[1,2,3,4,5,6,7,8].map(sem => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+              </div>
+              <p style={{fontSize:'12px', color:'#64748b', background:'#f8fafc', padding:'10px', borderRadius:'8px', border:'1px solid #e2e8f0'}}>
+                <strong>Note:</strong> This student will be automatically assigned to your department ({user.department_name}).
+              </p>
+              <div style={S.modalActions}>
+                <button type="button" onClick={() => setShowAddStudentModal(false)} style={S.cancelBtn}>Cancel</button>
+                <button type="submit" style={S.saveBtn}>Add Student</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        isDanger={confirmModal.isDanger}
+      />
     </div>
   )
 }
@@ -3774,7 +4009,7 @@ const S = {
     fontWeight: '600',
     border: '1px solid #e0e7ff',
   },
-  classBadge: {
+  classBadgeLight: {
     background: '#f8fafc',
     color: '#64748b',
     padding: '4px 10px',

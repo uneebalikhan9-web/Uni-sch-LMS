@@ -112,7 +112,7 @@ function StudentAssignments() {
     <div className="dashboard-container">
       <div className="sidebar">
         <div className="sidebar-header">
-          <h2>HITech</h2>
+          <h2>Lancers Tech</h2>
           <p className="sidebar-subtitle">Student Portal</p>
         </div>
         

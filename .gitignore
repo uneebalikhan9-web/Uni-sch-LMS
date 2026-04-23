@@ -20,3 +20,7 @@ frontend/package-lock.json
 *.sw?
 .idea/
 .vscode/
+
+# Build and Archives
+*.zip
+**/node_modules/

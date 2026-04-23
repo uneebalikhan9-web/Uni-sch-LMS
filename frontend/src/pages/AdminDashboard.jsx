@@ -326,7 +326,7 @@
         <aside style={sidebarStyle} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <div style={logoAreaStyle}>
             <div style={logoIconStyle}><GraduationCap size={20} weight="fill" /></div>
-            <span>HITech</span>
+            <span>Lancers Tech</span>
           </div>
 
           <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>

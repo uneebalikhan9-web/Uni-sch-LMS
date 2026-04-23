@@ -82,7 +82,7 @@ function SignIn() {
             <div className="logo-wrapper">
               <GraduationCap size={32} weight="duotone" />
             </div>
-            <span className="brand-name">HITech</span>
+            <span className="brand-name">Lancers Tech</span>
           </div>
           
           <div className="branding-body">
@@ -102,7 +102,7 @@ function SignIn() {
           </div>
           
           <div className="branding-footer">
-            <p>© 2026 HITech LMS. Professional Suite.</p>
+            <p>© 2026 Lancers Tech LMS. Professional Suite.</p>
           </div>
         </div>
 

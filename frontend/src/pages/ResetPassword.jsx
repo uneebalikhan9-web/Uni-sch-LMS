@@ -137,7 +137,7 @@ function ResetPassword() {
         <div className="branding-section">
           <div className="brand-header">
             <div className="logo-wrapper"><GraduationCap size={32} weight="duotone" /></div>
-            <span className="brand-name">HITech</span>
+            <span className="brand-name">Lancers Tech</span>
           </div>
           <div className="branding-body">
             <h1 className="hero-text">Secure your <br /><span>Identity</span></h1>
@@ -147,7 +147,7 @@ function ResetPassword() {
               <span>End-to-End Encryption</span>
             </div>
           </div>
-          <div className="branding-footer"><p>© 2026 HITech Security</p></div>
+          <div className="branding-footer"><p>© 2026 Lancers Tech Security</p></div>
         </div>
 
         {/* Right Side Form */}

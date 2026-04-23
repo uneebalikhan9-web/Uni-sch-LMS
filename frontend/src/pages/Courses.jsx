@@ -110,7 +110,7 @@ function Courses() {
       {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">
-          <h2>HITech</h2>
+          <h2>Lancers Tech</h2>
           <p className="sidebar-subtitle">Learning Portal</p>
         </div>
         

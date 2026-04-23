@@ -80,7 +80,7 @@ function ForgotPassword() {
             <div className="logo-wrapper">
               <GraduationCap size={32} weight="duotone" />
             </div>
-            <span className="brand-name">HITech</span>
+            <span className="brand-name">Lancers Tech</span>
           </div>
           
           <div className="branding-body">
@@ -94,7 +94,7 @@ function ForgotPassword() {
           </div>
           
           <div className="branding-footer">
-            <p>© 2026 HITech LMS. Professional Portal.</p>
+            <p>© 2026 Lancers Tech LMS. Professional Portal.</p>
           </div>
         </div>
 

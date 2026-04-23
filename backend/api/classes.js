@@ -11,7 +11,8 @@ router.use(verifyToken);
 router.get('/', isAdmin, async (req, res) => {
   try {
     let query = `SELECT c.*, u.name as teacher_name, 
-        (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id) as student_count
+        (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id) as student_count,
+        (SELECT COUNT(*) FROM courses WHERE class_id = c.id) as course_count
         FROM classes c
         LEFT JOIN users u ON c.teacher_id = u.id`;
     
@@ -105,8 +106,8 @@ router.post('/register', isStudent, async (req, res) => {
     }
 
     await pool.query(
-      'INSERT INTO student_classes (student_id, class_id) VALUES (?, ?)',
-      [student_id, class_id]
+      'INSERT INTO student_classes (student_id, class_id, status) VALUES (?, ?, ?)',
+      [student_id, class_id, 'pending']
     );
 
     res.status(201).json({ success: true, message: 'Successfully registered for class' });
@@ -320,7 +321,7 @@ router.get('/:id/students', verifyToken, async (req, res) => {
       `SELECT u.id, u.name, u.email, sc.assigned_at
        FROM student_classes sc
        JOIN users u ON sc.student_id = u.id
-       WHERE sc.class_id = ?
+       WHERE sc.class_id = ? AND sc.status = 'approved'
        ORDER BY u.name`,
       [id]
     );

@@ -1,6 +1,8 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const { pool } = require('../config/database');
 const { verifyToken, isTeacher } = require('../middleware/auth');
+const { generateRollNumber } = require('../utils/rollNumber');
 
 const router = express.Router();
 
@@ -13,30 +15,46 @@ router.use(isTeacher);
  * Allows teachers to review and approve/reject course requests
  */
 
-// Get pending enrollment requests for teacher's courses
+// Get pending requests (both Course Enrollments and Class Registrations) for teacher's courses/classes
 router.get('/pending-enrollments', async (req, res) => {
   try {
     const teacherId = req.user.id;
 
-    const [pendingEnrollments] = await pool.query(`
-      SELECT e.id as enrollment_id, e.course_id, e.student_id, e.status, e.enrolled_at,
+    // 1. Get pending Course enrollments
+    const [courseRequests] = await pool.query(`
+      SELECT 'course' as type, e.id as request_id, e.course_id, e.student_id, e.enrolled_at,
              u.name as student_name, u.email as student_email,
-             c.title as course_title, cl.name as class_name, cl.section as class_section
+             c.title as label, cl.name as class_name, cl.section as class_section
       FROM enrollments e
       JOIN users u ON e.student_id = u.id
       JOIN courses c ON e.course_id = c.id
       LEFT JOIN classes cl ON c.class_id = cl.id
       WHERE c.teacher_id = ? AND e.status = 'pending'
-      ORDER BY e.enrolled_at DESC
     `, [teacherId]);
+
+    // 2. Get pending Class registrations (where this teacher is the class teacher)
+    const [classRequests] = await pool.query(`
+      SELECT 'class' as type, sc.id as request_id, sc.class_id, sc.student_id, sc.assigned_at as enrolled_at,
+             u.name as student_name, u.email as student_email,
+             cl.name as label, cl.name as class_name, cl.section as class_section
+      FROM student_classes sc
+      JOIN users u ON sc.student_id = u.id
+      JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.teacher_id = ? AND sc.status = 'pending'
+    `, [teacherId]);
+
+    // Combine and sort
+    const allRequests = [...courseRequests, ...classRequests].sort((a, b) => 
+      new Date(b.enrolled_at) - new Date(a.enrolled_at)
+    );
 
     res.status(200).json({
       success: true,
-      pendingEnrollments: pendingEnrollments
+      pendingEnrollments: allRequests
     });
   } catch (error) {
-    console.error('Get pending enrollments error:', error);
-    res.status(500).json({ success: false, message: 'Error fetching pending enrollments', error: error.message });
+    console.error('Get pending requests error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching requests', error: error.message });
   }
 });
 
@@ -80,39 +98,92 @@ router.post('/enrollments/:enrollmentId/approve', async (req, res) => {
   }
 });
 
-// Reject enrollment request
-router.post('/enrollments/:enrollmentId/reject', async (req, res) => {
-  const { enrollmentId } = req.params;
-  const teacherId = req.user.id;
-
-  console.log(`[TeacherAPI] Rejection attempt - Enrollment ID: ${enrollmentId}`);
-
+// Approve class registration
+router.post('/class-requests/:requestId/approve', async (req, res) => {
   try {
-    // 1. Verify ownership
-    const [enrollment] = await pool.query(`
-      SELECT e.id, c.teacher_id
-      FROM enrollments e
-      JOIN courses c ON e.course_id = c.id
-      WHERE e.id = ? AND c.teacher_id = ? AND e.status = 'pending'
-    `, [enrollmentId, teacherId]);
+    const { requestId } = req.params;
+    const teacherId = req.user.id;
 
-    if (enrollment.length === 0) {
-      return res.status(404).json({ success: false, message: 'Enrollment request not found or unauthorized' });
-    }
+    const [request] = await pool.query(`
+      SELECT sc.id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      WHERE sc.id = ? AND cl.teacher_id = ? AND sc.status = 'pending'
+    `, [requestId, teacherId]);
 
-    // 2. Reject by deleting the request
-    await pool.query('DELETE FROM enrollments WHERE id = ?', [enrollmentId]);
+    if (request.length === 0) return res.status(404).json({ success: false, message: 'Request not found' });
 
-    console.log(`❌ [TeacherAPI] Enrollment ${enrollmentId} rejected`);
-    res.status(200).json({ success: true, message: 'Student enrollment rejected' });
-  } catch (error) {
-    console.error('[TeacherAPI] Reject enrollment error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error rejecting enrollment', 
-      error: error.message,
-      stack: error.stack
-    });
+    await pool.query('UPDATE student_classes SET status = "approved" WHERE id = ?', [requestId]);
+    res.status(200).json({ success: true, message: 'Class registration approved!' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
+});
+
+// Reject class registration
+router.post('/class-requests/:requestId/reject', async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const teacherId = req.user.id;
+
+    const [request] = await pool.query(`
+      SELECT sc.id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      WHERE sc.id = ? AND cl.teacher_id = ? AND sc.status = 'pending'
+    `, [requestId, teacherId]);
+
+    if (request.length === 0) return res.status(404).json({ success: false, message: 'Request not found' });
+
+    await pool.query('DELETE FROM student_classes WHERE id = ?', [requestId]);
+    res.status(200).json({ success: true, message: 'Class registration rejected' });
+  } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
+});
+
+// ============= STUDENT MANAGEMENT =============
+
+// Get students in teacher's campus or courses/classes
+router.get('/students', async (req, res) => {
+  try {
+    const { campus_id, id: teacherId } = req.user;
+    const [students] = await pool.query(`
+      SELECT DISTINCT u.id, u.name, u.email, u.roll_number, u.semester, u.created_at
+      FROM users u
+      LEFT JOIN enrollments e ON u.id = e.student_id
+      LEFT JOIN courses c ON e.course_id = c.id
+      LEFT JOIN student_classes sc ON u.id = sc.student_id
+      LEFT JOIN classes cl ON sc.class_id = cl.id
+      WHERE u.role = 'student' AND (
+        u.campus_id = ? 
+        OR c.teacher_id = ? 
+        OR cl.teacher_id = ?
+      )
+      ORDER BY u.name
+    `, [campus_id, teacherId, teacherId]);
+    res.status(200).json({ success: true, students });
+  } catch (err) { 
+    console.error('Error fetching teacher students:', err);
+    res.status(500).json({ success: false, message: 'Error' }); 
+  }
+});
+
+// Create new student (Teacher adding)
+router.post('/students', async (req, res) => {
+  try {
+    const { name, email, password, semester } = req.body;
+    const { campus_id } = req.user;
+
+    if (!name || !email || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) return res.status(400).json({ success: false, message: 'Email exists' });
+
+    const rollNumber = await generateRollNumber(campus_id, semester || 1);
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const [result] = await pool.query(
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id, semester, roll_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', true, campus_id, semester || 1, rollNumber]
+    );
+
+    res.status(201).json({ success: true, message: 'Student created!', student_id: result.insertId });
+  } catch (err) { 
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Error creating student' }); 
   }
 });
 

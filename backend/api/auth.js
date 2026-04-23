@@ -161,13 +161,13 @@ router.post('/signin', async (req, res) => {
 
       // Send OTP to the user's OWN registered email
       const mailOptions = {
-        from: `"HITech LMS" <${process.env.EMAIL_USER}>`,
+        from: `"Lancers Tech LMS" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Your HITech LMS Login Code',
+        subject: 'Your Lancers Tech LMS Login Code',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
             <div style="text-align: center; margin-bottom: 24px;">
-              <h1 style="color: #4f46e5; margin: 0; font-size: 24px;">HITech LMS</h1>
+              <h1 style="color: #4f46e5; margin: 0; font-size: 24px;">Lancers Tech LMS</h1>
               <p style="color: #64748b; margin: 4px 0 0;">University Learning Management System</p>
             </div>
             <h2 style="color: #1e293b; text-align: center;">Login Verification Code</h2>
@@ -178,7 +178,7 @@ router.post('/signin', async (req, res) => {
             </div>
             <p style="color: #64748b; font-size: 13px;">If you did not try to login, please ignore this email. Your account is safe.</p>
             <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
-            <p style="color: #94a3b8; font-size: 12px; text-align: center;">© 2026 HITech LMS. All rights reserved.</p>
+            <p style="color: #94a3b8; font-size: 12px; text-align: center;">© 2026 Lancers Tech LMS. All rights reserved.</p>
           </div>
         `
       };
