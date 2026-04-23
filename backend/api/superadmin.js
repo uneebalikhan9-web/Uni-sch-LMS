@@ -25,7 +25,6 @@ router.get('/overview', async (req, res) => {
       SELECT 
         c.id,
         c.name as campus_name,
-        c.subscription_plan,
         c.is_active,
         COUNT(DISTINCT CASE WHEN u.role = 'student' THEN u.id END) as students,
         COUNT(DISTINCT CASE WHEN u.role = 'teacher' THEN u.id END) as teachers,
@@ -86,7 +85,7 @@ router.post('/campuses', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Department created successfully',
-      department: { id: result.insertId, name, location, subscription_plan }
+      department: { id: result.insertId, name, location }
     });
   } catch (error) {
     console.error('Create department error:', error);
@@ -106,8 +105,8 @@ router.put('/campuses/:id', async (req, res) => {
     }
 
     await pool.query(
-      'UPDATE campuses SET name = ?, location = ?, subscription_plan = ?, is_active = ?, dept_code = ? WHERE id = ?',
-      [name, location, subscription_plan, is_active !== undefined ? is_active : true, dept_code || null, id]
+      'UPDATE campuses SET name = ?, location = ?, is_active = ?, dept_code = ? WHERE id = ?',
+      [name, location, is_active !== undefined ? is_active : true, dept_code || null, id]
     );
 
     res.json({ success: true, message: 'Department updated successfully' });
@@ -219,7 +218,7 @@ router.get('/principals/:id/details', async (req, res) => {
       SELECT 
         u.id, u.name, u.email, u.created_at, u.campus_id, 
         c.name as campus_name, c.location as campus_location, 
-        c.subscription_plan as campus_plan, c.is_active as campus_status
+        c.is_active as campus_status
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
       WHERE u.id = ? AND u.role = 'principal'

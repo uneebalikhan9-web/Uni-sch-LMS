@@ -23,7 +23,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
-  const [newDepartment, setNewDepartment] = useState({ name: "", location: "", subscription_plan: "basic" });
+  const [newDepartment, setNewDepartment] = useState({ name: "", location: "" });
   const [newHOD, setNewHOD] = useState({ name: "", email: "", password: "", campus_id: "" });
   const [bds, setBds] = useState([]);
   const [newBD, setNewBD] = useState({ name: "", email: "", password: "", campus_id: "" });
@@ -209,7 +209,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       showToast(editingItem ? "Department updated!" : "Department created!", "success");
       setShowAddModal(false); 
       setEditingItem(null); 
-      setNewDepartment({ name: "", location: "", subscription_plan: "basic" }); 
+      setNewDepartment({ name: "", location: "" }); 
       fetchData(); 
     }
     else showToast(data.message || "Error saving department", "error");
@@ -450,7 +450,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                   <thead>
                     <tr>
                       <th style={S.th}>DEPARTMENT</th>
-                      <th style={S.th}>PLAN</th>
                       <th style={S.th}>STUDENTS</th>
                       <th style={S.th}>TEACHERS</th>
                       <th style={S.th}>STATUS</th>
@@ -460,16 +459,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                     {departmentStats.map(c => (
                       <tr key={c.id} style={S.tr}>
                         <td style={S.tdName}>{c.campus_name}</td>
-                        <td style={S.td}>
-                          <span style={{...S.planBadge, 
-                            background: c.subscription_plan === 'premium' ? '#fef3c7' : 
-                                       c.subscription_plan === 'standard' ? '#dbeafe' : '#f1f5f9',
-                            color: c.subscription_plan === 'premium' ? '#92400e' : 
-                                   c.subscription_plan === 'standard' ? '#1e40af' : '#475569'
-                          }}>
-                            {c.subscription_plan}
-                          </span>
-                        </td>
                         <td style={S.td}>{c.students}</td>
                         <td style={S.td}>{c.teachers}</td>
                         <td style={S.td}>
@@ -508,7 +497,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                   <tr>
                     <th style={S.th}>NAME</th>
                     <th style={S.th}>LOCATION</th>
-                    <th style={S.th}>PLAN</th>
                     <th style={S.th}>STUDENTS</th>
                     <th style={S.th}>TEACHERS</th>
                     <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -519,16 +507,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                     <tr key={c.id} style={S.tr}>
                       <td style={S.tdName}>{c.name}</td>
                       <td style={S.td}>{c.location || '—'}</td>
-                      <td style={S.td}>
-                        <span style={{...S.planBadge,
-                          background: c.subscription_plan === 'premium' ? '#fef3c7' : 
-                                     c.subscription_plan === 'standard' ? '#dbeafe' : '#f1f5f9',
-                          color: c.subscription_plan === 'premium' ? '#92400e' : 
-                                 c.subscription_plan === 'standard' ? '#1e40af' : '#475569'
-                        }}>
-                          {c.subscription_plan}
-                        </span>
-                      </td>
                       <td style={S.td}>{c.student_count || 0}</td>
                       <td style={S.td}>{c.teacher_count || 0}</td>
                       <td style={{...S.td, textAlign: 'right'}}>
@@ -997,19 +975,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                 />
               </div>
               
-              <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Subscription Plan</label>
-                <select 
-                  value={editingItem ? editingItem.subscription_plan : newDepartment.subscription_plan} 
-                  onChange={e => editingItem ? setEditingItem({...editingItem, subscription_plan: e.target.value}) : setNewDepartment({...newDepartment, subscription_plan: e.target.value})} 
-                  style={S.input}
-                >
-                  <option value="basic">Basic</option>
-                  <option value="standard">Standard</option>
-                  <option value="premium">Premium</option>
-                </select>
-              </div>
-              
               {editingItem && (
                 <div style={S.checkboxGroup}>
                   <input 
@@ -1258,13 +1223,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                         <div>
                           <p style={S.infoLabel}>Location</p>
                           <p style={S.infoValue}>{selectedHODDetails.campus_location || 'Not Set'}</p>
-                        </div>
-                      </div>
-                      <div style={S.infoItem}>
-                        <ChartBar size={18} color="#64748b" />
-                        <div>
-                          <p style={S.infoLabel}>Service Plan</p>
-                          <p style={{...S.infoValue, textTransform: 'capitalize'}}>{selectedHODDetails.campus_plan}</p>
                         </div>
                       </div>
                     </div>
