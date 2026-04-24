@@ -64,7 +64,12 @@ export default function Whiteboard() {
           <Eraser size={20} weight="bold" /> Clear Board
         </button>
       </div>
-      <Tldraw onMount={handleMount} hideUi={false} inferDarkMode={false} />
+      <Tldraw 
+        onMount={handleMount} 
+        hideUi={false} 
+        inferDarkMode={false}
+        persistenceKey="lms_whiteboard_v1"
+      />
     </div>
   )
 }
