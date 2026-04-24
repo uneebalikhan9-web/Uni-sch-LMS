@@ -6,7 +6,7 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '127.0.0.1',
   user: process.env.DB_USER || 'root',
-  password: 'universitylms_768', // Hardcoded as last resort for VPS deployment
+  password: String(process.env.DB_PASSWORD || process.env.DB_PASS || ''),
   database: process.env.DB_NAME || 'university_lms',
   waitForConnections: true,
   connectionLimit: 10,
