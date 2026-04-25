@@ -367,12 +367,18 @@ router.get('/bds/:id/details', async (req, res) => {
 
     const bd = bdData[0];
 
-    // Get BD-specific counts
-    const [[{ totalLeads }]] = await pool.query("SELECT COUNT(*) as totalLeads FROM bd_campus_leads WHERE assigned_to = ?", [id]);
-    const [[{ closedLeads }]] = await pool.query("SELECT COUNT(*) as closedLeads FROM bd_campus_leads WHERE assigned_to = ? AND status = 'closed_won'", [id]);
-    const [[{ activePostings }]] = await pool.query("SELECT COUNT(*) as activePostings FROM bd_job_postings WHERE status = 'open'"); // Not directly linked to BD ID in current schema, but relevant overview
-    const [[{ totalApplicants }]] = await pool.query("SELECT COUNT(*) as totalApplicants FROM bd_applicants");
-    const [[{ shortlistedApplicants }]] = await pool.query("SELECT COUNT(*) as shortlistedApplicants FROM bd_applicants WHERE status = 'shortlisted'");
+    // Get BD-specific counts - Using safer extraction logic
+    const [leadsRes] = await pool.query("SELECT COUNT(*) as totalLeads FROM bd_campus_leads WHERE assigned_to = ?", [id]);
+    const [closedRes] = await pool.query("SELECT COUNT(*) as closedLeads FROM bd_campus_leads WHERE assigned_to = ? AND status = 'closed_won'", [id]);
+    const [postingsRes] = await pool.query("SELECT COUNT(*) as activePostings FROM bd_job_postings WHERE status = 'open'");
+    const [applicantsRes] = await pool.query("SELECT COUNT(*) as totalApplicants FROM bd_applicants");
+    const [shortlistedRes] = await pool.query("SELECT COUNT(*) as shortlistedApplicants FROM bd_applicants WHERE status = 'shortlisted'");
+
+    const totalLeads = leadsRes[0]?.totalLeads || 0;
+    const closedLeads = closedRes[0]?.closedLeads || 0;
+    const activePostings = postingsRes[0]?.activePostings || 0;
+    const totalApplicants = applicantsRes[0]?.totalApplicants || 0;
+    const shortlistedApplicants = shortlistedRes[0]?.shortlistedApplicants || 0;
 
     res.json({
       success: true,
