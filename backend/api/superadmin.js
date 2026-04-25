@@ -383,7 +383,7 @@ router.get('/bds/:id/details', async (req, res) => {
     });
   } catch (error) {
     console.error('Get BD details error:', error);
-    res.status(500).json({ success: false, message: 'Error fetching BD details' });
+    res.status(500).json({ success: false, message: 'Error fetching BD details', error: error.message });
   }
 });
 

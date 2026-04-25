@@ -137,6 +137,7 @@ function SignIn() {
                   type={showPassword ? "text" : "password"} 
                   name="password" 
                   placeholder="Password" 
+                  autocomplete="current-password"
                   value={formData.password} 
                   onChange={handleChange} 
                   required 

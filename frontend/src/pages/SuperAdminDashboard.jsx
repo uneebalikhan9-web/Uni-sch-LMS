@@ -1033,9 +1033,10 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Password</label>
                 <input 
-                  placeholder="••••••••" 
+                  placeholder="Password" 
                   required 
                   type="password" 
+                  autocomplete="new-password"
                   value={newHOD.password} 
                   onChange={e => setNewHOD({...newHOD, password: e.target.value})} 
                   style={S.input}
@@ -1103,6 +1104,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
                   placeholder="••••••••" 
                   required={!editingItem}
                   type="password" 
+                  autocomplete="new-password"
                   value={editingItem ? editingItem.password : newBD.password} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewBD({...newBD, password: e.target.value})} 
                   style={S.input}
