@@ -236,7 +236,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
       {/* Sidebar - Navy blue gradient */}
       <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <span style={S.logoText}>HITech</span>
+          <span style={S.logoText}>Lancers Tech</span>
         </div>
 
         <div style={S.bdBadge}>

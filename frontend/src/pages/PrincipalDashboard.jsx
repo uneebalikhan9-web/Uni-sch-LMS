@@ -544,7 +544,8 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
       {/* Sidebar */}
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
-          <span style={S.logoText}>HITech</span>
+          <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
+          <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
         </div>
 
         <div style={S.principalBadge}>
@@ -2133,31 +2134,32 @@ const S = {
   },
 
   logoIcon: {
-    width: '70px',
-    height: '70px',
+    width: '40px',
+    height: '40px',
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: '12px',
+    color: '#fff',
   },
 
   logoText: {
-    fontSize: '1.6rem',
+    fontSize: '1.4rem',
     fontWeight: '800',
     letterSpacing: '-0.02em',
+    color: '#fff',
   },
 
   logoAccent: {
     color: '#c4b5fd',
-    marginLeft: '2px',
   },
 
   principalBadge: {
-    background: 'rgba(124, 58, 237, 0.2)',
+    background: 'rgba(255, 255, 255, 0.05)',
     borderRadius: '30px',
     padding: '8px 16px',
-    margin: '0 8px 24px 8px',
+    margin: '0 8px 32px 8px',
     fontSize: '12px',
     color: '#c4b5fd',
     display: 'flex',
