@@ -1,226 +1,69 @@
-# HITech LMS - Learning Management System
+# 🚀 Lancers Tech LMS - Enterprise Learning Management System
 
-A comprehensive, modern Learning Management System designed for universities with role-based access for Admins, Teachers, and Students.
+Lancers Tech LMS is a premium, high-performance Learning Management System engineered for modern educational institutions. It features a sophisticated glassmorphism UI, real-time academic analytics, and a multi-tenant role-based architecture.
 
-## 🎯 Features
+---
 
-### 👨‍💼 Admin Dashboard
-- **User Management**: Create, edit, and delete teachers and students
-- **Student Approval System**: Review and approve/reject student registrations
-- **Course Management**: Manage courses, subjects, and class assignments
-- **Analytics**: Overview of system statistics and user data
-- **Teacher Assignment**: Assign courses and subjects to teachers
+## 🎨 Design Philosophy
+- **Modern Aesthetics**: Sleek dark-mode compatible UI with glassmorphism effects.
+- **Responsive Experience**: Optimized for Desktop, Tablet, and Mobile devices.
+- **Dynamic Feedback**: Real-time progress tracking and interactive dashboards.
+
+---
+
+## 🎭 Role-Based Portals & Key Features
+
+### 👨‍💼 HOD / Principal Dashboard
+- **Departmental Analytics**: Monitor teacher performance and student success metrics across the department.
+- **Student Approval Workspace**: Streamlined interface to verify and approve new student registrations.
+- **Course & Class Orchestration**: Manage course assignments, class schedules, and faculty workloads.
+- **Dynamic Timetables**: Automated generation and management of departmental class schedules.
+- **Quality Assurance**: Generate comprehensive academic reports and monitor training standards.
+
+### 🏢 Super Admin Dashboard
+- **Institutional Management**: Create and manage multiple departments and campuses.
+- **Leadership Management**: Provision HOD and Business Development accounts.
+- **Global Overview**: Platform-wide statistics and strategic data aggregation.
 
 ### 👨‍🏫 Teacher Dashboard
-- **Course Management**: Create custom courses and manage assigned subjects
-- **Attendance System**: Mark and track student attendance for each subject
-- **Grades Management**: Enter and manage student grades
-- **Progress Reports**: Generate detailed progress reports with remarks
-- **Student Overview**: View all students in assigned classes
+- **Academic Delivery**: Access student lists for assigned courses.
+- **Hybrid Attendance**: Efficient subject-wise attendance tracking system.
+- **Performance Grading**: Standardized grading system with automated progress report generation.
+- **Cloud Lab Integration**: Provision and manage virtual training environments (Cloud Labs).
 
 ### 👨‍🎓 Student Dashboard
-- **Course Access**: View enrolled courses and subjects
-- **Attendance Tracking**: Check attendance records for all subjects
-- **Grades View**: Access grades and performance metrics
-- **Progress Reports**: View detailed progress reports with teacher remarks
-- **Fee Challan**: Access and download fee challans
-- **Timetable**: Auto-generated class timetable
+- **Academic Progress**: Track subject-wise attendance, grades, and cumulative performance.
+- **Schedule Management**: Access personalized class timetables and assignment deadlines.
+- **Feedback Loop**: View detailed progress reports with qualitative teacher remarks.
+- **Digital Admin**: Instant access to course materials and fee challan downloads.
 
-### 🔐 Authentication & Security
-- JWT-based authentication
-- Role-based access control (Admin, Teacher, Student)
-- Student approval workflow
-- Password reset via email
-- Secure session management
-- Protected API routes
+### 📈 Business Development (BD) Portal
+- **Enrollment Monitoring**: Track registration trends and institutional growth.
+- **Strategic Reporting**: High-level data on student intake and department performance.
 
-### 🎨 Modern UI/UX
-- Glassmorphism design effects
-- Responsive layouts
-- Professional data visualization
-- Clean and intuitive navigation
-- Real-time updates
+---
 
-## 🛠️ HITech LMS Tech Stack
+## 🛠️ Technical Architecture
 
-**Frontend:**
-- React 18 with Vite
-- React Router for navigation
-- TailwindCSS for styling
-- Phosphor Icons
-- Custom CSS with glassmorphism effects
+### **Frontend Nexus**
+- **Framework**: React 18 with Vite for ultra-fast performance.
+- **Icons**: Phosphor Icons library for a consistent professional look.
+- **Routing**: Sophisticated React Router implementation with Protected & Public route logic.
+- **Styling**: Premium Custom CSS orchestration with dynamic glassmorphism utility classes.
 
-**Backend:**
-- Node.js & Express.js
-- MySQL Database
-- JWT for authentication
-- Nodemailer for email services
-- Multer for file uploads
-- bcrypt for password hashing
+### **Backend Core**
+- **Platform**: Node.js & Express.js.
+- **Real-time Nexus**: Socket.io for instantaneous institutional chat and updates.
+- **Authentication**: Secure JWT (JSON Web Tokens) with cryptographically hashed passwords.
+- **Data Integrity**: Relational MySQL database schema designed for scalability.
 
-## 📦 Installation & Setup
+---
 
-### Prerequisites
-- Node.js (v14 or higher)
-- MySQL Server
-- XAMPP or similar local server
+## 🔐 Security & Governance
+- **Access Control**: Strict Role-Based Access Control (RBAC) across all API endpoints.
+- **Data Protection**: Secure handling of student and faculty records with encrypted session management.
+- **File Management**: Optimized multi-part upload handling for large academic resources.
 
-### 1. Database Setup
-1. Start XAMPP and run MySQL
-2. Open phpMyAdmin: http://localhost/phpmyadmin
-3. Create a new database named `lms_db`
-4. Import the database:
-   - Go to the `lms_db` database
-   - Click "Import" tab
-   - Select `backend/COMPLETE_DATABASE.sql`
-   - Click "Go"
-5. **Chat feature:** Run the chat table script in phpMyAdmin (Import or SQL tab):
-   - Use `backend/CHAT_SCHEMA.sql` to create the `chat_messages` table
+---
 
-### 2. Backend Setup
-```bash
-# Navigate to backend directory
-cd backend
-
-# Install dependencies
-npm install
-
-# Start the server
-npm start
-```
-✅ Backend runs at: **http://localhost:5000**
-
-### 3. Frontend Setup
-```bash
-# Navigate to frontend directory
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-✅ Frontend runs at: **http://localhost:5173**
-
-## 🔑 Default Login Credentials
-
-### Admin Account
-- **Email**: admin@university.com
-- **Password**: admin123
-
-### Teacher Account (Sample)
-- Create via Admin Dashboard
-
-### Student Account (Sample)
-- Sign up and wait for admin approval
-
-## 💬 Chat
-
-- **Page:** `/chat` — HOD, Admin, Teacher, and Student can chat with each other (real-time). Super Admin does not have chat access.
-- **Storage:** Messages are stored in `chat_messages` table.
-- **Real-time:** Socket.io is used for instant delivery; open the Chat page and send messages to see them appear on the other user’s screen without refresh.
-
-## 📁 Project Structure
-
-```
-LMS/
-├── backend/
-│   ├── api/              # API routes
-│   ├── config/           # Database configuration
-│   ├── middleware/       # Auth middleware
-│   ├── migrations/       # Database migrations
-│   ├── uploads/          # Uploaded files
-│   ├── server.js         # Main server file
-│   └── COMPLETE_DATABASE.sql
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/        # All page components
-│   │   ├── App.jsx       # Main app component
-│   │   ├── main.jsx      # Entry point
-│   │   ├── index.css     # Global styles
-│   │   └── custom-styles.css
-│   └── index.html
-│
-└── README.md
-```
-
-## 🚀 Usage Guide
-
-### For Admins
-1. Login with admin credentials
-2. Navigate to "Students" or "Teachers" to manage users
-3. Review pending student approvals in the Approve tab
-4. Assign courses to teachers from the dashboard
-5. Monitor system analytics
-
-### For Teachers
-1. Wait for admin to create your account
-2. Login with provided credentials
-3. View assigned courses on dashboard
-4. Mark attendance for students
-5. Enter grades and create progress reports
-6. Add remarks for individual students
-
-### For Students
-1. Sign up using the registration form
-2. Wait for admin approval
-3. Login after approval
-4. Access courses and view subjects
-5. Check attendance and grades
-6. Download fee challans and view timetable
-
-## 🔧 Configuration
-
-### Backend Environment Variables
-Create a `.env` file in the `backend` directory:
-```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=lms_db
-JWT_SECRET=your_secret_key_here
-PORT=5000
-```
-
-### Email Configuration
-Update email settings in backend for password reset functionality.
-
-## 🐛 Troubleshooting
-
-**Database Connection Error:**
-- Ensure MySQL is running in XAMPP
-- Check database credentials in `.env` file
-- Verify database name matches `lms_db`
-
-**Port Already in Use:**
-- Backend: Change PORT in `.env` file
-- Frontend: Change port in `vite.config.js`
-
-**JWT Token Errors:**
-- Clear browser localStorage
-- Login again
-
-## 📝 Features Implemented
-
-✅ Admin Dashboard with full user management  
-✅ Teacher Dashboard with course creation  
-✅ Student Dashboard with course access  
-✅ Attendance system (subject-wise)  
-✅ Grades management  
-✅ Progress reports with remarks  
-✅ Fee challan generation  
-✅ Auto-generated timetables  
-✅ Student approval workflow  
-✅ Password reset via email  
-✅ Role-based authentication  
-✅ Modern, professional UI  
-
-## 📄 License
-
-This project is developed for educational purposes.
-
-## 👨‍💻 Support
-
-For issues or questions, please contact the development team.
+© 2026 Lancers Tech. Proprietary Institutional Framework. All Rights Reserved.
