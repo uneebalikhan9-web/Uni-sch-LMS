@@ -753,7 +753,7 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
                 </p>
               </div>
               <div style={S.tableActions}>
-                {activeTab !== 'pending' && activeTab !== 'timetable' && activeTab !== 'history' && (
+                {activeTab !== 'pending' && activeTab !== 'timetable' && activeTab !== 'history' && activeTab !== 'lab_reports' && activeTab !== 'feedback' && activeTab !== 'course_reports' && (
                   <button onClick={() => setShowAddModal(true)} style={S.addBtn} className="add-btn">
                     <Plus size={18} weight="bold" /> Add New
                   </button>
