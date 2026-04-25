@@ -1081,7 +1081,7 @@ function StudentDashboard({ user, onLogout }) {
 
         <div style={S.studentBadge}>
           <User size={14} weight="fill" />
-          <span>Student Portal</span>
+          <span>{user.department_name || 'Student Portal'}</span>
           <div style={S.liveIndicator}></div>
         </div>
 
@@ -1120,7 +1120,7 @@ function StudentDashboard({ user, onLogout }) {
         {!(activePage === 'labs' && selectedLab) && (
           <header style={S.header}>
             <div>
-              <h1 style={S.title}>Student Portal</h1>
+              <h1 style={S.title}>{user.department_name || 'Student Portal'}</h1>
               <p style={S.subtitle}>Welcome back, <span style={S.studentName}>{user.name}</span></p>
             </div>
             <div style={S.dateBadge}>

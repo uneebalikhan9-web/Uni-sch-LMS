@@ -545,12 +545,12 @@ function PrincipalDashboard({ user = { name: "HOD" }, onLogout }) {
       <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
         <div style={S.logoWrapper}>
           <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-          <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+          <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
         </div>
 
         <div style={S.principalBadge}>
           <UserCircle size={20} weight="duotone" />
-          <span>HOD Dashboard</span>
+          <span>Lancers HOD Console</span>
           <div style={S.liveIndicator}></div>
         </div>
 
