@@ -83,6 +83,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   const [reportDetails,     setReportDetails]     = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
   const [selectedClassForCourses,setSelectedClassForCourses]= useState(null);
+  const [showClassCoursesModal, setShowClassCoursesModal] = useState(false);
   const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
   const [selectedStudentForProfile, setSelectedStudentForProfile] = useState(null);
 
