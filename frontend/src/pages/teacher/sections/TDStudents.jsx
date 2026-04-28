@@ -1,7 +1,7 @@
 import { PlusCircle } from "@phosphor-icons/react";
 import { S } from "./TDStyles";
 
-export default function TDStudents({ campusStudents, loadingStudents, setShowAddStudentModal }) {
+export default function TDStudents({ campusStudents, loadingStudents, setShowAddStudentModal, onOpenStudentProfile }) {
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
