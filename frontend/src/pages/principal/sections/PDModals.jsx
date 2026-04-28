@@ -1,6 +1,6 @@
 import {
   Buildings, BookOpen, ChalkboardTeacher, CalendarBlank,
-  Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X
+  Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X, GraduationCap
 } from "@phosphor-icons/react";
 import { S } from "./PDStyles";
 
@@ -337,65 +337,64 @@ export function StudentProfileModal({ show, student, onClose }) {
   if (!show || !student) return null;
   return (
     <div style={S.modalOverlay} onClick={onClose}>
-      <div style={{ ...S.modal, width:'650px', padding:0, borderRadius:'32px', overflow:'hidden', border:'1px solid rgba(255,255,255,0.2)', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
+      <div style={{ ...S.modal, width:'650px', padding:0, borderRadius:'32px', overflow:'hidden', border:'none', boxShadow:'0 30px 60px -12px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
         
-        {/* Header Section with Gradient & Avatar */}
-        <div style={{ background:'linear-gradient(135deg, #6366f1, #a855f7)', padding:'40px 30px', position:'relative' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'24px', position:'relative', zIndex:1 }}>
-            <div style={{ width:'80px', height:'80px', borderRadius:'28px', background:'rgba(255,255,255,0.2)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px', fontWeight:800, color:'#fff', border:'2px solid rgba(255,255,255,0.3)', boxShadow:'0 10px 20px rgba(0,0,0,0.1)' }}>
-              {student.name.charAt(0)}
+        {/* Executive Header Section */}
+        <div style={{ background:'linear-gradient(135deg, #1e1b4b, #312e81)', padding:'45px 35px', position:'relative', overflow:'hidden' }}>
+          {/* Subtle background decoration */}
+          <div style={{ position:'absolute', top:'-20px', right:'-20px', width:'150px', height:'150px', borderRadius:'50%', background:'rgba(255,255,255,0.05)' }}></div>
+          <div style={{ position:'absolute', bottom:'-30px', left:'10%', width:'100px', height:'100px', borderRadius:'50%', background:'rgba(255,255,255,0.03)' }}></div>
+          
+          <div style={{ display:'flex', alignItems:'center', gap:'28px', position:'relative', zIndex:1 }}>
+            <div style={{ width:'90px', height:'90px', borderRadius:'32px', background:'rgba(255,255,255,0.1)', backdropFilter:'blur(15px)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'36px', fontWeight:800, color:'#fff', border:'1px solid rgba(255,255,255,0.2)', boxShadow:'0 15px 30px rgba(0,0,0,0.2)' }}>
+              {student.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 style={{ ...S.modalTitle, color:'#fff', fontSize:'1.8rem', marginBottom:'8px', letterSpacing:'-0.02em' }}>{student.name}</h2>
-              <div style={{ display:'flex', gap:'10px' }}>
-                <span style={{ padding:'6px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.15)', backdropFilter:'blur(5px)', fontSize:'12px', fontWeight:700, color:'#fff', border:'1px solid rgba(255,255,255,0.1)' }}>
-                  <Buildings size={14} style={{ marginRight:'6px', verticalAlign:'middle' }} /> {student.roll_number}
+              <h2 style={{ margin:0, color:'#fff', fontSize:'2rem', fontWeight:800, letterSpacing:'-0.5px' }}>{student.name}</h2>
+              <div style={{ display:'flex', gap:'12px', marginTop:'10px' }}>
+                <span style={{ padding:'6px 16px', borderRadius:'12px', background:'rgba(255,255,255,0.08)', fontSize:'12px', fontWeight:700, color:'#c7d2fe', border:'1px solid rgba(255,255,255,0.05)' }}>
+                  {student.roll_number}
                 </span>
-                <span style={{ padding:'6px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.15)', backdropFilter:'blur(5px)', fontSize:'12px', fontWeight:700, color:'#fff', border:'1px solid rgba(255,255,255,0.1)' }}>
-                  <CalendarBlank size={14} style={{ marginRight:'6px', verticalAlign:'middle' }} /> Semester {student.semester}
+                <span style={{ padding:'6px 16px', borderRadius:'12px', background:'rgba(255,255,255,0.08)', fontSize:'12px', fontWeight:700, color:'#c7d2fe', border:'1px solid rgba(255,255,255,0.05)' }}>
+                  Semester {student.semester}
                 </span>
               </div>
             </div>
           </div>
-          <button style={{ ...S.modalClose, color:'#fff', top:'20px', right:'20px', background:'rgba(255,255,255,0.1)', borderRadius:'50%', width:'36px', height:'36px', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={onClose}>
-            <X size={20} weight="bold" />
-          </button>
-          
-          {/* Abstract background shapes */}
-          <div style={{ position:'absolute', top:'-50px', right:'-50px', width:'200px', height:'200px', borderRadius:'50%', background:'rgba(255,255,255,0.1)', filter:'blur(40px)' }}></div>
         </div>
         
-        <div style={{ padding:'35px', background:'#fff' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'40px' }}>
+        <div style={{ padding:'40px', background:'#fff' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'45px' }}>
             
-            {/* Left Column: Academic & Personal */}
+            {/* Left Column: Profile */}
             <div>
-              <h4 style={{ fontSize:'12px', color:'#94a3b8', fontWeight:800, textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'8px' }}>
-                <UserCircle size={18} weight="duotone" color="#6366f1" /> Personal Profile
+              <h4 style={{ fontSize:'11px', color:'#6366f1', fontWeight:800, textTransform:'uppercase', letterSpacing:'2px', marginBottom:'24px', display:'flex', alignItems:'center', gap:'10px' }}>
+                <UserCircle size={20} weight="fill" /> Academic Profile
               </h4>
-              <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
-                <InfoRow label="Email Address" value={student.email} icon={<BookOpen size={16} />} />
-                <InfoRow label="B-Form / CNIC" value={student.bform_number || 'Not Provided'} icon={<Buildings size={16} />} />
-                <InfoRow label="Last Education" value={student.last_education || 'N/A'} icon={<GraduationCap size={16} />} />
-                <InfoRow label="Registration Date" value={new Date(student.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })} icon={<CalendarBlank size={16} />} />
+              <div style={{ display:'flex', flexDirection:'column', gap:'24px' }}>
+                <InfoRow label="Institutional Email" value={student.email} icon={<BookOpen size={18} weight="duotone" />} />
+                <InfoRow label="Identity (B-Form/CNIC)" value={student.bform_number || 'Verification Pending'} icon={<Buildings size={18} weight="duotone" />} />
+                <InfoRow label="Previous Qualification" value={student.last_education || 'Not Provided'} icon={<GraduationCap size={18} weight="duotone" />} />
+                <InfoRow label="Enrollment Date" value={new Date(student.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })} icon={<CalendarBlank size={18} weight="duotone" />} />
               </div>
             </div>
 
-            {/* Right Column: Family & Guardian */}
+            {/* Right Column: Family */}
             <div>
-              <h4 style={{ fontSize:'12px', color:'#94a3b8', fontWeight:800, textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'8px' }}>
-                <ChalkboardTeacher size={18} weight="duotone" color="#a855f7" /> Guardian Info
+              <h4 style={{ fontSize:'11px', color:'#4338ca', fontWeight:800, textTransform:'uppercase', letterSpacing:'2px', marginBottom:'24px', display:'flex', alignItems:'center', gap:'10px' }}>
+                <ChalkboardTeacher size={20} weight="fill" /> Family & Contact
               </h4>
-              <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
-                <InfoRow label="Father's Name" value={student.father_name || 'N/A'} icon={<UserCircle size={16} />} />
-                <InfoRow label="Father's CNIC" value={student.father_cnic || 'N/A'} icon={<Buildings size={16} />} />
-                <InfoRow label="Guardian Phone" value={student.father_number || 'N/A'} icon={<Clock size={16} />} isLink={`tel:${student.father_number}`} />
+              <div style={{ display:'flex', flexDirection:'column', gap:'24px' }}>
+                <InfoRow label="Father's Full Name" value={student.father_name || 'Not Available'} icon={<UserCircle size={18} weight="duotone" />} />
+                <InfoRow label="Father's CNIC" value={student.father_cnic || 'Not Available'} icon={<Buildings size={18} weight="duotone" />} />
+                <InfoRow label="Guardian Contact" value={student.father_number || 'No Contact Info'} icon={<Clock size={18} weight="duotone" />} isLink={`tel:${student.father_number}`} />
                 
-                {/* Credentials Section */}
-                <div style={{ marginTop:'10px', padding:'15px', borderRadius:'20px', background:'#f8fafc', border:'1px dashed #e2e8f0' }}>
-                  <p style={{ margin:0, fontSize:'11px', color:'#64748b', fontWeight:700 }}>LOGIN ACCESS</p>
-                  <p style={{ margin:'4px 0 0', fontSize:'13px', color:'#0f172a', fontWeight:600, display:'flex', alignItems:'center', gap:'6px' }}>
-                    <span style={{ color:'#6366f1' }}>●</span> Default Pass: Password123
+                {/* Access Info Box */}
+                <div style={{ marginTop:'10px', padding:'20px', borderRadius:'24px', background:'#f1f5f9', border:'1px solid #e2e8f0', position:'relative' }}>
+                  <div style={{ position:'absolute', top:'-10px', right:'20px', padding:'4px 12px', background:'#1e1b4b', color:'#fff', fontSize:'10px', fontWeight:800, borderRadius:'8px' }}>ACCESS</div>
+                  <p style={{ margin:0, fontSize:'11px', color:'#64748b', fontWeight:700 }}>PORTAL CREDENTIALS</p>
+                  <p style={{ margin:'8px 0 0', fontSize:'14px', color:'#0f172a', fontWeight:700, display:'flex', alignItems:'center', gap:'8px' }}>
+                    Access Status: <span style={{ color:'#16a34a', background:'#dcfce7', padding:'2px 8px', borderRadius:'6px' }}>Active</span>
                   </p>
                 </div>
               </div>
@@ -403,9 +402,9 @@ export function StudentProfileModal({ show, student, onClose }) {
           </div>
         </div>
 
-        <div style={{ padding:'25px 35px', background:'#f8fafc', borderTop:'1px solid #f1f5f9', display:'flex', gap:'15px' }}>
-          <button style={{ ...S.saveBtn, flex:1, height:'54px', borderRadius:'18px', fontSize:'15px', fontWeight:700, background:'#0f172a', boxShadow:'0 10px 20px rgba(0,0,0,0.1)' }} onClick={onClose}>
-            Close Directory
+        <div style={{ padding:'30px 40px 40px', background:'#f8fafc', borderTop:'1px solid #f1f5f9' }}>
+          <button style={{ ...S.saveBtn, width:'100%', height:'58px', borderRadius:'20px', fontSize:'16px', fontWeight:800, background:'#1e1b4b', boxShadow:'0 15px 30px rgba(30, 27, 75, 0.25)', transition:'0.3s' }} onClick={onClose}>
+            Done & Close Profile
           </button>
         </div>
       </div>
@@ -413,25 +412,21 @@ export function StudentProfileModal({ show, student, onClose }) {
   );
 }
 
-// Helper component for info rows
 function InfoRow({ label, value, icon, isLink }) {
   return (
-    <div style={{ display:'flex', gap:'14px' }}>
-      <div style={{ width:'36px', height:'36px', borderRadius:'12px', background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', color:'#64748b', flexShrink:0 }}>
+    <div style={{ display:'flex', gap:'18px' }}>
+      <div style={{ width:'42px', height:'42px', borderRadius:'14px', background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', color:'#6366f1', flexShrink:0, border:'1px solid #e2e8f0' }}>
         {icon}
       </div>
       <div>
-        <p style={{ margin:0, fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase' }}>{label}</p>
+        <p style={{ margin:0, fontSize:'10px', color:'#94a3b8', fontWeight:800, textTransform:'uppercase', letterSpacing:'0.5px' }}>{label}</p>
         {isLink ? (
-          <a href={isLink} style={{ margin:'2px 0 0', fontSize:'14px', color:'#4f46e5', fontWeight:600, textDecoration:'none', display:'block' }}>{value}</a>
+          <a href={isLink} style={{ margin:'3px 0 0', fontSize:'15px', color:'#4338ca', fontWeight:700, textDecoration:'none', display:'block' }}>{value}</a>
         ) : (
-          <p style={{ margin:'2px 0 0', fontSize:'14px', color:'#1e293b', fontWeight:600 }}>{value}</p>
+          <p style={{ margin:'3px 0 0', fontSize:'15px', color:'#1e293b', fontWeight:700 }}>{value}</p>
         )}
       </div>
     </div>
   );
 }
 
-export function GraduationCap({ size, style }) {
-  return <BookOpen size={size} style={style} />; // Fallback icon
-}
