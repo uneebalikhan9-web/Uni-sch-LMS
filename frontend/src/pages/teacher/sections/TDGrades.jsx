@@ -2,6 +2,10 @@ import { GraduationCap, ArrowLeft, Table } from "@phosphor-icons/react";
 import { S } from "./TDStyles";
 
 export default function TDGrades({ courses, students, grades, selectedCourse, setSelectedCourse, setActivePage, showGradeModal, setShowGradeModal, newGrade, setNewGrade, editingItem, setEditingItem, bulkGrades, setBulkGrades, showBulkGradeModal, setShowBulkGradeModal, handleGradesCourseSelect, fetchCourseGrades, bulkGradeHeader, setBulkGradeHeader, onBulkGradeSubmit }) {
+  const filteredStudents = selectedCourse 
+    ? students.filter(s => s.class_id === selectedCourse.class_id)
+    : [];
+
   const avgGrade = grades.length > 0 ? Math.round(grades.reduce((acc, g) => acc + (g.percentage || 0), 0) / grades.length) : 0;
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
@@ -15,7 +19,7 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
         </div>
         {selectedCourse && (
           <button onClick={() => {
-            const initialBulk = students.map(s => {
+            const initialBulk = filteredStudents.map(s => {
               const existing = grades.find(g => g.student_id === s.id);
               return { student_id:s.id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
             });
@@ -35,14 +39,14 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
       {selectedCourse && (
         <>
           <div style={S.gradesSummary}>
-            <div style={S.summaryItem}><span>Total Students</span><strong>{students.length}</strong></div>
+            <div style={S.summaryItem}><span>Total Students</span><strong>{filteredStudents.length}</strong></div>
             <div style={S.summaryItem}><span>Graded</span><strong>{grades.length}</strong></div>
             <div style={S.summaryItem}><span>Average</span><strong>{avgGrade}%</strong></div>
           </div>
           <table style={S.table}>
             <thead><tr style={S.tableHeadRow}><th style={S.th}>STUDENT</th><th style={S.th}>EXAM</th><th style={S.th}>MARKS</th><th style={S.th}>GRADE</th><th style={S.th}>DATE</th></tr></thead>
             <tbody>
-              {students.map(s => {
+              {filteredStudents.map(s => {
                 const g = grades.find(grade => grade.student_id === s.id);
                 return (
                   <tr key={s.id} style={{ ...S.tableRow, cursor:'pointer' }} onClick={() => {
@@ -58,7 +62,7 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
                   </tr>
                 );
               })}
-              {students.length === 0 && <tr><td colSpan="6" style={S.emptyTableCell}>No students enrolled in this course yet</td></tr>}
+              {filteredStudents.length === 0 && <tr><td colSpan="5" style={S.emptyTableCell}>No students enrolled in this course yet</td></tr>}
             </tbody>
           </table>
         </>
