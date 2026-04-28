@@ -16,7 +16,7 @@ import PDDataTable     from "./sections/PDDataTable";
 import PDTimetable     from "./sections/PDTimetable";
 import PDFeedback      from "./sections/PDFeedback";
 import PDCourseReports from "./sections/PDCourseReports";
-import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal } from "./sections/PDModals";
+import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal, StudentProfileModal } from "./sections/PDModals";
 
 const API = `${API_BASE_URL}/api`;
 
@@ -82,8 +82,9 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   const [selectedReport,    setSelectedReport]    = useState(null);
   const [reportDetails,     setReportDetails]     = useState(null);
   const [isReportDetailsLoading, setIsReportDetailsLoading] = useState(false);
-  const [showClassCoursesModal,  setShowClassCoursesModal]  = useState(false);
   const [selectedClassForCourses,setSelectedClassForCourses]= useState(null);
+  const [showStudentProfileModal, setShowStudentProfileModal] = useState(false);
+  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState(null);
 
   const { showToast } = useToast();
   const [confirmModal, setConfirmModal] = useState({ isOpen:false, title:"", message:"", onConfirm:()=>{}, isDanger:false });
@@ -171,8 +172,16 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     let body   = editingItem || bodyMap[activeTab];
     if (editingItem) {
       url = `${API}/${endpointMap[activeTab]}/${editingItem.id}`; method='PUT';
-      if (activeTab==='teachers'||activeTab==='students') {
+      if (activeTab==='teachers') {
         body={name:editingItem.name,email:editingItem.email,semester:editingItem.semester};
+        if (newPerson.password) body.password=newPerson.password;
+      } else if (activeTab==='students') {
+        body={
+          name:editingItem.name, email:editingItem.email, semester:editingItem.semester,
+          father_name:editingItem.father_name, father_cnic:editingItem.father_cnic,
+          last_education:editingItem.last_education, father_number:editingItem.father_number,
+          bform_number:editingItem.bform_number
+        };
         if (newPerson.password) body.password=newPerson.password;
       }
     }
@@ -377,6 +386,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             onDelete={handleDelete} onApprove={handleApprove} onReject={handleReject}
             onUpdateCourseStatus={handleUpdateCourseStatus} onGenerateReport={handleGenerateReport}
             onOpenClassCourses={(item)=>{setSelectedClassForCourses(item);setShowClassCoursesModal(true);}}
+            onOpenStudentProfile={(item)=>{setSelectedStudentForProfile(item);setShowStudentProfileModal(true);}}
             setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses}/>
         )}
       </main>
@@ -457,6 +467,9 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
 
       <ClassCoursesModal show={showClassCoursesModal} selectedClass={selectedClassForCourses}
         onClose={()=>setShowClassCoursesModal(false)} courses={courses}/>
+
+      <StudentProfileModal show={showStudentProfileModal} student={selectedStudentForProfile}
+        onClose={()=>setShowStudentProfileModal(false)} />
     </div>
   );
 }

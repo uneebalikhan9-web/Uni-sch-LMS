@@ -141,7 +141,8 @@ router.get('/students', async (req, res) => {
   try {
     const { campus_id, id: teacherId } = req.user;
     const [students] = await pool.query(`
-      SELECT DISTINCT u.id, u.name, u.email, u.roll_number, u.semester, u.created_at
+      SELECT DISTINCT u.id, u.name, u.email, u.roll_number, u.semester, u.created_at,
+             u.father_name, u.father_cnic, u.last_education, u.father_number, u.bform_number
       FROM users u
       LEFT JOIN enrollments e ON u.id = e.student_id
       LEFT JOIN courses c ON e.course_id = c.id

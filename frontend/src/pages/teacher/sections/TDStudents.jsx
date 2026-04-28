@@ -31,9 +31,15 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
               {campusStudents.map(student => (
                 <tr key={student.id} style={S.tableRow}>
                   <td style={S.td}>
-                    <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                    <div 
+                      style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }}
+                      onClick={() => onOpenStudentProfile(student)}
+                    >
                       <div style={{ width:'32px', height:'32px', borderRadius:'10px', background:'#f1f5f9', color:'#64748b', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700' }}>{student.name.charAt(0)}</div>
-                      <span style={{ fontWeight:'700', color:'#0f172a' }}>{student.name}</span>
+                      <div>
+                        <span style={{ fontWeight:'700', color:'#4f46e5', display:'block' }}>{student.name}</span>
+                        <span style={{ fontSize:'10px', color:'#64748b' }}>View Profile</span>
+                      </div>
                     </div>
                   </td>
                   <td style={S.td}><span style={{ fontWeight:700, color:'#0f172a' }}>{student.roll_number || 'N/A'}</span></td>

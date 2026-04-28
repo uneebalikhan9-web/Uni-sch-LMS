@@ -210,6 +210,11 @@ router.get('/students', async (req, res) => {
         u.roll_number,
         u.semester,
         u.created_at,
+        u.father_name,
+        u.father_cnic,
+        u.last_education,
+        u.father_number,
+        u.bform_number,
         COUNT(DISTINCT e.id) as total_enrollments
       FROM users u
       LEFT JOIN enrollments e ON u.id = e.student_id

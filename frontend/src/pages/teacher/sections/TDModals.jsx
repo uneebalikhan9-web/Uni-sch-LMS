@@ -31,7 +31,10 @@ export default function TDModals({
   setShowAddStudentModal,
   handleAddStudent,
   newStudent,
-  setNewStudent
+  setNewStudent,
+  showProfileModal,
+  setShowProfileModal,
+  selectedStudentProfile
 }) {
   return (
     <>
@@ -389,6 +392,81 @@ export default function TDModals({
                   <button type="submit" style={{...S.saveBtn, background:'#0f172a'}}>Register Student</button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STUDENT PROFILE VIEW MODAL */}
+      {showProfileModal && selectedStudentProfile && (
+        <div style={S.modalOverlay} onClick={() => setShowProfileModal(false)}>
+          <div style={{ ...S.modal, width:'600px' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
+            <div style={{ ...S.modalHeader, background:'linear-gradient(135deg, #4f46e5, #818cf8)', color:'#fff', border:'none' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
+                <div style={{ width:'64px', height:'64px', borderRadius:'22px', background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', fontWeight:800, border:'2px solid rgba(255,255,255,0.3)' }}>
+                  {selectedStudentProfile.name.charAt(0)}
+                </div>
+                <div>
+                  <h2 style={{ ...S.modalTitle, color:'#fff', marginBottom:'4px' }}>{selectedStudentProfile.name}</h2>
+                  <div style={{ display:'flex', gap:'8px' }}>
+                    <span style={{ padding:'2px 10px', borderRadius:'20px', background:'rgba(255,255,255,0.2)', fontSize:'11px', fontWeight:700 }}>{selectedStudentProfile.roll_number}</span>
+                    <span style={{ padding:'2px 10px', borderRadius:'20px', background:'rgba(255,255,255,0.2)', fontSize:'11px', fontWeight:700 }}>Semester {selectedStudentProfile.semester}</span>
+                  </div>
+                </div>
+              </div>
+              <button style={{ ...S.modalClose, color:'#fff' }} onClick={() => setShowProfileModal(false)}>×</button>
+            </div>
+            
+            <div style={{ padding:'30px', background:'#f8fafc' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
+                <div>
+                  <label style={{ fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase', letterSpacing:'1px' }}>Personal Information</label>
+                  <div style={{ marginTop:'12px', display:'flex', flexDirection:'column', gap:'16px' }}>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Full Name</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.name}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Email Address</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.email}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>B-Form / CNIC</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.bform_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Last Education</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.last_education || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase', letterSpacing:'1px' }}>Family & Guardian</label>
+                  <div style={{ marginTop:'12px', display:'flex', flexDirection:'column', gap:'16px' }}>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Father's Name</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.father_name || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Father's CNIC</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.father_cnic || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Guardian Phone</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{selectedStudentProfile.father_number || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Registration Date</p>
+                      <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{new Date(selectedStudentProfile.created_at).toLocaleDateString('en-GB')}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ ...S.modalFooter, background:'#fff', borderTop:'1px solid #f1f5f9' }}>
+              <button style={{ ...S.saveBtn, width:'100%', height:'48px' }} onClick={() => setShowProfileModal(false)}>Close Profile</button>
             </div>
           </div>
         </div>

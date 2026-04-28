@@ -90,6 +90,8 @@ function TeacherDashboard({ user, onLogout }) {
   const [globalLoading, setGlobalLoading] = useState(false)
   const { showToast } = useToast()
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {}, isDanger: false })
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState(null)
 
   const token = sessionStorage.getItem('token')
 
@@ -414,7 +416,14 @@ function TeacherDashboard({ user, onLogout }) {
       case 'lab-usage':
         return <TDLabUsage labUsage={labUsage} loadingLabs={loadingLabs} />
       case 'students':
-        return <TDStudents campusStudents={students} loadingStudents={loadingStudents} setShowAddStudentModal={setShowAddStudentModal} />
+        return (
+          <TDStudents 
+            campusStudents={students} 
+            loadingStudents={loadingStudents} 
+            setShowAddStudentModal={setShowAddStudentModal} 
+            onOpenStudentProfile={(s) => { setSelectedStudentProfile(s); setShowProfileModal(true); }}
+          />
+        )
       case 'pending':
         return <TDPending pendingEnrollments={pendingRequests} loadingPending={loadingPending} fetchPendingEnrollments={fetchPendingRequests} />
       case 'reports':
@@ -518,6 +527,8 @@ function TeacherDashboard({ user, onLogout }) {
         handleAddStudent={handleAddStudent} 
         handleBulkStudentUpload={handleBulkStudentUpload}
         newStudent={newStudent} setNewStudent={setNewStudent}
+        showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal}
+        selectedStudentProfile={selectedStudentProfile}
       />
     </div>
   )

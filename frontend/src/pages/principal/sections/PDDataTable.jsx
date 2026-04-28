@@ -23,7 +23,7 @@ export default function PDDataTable({
   setShowAddModal, setEditingItem,
   onDelete, onApprove, onReject,
   onUpdateCourseStatus, onGenerateReport,
-  onOpenClassCourses, setActiveTab, setNewCourse,
+  onOpenClassCourses, onOpenStudentProfile, setActiveTab, setNewCourse,
   courses,
 }) {
   const singularTab = (tab) => {
@@ -88,13 +88,25 @@ export default function PDDataTable({
                       </>
                     ) : (
                       <div
-                        style={{ display: 'flex', flexDirection: 'column', cursor: activeTab === 'classes' ? 'pointer' : 'default' }}
-                        onClick={() => activeTab === 'classes' ? onOpenClassCourses(item) : null}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          cursor: (activeTab === 'classes' || activeTab === 'students') ? 'pointer' : 'default' 
+                        }}
+                        onClick={() => {
+                          if (activeTab === 'classes') onOpenClassCourses(item);
+                          if (activeTab === 'students') onOpenStudentProfile(item);
+                        }}
                       >
-                        <span>{item.name || item.title}</span>
+                        <span style={activeTab === 'students' ? { color: '#7c3aed', fontWeight: 700 } : {}}>{item.name || item.title}</span>
                         {activeTab === 'classes' && (
                           <span style={{ fontSize: '10px', color: '#7c3aed', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                             <BookOpen size={10} weight="fill" /> {item.course_count || 0} Courses
+                          </span>
+                        )}
+                        {activeTab === 'students' && (
+                          <span style={{ fontSize: '10px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            View Profile
                           </span>
                         )}
                       </div>
