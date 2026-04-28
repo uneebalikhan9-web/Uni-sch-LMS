@@ -291,7 +291,7 @@ function TeacherDashboard({ user, onLogout }) {
     e.preventDefault();
     if (assignmentViewMode === 'create') {
       const method = editingItem ? 'PUT' : 'POST';
-      const url = editingItem ? `${API_BASE_URL}/api/submissions/assignments/${editingItem.id}` : `${API_BASE_URL}/api/submissions/assignments`;
+      const url = editingItem ? `${API_BASE_URL}/api/assignments/${editingItem.id}` : `${API_BASE_URL}/api/assignments`;
       try {
         const response = await fetch(url, {
           method,
