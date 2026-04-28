@@ -337,75 +337,101 @@ export function StudentProfileModal({ show, student, onClose }) {
   if (!show || !student) return null;
   return (
     <div style={S.modalOverlay} onClick={onClose}>
-      <div style={{ ...S.modal, width:'600px' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
-        <div style={{ ...S.modalHeader, background:'linear-gradient(135deg, #7c3aed, #a78bfa)', color:'#fff', border:'none' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'16px' }}>
-            <div style={{ width:'64px', height:'64px', borderRadius:'22px', background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'24px', fontWeight:800, border:'2px solid rgba(255,255,255,0.3)' }}>
+      <div style={{ ...S.modal, width:'650px', padding:0, borderRadius:'32px', overflow:'hidden', border:'1px solid rgba(255,255,255,0.2)', boxShadow:'0 25px 50px -12px rgba(0,0,0,0.25)' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
+        
+        {/* Header Section with Gradient & Avatar */}
+        <div style={{ background:'linear-gradient(135deg, #6366f1, #a855f7)', padding:'40px 30px', position:'relative' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'24px', position:'relative', zIndex:1 }}>
+            <div style={{ width:'80px', height:'80px', borderRadius:'28px', background:'rgba(255,255,255,0.2)', backdropFilter:'blur(10px)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px', fontWeight:800, color:'#fff', border:'2px solid rgba(255,255,255,0.3)', boxShadow:'0 10px 20px rgba(0,0,0,0.1)' }}>
               {student.name.charAt(0)}
             </div>
             <div>
-              <h2 style={{ ...S.modalTitle, color:'#fff', marginBottom:'4px' }}>{student.name}</h2>
-              <div style={{ display:'flex', gap:'8px' }}>
-                <span style={{ padding:'2px 10px', borderRadius:'20px', background:'rgba(255,255,255,0.2)', fontSize:'11px', fontWeight:700 }}>{student.roll_number}</span>
-                <span style={{ padding:'2px 10px', borderRadius:'20px', background:'rgba(255,255,255,0.2)', fontSize:'11px', fontWeight:700 }}>Semester {student.semester}</span>
+              <h2 style={{ ...S.modalTitle, color:'#fff', fontSize:'1.8rem', marginBottom:'8px', letterSpacing:'-0.02em' }}>{student.name}</h2>
+              <div style={{ display:'flex', gap:'10px' }}>
+                <span style={{ padding:'6px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.15)', backdropFilter:'blur(5px)', fontSize:'12px', fontWeight:700, color:'#fff', border:'1px solid rgba(255,255,255,0.1)' }}>
+                  <Buildings size={14} style={{ marginRight:'6px', verticalAlign:'middle' }} /> {student.roll_number}
+                </span>
+                <span style={{ padding:'6px 14px', borderRadius:'14px', background:'rgba(255,255,255,0.15)', backdropFilter:'blur(5px)', fontSize:'12px', fontWeight:700, color:'#fff', border:'1px solid rgba(255,255,255,0.1)' }}>
+                  <CalendarBlank size={14} style={{ marginRight:'6px', verticalAlign:'middle' }} /> Semester {student.semester}
+                </span>
               </div>
             </div>
           </div>
-          <button style={{ ...S.modalClose, color:'#fff' }} onClick={onClose}>×</button>
+          <button style={{ ...S.modalClose, color:'#fff', top:'20px', right:'20px', background:'rgba(255,255,255,0.1)', borderRadius:'50%', width:'36px', height:'36px', display:'flex', alignItems:'center', justifyContent:'center' }} onClick={onClose}>
+            <X size={20} weight="bold" />
+          </button>
+          
+          {/* Abstract background shapes */}
+          <div style={{ position:'absolute', top:'-50px', right:'-50px', width:'200px', height:'200px', borderRadius:'50%', background:'rgba(255,255,255,0.1)', filter:'blur(40px)' }}></div>
         </div>
         
-        <div style={{ padding:'30px', background:'#f8fafc' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'24px' }}>
+        <div style={{ padding:'35px', background:'#fff' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'40px' }}>
+            
+            {/* Left Column: Academic & Personal */}
             <div>
-              <label style={{ fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase', letterSpacing:'1px' }}>Personal Information</label>
-              <div style={{ marginTop:'12px', display:'flex', flexDirection:'column', gap:'16px' }}>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Full Name</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.name}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Email Address</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.email}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>B-Form / CNIC</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.bform_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Last Education</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.last_education || 'N/A'}</p>
-                </div>
+              <h4 style={{ fontSize:'12px', color:'#94a3b8', fontWeight:800, textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'8px' }}>
+                <UserCircle size={18} weight="duotone" color="#6366f1" /> Personal Profile
+              </h4>
+              <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
+                <InfoRow label="Email Address" value={student.email} icon={<BookOpen size={16} />} />
+                <InfoRow label="B-Form / CNIC" value={student.bform_number || 'Not Provided'} icon={<Buildings size={16} />} />
+                <InfoRow label="Last Education" value={student.last_education || 'N/A'} icon={<GraduationCap size={16} />} />
+                <InfoRow label="Registration Date" value={new Date(student.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' })} icon={<CalendarBlank size={16} />} />
               </div>
             </div>
 
+            {/* Right Column: Family & Guardian */}
             <div>
-              <label style={{ fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase', letterSpacing:'1px' }}>Family & Guardian</label>
-              <div style={{ marginTop:'12px', display:'flex', flexDirection:'column', gap:'16px' }}>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Father's Name</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.father_name || 'N/A'}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Father's CNIC</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.father_cnic || 'N/A'}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Guardian Phone</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{student.father_number || 'N/A'}</p>
-                </div>
-                <div>
-                  <p style={{ margin:0, fontSize:'13px', color:'#64748b' }}>Registration Date</p>
-                  <p style={{ margin:'2px 0 0', fontSize:'15px', color:'#0f172a', fontWeight:600 }}>{new Date(student.created_at).toLocaleDateString('en-GB')}</p>
+              <h4 style={{ fontSize:'12px', color:'#94a3b8', fontWeight:800, textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'20px', display:'flex', alignItems:'center', gap:'8px' }}>
+                <ChalkboardTeacher size={18} weight="duotone" color="#a855f7" /> Guardian Info
+              </h4>
+              <div style={{ display:'flex', flexDirection:'column', gap:'20px' }}>
+                <InfoRow label="Father's Name" value={student.father_name || 'N/A'} icon={<UserCircle size={16} />} />
+                <InfoRow label="Father's CNIC" value={student.father_cnic || 'N/A'} icon={<Buildings size={16} />} />
+                <InfoRow label="Guardian Phone" value={student.father_number || 'N/A'} icon={<Clock size={16} />} isLink={`tel:${student.father_number}`} />
+                
+                {/* Credentials Section */}
+                <div style={{ marginTop:'10px', padding:'15px', borderRadius:'20px', background:'#f8fafc', border:'1px dashed #e2e8f0' }}>
+                  <p style={{ margin:0, fontSize:'11px', color:'#64748b', fontWeight:700 }}>LOGIN ACCESS</p>
+                  <p style={{ margin:'4px 0 0', fontSize:'13px', color:'#0f172a', fontWeight:600, display:'flex', alignItems:'center', gap:'6px' }}>
+                    <span style={{ color:'#6366f1' }}>●</span> Default Pass: Password123
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div style={{ ...S.modalFooter, background:'#fff', borderTop:'1px solid #f1f5f9' }}>
-          <button style={{ ...S.saveBtn, width:'100%', height:'48px' }} onClick={onClose}>Close Profile</button>
+        <div style={{ padding:'25px 35px', background:'#f8fafc', borderTop:'1px solid #f1f5f9', display:'flex', gap:'15px' }}>
+          <button style={{ ...S.saveBtn, flex:1, height:'54px', borderRadius:'18px', fontSize:'15px', fontWeight:700, background:'#0f172a', boxShadow:'0 10px 20px rgba(0,0,0,0.1)' }} onClick={onClose}>
+            Close Directory
+          </button>
         </div>
       </div>
     </div>
   );
+}
+
+// Helper component for info rows
+function InfoRow({ label, value, icon, isLink }) {
+  return (
+    <div style={{ display:'flex', gap:'14px' }}>
+      <div style={{ width:'36px', height:'36px', borderRadius:'12px', background:'#f1f5f9', display:'flex', alignItems:'center', justifyContent:'center', color:'#64748b', flexShrink:0 }}>
+        {icon}
+      </div>
+      <div>
+        <p style={{ margin:0, fontSize:'11px', color:'#94a3b8', fontWeight:700, textTransform:'uppercase' }}>{label}</p>
+        {isLink ? (
+          <a href={isLink} style={{ margin:'2px 0 0', fontSize:'14px', color:'#4f46e5', fontWeight:600, textDecoration:'none', display:'block' }}>{value}</a>
+        ) : (
+          <p style={{ margin:'2px 0 0', fontSize:'14px', color:'#1e293b', fontWeight:600 }}>{value}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function GraduationCap({ size, style }) {
+  return <BookOpen size={size} style={style} />; // Fallback icon
 }
