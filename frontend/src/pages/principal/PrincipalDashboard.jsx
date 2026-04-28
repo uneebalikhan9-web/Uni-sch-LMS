@@ -154,7 +154,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   };
 
   const resetForms = () => {
-    setNewPerson({name:"",email:"",password:"",semester:"1"});
+    setNewPerson({ name: '', email: '', password: 'Password123', semester: 1, father_name: '', father_cnic: '', last_education: '', father_number: '', bform_number: '' });
     setNewClass({name:"",section:"",academic_year:"2024-2025",teacher_id:""});
     setNewCourse({title:"",description:"",teacher_id:"",class_id:""});
     setNewLab({name:"",description:"",icon:"Flask",environment:"Python",classId:"",url:""});
