@@ -53,10 +53,21 @@ router.post('/', async (req, res) => {
       ]
     );
 
+    const studentId = result.insertId;
+
+    // If class_id is provided, auto-assign student to class
+    const { class_id } = req.body;
+    if (class_id) {
+      await pool.query(
+        'INSERT INTO student_classes (student_id, class_id, status) VALUES (?, ?, ?)',
+        [studentId, class_id, 'approved']
+      );
+    }
+
     res.status(201).json({
       success: true,
       message: 'Student created successfully',
-      student_id: result.insertId,
+      student_id: studentId,
       roll_number: rollNumber
     });
   } catch (error) {

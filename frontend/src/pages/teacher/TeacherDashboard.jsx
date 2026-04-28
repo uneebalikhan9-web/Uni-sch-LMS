@@ -242,11 +242,23 @@ function TeacherDashboard({ user, onLogout }) {
 
   const handleAddStudent = async (e) => {
     e.preventDefault()
+    
+    // Ensure class_id is included
+    const payload = {
+      ...newStudent,
+      class_id: newStudent.class_id || (selectedCourse ? selectedCourse.class_id : null)
+    };
+
+    if (!payload.class_id) {
+      showToast('Please assign a class to the student', 'warning');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/students`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(newStudent)
+        body: JSON.stringify(payload)
       })
       const data = await response.json()
       if (data.success) { 
@@ -529,6 +541,8 @@ function TeacherDashboard({ user, onLogout }) {
         newStudent={newStudent} setNewStudent={setNewStudent}
         showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal}
         selectedStudentProfile={selectedStudentProfile}
+        teacherClasses={teacherClasses}
+        fetchStudents={fetchStudents}
       />
     </div>
   )

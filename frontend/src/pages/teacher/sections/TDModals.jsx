@@ -34,7 +34,8 @@ export default function TDModals({
   setNewStudent,
   showProfileModal,
   setShowProfileModal,
-  selectedStudentProfile
+  selectedStudentProfile,
+  teacherClasses
 }) {
   return (
     <>
@@ -380,6 +381,21 @@ export default function TDModals({
                   <div style={S.inputGroup}>
                     <label style={S.inputLabel}>Father's Phone</label>
                     <input type="text" placeholder="03xx-xxxxxxx" value={newStudent.father_number} onChange={e => setNewStudent({...newStudent, father_number:e.target.value})} style={S.input} required />
+                  </div>
+                  <div style={{...S.inputGroup, gridColumn:'span 2'}}>
+                    <label style={S.inputLabel}>Assign to Class (Required)</label>
+                    <select 
+                      required 
+                      value={newStudent.class_id || (selectedCourse ? selectedCourse.class_id : '')} 
+                      onChange={e => setNewStudent({...newStudent, class_id: e.target.value})} 
+                      style={S.input}
+                    >
+                      <option value="">Select Target Class</option>
+                      {teacherClasses.map(cl => (
+                        <option key={cl.id} value={cl.id}>{cl.name} - {cl.section} ({cl.department_name})</option>
+                      ))}
+                    </select>
+                    <p style={{margin:'4px 0 0', fontSize:'0.7rem', color:'#64748b'}}>Students must be assigned to a class to appear in courses.</p>
                   </div>
                   <div style={{...S.inputGroup, gridColumn:'span 2'}}>
                     <label style={S.inputLabel}>Last Education (Optional)</label>
