@@ -71,7 +71,7 @@ function TeacherDashboard({ user, onLogout }) {
   const [newStudent, setNewStudent] = useState({ 
     name: '', email: '', father_name: '', father_cnic: '', 
     last_education: '', father_number: '', bform_number: '',
-    password: 'Password123' // Default password for new students
+    password: 'Password123'
   })
   
   const [showGradeModal, setShowGradeModal] = useState(false)

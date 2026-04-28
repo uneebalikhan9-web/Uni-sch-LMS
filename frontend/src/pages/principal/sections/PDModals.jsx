@@ -236,6 +236,14 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
                 <div style={S.inputGroup}><label style={S.inputLabel}>Father's Phone</label><input placeholder="03xx-xxxxxxx" required value={editingItem ? editingItem.father_number : newPerson.father_number} onChange={e => editingItem ? setEditingItem({...editingItem, father_number:e.target.value}) : setNewPerson({...newPerson, father_number:e.target.value})} style={S.input} /></div>
                 <div style={S.inputGroup}><label style={S.inputLabel}>Semester</label><select required value={editingItem ? editingItem.semester : newPerson.semester} onChange={e => editingItem ? setEditingItem({...editingItem, semester:e.target.value}) : setNewPerson({...newPerson, semester:e.target.value})} style={S.input}>{[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}</select></div>
                 <div style={S.inputGroup}><label style={S.inputLabel}>Last Education</label><input placeholder="e.g. Matric" value={editingItem ? editingItem.last_education : newPerson.last_education} onChange={e => editingItem ? setEditingItem({...editingItem, last_education:e.target.value}) : setNewPerson({...newPerson, last_education:e.target.value})} style={S.input} /></div>
+                <div style={{...S.inputGroup, gridColumn:'span 2'}}>
+                  <label style={S.inputLabel}>Set Password {editingItem && '(Leave blank to keep current)'}</label>
+                  <input placeholder="••••••••" type="password" autoComplete="new-password" 
+                    value={newPerson.password} 
+                    onChange={e => setNewPerson({...newPerson, password:e.target.value})} 
+                    style={S.input} 
+                  />
+                </div>
               </div>
             </div>
           ) : (

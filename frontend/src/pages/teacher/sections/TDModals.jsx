@@ -385,6 +385,10 @@ export default function TDModals({
                     <label style={S.inputLabel}>Last Education (Optional)</label>
                     <input type="text" placeholder="e.g. Matric / O-Levels" value={newStudent.last_education} onChange={e => setNewStudent({...newStudent, last_education:e.target.value})} style={S.input} />
                   </div>
+                  <div style={{...S.inputGroup, gridColumn:'span 2'}}>
+                    <label style={S.inputLabel}>Set Password</label>
+                    <input type="password" placeholder="••••••••" value={newStudent.password} onChange={e => setNewStudent({...newStudent, password:e.target.value})} style={S.input} />
+                  </div>
                 </div>
 
                 <div style={{...S.modalActions, marginTop:'30px'}}>
