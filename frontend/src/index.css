@@ -19,3 +19,19 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* ─── Global Scrollbar Hiding ─── */
+/* Hide ALL scrollbars across the entire app — scrolling still works */
+*::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;  /* IE / Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+/* ─── Exception: Table containers get a very subtle thin scrollbar ─── */
+/* Only for horizontal scroll on tables, kept ultra-minimal */
+.table-container::-webkit-scrollbar {
+  display: none;
+}

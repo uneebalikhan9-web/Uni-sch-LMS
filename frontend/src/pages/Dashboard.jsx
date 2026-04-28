@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import AdminDashboard from './AdminDashboard'
-import PrincipalDashboard from './PrincipalDashboard'
-import SuperAdminDashboard from './SuperAdminDashboard'
-import BDDashboard from './BDDashboard'
-import StudentDashboard from './StudentDashboard'
-import TeacherDashboard from './TeacherDashboard'
+import PrincipalDashboard from './principal/PrincipalDashboard'
+import SuperAdminDashboard from './superadmin/SuperAdminDashboard'
+import BDDashboard from './bd/BDDashboard'
+import StudentDashboard from './student/StudentDashboard'
+import TeacherDashboard from './teacher/TeacherDashboard'
 import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
@@ -73,7 +72,7 @@ function Dashboard() {
 
   // Legacy admin role (backward compat)
   if (user.role === 'admin') {
-    return <AdminDashboard user={user} onLogout={handleLogout} />
+    return <PrincipalDashboard user={user} onLogout={handleLogout} />
   }
 
   if (user.role === 'student') {

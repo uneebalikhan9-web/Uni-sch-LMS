@@ -141,6 +141,10 @@ try {
   app.use('/api/pending-students', require('./api/pending-students'));
   console.log('✓ Pending students routes loaded');
 
+  console.log('Loading students routes...');
+  app.use('/api/students', require('./api/students'));
+  console.log('✓ Students routes loaded');
+
   console.log('Loading feedback routes...');
   app.use('/api/feedback', require('./api/feedback'));
   console.log('✓ Feedback routes loaded');

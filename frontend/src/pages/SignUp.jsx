@@ -153,14 +153,14 @@ function SignUp() {
             <div className="floating-group">
               <div className="input-container">
                 <User size={20} className="field-icon" />
-                <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required />
+                <input type="text" name="name" placeholder="Full Name" value={formData.name} onChange={handleChange} required autoComplete="name" />
               </div>
             </div>
 
             <div className="floating-group">
               <div className="input-container">
                 <Envelope size={20} className="field-icon" />
-                <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required />
+                <input type="email" name="email" placeholder="Email Address" value={formData.email} onChange={handleChange} required autoComplete="email" />
               </div>
             </div>
 
@@ -199,6 +199,7 @@ function SignUp() {
                   value={formData.password} 
                   onChange={handleChange} 
                   required 
+                  autoComplete="new-password"
                 />
                 <button 
                   type="button" 
@@ -230,6 +231,7 @@ function SignUp() {
                   value={formData.confirmPassword} 
                   onChange={handleChange} 
                   required 
+                  autoComplete="new-password"
                 />
                 <button 
                   type="button" 

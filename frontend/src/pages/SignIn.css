@@ -124,6 +124,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--primary) !important;
+}
+
+.logo-wrapper svg {
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
 }
 
 .logo-wrapper:hover {
@@ -229,7 +234,16 @@
 /* Floating input groups */
 .floating-group {
   position: relative;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 8px;
+  margin-left: 4px;
 }
 
 .input-container {

@@ -113,16 +113,17 @@ function SignIn() {
             <p>Enter your credentials to access your dashboard</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="modern-form">
+          <form onSubmit={handleSubmit} className="signin-form">
             {error && <div className="error-toast">{error}</div>}
-
             <div className="floating-group">
+              <label className="input-label">Email Address</label>
               <div className="input-container">
                 <Envelope size={20} className="field-icon" />
                 <input 
                   type="email" 
                   name="email" 
-                  placeholder="Email Address" 
+                  placeholder="name@university.edu" 
+                  autoComplete="username"
                   value={formData.email} 
                   onChange={handleChange} 
                   required 
@@ -131,13 +132,14 @@ function SignIn() {
             </div>
 
             <div className="floating-group">
+              <label className="input-label">Password</label>
               <div className="input-container">
                 <Lock size={20} className="field-icon" />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   name="password" 
-                  placeholder="Password" 
-                  autocomplete="current-password"
+                  placeholder="••••••••" 
+                  autoComplete="current-password"
                   value={formData.password} 
                   onChange={handleChange} 
                   required 
