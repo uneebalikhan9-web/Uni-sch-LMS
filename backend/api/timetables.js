@@ -36,7 +36,7 @@ router.post('/', verifyToken, async (req, res) => {
 // Teacher: Get My Timetable
 router.get('/my-timetable', verifyToken, isTeacher, async (req, res) => {
   try {
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     const [timetable] = await pool.query(
       `SELECT t.*, c.title as course_title, cl.name as class_name, cl.section
@@ -58,14 +58,15 @@ router.get('/my-timetable', verifyToken, isTeacher, async (req, res) => {
 // Student: Get My Timetable
 router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
   try {
-    const student_id = req.user.id;
+    const student_id = req.user.student_id;
 
     // Get student's enrolled courses
     const [timetable] = await pool.query(
       `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section
        FROM timetables t
        JOIN courses c ON t.course_id = c.id
-       JOIN users u ON t.teacher_id = u.id
+       LEFT JOIN employees e ON t.teacher_id = e.id
+       LEFT JOIN users u ON e.user_id = u.id
        LEFT JOIN classes cl ON t.class_id = cl.id
        WHERE t.course_id IN (
          SELECT course_id FROM enrollments WHERE student_id = ?
@@ -88,7 +89,8 @@ router.get('/', verifyToken, isAdmin, async (req, res) => {
     let query = `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section
                  FROM timetables t
                  JOIN courses c ON t.course_id = c.id
-                 JOIN users u ON t.teacher_id = u.id
+                 LEFT JOIN employees e ON t.teacher_id = e.id
+                 LEFT JOIN users u ON e.user_id = u.id
                  LEFT JOIN classes cl ON t.class_id = cl.id`;
     const params = [];
 
@@ -160,7 +162,8 @@ router.get('/class/:classId', verifyToken, async (req, res) => {
       `SELECT t.*, c.title as course_title, u.name as teacher_name
        FROM timetables t
        JOIN courses c ON t.course_id = c.id
-       JOIN users u ON t.teacher_id = u.id
+       LEFT JOIN employees e ON t.teacher_id = e.id
+       LEFT JOIN users u ON e.user_id = u.id
        WHERE t.class_id = ?
        ORDER BY FIELD(t.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.start_time`,
       [classId]
@@ -173,30 +176,32 @@ router.get('/class/:classId', verifyToken, async (req, res) => {
   }
 });
 
-// Admin/HOD: Get History of Classes Held (based on attendance records)
+// Admin/HOD: Get History of Classes Held (based on timetables records)
 router.get('/history', verifyToken, isAdmin, async (req, res) => {
   try {
     const campus_id = req.user.campus_id;
     const role = req.user.role;
 
     let query = `
-      SELECT DISTINCT a.date, a.class_id, a.course_id, a.teacher_id,
-             c.title as course_title, cl.name as class_name, cl.section,
-             u.name as teacher_name,
-             (SELECT COUNT(*) FROM attendance WHERE date = a.date AND class_id = a.class_id AND course_id = a.course_id) as student_count
-      FROM attendance a
-      JOIN courses c ON a.course_id = c.id
-      JOIN classes cl ON a.class_id = cl.id
-      JOIN users u ON a.teacher_id = u.id
+      SELECT t.id, t.day_of_week, t.start_time, t.end_time, t.room_number,
+             t.academic_year, t.semester,
+             c.title as course_title,
+             cl.name as class_name, cl.section,
+             u.name as teacher_name
+      FROM timetables t
+      JOIN courses c ON t.course_id = c.id
+      LEFT JOIN classes cl ON t.class_id = cl.id
+      LEFT JOIN employees e ON t.teacher_id = e.id
+      LEFT JOIN users u ON e.user_id = u.id
     `;
     const params = [];
 
     if (role !== 'super_admin') {
-      query += ` WHERE cl.campus_id = ?`;
-      params.push(campus_id);
+      query += ` WHERE (t.campus_id = ? OR c.campus_id = ?)`;
+      params.push(campus_id, campus_id);
     }
 
-    query += ` ORDER BY a.date DESC LIMIT 50`;
+    query += ` ORDER BY t.id DESC LIMIT 50`;
 
     const [history] = await pool.query(query, params);
     res.status(200).json({ success: true, history });

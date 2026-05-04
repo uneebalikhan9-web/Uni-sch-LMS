@@ -13,8 +13,10 @@ router.use(isAdmin);
 router.get('/', async (req, res) => {
   try {
     const { role, campus_id: adminCampusId } = req.user;
-    let query = `SELECT u.id, u.name, u.email, u.created_at, u.semester, c.name as department_name, u.campus_id
+    let query = `
+      SELECT u.id, u.name, u.email, u.created_at, s.semester, c.name as department_name, u.campus_id
        FROM users u
+       LEFT JOIN students s ON u.id = s.user_id
        LEFT JOIN campuses c ON u.campus_id = c.id
        WHERE u.role = 'student' AND u.is_approved = FALSE`;
     const params = [];
@@ -92,10 +94,21 @@ router.put('/:id/approve', async (req, res) => {
     }
 
     // 5. Final Approval
-    await pool.query(
-      'UPDATE users SET is_approved = TRUE, roll_number = ? WHERE id = ?',
-      [rollNumber, id]
-    );
+    await pool.query('UPDATE users SET is_approved = TRUE WHERE id = ?', [id]);
+
+    // 6. Create/Update Student Profile
+    const [existingStudent] = await pool.query('SELECT id FROM students WHERE user_id = ?', [id]);
+    if (existingStudent.length > 0) {
+      await pool.query(
+        'UPDATE students SET roll_number = ?, semester = ? WHERE user_id = ?',
+        [rollNumber, student.semester || 1, id]
+      );
+    } else {
+      await pool.query(
+        'INSERT INTO students (user_id, roll_number, semester, admission_year) VALUES (?, ?, ?, ?)',
+        [id, rollNumber, student.semester || 1, new Date().getFullYear()]
+      );
+    }
 
     console.log(`✅ Admin approved student: ${student.email} (ID: ${id})`);
 

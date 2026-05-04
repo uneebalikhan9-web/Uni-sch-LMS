@@ -4,7 +4,7 @@ import { Chart } from "chart.js/auto";
 import {
   House, ChalkboardTeacher, UserCircle, Buildings, BookOpen,
   UserPlus, SignOut, Plus, DotsThreeOutline, Clock, SquaresFour,
-  ChartLine, FileText, ChatCircle, GraduationCap
+  ChartLine, FileText, ChatCircle, GraduationCap, ShieldCheck
 } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config/api";
@@ -288,18 +288,18 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   );
 
   const navItems = [
-    ['overview',      'Overview',       <House size={20}/>,                teachers.length+students.length],
-    ['teachers',      'Teachers',       <ChalkboardTeacher size={20}/>,    teachers.length],
-    ['students',      'Students',       <UserCircle size={20}/>,           students.length],
-    ['classes',       'Classes',        <Buildings size={20}/>,            classes.length],
-    ['courses',       'Courses',        <BookOpen size={20}/>,             courses.filter(c=>c.status==='active').length],
-    ['history',       'Course History', <Clock size={20}/>,                courses.filter(c=>c.status==='completed').length],
-    ['timetable',     'Time Table',     <Clock size={20}/>,                timetables.length],
-    ['labs',          'Lab Management', <SquaresFour size={20}/>,          labs.length],
-    ['lab_reports',   'Lab Reports',    <FileText size={20}/>,             null],
-    ['feedback',      'Quality Reports',<ChartLine size={20} weight="duotone"/>, null],
-    ['course_reports','Course Reports', <ChartLine size={20} weight="duotone"/>, campusReports.length||null],
-    ['pending',       'Pending',        <UserPlus size={20}/>,             pendingStudents.length],
+    ['overview',      'Academic Analytics', <House size={20}/>,                teachers.length+students.length],
+    ['teachers',      'Faculty Management', <ChalkboardTeacher size={20}/>,    teachers.length],
+    ['students',      'Student Lifecycle', <UserCircle size={20}/>,           students.length],
+    ['classes',       'Academic Groups',   <Buildings size={20}/>,            classes.length],
+    ['courses',       'Programs & Courses', <BookOpen size={20}/>,             courses.filter(c=>c.status==='active').length],
+    ['exams',         'Exam & Results',     <FileText size={20}/>,             null],
+    ['finance',       'Dept. Finance',     <ShieldCheck size={20}/>,          null],
+    ['timetable',     'Academic Schedule', <Clock size={20}/>,                timetables.length],
+    ['labs',          'Lab & Assets',      <SquaresFour size={20}/>,          labs.length],
+    ['library',       'Research Resources', <BookOpen size={20}/>,             null],
+    ['feedback',      'Quality Assurance', <ChartLine size={20} weight="duotone"/>, null],
+    ['pending',       'Enrollment Queue',  <UserPlus size={20}/>,             pendingStudents.length],
   ];
 
   return (
@@ -320,8 +320,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
         </div>
         <div style={S.principalBadge}>
-          <UserCircle size={20} weight="duotone"/>
-          <span>{user.department_name ? `Lancers ${user.department_name}` : 'Lancers Principal'}</span>
+          <ShieldCheck size={20} weight="duotone"/>
+          <span>{user.department_name ? `Dean of ${user.department_name}` : 'Academic Dean'}</span>
           <div style={S.liveIndicator}/>
         </div>
         <nav style={S.nav}>
@@ -348,8 +348,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
       <main style={S.main} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>{user.department_name||'Department Hub'}</h1>
-            <p style={S.subtitle}>Welcome back, {user.name}</p>
+            <h1 style={S.title}>{user.department_name||'Deanery Office'}</h1>
+            <p style={S.subtitle}>Academic Council Portal — {user.name}</p>
           </div>
           <div style={S.headerActions}>
             <div style={S.dateBadge}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
@@ -397,7 +397,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         <div style={S.profileCard}>
           <div style={{...S.avatar,background:'linear-gradient(135deg,#7c3aed,#a78bfa)'}}>{user.name.charAt(0)}</div>
           <h3 style={S.profileName}>{user.name}</h3>
-          <span style={S.roleBadge}>Principal</span>
+          <span style={S.roleBadge}>Dean</span>
           <div style={S.profileStats}>
             <div style={S.profileStat}><span style={S.profileStatLabel}>Teachers</span><span style={S.profileStatValue}>{teachers.length}</span></div>
             <div style={S.profileStat}><span style={S.profileStatLabel}>Students</span><span style={S.profileStatValue}>{students.length}</span></div>

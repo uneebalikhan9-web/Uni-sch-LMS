@@ -136,18 +136,21 @@ router.post('/class-requests/:requestId/reject', async (req, res) => {
 
 // ============= STUDENT MANAGEMENT =============
 
+// ============= STUDENT MANAGEMENT =============
+
 // Get students in teacher's campus or courses/classes
 router.get('/students', async (req, res) => {
   try {
     const { campus_id, id: teacherId } = req.user;
     const [students] = await pool.query(`
-      SELECT DISTINCT u.id, u.name, u.email, u.roll_number, u.semester, u.created_at,
-             u.father_name, u.father_cnic, u.last_education, u.father_number, u.bform_number,
+      SELECT DISTINCT u.id as user_id, s.id as student_id, u.name, u.email, s.roll_number, s.semester, u.created_at,
+             s.father_name, s.father_cnic, s.last_education, s.father_number, s.bform_number,
              sc.class_id
       FROM users u
-      LEFT JOIN enrollments e ON u.id = e.student_id
+      LEFT JOIN students s ON u.id = s.user_id
+      LEFT JOIN enrollments e ON s.id = e.student_id
       LEFT JOIN courses c ON e.course_id = c.id
-      LEFT JOIN student_classes sc ON u.id = sc.student_id
+      LEFT JOIN student_classes sc ON s.id = sc.student_id
       LEFT JOIN classes cl ON sc.class_id = cl.id
       WHERE u.role = 'student' AND (
         u.campus_id = ? 
@@ -159,33 +162,52 @@ router.get('/students', async (req, res) => {
     res.status(200).json({ success: true, students });
   } catch (err) { 
     console.error('Error fetching teacher students:', err);
-    res.status(500).json({ success: false, message: 'Error' }); 
+    res.status(500).json({ success: false, message: 'Error fetching students' }); 
   }
 });
 
 // Create new student (Teacher adding)
 router.post('/students', async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const { name, email, password, semester } = req.body;
     const { campus_id } = req.user;
 
-    if (!name || !email || !password) return res.status(400).json({ success: false, message: 'Missing fields' });
+    if (!name || !email || !password) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: 'Missing fields' });
+    }
 
-    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) return res.status(400).json({ success: false, message: 'Email exists' });
+    const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: 'Email exists' });
+    }
 
     const rollNumber = await generateRollNumber(campus_id, semester || 1);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id, semester, roll_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', true, campus_id, semester || 1, rollNumber]
+    // 1. Create user
+    const [uResult] = await connection.query(
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', true, campus_id]
     );
 
-    res.status(201).json({ success: true, message: 'Student created!', student_id: result.insertId });
+    // 2. Create student profile
+    await connection.query(
+      'INSERT INTO students (user_id, roll_number, semester) VALUES (?, ?, ?)',
+      [uResult.insertId, rollNumber, semester || 1]
+    );
+
+    await connection.commit();
+    res.status(201).json({ success: true, message: 'Student created!', student_id: uResult.insertId });
   } catch (err) { 
-    console.error(err);
+    await connection.rollback();
+    console.error('Teacher student create error:', err);
     res.status(500).json({ success: false, message: 'Error creating student' }); 
+  } finally {
+    connection.release();
   }
 });
 
@@ -205,9 +227,18 @@ router.get('/courses/:courseId/assignments', async (req, res) => {
 router.get('/assignments/:assignmentId/submissions', async (req, res) => {
     try {
       const { assignmentId } = req.params;
-      const [submissions] = await pool.query('SELECT s.*, u.name as student_name, u.email as student_email, m.marks_obtained, m.feedback, m.graded_at, m.id as mark_id, a.max_marks FROM submissions s JOIN users u ON s.student_id = u.id JOIN assignments a ON s.assignment_id = a.id LEFT JOIN marks m ON s.id = m.submission_id WHERE s.assignment_id = ? ORDER BY s.submitted_at DESC', [assignmentId]);
+      const [submissions] = await pool.query(`
+        SELECT s.*, u.name as student_name, u.email as student_email, m.marks_obtained, m.feedback, m.graded_at, m.id as mark_id, a.max_marks 
+        FROM submissions s 
+        JOIN students st ON s.student_id = st.id
+        JOIN users u ON st.user_id = u.id 
+        JOIN assignments a ON s.assignment_id = a.id 
+        LEFT JOIN marks m ON s.id = m.submission_id 
+        WHERE s.assignment_id = ? 
+        ORDER BY s.submitted_at DESC
+      `, [assignmentId]);
       res.status(200).json({ success: true, submissions });
-    } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
+    } catch (err) { res.status(500).json({ success: false, message: 'Error fetching submissions' }); }
 });
 
 router.post('/submissions/:submissionId/grade', async (req, res) => {
@@ -225,7 +256,6 @@ router.post('/submissions/:submissionId/grade', async (req, res) => {
     } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
 });
 
-// Restoration of other routes from previous check 
 router.get('/courses', async (req, res) => {
     try {
       const teacherId = req.user.id;
@@ -251,9 +281,22 @@ router.get('/stats', async (req, res) => {
       const [[{ total_assignments }]] = await pool.query('SELECT COUNT(*) as total_assignments FROM assignments a JOIN courses c ON a.course_id = c.id WHERE c.teacher_id = ?', [teacherId]);
       const [[{ total_graded }]] = await pool.query('SELECT COUNT(*) as total_graded FROM marks m JOIN submissions s ON m.submission_id = s.id JOIN assignments a ON s.assignment_id = a.id JOIN courses c ON a.course_id = c.id WHERE c.teacher_id = ?', [teacherId]);
       const [[{ total_pending }]] = await pool.query('SELECT COUNT(*) as total_pending FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE c.teacher_id = ? AND e.status = "pending"', [teacherId]);
-      const [recent_students] = await pool.query('SELECT u.id, u.name, u.email, c.title as course_title, e.enrolled_at FROM enrollments e JOIN users u ON e.student_id = u.id JOIN courses c ON e.course_id = c.id WHERE c.teacher_id = ? AND e.status = "approved" ORDER BY e.enrolled_at DESC LIMIT 5', [teacherId]);
+      
+      const [recent_students] = await pool.query(`
+        SELECT u.id, u.name, u.email, c.title as course_title, e.enrolled_at 
+        FROM enrollments e 
+        JOIN students s ON e.student_id = s.id
+        JOIN users u ON s.user_id = u.id 
+        JOIN courses c ON e.course_id = c.id 
+        WHERE c.teacher_id = ? AND e.status = "approved" 
+        ORDER BY e.enrolled_at DESC LIMIT 5
+      `, [teacherId]);
+      
       res.status(200).json({ success: true, stats: { total_courses, total_students, total_classes, total_assignments, total_graded, total_pending, recent_students } });
-    } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
+    } catch (err) { 
+      console.error('Teacher stats error:', err);
+      res.status(500).json({ success: false, message: 'Error fetching stats' }); 
+    }
 });
 
 module.exports = router;

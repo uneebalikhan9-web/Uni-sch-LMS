@@ -14,7 +14,8 @@ router.get('/', isAdmin, async (req, res) => {
         (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id) as student_count,
         (SELECT COUNT(*) FROM courses WHERE class_id = c.id) as course_count
         FROM classes c
-        LEFT JOIN users u ON c.teacher_id = u.id`;
+        LEFT JOIN employees e ON c.teacher_id = e.id
+        LEFT JOIN users u ON e.user_id = u.id`;
     
     let params = [];
     
@@ -38,7 +39,7 @@ router.get('/', isAdmin, async (req, res) => {
 // Get My Assigned Classes (For Teachers)
 router.get('/teacher/my-classes', isTeacher, async (req, res) => {
   try {
-    const teacherId = req.user.id;
+    const teacherId = req.user.employee_id; // Use employee_id from token
     const [classes] = await pool.query(
       `SELECT c.*, 
        (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id) as student_count,
@@ -59,14 +60,15 @@ router.get('/teacher/my-classes', isTeacher, async (req, res) => {
 // Get Available Classes for Registration (For Students)
 router.get('/available', isStudent, async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentId = req.user.student_id; // Use student_id from token
     const campusId = req.user.campus_id;
 
     const [classes] = await pool.query(
       `SELECT c.*, u.name as teacher_name,
        (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id AND student_id = ?) as is_registered
        FROM classes c
-       LEFT JOIN users u ON c.teacher_id = u.id
+       LEFT JOIN employees e ON c.teacher_id = e.id
+       LEFT JOIN users u ON e.user_id = u.id
        WHERE c.campus_id = ?
        ORDER BY c.name, c.section`,
       [studentId, campusId]
@@ -83,7 +85,7 @@ router.get('/available', isStudent, async (req, res) => {
 router.post('/register', isStudent, async (req, res) => {
   try {
     const { class_id } = req.body;
-    const student_id = req.user.id;
+    const student_id = req.user.student_id;
 
     if (!class_id) {
       return res.status(400).json({ success: false, message: 'Class ID is required' });
@@ -329,9 +331,10 @@ router.get('/:id/students', verifyToken, async (req, res) => {
     }
 
     const [students] = await pool.query(
-      `SELECT u.id, u.name, u.email, sc.assigned_at
+      `SELECT u.id as user_id, s.id as student_id, u.name, u.email, sc.assigned_at
        FROM student_classes sc
-       JOIN users u ON sc.student_id = u.id
+       JOIN students s ON sc.student_id = s.id
+       JOIN users u ON s.user_id = u.id
        WHERE sc.class_id = ? AND sc.status = 'approved'
        ORDER BY u.name`,
       [id]
@@ -349,13 +352,14 @@ router.get('/:id/courses', async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.query;
-    const studentId = req.user.id;
+    const studentId = req.user.student_id;
     
     let query = `
       SELECT c.*, e.status as enrollment_status, u.name as teacher_name
       FROM courses c
       LEFT JOIN enrollments e ON c.id = e.course_id AND e.student_id = ?
-      LEFT JOIN users u ON c.teacher_id = u.id
+      LEFT JOIN employees emp ON c.teacher_id = emp.id
+      LEFT JOIN users u ON emp.user_id = u.id
       WHERE c.class_id = ?
     `;
     

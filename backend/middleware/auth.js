@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 
 // Middleware to verify JWT token
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(' ')[1]; // Bearer TOKEN
 
@@ -13,7 +13,18 @@ const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Add user info to request
+    req.user = decoded; 
+
+    // Inject specialized IDs based on role
+    const { pool } = require('../config/database');
+    if (decoded.role === 'student') {
+      const [student] = await pool.query('SELECT id FROM students WHERE user_id = ?', [decoded.id]);
+      if (student.length > 0) req.user.student_id = student[0].id;
+    } else if (['teacher', 'principal', 'admin', 'bd_agent'].includes(decoded.role)) {
+      const [employee] = await pool.query('SELECT id FROM employees WHERE user_id = ?', [decoded.id]);
+      if (employee.length > 0) req.user.employee_id = employee[0].id;
+    }
+
     next();
   } catch (error) {
     console.error('Token verification error:', error);
@@ -108,6 +119,46 @@ const isChatUser = (req, res, next) => {
   next();
 };
 
+// Middleware to check if user is a Finance Manager
+const isFinanceManager = (req, res, next) => {
+  if (!['finance_manager', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. Finance Managers only.' });
+  }
+  next();
+};
+
+// Middleware to check if user is an HR Manager
+const isHRManager = (req, res, next) => {
+  if (!['hr_manager', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. HR Managers only.' });
+  }
+  next();
+};
+
+// Middleware to check if user is a Registrar
+const isRegistrar = (req, res, next) => {
+  if (!['registrar', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. Registrar only.' });
+  }
+  next();
+};
+
+// Middleware to check if user is an Admission Officer
+const isAdmissionOfficer = (req, res, next) => {
+  if (!['admission_officer', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. Admission Officers only.' });
+  }
+  next();
+};
+
+// Middleware to check if user is a Librarian
+const isLibrarian = (req, res, next) => {
+  if (!['library_manager', 'super_admin'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. Librarians only.' });
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
   isTeacher,
@@ -116,5 +167,10 @@ module.exports = {
   isSuperAdmin,
   isStudent,
   isBDAgent,
-  isChatUser
+  isChatUser,
+  isFinanceManager,
+  isHRManager,
+  isRegistrar,
+  isAdmissionOfficer,
+  isLibrarian
 };

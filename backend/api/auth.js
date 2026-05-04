@@ -56,8 +56,18 @@ router.post('/signup', async (req, res) => {
 
     // Insert user into database with pending approval status
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id, semester) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', false, req.body.campus_id || null, req.body.semester || 1]
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', false, req.body.campus_id || null]
+    );
+
+    const userId = result.insertId;
+
+    // Create student profile
+    // Note: Generating a temporary roll number for now
+    const tempRollNumber = `LUK-${Date.now().toString().slice(-5)}`;
+    await pool.query(
+      'INSERT INTO students (user_id, roll_number, semester, admission_year) VALUES (?, ?, ?, ?)',
+      [userId, tempRollNumber, req.body.semester || 1, new Date().getFullYear()]
     );
 
     // Return success message without token (account pending admin approval)
@@ -66,7 +76,7 @@ router.post('/signup', async (req, res) => {
       message: 'Registration submitted successfully! Please wait for admin approval before signing in.',
       pending: true,
       user: {
-        id: result.insertId,
+        id: userId,
         name: name,
         email: email,
         role: 'student'
@@ -99,9 +109,11 @@ router.post('/signin', async (req, res) => {
 
     // Check if user exists
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name 
+      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
+       LEFT JOIN students s ON u.id = s.user_id
+       LEFT JOIN employees e ON u.id = e.user_id
        WHERE u.email = ?`,
       [email]
     );
@@ -204,7 +216,14 @@ router.post('/signin', async (req, res) => {
 
     // --- DIRECT LOGIN (2FA disabled) ---
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, campus_id: user.campus_id },
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        campus_id: user.campus_id,
+        student_id: user.student_id || null,
+        employee_id: user.employee_id || null
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -269,6 +288,15 @@ router.post('/teacher/signup', async (req, res) => {
       [name, email, hashedPassword, 'teacher']
     );
 
+    const userId = result.insertId;
+
+    // Create employee profile for teacher
+    const tempEmpCode = `EMP-${Date.now().toString().slice(-5)}`;
+    await pool.query(
+      'INSERT INTO employees (user_id, employee_code, designation, joining_date) VALUES (?, ?, ?, ?)',
+      [userId, tempEmpCode, 'Lecturer', new Date()]
+    );
+
     // Generate JWT token
     const token = jwt.sign(
       { id: result.insertId, email: email, role: 'teacher' },
@@ -312,9 +340,10 @@ router.post('/teacher/signin', async (req, res) => {
 
     // Check if teacher exists
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name 
+      `SELECT u.*, c.name as department_name, e.employee_code, e.designation, e.id as employee_id
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
+       LEFT JOIN employees e ON u.id = e.user_id
        WHERE u.email = ? AND u.role = ?`,
       [email, 'teacher']
     );
@@ -340,7 +369,13 @@ router.post('/teacher/signin', async (req, res) => {
 
     // Generate JWT token with campus_id
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, campus_id: user.campus_id },
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        campus_id: user.campus_id,
+        employee_id: user.employee_id || null
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -389,9 +424,11 @@ router.post('/verify-otp', async (req, res) => {
 
     // OTP is valid! Now get the user and issue the token
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name 
+      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
+       LEFT JOIN students s ON u.id = s.user_id
+       LEFT JOIN employees e ON u.id = e.user_id
        WHERE u.email = ?`,
       [email]
     );
@@ -402,7 +439,14 @@ router.post('/verify-otp', async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, role: user.role, campus_id: user.campus_id },
+      { 
+        id: user.id, 
+        email: user.email, 
+        role: user.role, 
+        campus_id: user.campus_id,
+        student_id: user.student_id || null,
+        employee_id: user.employee_id || null
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -433,12 +477,17 @@ router.post('/verify-otp', async (req, res) => {
 router.get('/verify-token', require('../middleware/auth').verifyToken, async (req, res) => {
   try {
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name 
+      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
+       LEFT JOIN students s ON u.id = s.user_id
+       LEFT JOIN employees e ON u.id = e.user_id
        WHERE u.id = ?`,
       [req.user.id]
     );
+    if (users.length === 0) {
+      return res.status(401).json({ success: false, message: 'User no longer exists. Please login again.' });
+    }
     const user = users[0];
     
     res.status(200).json({
@@ -456,6 +505,7 @@ router.get('/verify-token', require('../middleware/auth').verifyToken, async (re
       }
     });
   } catch (error) {
+    console.error('Verify token error:', error);
     res.status(500).json({ success: false, message: 'Error verifying token' });
   }
 });

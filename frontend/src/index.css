@@ -21,7 +21,6 @@ code {
 }
 
 /* ─── Global Scrollbar Hiding ─── */
-/* Hide ALL scrollbars across the entire app — scrolling still works */
 *::-webkit-scrollbar {
   display: none;
 }
@@ -30,8 +29,59 @@ code {
   scrollbar-width: none;     /* Firefox */
 }
 
-/* ─── Exception: Table containers get a very subtle thin scrollbar ─── */
-/* Only for horizontal scroll on tables, kept ultra-minimal */
-.table-container::-webkit-scrollbar {
-  display: none;
+/* ─── Global Responsive Utilities ─── */
+.mobile-only { display: none; }
+
+@media (max-width: 1024px) {
+  .mobile-only { display: block !important; }
+  .desktop-only { display: none !important; }
+}
+
+/* Base Dashboard Layout System */
+.portal-container {
+  display: flex;
+  min-height: 100vh;
+  background: #f8fafc;
+}
+
+.portal-sidebar {
+  width: 280px;
+  background: #1e293b;
+  color: white;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.portal-main {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .portal-sidebar {
+    position: fixed;
+    height: 100vh;
+    z-index: 1000;
+    left: -280px;
+  }
+  .portal-sidebar.open {
+    left: 0;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+  }
+}
+
+/* Standardized Metric Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
 }

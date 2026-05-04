@@ -64,21 +64,26 @@ router.get('/teachers', async (req, res) => {
     const [teachers] = await pool.query(`
       SELECT 
         u.id,
+        u.id as user_id,
+        e.id as employee_id,
         u.name,
         u.email,
         u.created_at,
+        e.employee_code,
+        e.designation,
         COUNT(DISTINCT c.id) as total_courses
       FROM users u
-      LEFT JOIN courses c ON u.id = c.teacher_id
+      JOIN employees e ON u.id = e.user_id
+      LEFT JOIN courses c ON e.id = c.teacher_id
       WHERE u.role = 'teacher' AND u.campus_id = ?
-      GROUP BY u.id
+      GROUP BY u.id, e.id
       ORDER BY u.created_at DESC
     `, [campusId]);
 
     for (let teacher of teachers) {
       const [courses] = await pool.query(
         'SELECT id, title FROM courses WHERE teacher_id = ? AND campus_id = ?',
-        [teacher.id, campusId]
+        [teacher.employee_id, campusId]
       );
       teacher.courses = courses;
     }
@@ -107,8 +112,17 @@ router.post('/teachers', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id) VALUES (?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'teacher', campusId]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'teacher', campusId, true]
+    );
+
+    const userId = result.insertId;
+
+    // Create employee profile
+    const tempEmpCode = `EMP-${Date.now().toString().slice(-5)}`;
+    await pool.query(
+      'INSERT INTO employees (user_id, employee_code, designation, joining_date) VALUES (?, ?, ?, ?)',
+      [userId, tempEmpCode, req.body.designation || 'Lecturer', new Date()]
     );
 
     res.status(201).json({
@@ -205,21 +219,24 @@ router.get('/students', async (req, res) => {
     const [students] = await pool.query(`
       SELECT 
         u.id,
+        u.id as user_id,
+        s.id as student_id,
         u.name,
         u.email,
-        u.roll_number,
-        u.semester,
+        s.roll_number,
+        s.semester,
+        s.father_name,
+        s.father_cnic,
+        s.last_education,
+        s.father_number,
+        s.bform_number,
         u.created_at,
-        u.father_name,
-        u.father_cnic,
-        u.last_education,
-        u.father_number,
-        u.bform_number,
         COUNT(DISTINCT e.id) as total_enrollments
       FROM users u
-      LEFT JOIN enrollments e ON u.id = e.student_id
+      JOIN students s ON u.id = s.user_id
+      LEFT JOIN enrollments e ON s.id = e.student_id
       WHERE u.role = 'student' AND u.campus_id = ?
-      GROUP BY u.id
+      GROUP BY u.id, s.id
       ORDER BY u.created_at DESC
     `, [campusId]);
 
@@ -229,7 +246,7 @@ router.get('/students', async (req, res) => {
         FROM courses c
         JOIN enrollments e ON c.id = e.course_id
         WHERE e.student_id = ? AND c.campus_id = ?
-      `, [student.id, campusId]);
+      `, [student.student_id, campusId]);
       student.enrollments = enrollments;
     }
 
@@ -260,8 +277,23 @@ router.post('/students', async (req, res) => {
     const rollNumber = await generateRollNumber(campusId, semNum);
 
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id, is_approved, semester, roll_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', campusId, true, semNum, rollNumber]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', campusId, true]
+    );
+
+    const userId = result.insertId;
+
+    // Create student profile with academic details
+    await pool.query(
+      `INSERT INTO students (
+        user_id, roll_number, semester, admission_year,
+        father_name, father_cnic, last_education, father_number, bform_number
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        userId, rollNumber, semNum, new Date().getFullYear(),
+        req.body.father_name || null, req.body.father_cnic || null, 
+        req.body.last_education || null, req.body.father_number || null, req.body.bform_number || null
+      ]
     );
 
     res.status(201).json({
@@ -296,6 +328,19 @@ router.put('/students/:id', async (req, res) => {
     } else {
       await pool.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, id]);
     }
+
+    // Update student profile with academic details
+    await pool.query(
+      `UPDATE students SET 
+        semester = ?, father_name = ?, father_cnic = ?, 
+        last_education = ?, father_number = ?, bform_number = ? 
+      WHERE user_id = ?`,
+      [
+        req.body.semester || 1, req.body.father_name || null, req.body.father_cnic || null, 
+        req.body.last_education || null, req.body.father_number || null, req.body.bform_number || null, 
+        id
+      ]
+    );
 
     res.status(200).json({ success: true, message: 'Student updated successfully' });
   } catch (error) {

@@ -1,0 +1,232 @@
+/* HR Portal Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --hr-primary: #4f46e5;
+    --hr-primary-light: #eef2ff;
+    --hr-sidebar-bg: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    --hr-bg: #f8fafc;
+    --hr-card-bg: #ffffff;
+    --hr-text-main: #0f172a;
+    --hr-text-muted: #64748b;
+    --hr-border: #e2e8f0;
+    --hr-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+.hr-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--hr-bg);
+    font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar */
+.hr-sidebar {
+    width: 260px;
+    background: var(--hr-sidebar-bg);
+    color: #e2e8f0;
+    position: fixed;
+    height: 100vh;
+    z-index: 40;
+    left: 0;
+    top: 0;
+    transition: transform 0.3s ease;
+}
+
+.hr-sidebar.closed {
+    transform: translateX(-100%);
+}
+
+.hr-logo-section {
+    padding: 2.5rem 1.5rem;
+}
+
+.hr-logo-text {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+}
+
+.hr-logo-accent {
+    color: #a5b4fc;
+}
+
+.hr-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 1rem;
+}
+
+.hr-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: 0.2s all;
+    font-weight: 500;
+}
+
+.hr-nav-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.hr-nav-item.active {
+    background: rgba(79, 70, 229, 0.4);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Main Content */
+.hr-main {
+    flex: 1;
+    margin-left: 260px;
+    transition: margin-left 0.3s ease;
+}
+
+.hr-main.full-width {
+    margin-left: 0;
+}
+
+.hr-header {
+    position: sticky;
+    top: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--hr-border);
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 30;
+}
+
+.hr-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.hr-content {
+    padding: 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards */
+.hr-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.8rem;
+    margin-bottom: 2.5rem;
+}
+
+.hr-card {
+    background: white;
+    border-radius: 24px;
+    border: 1px solid var(--hr-border);
+    padding: 1.8rem;
+    box-shadow: var(--hr-shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hr-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.1);
+    border-color: #cbd5e1;
+}
+
+.hr-metric-icon-box {
+    background: var(--hr-primary-light);
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--hr-primary);
+}
+
+.hr-metric-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--hr-text-main);
+    letter-spacing: -1px;
+}
+
+.hr-metric-label {
+    color: var(--hr-text-muted);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Tables */
+.hr-table-container {
+    overflow-x: auto;
+}
+
+.hr-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hr-table th {
+    text-align: left;
+    padding: 1.2rem;
+    color: var(--hr-text-main);
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+.hr-table td {
+    padding: 1.2rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* Badges */
+.hr-badge {
+    padding: 0.3rem 1rem;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.hr-badge-active { background: #dcfce7; color: #15803d; }
+.hr-badge-leave { background: #fef3c7; color: #b45309; }
+.hr-badge-terminated { background: #fee2e2; color: #b91c1c; }
+
+/* Responsive Tweaks - Mobile Only */
+@media (max-width: 1024px) {
+    .hr-sidebar { 
+        transform: translateX(-100%); 
+        width: 280px;
+        box-shadow: 20px 0 50px rgba(0,0,0,0.2);
+    }
+    .hr-sidebar.open { transform: translateX(0); }
+    .hr-main { margin-left: 0; width: 100%; }
+    .hr-content { padding: 1rem; }
+    .hr-header { padding: 1rem; }
+    .hr-metrics-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .hr-metrics-grid .hr-metric-value { font-size: 1.5rem; }
+}
+
+@media (max-width: 640px) {
+    .hr-metrics-grid { grid-template-columns: 1fr; }
+    .hr-user-pill span { display: none; }
+}

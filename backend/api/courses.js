@@ -13,7 +13,8 @@ router.get('/', verifyToken, async (req, res) => {
     let query = `
       SELECT c.*, u.name as teacher_name, cl.name as class_name 
       FROM courses c
-      LEFT JOIN users u ON c.teacher_id = u.id
+      LEFT JOIN employees e ON c.teacher_id = e.id
+      LEFT JOIN users u ON e.user_id = u.id
       LEFT JOIN classes cl ON c.class_id = cl.id
     `;
     
@@ -134,8 +135,8 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
         const isPowerUser = ['admin', 'principal', 'super_admin'].includes(user.role);
         console.log(`Permission check: user=${user.email}, role=${user.role}, isPowerUser=${isPowerUser}`);
 
-        if (!isPowerUser && course[0].teacher_id !== user.id) {
-            console.log(`Access Denied: user.id=${user.id}, teacher_id=${course[0].teacher_id}`);
+        if (!isPowerUser && course[0].teacher_id !== user.employee_id) {
+            console.log(`Access Denied: user.employee_id=${user.employee_id}, teacher_id=${course[0].teacher_id}`);
             return res.status(403).json({ success: false, message: 'Access denied' });
         }
         
@@ -157,7 +158,7 @@ router.patch('/:id/status', verifyToken, async (req, res) => {
 router.post('/:courseId/enroll', verifyToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const studentId = req.user.id;
+    const studentId = req.user.student_id;
 
     // Check if course exists
     const [courses] = await pool.query('SELECT id FROM courses WHERE id = ?', [courseId]);
@@ -210,13 +211,14 @@ router.post('/:courseId/enroll', verifyToken, async (req, res) => {
 // Get student's enrolled courses
 router.get('/my-enrollments', verifyToken, async (req, res) => {
   try {
-    const studentId = req.user.id;
+    const studentId = req.user.student_id;
 
     const [enrollments] = await pool.query(`
       SELECT c.*, u.name as teacher_name, e.enrolled_at, e.status, cl.name as class_name
       FROM enrollments e
       JOIN courses c ON e.course_id = c.id
-      LEFT JOIN users u ON c.teacher_id = u.id
+      LEFT JOIN employees emp ON c.teacher_id = emp.id
+      LEFT JOIN users u ON emp.user_id = u.id
       LEFT JOIN classes cl ON c.class_id = cl.id
       WHERE e.student_id = ?
       ORDER BY e.enrolled_at DESC
@@ -242,9 +244,10 @@ router.get('/:courseId/students', verifyToken, async (req, res) => {
 
     // Fetch all students who are in the class assigned to this course
     const query = `
-      SELECT u.id, u.name, u.email
+      SELECT u.id as user_id, s.id as student_id, u.name, u.email
       FROM users u
-      JOIN student_classes sc ON u.id = sc.student_id
+      JOIN students s ON u.id = s.user_id
+      JOIN student_classes sc ON s.id = sc.student_id
       JOIN courses c ON sc.class_id = c.class_id
       WHERE c.id = ?
       ORDER BY u.name

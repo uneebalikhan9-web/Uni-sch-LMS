@@ -12,13 +12,13 @@ export default function SADepartments({
     <>
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
-          <h2 style={S.tableTitle}>Departments</h2>
+          <h2 style={S.tableTitle}>Faculties & Departments</h2>
           <button 
             onClick={() => { setEditingItem(null); setShowAddModal(true); }} 
             style={S.addBtn} className="add-btn"
           >
             <Plus size={18} weight="bold" />
-            <span>Add Department</span>
+            <span>Add Faculty</span>
           </button>
         </div>
         <div style={S.tableContainer} className="table-container">
@@ -108,7 +108,7 @@ export default function SADepartments({
                   Cancel
                 </button>
                 <button type="submit" style={S.saveBtn}>
-                  {editingItem ? 'Update Department' : 'Create Department'}
+                  {editingItem ? 'Update Faculty' : 'Create Faculty'}
                 </button>
               </div>
             </form>

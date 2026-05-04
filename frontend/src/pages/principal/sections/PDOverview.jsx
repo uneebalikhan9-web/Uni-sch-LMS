@@ -59,12 +59,12 @@ export default function PDOverview({
   }, [engagementData]);
 
   const metrics = [
-    { label: 'Teachers',        val: teachers.length,         color: '#7c3aed', trend: `+${Math.floor(teachers.length * 0.2) || 2}%` },
-    { label: 'Students',        val: students.length,         color: '#8b5cf6', trend: `+${Math.floor(students.length * 0.15) || 5}%` },
-    { label: 'Classes',         val: classes.length,          color: '#a78bfa', trend: `Avg ${classAverageSize} students` },
-    { label: 'Active Courses',  val: totalActiveCourses,      color: '#c084fc', trend: `${courses.length - totalActiveCourses} inactive` },
-    { label: 'Pending',         val: pendingCount,            color: '#f472b6', trend: 'Awaiting approval' },
-    { label: 'Teacher:Student', val: teacherStudentRatio,     color: '#60a5fa', trend: 'Ratio' },
+    { label: 'Faculty Members', val: teachers.length,         color: '#7c3aed', trend: `+${Math.floor(teachers.length * 0.2) || 2}%` },
+    { label: 'Student Enrollment', val: students.length,         color: '#8b5cf6', trend: `+${Math.floor(students.length * 0.15) || 5}%` },
+    { label: 'Academic Groups', val: classes.length,          color: '#a78bfa', trend: `Avg ${classAverageSize} students` },
+    { label: 'Curriculum Programs', val: totalActiveCourses,      color: '#c084fc', trend: `${courses.length - totalActiveCourses} inactive` },
+    { label: 'Enrollment Queue', val: pendingCount,            color: '#f472b6', trend: 'Awaiting approval' },
+    { label: 'Faculty:Student', val: teacherStudentRatio,     color: '#60a5fa', trend: 'Ratio' },
   ];
 
   const icons = [
@@ -96,8 +96,8 @@ export default function PDOverview({
       <div style={S.chartCard}>
         <div style={S.chartHeader}>
           <div>
-            <h3 style={S.chartTitle}>Department Engagement</h3>
-            <p style={S.chartSubtitle}>Weekly activity based on real-time data</p>
+            <h3 style={S.chartTitle}>Faculty & Student Engagement Analytics</h3>
+            <p style={S.chartSubtitle}>Departmental activity monitoring based on real-time data</p>
           </div>
           <div style={S.chartControls}>
             <Pulse size={20} color="#7c3aed" weight="duotone" />

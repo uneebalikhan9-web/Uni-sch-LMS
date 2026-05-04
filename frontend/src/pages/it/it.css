@@ -1,0 +1,88 @@
+/* IT Portal Styles */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --it-primary: #4f46e5;
+    --it-sidebar-bg: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    --it-bg: #0f172a; /* Dark mode style for IT portal */
+    --it-card-bg: #1e293b;
+    --it-text-main: #f8fafc;
+    --it-border: #334155;
+}
+
+.it-container {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--it-bg);
+    font-family: 'Inter', sans-serif;
+    color: var(--it-text-main);
+}
+
+.it-sidebar {
+    width: 260px;
+    background: var(--it-sidebar-bg);
+    color: #e2e8f0;
+    position: fixed;
+    height: 100vh;
+}
+
+.it-main {
+    flex: 1;
+    margin-left: 260px;
+}
+
+.it-header {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--it-border);
+    padding: 1.2rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.it-content {
+    padding: 2.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.it-card {
+    background: var(--it-card-bg);
+    border-radius: 24px;
+    border: 1px solid var(--it-border);
+    padding: 1.8rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.it-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.it-status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.it-dot-online { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+.it-btn-primary {
+    background: var(--it-primary);
+    color: white;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 40px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 1024px) {
+    .it-sidebar { display: none; }
+    .it-main { margin-left: 0; }
+}

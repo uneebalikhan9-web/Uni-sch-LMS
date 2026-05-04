@@ -417,22 +417,28 @@ function StudentDashboard({ user, onLogout }) {
           ...S.main, 
           marginRight: (activePage === 'labs' && selectedLab) ? '0' : '320px',
           padding: (activePage === 'labs' && selectedLab) ? '24px' : '48px',
-          width: (activePage === 'labs' && selectedLab) ? 'calc(100% - 280px)' : 'auto'
+          width: (activePage === 'labs' && selectedLab) ? 'calc(100% - 280px)' : 'auto',
+          background: 'rgba(255, 255, 255, 0.02)',
+          backdropFilter: 'blur(10px)',
+          minHeight: '100vh',
+          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
         }} 
         className="main-content"
       >
         {!(activePage === 'labs' && selectedLab) && (
-          <header style={S.header}>
+          <header style={{...S.header, marginBottom:'40px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div>
-              <h1 style={S.title}>{user.department_name || 'Student Portal'}</h1>
-              <p style={S.subtitle}>Welcome back, <span style={S.studentName}>{user.name}</span></p>
+              <h1 style={{...S.title, fontSize:'2.5rem', fontWeight:'800', letterSpacing:'-1px', background:'linear-gradient(135deg, #fff 0%, #a5b4fc 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>{user.department_name || 'Lancers Academic Portal'}</h1>
+              <p style={{...S.subtitle, fontSize:'1.1rem', color:'#94a3b8', marginTop:'8px'}}>Welcome back, <span style={{color:'#818cf8', fontWeight:'700'}}>{user.name}</span> ✨</p>
             </div>
-            <div style={S.dateBadge}>
-              <CalendarBlank size={18} /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+            <div style={{...S.dateBadge, padding:'12px 20px', background:'rgba(255, 255, 255, 0.05)', border:'1px solid rgba(255, 255, 255, 0.1)', borderRadius:'16px', color:'#fff', display:'flex', alignItems:'center', gap:'10px', fontWeight:'600'}}>
+              <CalendarBlank size={20} weight="duotone" color="#818cf8" /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
             </div>
           </header>
         )}
-        {renderContent()}
+        <div style={{animation:'fadeIn 0.5s ease-out'}}>
+          {renderContent()}
+        </div>
       </main>
 
       {!(activePage === 'labs' && selectedLab) && (

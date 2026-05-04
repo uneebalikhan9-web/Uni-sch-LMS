@@ -23,6 +23,37 @@ const canManageStudents = (req, res, next) => {
 router.use(verifyToken);
 router.use(canManageStudents);
 
+// Get All Students (Filtered by campus)
+router.get('/', async (req, res) => {
+  try {
+    const { role, campus_id } = req.user;
+    let query = `
+      SELECT u.id, u.name, u.email, u.phone, u.status, u.profile_image,
+             s.id as student_id, s.roll_number, s.semester, s.academic_status,
+             p.name as program_name, c.name as campus_name
+      FROM users u
+      JOIN students s ON u.id = s.user_id
+      LEFT JOIN programs p ON s.program_id = p.id
+      LEFT JOIN campuses c ON u.campus_id = c.id
+      WHERE u.role = 'student'
+    `;
+    const params = [];
+
+    if (role !== 'super_admin') {
+      query += ` AND u.campus_id = ?`;
+      params.push(campus_id);
+    }
+
+    query += ` ORDER BY s.roll_number ASC`;
+    const [students] = await pool.query(query, params);
+
+    res.json({ success: true, students });
+  } catch (error) {
+    console.error('Get students error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching students' });
+  }
+});
+
 // Add single student
 router.post('/', async (req, res) => {
   try {
@@ -44,16 +75,25 @@ router.post('/', async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO users (
-        name, email, password, role, campus_id, is_approved, semester, roll_number,
+        name, email, password, role, campus_id, is_approved
+      ) VALUES (?, ?, ?, ?, ?, ?)`,
+      [name, email, hashedPassword, 'student', campus_id, true]
+    );
+
+    const userId = result.insertId;
+
+    // Create student profile with all academic details
+    const [studentResult] = await pool.query(
+      `INSERT INTO students (
+        user_id, roll_number, semester, admission_year,
         father_name, father_cnic, last_education, father_number, bform_number
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        name, email, hashedPassword, 'student', campus_id, true, semNum, rollNumber,
+        userId, rollNumber, semNum, new Date().getFullYear(),
         father_name || null, father_cnic || null, last_education || null, father_number || null, bform_number || null
       ]
     );
-
-    const studentId = result.insertId;
+    const studentId = studentResult.insertId;
 
     // If class_id is provided, auto-assign student to class
     const { class_id } = req.body;
@@ -114,13 +154,22 @@ router.post('/bulk', upload.single('file'), async (req, res) => {
           const rollNumber = await generateRollNumber(campus_id, semNum);
           const hashedPassword = await bcrypt.hash(password || 'Password123', 10);
 
-          await pool.query(
+          const [result] = await pool.query(
             `INSERT INTO users (
-              name, email, password, role, campus_id, is_approved, semester, roll_number,
+              name, email, password, role, campus_id, is_approved
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+            [name, email, hashedPassword, 'student', campus_id, true]
+          );
+
+          const userId = result.insertId;
+          
+          await pool.query(
+            `INSERT INTO students (
+              user_id, roll_number, semester, admission_year,
               father_name, father_cnic, last_education, father_number, bform_number
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              name, email, hashedPassword, 'student', campus_id, true, semNum, rollNumber,
+              userId, rollNumber, semNum, new Date().getFullYear(),
               father_name || null, father_cnic || null, last_education || null, father_number || null, bform_number || null
             ]
           );
@@ -155,22 +204,28 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student not found in your campus' });
     }
 
-    let query = `UPDATE users SET 
-      name = ?, email = ?, semester = ?, 
-      father_name = ?, father_cnic = ?, last_education = ?, 
-      father_number = ?, bform_number = ?`;
-    let params = [name, email, semester, father_name, father_cnic, last_education, father_number, bform_number];
+    let userQuery = `UPDATE users SET name = ?, email = ?`;
+    let userParams = [name, email];
 
     if (password) {
       const hashedPassword = await bcrypt.hash(password, 10);
-      query += `, password = ? WHERE id = ?`;
-      params.push(hashedPassword, id);
+      userQuery += `, password = ? WHERE id = ?`;
+      userParams.push(hashedPassword, id);
     } else {
-      query += ` WHERE id = ?`;
-      params.push(id);
+      userQuery += ` WHERE id = ?`;
+      userParams.push(id);
     }
 
-    await pool.query(query, params);
+    await pool.query(userQuery, userParams);
+
+    // Update student profile with academic details
+    await pool.query(
+      `UPDATE students SET 
+        semester = ?, father_name = ?, father_cnic = ?, 
+        last_education = ?, father_number = ?, bform_number = ? 
+      WHERE user_id = ?`,
+      [semester, father_name, father_cnic, last_education, father_number, bform_number, id]
+    );
     res.status(200).json({ success: true, message: 'Student updated successfully' });
   } catch (error) {
     console.error('Update student error:', error);

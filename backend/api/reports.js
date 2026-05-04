@@ -264,8 +264,9 @@ router.get('/:id/details', async (req, res) => {
         COALESCE(g.percentage, 0) as percentage,
         CASE WHEN COALESCE(g.percentage, 0) >= 50 THEN 'Pass' ELSE 'Fail' END as status
       FROM enrollments e
-      JOIN users u ON e.student_id = u.id
-      LEFT JOIN grades g ON e.course_id = g.course_id AND e.student_id = g.student_id
+      JOIN students s ON e.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      LEFT JOIN grades g ON e.course_id = g.course_id AND e.student_id = g.id
       WHERE e.course_id = ? AND e.status = 'approved'
       ORDER BY u.name ASC
     `, [report.course_id]);

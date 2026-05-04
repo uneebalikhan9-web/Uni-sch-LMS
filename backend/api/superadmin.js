@@ -408,4 +408,67 @@ router.get('/bds/:id/details', async (req, res) => {
   }
 });
 
+// ==================== GENERIC STAFF MANAGEMENT ====================
+
+// Get staff by role
+router.get('/staff/:role', async (req, res) => {
+  try {
+    const { role } = req.params;
+    const [staff] = await pool.query(`
+      SELECT u.id, u.name, u.email, u.created_at, u.campus_id, c.name as campus_name
+      FROM users u
+      LEFT JOIN campuses c ON u.campus_id = c.id
+      WHERE u.role = ?
+      ORDER BY u.created_at DESC
+    `, [role]);
+    res.json({ success: true, staff });
+  } catch (error) {
+    console.error(`Get ${req.params.role} error:`, error);
+    res.status(500).json({ success: false, message: `Error fetching ${req.params.role}` });
+  }
+});
+
+// Create any staff member
+router.post('/staff', async (req, res) => {
+  try {
+    const { name, email, password, role, campus_id } = req.body;
+
+    if (!name || !email || !password || !role || !campus_id) {
+      return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'Email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, role, campus_id, true]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: `${role.replace('_', ' ').toUpperCase()} created successfully`,
+      user: { id: result.insertId, name, email, role, campus_id }
+    });
+  } catch (error) {
+    console.error('Create staff error:', error);
+    res.status(500).json({ success: false, message: 'Error creating staff member' });
+  }
+});
+
+// Delete any staff member
+router.delete('/staff/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query("DELETE FROM users WHERE id = ?", [id]);
+    res.json({ success: true, message: 'Staff member deleted successfully' });
+  } catch (error) {
+    console.error('Delete staff error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting staff member' });
+  }
+});
+
 module.exports = router;

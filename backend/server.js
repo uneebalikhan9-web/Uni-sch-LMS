@@ -139,7 +139,7 @@ try {
 
   console.log('Loading pending students routes...');
   app.use('/api/pending-students', require('./api/pending-students'));
-  console.log('✓ Pending students routes loaded');
+  console.log('✓ Pending students loaded');
 
   console.log('Loading students routes...');
   app.use('/api/students', require('./api/students'));
@@ -153,9 +153,12 @@ try {
   app.use('/api/chat', require('./api/chat'));
   console.log('✓ Chat routes loaded');
 
-  console.log('Loading reports routes...');
+  console.log('Loading institutional routes...');
+  app.use('/api/hr', require('./api/hr'));
+  app.use('/api/finance', require('./api/finance'));
   app.use('/api/reports', require('./api/reports'));
-  console.log('✓ Reports routes loaded');
+  console.log('✓ Institutional routes loaded');
+  console.log('✓ Finance routes loaded');
   
   console.log('\n✅ All routes loaded successfully!\n');
   

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../../responsive.css";
 import { 
-  Globe, SignOut, ChartBar, Buildings, UserCircle, IdentificationCard, ChartLine, List, ShieldCheck
+  Globe, SignOut, ChartBar, Buildings, UserCircle, IdentificationCard, ChartLine, List, ShieldCheck, UserCirclePlus
 } from "@phosphor-icons/react";
 
 import API_BASE_URL from "../../config/api";
@@ -14,6 +14,7 @@ import SADepartments from "./sections/SADepartments";
 import SAHODs        from "./sections/SAHODs";
 import SABDUsers     from "./sections/SABDUsers";
 import SAReports     from "./sections/SAReports";
+import SAStaffManagement from "./sections/SAStaffManagement";
 import { S }         from "./sections/SAStyles";
 
 const API = `${API_BASE_URL}/api`;
@@ -48,6 +49,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [departments, setDepartments]     = useState([]);
   const [hods, setHods]                   = useState([]);
   const [bds, setBds]                     = useState([]);
+  const [financeManagers, setFinanceManagers] = useState([]);
   const [isLoading, setIsLoading]         = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -57,6 +59,11 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [newDepartment, setNewDepartment] = useState({ name: "", location: "" });
   const [newHOD, setNewHOD]               = useState({ name: "", email: "", password: "", campus_id: "" });
   const [newBD, setNewBD]                 = useState({ name: "", email: "", password: "", campus_id: "" });
+  const [newStaff, setNewStaff]           = useState({ name: "", email: "", password: "", campus_id: "" });
+
+  // Staff lists
+  const [staffData, setStaffData]         = useState([]);
+  const [isStaffLoading, setIsStaffLoading] = useState(false);
 
   // HOD detail modal
   const [showHODModal, setShowHODModal]         = useState(false);
@@ -83,23 +90,51 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   // ─── Data Fetching ───────────────────────────────────────────
   useEffect(() => { fetchData(); }, []);
   useEffect(() => { if (activeTab === 'reports') fetchReports(); }, [activeTab]);
+  useEffect(() => {
+    const staffRoles = {
+      hr: 'hr_manager',
+      finance: 'finance_manager',
+      exams: 'exam_controller',
+      library: 'librarian',
+      admissions: 'admission_officer',
+      it: 'it_admin',
+      registrar: 'registrar'
+    };
+    if (staffRoles[activeTab]) fetchStaff(staffRoles[activeTab]);
+  }, [activeTab]);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const [ov, cp, pr, bdRes] = await Promise.all([
+      const [ov, cp, pr, bdRes, fmRes] = await Promise.all([
         fetch(`${API}/superadmin/overview`, { headers }).then(r => r.json()),
         fetch(`${API}/superadmin/campuses`, { headers }).then(r => r.json()),
         fetch(`${API}/superadmin/principals`, { headers }).then(r => r.json()),
         fetch(`${API}/superadmin/bds`, { headers }).then(r => r.json()),
+        fetch(`${API}/superadmin/finance-managers`, { headers }).then(r => r.json()),
       ]);
       if (ov.success) { setOverview(ov.overview || {}); setDepartmentStats(ov.campusStats || []); }
       if (cp.success) setDepartments(cp.campuses || []);
       if (pr.success) setHods(pr.principals || []);
       if (bdRes.success) setBds(bdRes.bds || []);
+      if (fmRes.success) setFinanceManagers(fmRes.financeManagers || []);
     } catch (e) { console.error(e); }
     setIsLoading(false);
+  };
+
+  const fetchStaff = async (role) => {
+    setIsStaffLoading(true);
+    try {
+      const res = await fetch(`${API}/superadmin/staff/${role}`, { headers: { Authorization: `Bearer ${token}` } });
+      const data = await res.json();
+      if (data.success) setStaffData(data.staff || []);
+      else setStaffData([]);
+    } catch (e) { 
+      console.error(e);
+      setStaffData([]);
+    }
+    setIsStaffLoading(false);
   };
 
   const fetchReports = async () => {
@@ -149,6 +184,22 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       }, isDanger: true });
   };
 
+  const handleDeleteStaff = (id) => {
+    setConfirmModal({ isOpen: true, title: "Delete Staff Member", message: "Are you sure? This will remove their portal access.",
+      onConfirm: async () => {
+        setConfirmModal(p => ({...p, isOpen: false}));
+        try {
+          const res = await fetch(`${API}/superadmin/staff/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+          const data = await res.json();
+          if (data.success) {
+            showToast("Staff member removed", "success");
+            const staffRoles = { hr: 'hr_manager', finance: 'finance_manager', exams: 'exam_controller', library: 'librarian', admissions: 'admission_officer', it: 'it_admin', registrar: 'registrar' };
+            fetchStaff(staffRoles[activeTab]);
+          } else showToast(data.message || "Error", "error");
+        } catch { showToast("Error deleting staff", "error"); }
+      }, isDanger: true });
+  };
+
   const handleAddDepartment = async (e) => {
     e.preventDefault();
     const body = editingItem ? { ...editingItem } : newDepartment;
@@ -175,6 +226,23 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     const data = await res.json();
     if (data.success) { showToast(editingItem ? "BD User updated!" : "BD User created!", "success"); setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
     else showToast(data.message || "Error saving BD User", "error");
+  };
+
+  const handleAddStaff = async (e, role) => {
+    e.preventDefault();
+    const res = await fetch(`${API}/superadmin/staff`, { 
+      method: 'POST', 
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ ...newStaff, role }) 
+    });
+    const data = await res.json();
+    if (data.success) { 
+      showToast(`${role.replace('_', ' ').toUpperCase()} created!`, "success"); 
+      setShowAddModal(false); 
+      setNewStaff({ name: "", email: "", password: "", campus_id: "" }); 
+      fetchStaff(role); 
+    }
+    else showToast(data.message || "Error creating staff", "error");
   };
 
   const handleViewHODDetails = async (id) => {
@@ -217,11 +285,18 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   // ─── Sidebar Nav Items ────────────────────────────────────────
   const navItems = [
-    ['overview',    'Platform Overview', <ChartBar   size={20} />],
-    ['campuses',    'Departments',       <Buildings  size={20} />],
-    ['principals',  'Principals',        <UserCircle size={20} />],
-    // ['bds',         'BD Users',          <IdentificationCard size={20} />],
-    ['reports',     'Course Reports',    <ChartLine  size={20} />],
+    ['overview',    'VC Overview',       <ChartBar   size={20} />],
+    ['campuses',    'Academic Depts',    <Buildings  size={20} />],
+    ['principals',  'Dean & HODs',       <UserCircle size={20} />],
+    ['bd',          'BD Management',     <IdentificationCard size={20} />],
+    ['hr',          'HR & Faculty',      <IdentificationCard size={20} />],
+    ['finance',     'Financial Ops',     <ShieldCheck size={20} />],
+    ['registrar',   'Registrar Office',  <List size={20} />],
+    ['admissions',  'Admissions',        <UserCirclePlus size={20} />],
+    ['exams',       'Exams & Grading',   <Globe size={20} />],
+    ['library',     'Digital Library',   <List size={20} />],
+    ['it',          'IT & Systems',      <ShieldCheck size={20} />],
+    ['reports',     'Institutional KPI', <ChartLine  size={20} />],
   ];
 
   // ─── Render ───────────────────────────────────────────────────
@@ -251,7 +326,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
         <div style={S.globalBadge}>
           <ShieldCheck size={14} weight="fill" />
-          <span>Global Platform Control</span>
+          <span>VC Institutional Master</span>
         </div>
 
         <nav style={S.nav}>
@@ -277,8 +352,8 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       <main style={S.main} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>Global Control Center</h1>
-            <p style={S.subtitle}>Platform-wide management — all departments</p>
+            <h1 style={S.title}>VC Institutional Master</h1>
+            <p style={S.subtitle}>University-wide Operations & KPI Monitoring</p>
           </div>
           <div style={S.campusCounter}>
             <Buildings size={16} color="#94a3b8" />
@@ -315,11 +390,9 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           />
         )}
 
-
-        {/* {activeTab === "bds" && (
+        {activeTab === "bd" && (
           <SABDUsers
             bds={bds} departments={departments}
-            editingItem={editingItem} setEditingItem={setEditingItem}
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newBD={newBD} setNewBD={setNewBD}
             onAdd={handleAddBD}
@@ -327,8 +400,79 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showBDModal={showBDModal} setShowBDModal={setShowBDModal}
             selectedBDDetails={selectedBDDetails} isBDDetailsLoading={isBDDetailsLoading}
             onViewDetails={handleViewBDDetails}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
-        )} */}
+        )}
+
+        {activeTab === "hr" && (
+          <SAStaffManagement 
+            title="HR Managers" role="hr_manager" icon={IdentificationCard}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "finance" && (
+          <SAStaffManagement 
+            title="Finance Managers" role="finance_manager" icon={ShieldCheck}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "registrar" && (
+          <SAStaffManagement 
+            title="Registrars" role="registrar" icon={List}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "admissions" && (
+          <SAStaffManagement 
+            title="Admission Officers" role="admission_officer" icon={UserCirclePlus}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "exams" && (
+          <SAStaffManagement 
+            title="Exam Controllers" role="exam_controller" icon={Globe}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "library" && (
+          <SAStaffManagement 
+            title="Librarians" role="librarian" icon={List}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
+
+        {activeTab === "it" && (
+          <SAStaffManagement 
+            title="IT Admins" role="it_admin" icon={ShieldCheck}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+          />
+        )}
 
         {activeTab === "reports" && (
           <SAReports
@@ -349,7 +493,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             {user.name.charAt(0)}
           </div>
           <h3 style={S.profileName}>{user.name}</h3>
-          <span style={S.roleBadge}>Super Admin</span>
+          <span style={S.roleBadge}>Vice Chancellor</span>
           <div style={S.profileStats}>
             <div style={S.profileStat}>
               <span style={S.profileStatLabel}>Last Login</span>

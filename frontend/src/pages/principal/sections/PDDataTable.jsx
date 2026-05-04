@@ -75,8 +75,8 @@ export default function PDDataTable({
             </tr>
           </thead>
           <tbody>
-            {tableData.map(item => (
-              <tr key={item.id} style={S.tableRow}>
+            {tableData.map((item, index) => (
+              <tr key={`${activeTab}-${item.id || index}`} style={S.tableRow}>
                 {/* Name / Title cell */}
                 <td style={S.tdName}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

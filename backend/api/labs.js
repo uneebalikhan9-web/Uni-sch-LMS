@@ -14,7 +14,8 @@ const ENV_URLS = {
 // Log lab start
 router.post('/log-start', async (req, res) => {
     try {
-        const { studentId, labName } = req.body;
+        const { labName } = req.body;
+        const studentId = req.user.student_id;
         const now = new Date();
         const date = now.toISOString().split('T')[0];
 
@@ -78,9 +79,10 @@ router.get('/usage/student/:id', async (req, res) => {
 router.get('/usage/all', verifyToken, async (req, res) => {
     try {
         const { role, campus_id } = req.user;
-        let query = `SELECT lu.*, u.name as student_name, u.roll_number 
+        let query = `SELECT lu.*, u.name as student_name, s.roll_number 
                      FROM lab_usage lu 
-                     JOIN users u ON lu.student_id = u.id`;
+                     JOIN students s ON lu.student_id = s.id
+                     JOIN users u ON s.user_id = u.id`;
         const params = [];
 
         if (role !== 'super_admin') {
@@ -114,8 +116,9 @@ router.get('/', verifyToken, async (req, res) => {
 
         // If student, only show labs for their classes
         if (role === 'student') {
+            const studentId = req.user.student_id;
             whereClauses.push('class_id IN (SELECT class_id FROM student_classes WHERE student_id = ?)');
-            params.push(userId);
+            params.push(studentId);
         }
 
         if (whereClauses.length > 0) {

@@ -34,7 +34,7 @@ async function generateRollNumber(campusId, semester) {
 
     // 2. Get the highest current sequence for this department, semester, and year
     const [lastRoll] = await pool.query(
-      'SELECT roll_number FROM users WHERE roll_number LIKE ? ORDER BY roll_number DESC LIMIT 1',
+      'SELECT roll_number FROM students WHERE roll_number LIKE ? ORDER BY roll_number DESC LIMIT 1',
       [`${prefix}%`]
     );
 

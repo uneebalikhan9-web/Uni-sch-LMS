@@ -1,0 +1,204 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ChartPie, CreditCard, Users, Buildings, 
+  FileText, SignOut, List, CalendarBlank, 
+  Download, Plus
+} from "@phosphor-icons/react";
+import { useToast } from '../../components/Toast';
+import ConfirmModal from '../../components/ConfirmModal';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import API_BASE_URL from '../../config/api';
+import './finance.css';
+
+// Section Imports
+import FinOverview from './sections/FinOverview';
+import FinFees from './sections/FinFees';
+import FinPayroll from './sections/FinPayroll';
+import FinExpenses from './sections/FinExpenses';
+import FinReports from './sections/FinReports';
+import FinModals from './sections/FinModals';
+
+const NavItem = ({ active, icon, label, count, onClick }) => (
+  <button 
+    onClick={onClick} 
+    className={`fin-nav-btn ${active ? 'active' : ''}`}
+  >
+    {icon}
+    <span>{label}</span>
+    {count > 0 && <span className="fin-nav-badge">{count}</span>}
+    {active && <div className="fin-active-indicator"></div>}
+  </button>
+);
+
+const FinanceDashboard = ({ user, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({});
+  const [challans, setChallans] = useState([]);
+  const [payroll, setPayroll] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'challan', 'payroll', 'expense'
+  const [editingItem, setEditingItem] = useState(null);
+  
+  const { showToast } = useToast();
+  const token = sessionStorage.getItem('token');
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: () => {} });
+
+  const headers = { 
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+
+  useEffect(() => {
+    fetchAllData();
+    const interval = setInterval(fetchAllData, 30000); // Auto-refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchAllData = async () => {
+    setLoading(true);
+    try {
+      const [sRes, cRes, pRes, eRes, stdRes, empRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/finance/overview`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/finance/challans`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/finance/payroll`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/finance/expenses`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/finance/students-list`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/finance/employees-list`, { headers }).then(r => r.json()),
+      ]);
+
+      if (sRes.success) setStats(sRes.stats);
+      if (cRes.success) setChallans(cRes.challans);
+      if (pRes.success) setPayroll(pRes.payroll);
+      if (eRes.success) setExpenses(eRes.expenses);
+      if (stdRes.success) setStudents(stdRes.students);
+      if (empRes.success) setEmployees(empRes.employees);
+      
+    } catch (error) {
+      showToast('Error fetching finance data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async (method, url, body) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/finance${url}`, {
+        method,
+        headers,
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || 'Action successful', 'success');
+        fetchAllData();
+        return true;
+      } else {
+        showToast(data.message || 'Action failed', 'error');
+        return false;
+      }
+    } catch (e) {
+      showToast('Network error', 'error');
+      return false;
+    }
+  };
+
+  if (loading) return <LoadingSpinner fullPage message="Loading Financial Data..." />;
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} />;
+      case 'fees': return <FinFees challans={challans} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
+      case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
+      case 'expenses': return <FinExpenses expenses={expenses} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('expense'); setShowModal(true); }} />;
+      case 'reports': return <FinReports stats={stats} challans={challans} payroll={payroll} expenses={expenses} />;
+      default: return <FinOverview stats={stats} />;
+    }
+  };
+
+  return (
+    <div className="finance-dashboard">
+      <div className="fin-orb fin-orb-1"></div>
+      <div className="fin-orb fin-orb-2"></div>
+
+      <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="fin-mobile-toggle">
+        <List size={24} weight="bold" />
+      </button>
+
+      <aside className={`fin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="fin-logo-wrapper">
+          <div className="fin-logo-icon"><Buildings size={24} weight="fill" /></div>
+          <span className="fin-logo-text">LANCERS <span className="fin-logo-accent">TECH</span></span>
+        </div>
+
+        <div className="fin-role-badge">
+          <Buildings size={18} weight="duotone" />
+          <span>Finance Portal</span>
+          <div className="fin-live-dot"></div>
+        </div>
+
+        <nav className="fin-nav">
+          <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<ChartPie size={20} />} label="Overview" />
+          <NavItem active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} icon={<CreditCard size={20} />} label="Fee Management" count={challans.filter(c => c.status === 'overdue').length} />
+          <NavItem active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} icon={<Users size={20} />} label="Payroll" count={payroll.filter(p => p.status === 'pending').length} />
+          <NavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<Buildings size={20} />} label="Expenses" />
+          <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<FileText size={20} />} label="Reports" />
+        </nav>
+
+        <button onClick={onLogout} className="fin-logout-btn">
+          <SignOut size={20} weight="bold" />
+          <span>Sign Out</span>
+        </button>
+      </aside>
+
+      <main className="fin-main">
+        <header className="fin-header">
+          <div>
+            <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Dashboard</h1>
+            <p>Welcome back, <span className="fin-user-name">{user.name}</span></p>
+          </div>
+          <div className="fin-header-actions">
+            <div className="fin-date-badge">
+              <CalendarBlank size={18} weight="duotone" />
+              {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+            {['fees', 'payroll', 'expenses'].includes(activeTab) && (
+              <button className="fin-add-btn" onClick={() => { setEditingItem(null); setModalType(activeTab === 'fees' ? 'challan' : activeTab === 'payroll' ? 'payroll' : 'expense'); setShowModal(true); }}>
+                <Plus size={18} weight="bold" /> Add New
+              </button>
+            )}
+          </div>
+        </header>
+
+        <div className="fin-content-body">
+          {renderContent()}
+        </div>
+      </main>
+
+      <FinModals 
+        show={showModal} 
+        onClose={() => setShowModal(false)} 
+        type={modalType} 
+        editingItem={editingItem}
+        students={students}
+        employees={employees}
+        onAction={handleAction}
+      />
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
+    </div>
+  );
+};
+
+export default FinanceDashboard;

@@ -189,21 +189,24 @@ router.delete('/teachers/:id', async (req, res) => {
 // Get all students with their enrollments
 router.get('/students', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
     const [students] = await pool.query(`
       SELECT 
         u.id,
         u.name,
         u.email,
-        u.roll_number,
-        u.semester,
+        s.roll_number,
+        s.semester,
+        s.father_name,
         u.created_at,
         COUNT(DISTINCT e.id) as total_enrollments
       FROM users u
-      LEFT JOIN enrollments e ON u.id = e.student_id
-      WHERE u.role = 'student'
+      LEFT JOIN students s ON u.id = s.user_id
+      LEFT JOIN enrollments e ON s.id = e.student_id
+      WHERE u.role = 'student' AND (u.campus_id = ? OR ? IS NULL)
       GROUP BY u.id
       ORDER BY u.created_at DESC
-    `);
+    `, [campusId, campusId]);
 
     // Get enrollment details for each student
     for (let student of students) {
@@ -211,7 +214,7 @@ router.get('/students', async (req, res) => {
         SELECT c.id, c.title 
         FROM courses c
         JOIN enrollments e ON c.id = e.course_id
-        WHERE e.student_id = ?
+        WHERE e.student_id = (SELECT id FROM students WHERE user_id = ?)
       `, [student.id]);
       student.enrollments = enrollments;
     }
@@ -231,8 +234,10 @@ router.get('/students', async (req, res) => {
 
 // Add new student
 router.post('/students', async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-    const { name, email, password, campus_id, semester } = req.body;
+    await connection.beginTransaction();
+    const { name, email, password, campus_id, semester, father_name } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -242,46 +247,47 @@ router.post('/students', async (req, res) => {
     }
 
     // Check if email already exists
-    const [existing] = await pool.query(
+    const [existing] = await connection.query(
       'SELECT id FROM users WHERE email = ?',
       [email]
     );
 
     if (existing.length > 0) {
+      await connection.rollback();
       return res.status(400).json({
         success: false,
         message: 'Email already exists'
       });
     }
 
-    // Generate Roll Number if dept/sem provided
-    const rollNumber = await generateRollNumber(campus_id, semester);
-
-    // Hash password
+    // Generate Roll Number
+    const rollNumber = await generateRollNumber(campus_id || req.user.campus_id, semester || 1);
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create student (Admin created students are auto-approved)
-    const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id, semester, roll_number) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', true, campus_id || null, semester || 1, rollNumber]
+    // 1. Create user
+    const [uResult] = await connection.query(
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', true, campus_id || req.user.campus_id]
     );
 
+    // 2. Create student profile
+    await connection.query(
+      'INSERT INTO students (user_id, roll_number, semester, father_name) VALUES (?, ?, ?, ?)',
+      [uResult.insertId, rollNumber, semester || 1, father_name || '']
+    );
+
+    await connection.commit();
     res.status(201).json({
       success: true,
       message: 'Student created successfully',
-      student: {
-        id: result.insertId,
-        name,
-        email,
-        role: 'student'
-      }
+      student: { id: uResult.insertId, name, email, rollNumber }
     });
   } catch (error) {
+    await connection.rollback();
     console.error('Create student error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating student'
-    });
+    res.status(500).json({ success: false, message: 'Error creating student' });
+  } finally {
+    connection.release();
   }
 });
 

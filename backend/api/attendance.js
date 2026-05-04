@@ -33,7 +33,7 @@ router.post('/mark', isTeacher, async (req, res) => {
       return res.status(404).json({ success: false, message: 'Class not found' });
     }
 
-    if (classCheck[0].teacher_id !== teacher_id) {
+    if (classCheck[0].teacher_id !== req.user.employee_id) {
       return res.status(403).json({ 
         success: false, 
         message: 'You are not assigned to this class' 
@@ -52,7 +52,7 @@ router.post('/mark', isTeacher, async (req, res) => {
         class_id,
         course_id,
         s.student_id,
-        teacher_id,
+        req.user.employee_id,
         s.status || 'present',
         attendance_date
       ]);
@@ -115,9 +115,10 @@ router.get('/class/:class_id/students', isTeacher, async (req, res) => {
     const { class_id } = req.params;
     
     const [students] = await pool.query(
-      `SELECT u.id, u.name, u.email 
+      `SELECT s.id, u.name, u.email 
        FROM student_classes sc
-       JOIN users u ON sc.student_id = u.id
+       JOIN students s ON sc.student_id = s.id
+       JOIN users u ON s.user_id = u.id
        WHERE sc.class_id = ?
        ORDER BY u.name`,
       [class_id]
@@ -149,7 +150,7 @@ router.get('/my-attendance', isStudent, async (req, res) => {
        WHERE a.student_id = ?
        ORDER BY a.date DESC
        LIMIT 50`,
-      [student_id]
+      [req.user.student_id]
     );
 
     // Calculate stats

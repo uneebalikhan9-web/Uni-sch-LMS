@@ -7,7 +7,7 @@ const { verifyToken, isAdmin, isStudent } = require('../middleware/auth');
 router.post('/', verifyToken, async (req, res) => {
     try {
         const { courseId, labId, rating, comment } = req.body;
-        const studentId = req.user.id;
+        const studentId = req.user.student_id;
 
         if (!rating || rating < 1 || rating > 5) {
             return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });

@@ -8,15 +8,9 @@ const router = express.Router();
 router.post('/', verifyToken, isTeacher, async (req, res) => {
   try {
     const { title, description, course_id, due_date, max_marks, status, assignment_type, academic_period } = req.body;
-    const teacher_id = req.user.id;
-
-    if (!title || !course_id || !due_date) {
-      return res.status(400).json({ success: false, message: 'Missing required fields' });
-    }
-
     const [result] = await pool.query(
       'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, course_id, teacher_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027']
+      [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027']
     );
 
     res.status(201).json({
@@ -42,16 +36,13 @@ router.post('/', verifyToken, isTeacher, async (req, res) => {
 // Teacher: Get My Assignments
 router.get('/my-assignments', verifyToken, isTeacher, async (req, res) => {
   try {
-    const teacher_id = req.user.id;
-    
-    // Join with courses to get course name
     const [assignments] = await pool.query(`
       SELECT a.*, c.title as course_title 
       FROM assignments a
       JOIN courses c ON a.course_id = c.id
       WHERE a.teacher_id = ?
       ORDER BY a.created_at DESC
-    `, [teacher_id]);
+    `, [req.user.employee_id]);
 
     res.status(200).json({ success: true, assignments });
   } catch (error) {
@@ -82,11 +73,9 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, due_date, max_marks, status, assignment_type, academic_period } = req.body;
-    const teacher_id = req.user.id;
-
     const [result] = await pool.query(
       'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ?, status = ?, assignment_type = ?, academic_period = ? WHERE id = ? AND teacher_id = ?',
-      [title, description, due_date, max_marks, status, assignment_type, academic_period, id, teacher_id]
+      [title, description, due_date, max_marks, status, assignment_type, academic_period, id, req.user.employee_id]
     );
 
     if (result.affectedRows === 0) {
@@ -104,11 +93,9 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
 router.delete('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
-    const teacher_id = req.user.id;
-
     const [result] = await pool.query(
       'DELETE FROM assignments WHERE id = ? AND teacher_id = ?',
-      [id, teacher_id]
+      [id, req.user.employee_id]
     );
 
     if (result.affectedRows === 0) {

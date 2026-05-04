@@ -55,11 +55,11 @@ export default function SAOverview({ overview, departmentStats }) {
       {/* Stats Grid */}
       <div style={S.statsGrid} className="stats-grid">
         {[
-          ['Total Departments', overview.totalCampuses || 0, '#4f46e5', <Buildings size={24} weight="duotone" />],
-          ['Total HODs', overview.totalPrincipals || 0, '#7c3aed', <UserCircle size={24} weight="duotone" />],
-          ['Total BDs', overview.totalBds || 0, '#ec4899', <IdentificationCard size={24} weight="duotone" />],
-          ['Total Teachers', overview.totalTeachers || 0, '#2563eb', <UserCircle size={24} weight="duotone" />],
-          ['Total Courses', overview.totalCourses || 0, '#0891b2', <ChartLine size={24} weight="duotone" />],
+          ['Total Faculties', overview.totalCampuses || 0, '#4f46e5', <Buildings size={24} weight="duotone" />],
+          ['Institutional Reach', overview.totalPrincipals || 0, '#7c3aed', <UserCircle size={24} weight="duotone" />],
+          ['Admissions & Growth', overview.totalStudents || 0, '#ec4899', <IdentificationCard size={24} weight="duotone" />],
+          ['Faculty Strength', overview.totalTeachers || 0, '#2563eb', <UserCircle size={24} weight="duotone" />],
+          ['Active Programs', overview.totalCourses || 0, '#0891b2', <ChartLine size={24} weight="duotone" />],
         ].map(([label, val, color, icon]) => (
           <div key={label} style={S.metricCard} className="metric-card">
             <div style={S.metricIconWrapper(color)}>{icon}</div>
@@ -74,7 +74,7 @@ export default function SAOverview({ overview, departmentStats }) {
       {/* Chart */}
       <div style={S.chartCard}>
         <div style={S.chartHeader}>
-          <h3 style={S.chartTitle}>Students & Teachers per Department</h3>
+          <h3 style={S.chartTitle}>Student Enrollment & Faculty Distribution</h3>
           <div style={S.chartLegend}>
             <span style={S.legendItem}><span style={{...S.legendDot, background: '#4f46e5'}}></span> Students</span>
             <span style={S.legendItem}><span style={{...S.legendDot, background: '#7c3aed'}}></span> Teachers</span>
@@ -88,7 +88,7 @@ export default function SAOverview({ overview, departmentStats }) {
       {/* Department Breakdown Table */}
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
-          <h3 style={S.tableTitle}>Department Breakdown</h3>
+          <h3 style={S.tableTitle}>Faculty & Institutional Performance</h3>
           <div style={S.tableBadge}>
             <Calendar size={14} />
             <span>Real-time stats</span>

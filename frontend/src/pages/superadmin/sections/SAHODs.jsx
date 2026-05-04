@@ -14,10 +14,10 @@ export default function SAHODs({
     <>
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
-          <h2 style={S.tableTitle}>Principals</h2>
+          <h2 style={S.tableTitle}>Deans & Academic Heads</h2>
           <button onClick={() => setShowAddModal(true)} style={S.addBtn} className="add-btn">
             <Plus size={18} weight="bold" />
-            <span>Add Principal</span>
+            <span>Add Dean / Head</span>
           </button>
         </div>
         <div style={S.tableContainer} className="table-container">
@@ -51,7 +51,7 @@ export default function SAHODs({
                       <button 
                         style={S.deleteBtn} className="delete-btn"
                         onClick={() => onDelete(p.id)}
-                        title="Delete Principal"
+                        title="Delete Dean / Head"
                       >
                         <Trash size={16} />
                       </button>
@@ -68,7 +68,7 @@ export default function SAHODs({
       {showAddModal && (
         <div style={S.overlay} onClick={() => setShowAddModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
-            <h3 style={S.modalTitle}>Add New Principal</h3>
+            <h3 style={S.modalTitle}>Add New Dean / Academic Head</h3>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Full Name</label>
@@ -95,7 +95,7 @@ export default function SAHODs({
               </div>
               <div style={S.modalActions}>
                 <button type="button" onClick={() => setShowAddModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>Create Principal</button>
+                <button type="submit" style={S.saveBtn}>Create Dean / Head</button>
               </div>
             </form>
           </div>
@@ -147,7 +147,7 @@ export default function SAHODs({
                         <ShieldCheck size={18} color="#64748b" />
                         <div>
                           <p style={S.infoLabel}>System Role</p>
-                          <p style={S.infoValue}>Departmental Principal</p>
+                          <p style={S.infoValue}>Dean / Academic Council</p>
                         </div>
                       </div>
                     </div>
@@ -183,7 +183,7 @@ export default function SAHODs({
                   <div style={{ marginTop: '24px', padding: '16px', background: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <ShieldCheck size={20} color="#10b981" />
                     <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600' }}>
-                      This Principal has full operational control over the <strong style={{ color: '#0f172a' }}>{selectedHODDetails.campus_name}</strong> department.
+                      This Head of Department has full operational control over the <strong style={{ color: '#0f172a' }}>{selectedHODDetails.campus_name}</strong> faculty.
                     </span>
                   </div>
                 </div>
