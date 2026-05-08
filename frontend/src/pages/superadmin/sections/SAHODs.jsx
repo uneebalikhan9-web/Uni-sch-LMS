@@ -1,10 +1,11 @@
-import { Plus, Trash, ChartLine, Buildings, Globe, ShieldCheck, Calendar, Users, UserCircle } from "@phosphor-icons/react";
+import { Plus, Trash, ChartLine, Buildings, Globe, ShieldCheck, Calendar, Users, UserCircle, PencilSimple } from "@phosphor-icons/react";
 import { S } from "./SAStyles";
 
 export default function SAHODs({
   hods, departments,
   showAddModal, setShowAddModal,
   newHOD, setNewHOD,
+  editingItem, setEditingItem,
   onAdd, onDelete,
   showHODModal, setShowHODModal,
   selectedHODDetails, isHODDetailsLoading,
@@ -15,7 +16,7 @@ export default function SAHODs({
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
           <h2 style={S.tableTitle}>Deans & Academic Heads</h2>
-          <button onClick={() => setShowAddModal(true)} style={S.addBtn} className="add-btn">
+          <button onClick={() => { setEditingItem(null); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); setShowAddModal(true); }} style={S.addBtn} className="add-btn">
             <Plus size={18} weight="bold" />
             <span>Add Dean / Head</span>
           </button>
@@ -49,6 +50,14 @@ export default function SAHODs({
                         <ChartLine size={16} weight="bold" />
                       </button>
                       <button 
+                        style={{...S.editBtn, background: '#e0e7ff', color: '#4338ca'}} 
+                        className="edit-btn"
+                        onClick={() => { setEditingItem(p); setShowAddModal(true); }}
+                        title="Edit Dean / Head"
+                      >
+                        <PencilSimple size={16} weight="bold" />
+                      </button>
+                      <button 
                         style={S.deleteBtn} className="delete-btn"
                         onClick={() => onDelete(p.id)}
                         title="Delete Dean / Head"
@@ -68,34 +77,34 @@ export default function SAHODs({
       {showAddModal && (
         <div style={S.overlay} onClick={() => setShowAddModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
-            <h3 style={S.modalTitle}>Add New Dean / Academic Head</h3>
+            <h3 style={S.modalTitle}>{editingItem ? 'Edit Dean / Academic Head' : 'Add New Dean / Academic Head'}</h3>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Full Name</label>
-                <input placeholder="e.g., Prof. Ahmed" required value={newHOD.name} 
-                  onChange={e => setNewHOD({...newHOD, name: e.target.value})} style={S.input} />
+                <input placeholder="e.g., Prof. Ahmed" required value={editingItem ? editingItem.name : newHOD.name} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, name: e.target.value}) : setNewHOD({...newHOD, name: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Email Address</label>
-                <input placeholder="principal@department.edu" required type="email" value={newHOD.email} 
-                  onChange={e => setNewHOD({...newHOD, email: e.target.value})} style={S.input} />
+                <input placeholder="principal@department.edu" required type="email" value={editingItem ? editingItem.email : newHOD.email} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, email: e.target.value}) : setNewHOD({...newHOD, email: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Password</label>
-                <input placeholder="Password" required type="password" autoComplete="new-password"
-                  value={newHOD.password} onChange={e => setNewHOD({...newHOD, password: e.target.value})} style={S.input} />
+                <label style={S.inputLabel}>{editingItem ? 'New Password (leave blank to keep current)' : 'Password'}</label>
+                <input placeholder="Password" required={!editingItem} type="password" autoComplete="new-password"
+                  value={editingItem ? (editingItem.password || '') : newHOD.password} onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewHOD({...newHOD, password: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Assign to Department</label>
-                <select required value={newHOD.campus_id} 
-                  onChange={e => setNewHOD({...newHOD, campus_id: e.target.value})} style={S.input}>
+                <select required value={editingItem ? editingItem.campus_id : newHOD.campus_id} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewHOD({...newHOD, campus_id: e.target.value})} style={S.input}>
                   <option value="">Select Department...</option>
                   {departments.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div style={S.modalActions}>
                 <button type="button" onClick={() => setShowAddModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>Create Dean / Head</button>
+                <button type="submit" style={S.saveBtn}>{editingItem ? 'Save Changes' : 'Create Dean / Head'}</button>
               </div>
             </form>
           </div>

@@ -57,10 +57,13 @@ router.get('/my-timetable', verifyToken, isTeacher, async (req, res) => {
 
 // Student: Get My Timetable
 router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
+  const fs = require('fs');
+  const logFile = 'debug_timetable.log';
+  const timestamp = new Date().toISOString();
   try {
     const student_id = req.user.student_id;
+    fs.appendFileSync(logFile, `${timestamp} - Fetching for student_id: ${student_id}\n`);
 
-    // Get student's enrolled courses
     const [timetable] = await pool.query(
       `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section
        FROM timetables t
@@ -70,14 +73,22 @@ router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
        LEFT JOIN classes cl ON t.class_id = cl.id
        WHERE t.course_id IN (
          SELECT course_id FROM enrollments WHERE student_id = ?
+       ) OR t.class_id IN (
+         SELECT class_id FROM student_classes WHERE student_id = ?
        )
        ORDER BY FIELD(t.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.start_time`,
-      [student_id]
+      [student_id, student_id]
     );
+
+    fs.appendFileSync(logFile, `${timestamp} - Found ${timetable.length} entries\n`);
+
+    if (timetable.length === 0) {
+      timetable.push({ id: 0, day_of_week: 'Saturday', start_time: '09:00:00', end_time: '11:00:00', course_title: 'MOCK: SQL RETURNED EMPTY', teacher_name: 'Debug', class_name: 'TEST', room_number: '1' });
+    }
 
     res.status(200).json({ success: true, timetable });
   } catch (error) {
-    console.error('Get student timetable error:', error);
+    fs.appendFileSync(logFile, `${timestamp} - ERROR: ${error.message}\n`);
     res.status(500).json({ success: false, message: 'Error fetching timetable' });
   }
 });

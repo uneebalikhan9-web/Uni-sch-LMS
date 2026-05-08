@@ -20,8 +20,8 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
         {selectedCourse && (
           <button onClick={() => {
             const initialBulk = filteredStudents.map(s => {
-              const existing = grades.find(g => g.student_id === s.id);
-              return { student_id:s.id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
+              const existing = grades.find(g => g.student_id === s.student_id);
+              return { student_id:s.student_id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
             });
             setBulkGrades(initialBulk);
             setShowBulkGradeModal(true);
@@ -47,11 +47,11 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
             <thead><tr style={S.tableHeadRow}><th style={S.th}>STUDENT</th><th style={S.th}>EXAM</th><th style={S.th}>MARKS</th><th style={S.th}>GRADE</th><th style={S.th}>DATE</th></tr></thead>
             <tbody>
               {filteredStudents.map(s => {
-                const g = grades.find(grade => grade.student_id === s.id);
+                const g = grades.find(grade => grade.student_id === s.student_id);
                 return (
-                  <tr key={s.id} style={{ ...S.tableRow, cursor:'pointer' }} onClick={() => {
+                  <tr key={s.student_id} style={{ ...S.tableRow, cursor:'pointer' }} onClick={() => {
                     if (g) { setEditingItem(g); setNewGrade({ student_id:g.student_id, exam_type:g.exam_type, marks_obtained:g.marks_obtained, max_marks:g.max_marks, exam_date:new Date(g.exam_date).toISOString().split('T')[0], remarks:g.remarks||'' }); }
-                    else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.id, exam_date:new Date().toISOString().split('T')[0] }); }
+                    else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.student_id, exam_date:new Date().toISOString().split('T')[0] }); }
                     setShowGradeModal(true);
                   }}>
                     <td style={{ ...S.tdName, color:'#4f46e5' }}>{s.name}</td>

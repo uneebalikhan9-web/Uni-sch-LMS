@@ -19,7 +19,7 @@ export default function TDClasses({ teacherClasses, courses, selectedClassId, se
                 <span style={S.classStudentCount}><Users size={14} /> {cls.student_count || 0}</span>
               </div>
               <h3 style={S.className}>{cls.name}</h3>
-              <p style={S.classSection}>Section: {cls.section}</p>
+              <p style={S.classSection}><Buildings size={16} weight="duotone" /> Section: {cls.section}</p>
               <div style={S.classFooter}>
                 <span style={S.classCoursesCount}><BookOpen size={12} /> {cls.course_count || 0} courses</span>
               </div>

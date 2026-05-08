@@ -1,124 +1,246 @@
-import React, { useState } from 'react';
+  import React, { useState, useEffect } from 'react';
 import { 
-  Books, BookOpen, Users, Clock, Bell, 
-  SignOut, List, Plus, MagnifyingGlass, ChartLineUp, UserCircle, 
-  Bookmark, ArrowUUpLeft, ArrowUDownRight, BookBookmark
+  Books, 
+  ChartLineUp, 
+  ArrowUDownRight, 
+  Users, 
+  Money, 
+  SignOut, 
+  List, 
+  X, 
+  Bell, 
+  UserCircle,
+  BookmarkSimple,
+  ChatCircle,
+  ShieldCheck
 } from '@phosphor-icons/react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import API_BASE_URL from '../../config/api';
 import { useToast } from '../../components/Toast';
 import './library.css';
 
-const LibraryDashboard = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const { showToast } = useToast();
+// Import Modular Sections
+import LibraryOverview from './sections/LibraryOverview';
+import BookCatalog from './sections/BookCatalog';
+import IssueReturn from './sections/IssueReturn';
+import LibraryMembers from './sections/LibraryMembers';
+import FineTracking from './sections/FineTracking';
+import { AddBookModal, IssueBookModal, MemberModal, HistoryModal } from './LibraryModals';
 
-  const [books, setBooks] = useState([
-    { id: 1, title: 'Modern Operating Systems', author: 'Andrew S. Tanenbaum', status: 'Available' },
-    { id: 2, title: 'Clean Code', author: 'Robert C. Martin', status: 'Issued' },
-    { id: 3, title: 'Introduction to Algorithms', author: 'Cormen et al.', status: 'Available' },
-  ]);
+const LibraryDashboard = ({ user, onLogout }) => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { showToast } = useToast();
+  
+  // States for Library Data
+  const [stats, setStats] = useState({ totalBooks: 0, issuedBooks: 0, members: 0, overdue: 0 });
+  const [books, setBooks] = useState([]);
+  const [members, setMembers] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [fines, setFines] = useState([]);
+  const [showAddBook, setShowAddBook] = useState(false);
+  const [showIssueBook, setShowIssueBook] = useState(false);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberHistory, setMemberHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const handleAddBook = async (data) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await axios.post(`${API_BASE_URL}/api/library/books`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        showToast('Book added successfully!', 'success');
+        setShowAddBook(false);
+        fetchAllData();
+      }
+    } catch (err) { showToast('Error adding book', 'error'); }
+  };
+
+  const handleIssueBook = async (data) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await axios.post(`${API_BASE_URL}/api/library/issue`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        showToast('Book issued successfully!', 'success');
+        setShowIssueBook(false);
+        fetchAllData();
+      }
+    } catch (err) { showToast('Error issuing book', 'error'); }
+  };
+
+  const handleAddMember = async (data) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await axios.post(`${API_BASE_URL}/api/library/members`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        showToast('Member registered successfully!', 'success');
+        setShowAddMember(false);
+        fetchAllData();
+      }
+    } catch (err) { showToast('Error registering member', 'error'); }
+  };
+
+  const handleViewHistory = async (member) => {
+    try {
+      setSelectedMember(member);
+      const token = sessionStorage.getItem('token');
+      const res = await axios.get(`${API_BASE_URL}/api/library/transactions`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data.success) {
+        const history = res.data.transactions.filter(t => t.member_id === member.id);
+        setMemberHistory(history);
+        setShowHistory(true);
+      }
+    } catch (err) { showToast('Error fetching history', 'error'); }
+  };
+
+  const fetchAllData = async () => {
+    try {
+      setLoading(true);
+      const token = sessionStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [statsRes, booksRes, membersRes, transRes, finesRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/library/stats`, { headers }),
+        axios.get(`${API_BASE_URL}/api/library/books`, { headers }),
+        axios.get(`${API_BASE_URL}/api/library/members`, { headers }),
+        axios.get(`${API_BASE_URL}/api/library/transactions`, { headers }),
+        axios.get(`${API_BASE_URL}/api/library/fines`, { headers })
+      ]);
+
+      if (statsRes.data.success) setStats(statsRes.data.stats);
+      if (booksRes.data.success) setBooks(booksRes.data.books);
+      if (membersRes.data.success) setMembers(membersRes.data.members);
+      if (transRes.data.success) setTransactions(transRes.data.transactions);
+      if (finesRes.data.success) setFines(finesRes.data.fines);
+
+    } catch (error) {
+      console.error('Error fetching library data:', error);
+      showToast('Failed to load library data', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const navItems = [
+    { id: 'overview', label: 'Dashboard', icon: ChartLineUp },
+    { id: 'catalog', label: 'Book Catalog', icon: Books },
+    { id: 'issuance', label: 'Issue / Return', icon: ArrowUDownRight },
+    { id: 'members', label: 'Library Members', icon: Users },
+    { id: 'fines', label: 'Fine Tracking', icon: Money },
+  ];
+
+  useEffect(() => {
+    fetchAllData();
+  }, []);
 
   return (
     <div className="lib-container">
       {/* Sidebar */}
-      <aside className="lib-sidebar">
-        <div style={{ padding: '2.5rem 1.5rem' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>Lancers<span style={{ color: '#a5b4fc' }}>Tech</span></div>
-          <div style={{ color: '#a5b4fc', fontSize: 11, fontWeight: 600, marginTop: 4 }}>DIGITAL LIBRARY</div>
+      <aside className={`lib-sidebar ${sidebarOpen ? 'mobile-open' : ''}`}>
+        <div className="sidebar-header">
+          <div className="logo-brand">
+            <div className="logo-icon">
+              <Books size={24} weight="fill" color="white" />
+            </div>
+            <div className="brand-text">
+              <span className="brand-lancers">LANCERS</span>
+              <span className="brand-tech">TECH</span>
+            </div>
+          </div>
+          
+          <div className="portal-pill">
+            <div className="portal-pill-content">
+              <ShieldCheck size={18} weight="bold" />
+              <span>Digital Library Command Center</span>
+            </div>
+            <div className="status-dot"></div>
+          </div>
         </div>
-        
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 1rem' }}>
-          <div onClick={() => setActiveTab('overview')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'overview' ? 'white' : '#cbd5e1', background: activeTab === 'overview' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
-            <ChartLineUp size={20} /> <span>Dashboard</span>
+
+        <nav className="nav-links">
+          <div 
+            className="nav-item"
+            onClick={() => { navigate('/chat'); setSidebarOpen(false); }}
+          >
+            <ChatCircle size={22} weight="regular" />
+            <span>Chat</span>
           </div>
-          <div onClick={() => setActiveTab('catalog')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'catalog' ? 'white' : '#cbd5e1', background: activeTab === 'catalog' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
-            <Books size={20} /> <span>Catalog</span>
-          </div>
-          <div onClick={() => setActiveTab('issuance')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'issuance' ? 'white' : '#cbd5e1', background: activeTab === 'issuance' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
-            <ArrowUDownRight size={20} /> <span>Issue/Return</span>
-          </div>
+          {navItems.map((item) => (
+            <div 
+              key={item.id}
+              className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+              onClick={() => {
+                setActiveTab(item.id);
+                setSidebarOpen(false);
+              }}
+            >
+              <item.icon size={22} weight={activeTab === item.id ? "fill" : "regular"} />
+              <span>{item.label}</span>
+            </div>
+          ))}
         </nav>
 
-        <div style={{ position: 'absolute', bottom: 30, width: '100%', padding: '0 1rem' }}>
-          <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: 'none', background: 'transparent', color: '#fca5a5', cursor: 'pointer' }}>
-            <SignOut size={20} /> <span>Sign Out</span>
-          </button>
-        </div>
+        <button className="logout-btn" onClick={onLogout}>
+          <SignOut size={22} weight="bold" />
+          <span>Sign Out</span>
+        </button>
       </aside>
 
       {/* Main Content */}
       <main className="lib-main">
-        <header className="lib-header">
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Library Command Center</h1>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <Bell size={22} color="#64748b" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', padding: '8px 18px', borderRadius: 40, border: '1px solid #e2e8f0' }}>
-              <UserCircle size={28} color="#4f46e5" />
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user?.name || 'Librarian'}</span>
-                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Resource Curator</span>
+        <header className="top-header">
+          <div className="header-left">
+            <button className="mobile-menu-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              {sidebarOpen ? <X size={24} /> : <List size={24} />}
+            </button>
+            <div className="header-title">
+              <h1>{navItems.find(i => i.id === activeTab)?.label}</h1>
+              <p style={{ color: '#64748b', fontWeight: 600, fontSize: '0.9rem', marginTop: -5 }}>Library Nexus • Command Center</p>
+            </div>
+          </div>
+
+          <div className="header-right">
+            <div className="notification-bell">
+              <Bell size={24} weight="duotone" />
+              <span className="dot"></span>
+            </div>
+            <div className="user-pill">
+              <UserCircle size={28} weight="fill" color="#0891b2" />
+              <div className="user-info">
+                <span className="user-name">{user?.name || 'Rehan'}</span>
+                <span className="user-role">System Curator</span>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="lib-content">
-          <div className="lib-metrics">
-            <MetricCard icon={<Books size={26} weight="duotone" />} value="12,450" label="Total Books" />
-            <MetricCard icon={<ArrowUDownRight size={26} weight="duotone" />} value="420" label="Books Issued" />
-            <MetricCard icon={<ArrowUUpLeft size={26} weight="duotone" />} value="85" label="Returns Today" />
-            <MetricCard icon={<Clock size={26} weight="duotone" />} value="12" label="Overdue Items" />
-          </div>
-
-          {activeTab === 'overview' && (
-            <div className="lib-card">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <h3>Library Catalog</h3>
-                <button className="lib-btn-primary"><Plus size={18} weight="bold" /> Add New Book</button>
-              </div>
-              <table className="lib-table">
-                <thead>
-                  <tr><th>Book Title</th><th>Author</th><th>Status</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                  {books.map(book => (
-                    <tr key={book.id}>
-                      <td style={{ fontWeight: 700 }}>{book.title}</td>
-                      <td>{book.author}</td>
-                      <td>
-                        <span className={`lib-badge ${book.status === 'Available' ? 'lib-badge-available' : 'lib-badge-issued'}`}>
-                          {book.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button style={{ background: 'transparent', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer' }}>Details</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {(activeTab === 'catalog' || activeTab === 'issuance') && (
-            <div className="lib-card" style={{ textAlign: 'center', padding: '50px' }}>
-              <BookBookmark size={64} weight="duotone" color="#4f46e5" style={{ margin: '0 auto 20px' }} />
-              <h3>Digital Catalog Synchronization</h3>
-              <p style={{ color: '#64748b' }}>Connecting with the Global Library Database for real-time indexing.</p>
-            </div>
-          )}
+        <div className="tab-content">
+          {activeTab === 'overview' && <LibraryOverview stats={stats} transactions={transactions} />}
+          {activeTab === 'catalog' && <BookCatalog books={books} onAdd={() => setShowAddBook(true)} />}
+          {activeTab === 'issuance' && <IssueReturn transactions={transactions} onIssue={() => setShowIssueBook(true)} />}
+          {activeTab === 'members' && <LibraryMembers members={members} onAdd={() => setShowAddMember(true)} onViewHistory={handleViewHistory} />}
+          {activeTab === 'fines' && <FineTracking fines={fines} onRefresh={fetchAllData} />}
         </div>
+
+        {showAddBook && <AddBookModal onClose={() => setShowAddBook(false)} onSave={handleAddBook} />}
+        {showIssueBook && <IssueBookModal onClose={() => setShowIssueBook(false)} onSave={handleIssueBook} members={members} books={books} />}
+        {showAddMember && <MemberModal onClose={() => setShowAddMember(false)} onSave={handleAddMember} />}
+        {showHistory && <HistoryModal onClose={() => setShowHistory(false)} member={selectedMember} history={memberHistory} />}
       </main>
     </div>
   );
 };
-
-const MetricCard = ({ icon, value, label }) => (
-  <div className="lib-card">
-    <div style={{ background: '#f5f3ff', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: '#4f46e5' }}>{icon}</div>
-    <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a' }}>{value}</div>
-    <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>{label}</div>
-  </div>
-);
 
 export default LibraryDashboard;

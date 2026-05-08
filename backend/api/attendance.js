@@ -11,7 +11,7 @@ router.use(verifyToken);
 router.post('/mark', isTeacher, async (req, res) => {
   try {
     const { class_id, course_id, attendance_date, students } = req.body;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     // Validate input
     if (!class_id || !course_id || !attendance_date || !Array.isArray(students)) {
@@ -136,7 +136,7 @@ router.get('/class/:class_id/students', isTeacher, async (req, res) => {
 // ==========================================
 router.get('/my-attendance', isStudent, async (req, res) => {
   try {
-    const student_id = req.user.id;
+    const student_id = req.user.student_id;
 
     const [records] = await pool.query(
       `SELECT 
@@ -150,7 +150,7 @@ router.get('/my-attendance', isStudent, async (req, res) => {
        WHERE a.student_id = ?
        ORDER BY a.date DESC
        LIMIT 50`,
-      [req.user.student_id]
+      [student_id]
     );
 
     // Calculate stats

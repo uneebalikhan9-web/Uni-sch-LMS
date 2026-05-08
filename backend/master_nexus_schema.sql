@@ -678,6 +678,25 @@ CREATE TABLE IF NOT EXISTS registrar_degrees (
     FOREIGN KEY (student_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS registrar_transcript_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    request_date DATE,
+    status ENUM('Pending', 'Processing', 'Completed', 'Rejected') DEFAULT 'Pending',
+    notes TEXT,
+    FOREIGN KEY (student_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS registrar_degree_verifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    degree_id INT NOT NULL,
+    company_name VARCHAR(255) NOT NULL,
+    requester_email VARCHAR(100),
+    request_date DATE,
+    status ENUM('Pending', 'Verified', 'Rejected') DEFAULT 'Pending',
+    FOREIGN KEY (degree_id) REFERENCES registrar_degrees(id)
+);
+
 -- =============================================
 -- BUSINESS DEVELOPMENT (BD) PORTAL TABLES
 -- =============================================

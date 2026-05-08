@@ -29,7 +29,7 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
             </thead>
             <tbody>
               {campusStudents.map(student => (
-                <tr key={student.id} style={S.tableRow}>
+                <tr key={student.student_id} style={S.tableRow}>
                   <td style={S.td}>
                     <div 
                       style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }}

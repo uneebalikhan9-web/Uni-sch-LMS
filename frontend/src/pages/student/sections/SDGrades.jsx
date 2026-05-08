@@ -11,16 +11,16 @@ export default function SDGrades({ grades, calculateGPA }) {
       </h2>
       <div style={S.gradesSummary}>
         <div style={S.summaryItem}>
-          <span>GPA</span>
-          <strong>{calculateGPA()}</strong>
+          <span style={{color:'rgba(255,255,255,0.6)', fontSize:'12px', fontWeight:600, letterSpacing:'1px'}}>GPA</span>
+          <strong style={{color:'#fff', fontSize:'28px', fontWeight:800}}>{calculateGPA()}</strong>
         </div>
         <div style={S.summaryItem}>
-          <span>Courses</span>
-          <strong>{grades.length}</strong>
+          <span style={{color:'rgba(255,255,255,0.6)', fontSize:'12px', fontWeight:600, letterSpacing:'1px'}}>COURSES</span>
+          <strong style={{color:'#fff', fontSize:'28px', fontWeight:800}}>{grades.length}</strong>
         </div>
         <div style={S.summaryItem}>
-          <span>Grades</span>
-          <strong>{grades.reduce((acc, g) => acc + (g.grades?.length || 0), 0)}</strong>
+          <span style={{color:'rgba(255,255,255,0.6)', fontSize:'12px', fontWeight:600, letterSpacing:'1px'}}>TOTAL GRADES</span>
+          <strong style={{color:'#fff', fontSize:'28px', fontWeight:800}}>{grades.reduce((acc, g) => acc + (g.grades?.length || 0), 0)}</strong>
         </div>
       </div>
 

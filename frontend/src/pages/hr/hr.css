@@ -1,36 +1,52 @@
-/* HR Portal Styles */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* HR Portal - Professional Responsive Design */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
     --hr-primary: #4f46e5;
+    --hr-primary-dark: #312e81;
     --hr-primary-light: #eef2ff;
-    --hr-sidebar-bg: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
     --hr-bg: #f8fafc;
+    --hr-sidebar-bg: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
     --hr-card-bg: #ffffff;
     --hr-text-main: #0f172a;
     --hr-text-muted: #64748b;
     --hr-border: #e2e8f0;
     --hr-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+    --sidebar-width: 280px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: var(--hr-bg);
+    color: var(--hr-text-main);
 }
 
 .hr-container {
     display: flex;
     min-height: 100vh;
-    background-color: var(--hr-bg);
-    font-family: 'Inter', sans-serif;
+    position: relative;
 }
 
 /* Sidebar */
 .hr-sidebar {
-    width: 260px;
+    width: var(--sidebar-width);
     background: var(--hr-sidebar-bg);
     color: #e2e8f0;
     position: fixed;
     height: 100vh;
-    z-index: 40;
+    z-index: 1000;
     left: 0;
     top: 0;
-    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 20px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .hr-sidebar.closed {
@@ -38,13 +54,15 @@
 }
 
 .hr-logo-section {
-    padding: 2.5rem 1.5rem;
+    margin-bottom: 32px;
+    padding: 0 12px;
 }
 
 .hr-logo-text {
     font-size: 1.5rem;
     font-weight: 800;
     color: white;
+    letter-spacing: -1px;
 }
 
 .hr-logo-accent {
@@ -52,10 +70,10 @@
 }
 
 .hr-nav {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    padding: 0 1rem;
+    gap: 6px;
 }
 
 .hr-nav-item {
@@ -63,11 +81,12 @@
     align-items: center;
     gap: 14px;
     padding: 14px 18px;
-    border-radius: 16px;
+    border-radius: 12px;
     color: #cbd5e1;
     cursor: pointer;
     transition: 0.2s all;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 15px;
 }
 
 .hr-nav-item:hover {
@@ -81,11 +100,26 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+.hr-sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 950;
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .hr-sidebar.open + .hr-sidebar-overlay {
+        display: block;
+    }
+}
+
 /* Main Content */
 .hr-main {
     flex: 1;
-    margin-left: 260px;
-    transition: margin-left 0.3s ease;
+    margin-left: var(--sidebar-width);
+    transition: all 0.3s ease;
 }
 
 .hr-main.full-width {
@@ -98,7 +132,7 @@
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--hr-border);
-    padding: 1.2rem 2.5rem;
+    padding: 16px 32px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -111,122 +145,269 @@
     gap: 16px;
 }
 
+.hr-header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.hr-user-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 30px;
+    border: 1px solid var(--hr-border);
+}
+
 .hr-content {
-    padding: 2.5rem;
-    max-width: 1400px;
+    padding: 32px;
+    max-width: 1600px;
     margin: 0 auto;
-    animation: fadeIn 0.4s ease;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Cards */
+/* Metrics Grid */
 .hr-metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1.8rem;
-    margin-bottom: 2.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
 }
 
 .hr-card {
     background: white;
-    border-radius: 24px;
+    border-radius: 20px;
     border: 1px solid var(--hr-border);
-    padding: 1.8rem;
+    padding: 24px;
     box-shadow: var(--hr-shadow);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
 }
 
 .hr-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 35px -10px rgba(79, 70, 229, 0.1);
-    border-color: #cbd5e1;
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.05);
 }
 
 .hr-metric-icon-box {
     background: var(--hr-primary-light);
-    width: 56px;
-    height: 56px;
-    border-radius: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     color: var(--hr-primary);
 }
 
 .hr-metric-value {
-    font-size: 2.2rem;
+    font-size: 1.75rem;
     font-weight: 800;
     color: var(--hr-text-main);
-    letter-spacing: -1px;
+    margin-bottom: 4px;
 }
 
 .hr-metric-label {
     color: var(--hr-text-muted);
-    font-size: 0.95rem;
+    font-size: 14px;
     font-weight: 600;
 }
 
 /* Tables */
 .hr-table-container {
     overflow-x: auto;
+    border-radius: 12px;
+    background: #fff;
 }
 
 .hr-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
 }
 
 .hr-table th {
     text-align: left;
-    padding: 1.2rem;
-    color: var(--hr-text-main);
-    font-weight: 700;
-    font-size: 0.85rem;
+    padding: 16px;
+    background: var(--hr-bg);
+    color: var(--hr-text-muted);
+    font-weight: 800;
+    font-size: 12px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 1px solid var(--hr-border);
 }
 
 .hr-table td {
-    padding: 1.2rem;
-    border-bottom: 1px solid #f1f5f9;
-    color: #475569;
+    padding: 16px;
+    border-bottom: 1px solid var(--hr-border);
+    color: var(--hr-text-main);
+    font-size: 14px;
     font-weight: 500;
 }
 
 /* Badges */
 .hr-badge {
-    padding: 0.3rem 1rem;
-    border-radius: 100px;
-    font-size: 0.8rem;
-    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .hr-badge-active { background: #dcfce7; color: #15803d; }
 .hr-badge-leave { background: #fef3c7; color: #b45309; }
 .hr-badge-terminated { background: #fee2e2; color: #b91c1c; }
 
-/* Responsive Tweaks - Mobile Only */
+/* Responsive Adjustments */
 @media (max-width: 1024px) {
-    .hr-sidebar { 
-        transform: translateX(-100%); 
-        width: 280px;
-        box-shadow: 20px 0 50px rgba(0,0,0,0.2);
+    .hr-main {
+        margin-left: 0;
     }
-    .hr-sidebar.open { transform: translateX(0); }
-    .hr-main { margin-left: 0; width: 100%; }
-    .hr-content { padding: 1rem; }
-    .hr-header { padding: 1rem; }
-    .hr-metrics-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-    .hr-metrics-grid .hr-metric-value { font-size: 1.5rem; }
+    .hr-sidebar {
+        transform: translateX(-100%);
+    }
+    .hr-sidebar.open {
+        transform: translateX(0);
+    }
+    .hr-header {
+        padding: 12px 16px;
+    }
+    .hr-content {
+        padding: 16px;
+    }
 }
 
-@media (max-width: 640px) {
-    .hr-metrics-grid { grid-template-columns: 1fr; }
-    .hr-user-pill span { display: none; }
+@media (max-width: 768px) {
+    .hr-metrics-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .hr-header-right {
+        gap: 8px;
+    }
+    .hr-user-pill {
+        padding: 4px 8px;
+    }
+    .hr-user-pill span {
+        display: none;
+    }
+    .hr-card {
+        padding: 16px;
+    }
+    .hr-metric-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* HR Form Modals & Popups (Premium Design) */
+.hr-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.hr-form-modal {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 32px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.hr-form-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--hr-text-main);
+}
+
+.hr-form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.hr-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hr-metric-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--hr-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.hr-form-input, .hr-form-select {
+    padding: 14px 16px;
+    border: 1px solid var(--hr-border);
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: var(--hr-text-main);
+    background: #f8fafc;
+    transition: all 0.2s;
+}
+
+.hr-form-input:focus, .hr-form-select:focus {
+    outline: none;
+    border-color: var(--hr-primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    background: #ffffff;
+}
+
+.hr-modal-cancel {
+    padding: 14px 24px;
+    border: 1px solid var(--hr-border);
+    background: white;
+    color: var(--hr-text-muted);
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex: 1;
+    transition: 0.2s;
+}
+
+.hr-modal-cancel:hover {
+    background: #f1f5f9;
+    color: var(--hr-text-main);
+}
+
+.hr-modal-confirm {
+    padding: 14px 24px;
+    border: none;
+    background: var(--hr-sidebar-bg);
+    color: white;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex: 2;
+    transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(49, 46, 129, 0.3);
+}
+
+.hr-modal-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(49, 46, 129, 0.4);
+}
+
+.hr-animate {
+    animation: hrModalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes hrModalSlideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }

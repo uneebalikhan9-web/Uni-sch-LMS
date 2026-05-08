@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/', verifyToken, isTeacher, async (req, res) => {
   try {
     const { student_id, course_id, exam_type, marks_obtained, max_marks, exam_date, remarks } = req.body;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     if (!student_id || !course_id || !exam_type || marks_obtained === undefined) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -61,7 +61,7 @@ router.post('/bulk', verifyToken, isTeacher, async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const { course_id, exam_type, max_marks, exam_date, grades } = req.body;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     if (!course_id || !exam_type || !exam_date || !grades || !Array.isArray(grades)) {
       return res.status(400).json({ success: false, message: 'Missing required bulk data' });
@@ -84,6 +84,8 @@ router.post('/bulk', verifyToken, isTeacher, async (req, res) => {
     for (const g of grades) {
       const { student_id, marks_obtained, remarks } = g;
       
+      if (!student_id) continue; // Skip invalid entries
+
       // Calculate percentage and grade letter
       const percentage = (marks_obtained / finalMaxMarks) * 100;
       let gradeLetter = 'F';
@@ -117,7 +119,7 @@ router.post('/bulk', verifyToken, isTeacher, async (req, res) => {
 router.get('/course/:courseId', verifyToken, isTeacher, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     // Verify teacher owns this course
     const [courses] = await pool.query(
@@ -132,7 +134,8 @@ router.get('/course/:courseId', verifyToken, isTeacher, async (req, res) => {
     const [grades] = await pool.query(
       `SELECT g.*, u.name as student_name, u.email as student_email
        FROM grades g
-       JOIN users u ON g.student_id = u.id
+       JOIN students s ON g.student_id = s.id
+       JOIN users u ON s.user_id = u.id
        WHERE g.course_id = ?
        ORDER BY u.name, g.exam_date DESC`,
       [courseId]
@@ -150,7 +153,7 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
     const { marks_obtained, max_marks, remarks, exam_type, exam_date } = req.body;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     // Verify teacher owns this grade
     const [grades] = await pool.query(
@@ -194,7 +197,7 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
 router.delete('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     // Verify teacher owns this grade
     const [grades] = await pool.query(
@@ -220,13 +223,14 @@ router.delete('/:id', verifyToken, isTeacher, async (req, res) => {
 // Student: Get My Grades
 router.get('/my-grades', verifyToken, isStudent, async (req, res) => {
   try {
-    const student_id = req.user.id;
+    const student_id = req.user.student_id;
 
     const [grades] = await pool.query(
       `SELECT g.*, c.title as course_title, u.name as teacher_name
        FROM grades g
        JOIN courses c ON g.course_id = c.id
-       JOIN users u ON g.teacher_id = u.id
+       JOIN employees e ON g.teacher_id = e.id
+       JOIN users u ON e.user_id = u.id
        WHERE g.student_id = ?
        ORDER BY g.exam_date DESC`,
       [student_id]

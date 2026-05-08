@@ -33,22 +33,23 @@ const FinFees = ({ challans, onAction, onEdit }) => {
 
   return (
     <div className="fin-animate">
-      <div className="fin-section-header">
-        <h2>Fee Challan Management</h2>
-        <div className="fin-section-actions">
-          <div className="fin-search-box">
-            <MagnifyingGlass size={18} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Fee Challan Management</h2>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <MagnifyingGlass size={18} color="#94a3b8" />
             <input 
               type="text" 
-              placeholder="Search by student, roll no or challan..." 
+              placeholder="Search student or challan..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ border: 'none', background: 'transparent', padding: '10px', outline: 'none', width: '220px', fontSize: '0.85rem' }}
             />
           </div>
           <select 
-            className="fin-filter-select"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
+            style={{ padding: '10px 16px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '0.85rem', color: '#475569', fontWeight: 600, outline: 'none', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -87,20 +88,20 @@ const FinFees = ({ challans, onAction, onEdit }) => {
                 <td>{new Date(c.due_date).toLocaleDateString()}</td>
                 <td><StatusBadge status={c.status} /></td>
                 <td>
-                  <div className="fin-action-icons" style={{justifyContent: 'flex-end'}}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                     {c.status !== 'paid' && (
-                      <button className="fin-icon-btn" title="Mark as Paid" onClick={() => handleUpdateStatus(c.id, 'paid')}>
+                      <button style={{ background: '#ecfdf5', color: '#10b981', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Mark as Paid" onClick={() => handleUpdateStatus(c.id, 'paid')}>
                         <CheckCircle size={18} weight="bold" />
                       </button>
                     )}
-                    <button className="fin-icon-btn" title="Print Challan">
-                      <Printer size={18} />
+                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Print Challan">
+                      <Printer size={18} weight="duotone" />
                     </button>
-                    <button className="fin-icon-btn" title="Send Reminder">
-                      <Envelope size={18} />
+                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Send Reminder">
+                      <Envelope size={18} weight="duotone" />
                     </button>
-                    <button className="fin-icon-btn del" title="Delete" onClick={() => handleDelete(c.id)}>
-                      <Trash size={18} />
+                    <button style={{ background: '#fef2f2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Delete" onClick={() => handleDelete(c.id)}>
+                      <Trash size={18} weight="duotone" />
                     </button>
                   </div>
                 </td>

@@ -62,32 +62,32 @@ const FinOverview = ({ stats, challans, expenses }) => {
         />
       </div>
 
-      <div className="fin-chart-card">
-        <div className="fin-chart-header">
-          <h3>Revenue vs Expenses Trend (k)</h3>
-          <div className="fin-chart-legends">
-            <span><span className="fin-legend fin-legend-rev"></span> Revenue</span>
-            <span><span className="fin-legend fin-legend-exp"></span> Expenses</span>
+      <div style={{ background: 'white', borderRadius: 24, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses Trend (k)</h3>
+          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', fontWeight: 600 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: '#4f46e5' }}></span> Revenue</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: '#e2e8f0' }}></span> Expenses</span>
           </div>
         </div>
-        <div className="fin-bar-chart">
+        <div style={{ position: 'relative', height: 260, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingTop: 20, borderBottom: '2px solid #f1f5f9' }}>
+            {/* Grid lines */}
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, borderTop: '1px dashed #e2e8f0', zIndex: 0 }}></div>
+            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, borderTop: '1px dashed #e2e8f0', zIndex: 0 }}></div>
+
           {months.map((month, idx) => (
-            <div key={month} className="fin-bar-group">
-              <div className="fin-bar-col">
+            <div key={month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '10%', zIndex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 220, width: '100%', justifyContent: 'center' }}>
                 <div 
-                  className="fin-bar fin-bar-rev" 
-                  style={{ height: `${revenueData[idx] * 1.2}px` }}
-                >
-                  <span className="fin-bar-tip">₹{revenueData[idx].toFixed(0)}k</span>
-                </div>
+                  style={{ width: 24, height: `${revenueData[idx] * 1.2}%`, maxHeight: '100%', background: 'linear-gradient(180deg, #4f46e5 0%, #6366f1 100%)', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out', position: 'relative', cursor: 'pointer' }}
+                  title={`Revenue: ₹${revenueData[idx].toFixed(0)}k`}
+                />
                 <div 
-                  className="fin-bar fin-bar-exp" 
-                  style={{ height: `${expenseData[idx] * 1.2}px` }}
-                >
-                  <span className="fin-bar-tip">₹{expenseData[idx].toFixed(0)}k</span>
-                </div>
+                  style={{ width: 24, height: `${expenseData[idx] * 1.2}%`, maxHeight: '100%', background: '#e2e8f0', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out 0.2s', position: 'relative', cursor: 'pointer' }}
+                  title={`Expenses: ₹${expenseData[idx].toFixed(0)}k`}
+                />
               </div>
-              <span className="fin-bar-label">{month}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>{month}</span>
             </div>
           ))}
         </div>

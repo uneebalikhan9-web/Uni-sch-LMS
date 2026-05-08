@@ -194,7 +194,7 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
               <div style={S.inputGroup}><label style={S.inputLabel}>Class Name</label><input placeholder="e.g., Grade 10" required autoComplete="off" value={editingItem ? editingItem.name : newClass.name} onChange={e => editingItem ? setEditingItem({...editingItem, name:e.target.value}) : setNewClass({...newClass, name:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Section</label><input placeholder="e.g., A" required autoComplete="off" value={editingItem ? editingItem.section : newClass.section} onChange={e => editingItem ? setEditingItem({...editingItem, section:e.target.value}) : setNewClass({...newClass, section:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Academic Year</label><input placeholder="2024-2025" autoComplete="off" value={editingItem ? editingItem.academic_year : newClass.academic_year} onChange={e => editingItem ? setEditingItem({...editingItem, academic_year:e.target.value}) : setNewClass({...newClass, academic_year:e.target.value})} style={S.input} /></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newClass.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewClass({...newClass, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newClass.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewClass({...newClass, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
             </>
           ) : activeTab === 'labs' ? (
             <>
@@ -216,7 +216,7 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
               <div style={S.inputGroup}><label style={S.inputLabel}>Course Title</label><input placeholder="e.g., Mathematics 101" required autoComplete="off" value={editingItem ? editingItem.title : newCourse.title} onChange={e => editingItem ? setEditingItem({...editingItem, title:e.target.value}) : setNewCourse({...newCourse, title:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Description</label><textarea placeholder="Course description..." value={editingItem ? editingItem.description : newCourse.description} onChange={e => editingItem ? setEditingItem({...editingItem, description:e.target.value}) : setNewCourse({...newCourse, description:e.target.value})} style={{...S.input, height:'100px', resize:'vertical'}} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Class (Required)</label><select required value={editingItem ? editingItem.class_id : newCourse.class_id} onChange={e => editingItem ? setEditingItem({...editingItem, class_id:e.target.value}) : setNewCourse({...newCourse, class_id:e.target.value})} style={S.input}><option value="">Select a Class...</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}</select></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newCourse.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewCourse({...newCourse, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newCourse.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewCourse({...newCourse, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
             </>
           ) : activeTab === 'students' ? (
             <div style={{maxHeight:'50vh', overflowY:'auto', paddingRight:'10px', marginBottom:'20px'}}>
@@ -298,7 +298,7 @@ export function TimetableModal({ show, onClose, editingItem, newTimetableEntry, 
             <label style={S.inputLabel}><ChalkboardTeacher size={14} /> Assigned Instructor</label>
             <select disabled value={newTimetableEntry.teacher_id} style={{...S.input, background:'#f8fafc', border:'1px dashed #e2e8f0'}}>
               <option value="">Teacher will be assigned automatically</option>
-              {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}
             </select>
           </div>
           <div style={S.row}>

@@ -29,76 +29,81 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' };
+  const inputStyle = { width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#0f172a', outline: 'none', transition: 'all 0.2s' };
+  const inputFocusStyle = "this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 4px #e0e7ff'; this.style.background='white'";
+  const inputBlurStyle = "this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'; this.style.background='#f8fafc'";
+
   const renderForm = () => {
     switch (type) {
       case 'challan':
         return (
-          <>
-            <div className="fin-form-field full">
-              <label className="fin-form-label">Select Student</label>
-              <select name="student_id" className="fin-form-select" value={formData.student_id} onChange={handleChange} required>
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Select Student</label>
+              <select name="student_id" style={inputStyle} value={formData.student_id ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
                 <option value="">Select a student...</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.roll_number})</option>)}
               </select>
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Tuition Fee</label>
-              <input type="number" name="tuition_fee" className="fin-form-input" value={formData.tuition_fee} onChange={handleChange} />
+            <div>
+              <label style={labelStyle}>Tuition Fee</label>
+              <input type="number" name="tuition_fee" style={inputStyle} value={formData.tuition_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Lab Fee</label>
-              <input type="number" name="lab_fee" className="fin-form-input" value={formData.lab_fee} onChange={handleChange} />
+            <div>
+              <label style={labelStyle}>Lab Fee</label>
+              <input type="number" name="lab_fee" style={inputStyle} value={formData.lab_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Library Fee</label>
-              <input type="number" name="library_fee" className="fin-form-input" value={formData.library_fee} onChange={handleChange} />
+            <div>
+              <label style={labelStyle}>Library Fee</label>
+              <input type="number" name="library_fee" style={inputStyle} value={formData.library_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Due Date</label>
-              <input type="date" name="due_date" className="fin-form-input" value={formData.due_date} onChange={handleChange} required />
+            <div>
+              <label style={labelStyle}>Due Date</label>
+              <input type="date" name="due_date" style={inputStyle} value={formData.due_date ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-          </>
+          </div>
         );
       case 'payroll':
         return (
-          <>
-            <div className="fin-form-field full">
-              <label className="fin-form-label">Select Employee</label>
-              <select name="employee_id" className="fin-form-select" value={formData.employee_id} onChange={handleChange} required>
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Select Employee</label>
+              <select name="employee_id" style={inputStyle} value={formData.employee_id ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
                 <option value="">Select an employee...</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.designation})</option>)}
               </select>
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Month</label>
-              <select name="month" className="fin-form-select" value={formData.month} onChange={handleChange}>
+            <div>
+              <label style={labelStyle}>Month</label>
+              <select name="month" style={inputStyle} value={formData.month ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
                 {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Basic Salary</label>
-              <input type="number" name="basic_salary" className="fin-form-input" value={formData.basic_salary} onChange={handleChange} required />
+            <div>
+              <label style={labelStyle}>Basic Salary</label>
+              <input type="number" name="basic_salary" style={inputStyle} value={formData.basic_salary ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Bonus</label>
-              <input type="number" name="bonus" className="fin-form-input" value={formData.bonus} onChange={handleChange} />
+            <div>
+              <label style={labelStyle}>Bonus</label>
+              <input type="number" name="bonus" style={inputStyle} value={formData.bonus ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Deductions</label>
-              <input type="number" name="deductions" className="fin-form-input" value={formData.deductions} onChange={handleChange} />
+            <div>
+              <label style={labelStyle}>Deductions</label>
+              <input type="number" name="deductions" style={inputStyle} value={formData.deductions ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-          </>
+          </div>
         );
       case 'expense':
         return (
-          <>
-            <div className="fin-form-field full">
-              <label className="fin-form-label">Expense Title</label>
-              <input type="text" name="title" className="fin-form-input" placeholder="e.g. Electricity Bill" value={formData.title} onChange={handleChange} required />
+          <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Expense Title</label>
+              <input type="text" name="title" style={inputStyle} placeholder="e.g. Electricity Bill" value={formData.title ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Category</label>
-              <select name="category" className="fin-form-select" value={formData.category} onChange={handleChange}>
+            <div>
+              <label style={labelStyle}>Category</label>
+              <select name="category" style={inputStyle} value={formData.category ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
                 <option value="utilities">Utilities</option>
                 <option value="maintenance">Maintenance</option>
                 <option value="supplies">Supplies</option>
@@ -106,34 +111,32 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
                 <option value="other">Other</option>
               </select>
             </div>
-            <div className="fin-form-field">
-              <label className="fin-form-label">Amount</label>
-              <input type="number" name="amount" className="fin-form-input" value={formData.amount} onChange={handleChange} required />
+            <div>
+              <label style={labelStyle}>Amount</label>
+              <input type="number" name="amount" style={inputStyle} value={formData.amount ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
             </div>
-            <div className="fin-form-field full">
-              <label className="fin-form-label">Description</label>
-              <textarea name="description" className="fin-form-input" style={{height: '80px'}} value={formData.description} onChange={handleChange}></textarea>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>Description</label>
+              <textarea name="description" style={{...inputStyle, height: '100px', resize: 'none'}} value={formData.description ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}></textarea>
             </div>
-          </>
+          </div>
         );
       default: return null;
     }
   };
 
   return (
-    <div className="fin-modal-overlay" onClick={onClose}>
-      <div className="fin-form-modal" onClick={e => e.stopPropagation()}>
-        <div className="fin-modal-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'1.5rem'}}>
-          <h3 className="fin-form-title">{editingItem ? 'Edit' : 'Add New'} {type.charAt(0).toUpperCase() + type.slice(1)}</h3>
-          <button onClick={onClose} style={{background:'none', border:'none', cursor:'pointer', color:'#9ca3af'}}><X size={24} /></button>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
+      <div style={{ background: 'white', borderRadius: 24, padding: '2.5rem', width: '90%', maxWidth: '600px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'2rem' }}>
+          <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>{editingItem ? 'Edit' : 'Add New'} {type.charAt(0).toUpperCase() + type.slice(1)}</h3>
+          <button onClick={onClose} style={{ background:'#f1f5f9', border:'none', cursor:'pointer', color:'#64748b', padding: '8px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><X size={20} weight="bold" /></button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div className="fin-form-grid">
-            {renderForm()}
-          </div>
-          <div className="fin-form-actions">
-            <button type="button" className="fin-modal-cancel" onClick={onClose}>Cancel</button>
-            <button type="submit" className="fin-modal-confirm">Save Record</button>
+          {renderForm()}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
+            <button type="button" onClick={onClose} style={{ padding: '12px 24px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+            <button type="submit" style={{ padding: '12px 24px', background: '#4f46e5', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' }}>Save Record</button>
           </div>
         </form>
       </div>

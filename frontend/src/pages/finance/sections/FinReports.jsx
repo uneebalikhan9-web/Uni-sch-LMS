@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   Download, FilePdf, FileCsv, 
-  Printer, SealCheck
+  Printer, SealCheck, FileText
 } from "@phosphor-icons/react";
 
 const FinReports = ({ stats, challans }) => {
@@ -11,22 +11,26 @@ const FinReports = ({ stats, challans }) => {
 
   return (
     <div className="fin-animate">
-      <div className="fin-section-header">
-        <h2>Financial Reports & Receipts</h2>
-        <div className="fin-section-actions">
-          <button className="fin-action-btn">
-            <FilePdf size={18} /> Export PDF
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Financial Reports & Receipts</h2>
+        <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'white', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <FilePdf size={18} weight="bold" color="#ef4444" /> Export PDF
           </button>
-          <button className="fin-action-btn" style={{background: '#065f46'}}>
-            <FileCsv size={18} /> Export CSV
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'white', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+            <FileCsv size={18} weight="bold" color="#10b981" /> Export CSV
           </button>
         </div>
       </div>
 
-      <div className="fin-receipt-wrap">
-        <div className="fin-receipt-header">
-          <h3>📄 Recent Receipt Template</h3>
-          <button className="fin-icon-btn"><Download size={18} /> Download</button>
+      <div style={{ background: 'white', borderRadius: 24, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#475569', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+             <FileText size={20} weight="duotone" /> Recent Receipt Template
+          </h3>
+          <button style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', background: '#f8fafc', color: '#4f46e5', border: '1px solid #e0e7ff', borderRadius: '8px', fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer' }}>
+            <Download size={16} weight="bold" /> Download
+          </button>
         </div>
         
         {recentPaid ? (

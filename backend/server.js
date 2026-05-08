@@ -156,9 +156,13 @@ try {
   console.log('Loading institutional routes...');
   app.use('/api/hr', require('./api/hr'));
   app.use('/api/finance', require('./api/finance'));
+  app.use('/api/registrar', require('./api/registrar'));
+  app.use('/api/admissions', require('./api/admissions'));
+  app.use('/api/library', require('./api/library'));
+  app.use('/api/it', require('./api/it'));
+  app.use('/api/exams', require('./api/exams'));
   app.use('/api/reports', require('./api/reports'));
   console.log('✓ Institutional routes loaded');
-  console.log('✓ Finance routes loaded');
   
   console.log('\n✅ All routes loaded successfully!\n');
   

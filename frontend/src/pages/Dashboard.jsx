@@ -12,6 +12,7 @@ import AdmissionsDashboard from './admissions/AdmissionsDashboard'
 import ExamsDashboard from './exams/ExamsDashboard'
 import LibraryDashboard from './library/LibraryDashboard'
 import ITDashboard from './it/ITDashboard'
+import LabAssistantDashboard from './lab/LabAssistantDashboard'
 import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
@@ -104,6 +105,10 @@ function Dashboard() {
 
   if (userRole === 'it_admin') {
     return <ITDashboard user={user} onLogout={handleLogout} />
+  }
+
+  if (userRole === 'lab_assistant') {
+    return <LabAssistantDashboard user={user} onLogout={handleLogout} />
   }
 
   if (userRole === 'admin') {

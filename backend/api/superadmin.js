@@ -192,6 +192,37 @@ router.post('/principals', async (req, res) => {
   }
 });
 
+// Update HOD
+router.put('/principals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, campus_id } = req.body;
+
+    const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'principal'", [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: 'HOD not found' });
+    }
+
+    let query = 'UPDATE users SET name = ?, email = ?, campus_id = ?';
+    let params = [name, email, campus_id || null];
+
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += ', password = ?';
+      params.push(hashedPassword);
+    }
+
+    query += ' WHERE id = ?';
+    params.push(id);
+
+    await pool.query(query, params);
+    res.json({ success: true, message: 'HOD updated successfully' });
+  } catch (error) {
+    console.error('Update HOD error:', error);
+    res.status(500).json({ success: false, message: 'Error updating HOD' });
+  }
+});
+
 // Delete HOD
 router.delete('/principals/:id', async (req, res) => {
   try {

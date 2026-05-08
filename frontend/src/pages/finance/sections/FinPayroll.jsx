@@ -22,8 +22,7 @@ const FinPayroll = ({ payroll, onAction }) => {
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <select 
-            className="fin-form-select" 
-            style={{ width: '150px' }}
+            style={{ padding: '10px 16px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '0.85rem', color: '#475569', fontWeight: 600, outline: 'none', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)', width: '150px' }}
             value={filterMonth} 
             onChange={(e) => setFilterMonth(e.target.value)}
           >
@@ -32,7 +31,7 @@ const FinPayroll = ({ payroll, onAction }) => {
             ))}
           </select>
           <button 
-            className="fin-add-btn" 
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }}
             onClick={() => onAction('POST', '/payroll/disburse-all', { month: filterMonth })}
           >
             <CheckCircle size={18} weight="bold" /> Disburse All Pending
@@ -74,17 +73,17 @@ const FinPayroll = ({ payroll, onAction }) => {
                   </span>
                 </td>
                 <td>
-                  <div className="fin-action-icons" style={{justifyContent: 'flex-end'}}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
                     {p.status === 'pending' && (
-                      <button className="fin-icon-btn" title="Disburse Salary" onClick={() => handleDisburse(p.id)}>
-                        <CurrencyDollar size={18} weight="bold" color="var(--fin-primary)" />
+                      <button style={{ background: '#ecfdf5', color: '#10b981', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Disburse Salary" onClick={() => handleDisburse(p.id)}>
+                        <CurrencyDollar size={18} weight="bold" />
                       </button>
                     )}
-                    <button className="fin-icon-btn" title="View Payslip">
-                      <Eye size={18} />
+                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="View Payslip">
+                      <Eye size={18} weight="duotone" />
                     </button>
-                    <button className="fin-icon-btn" title="Print Payslip">
-                      <Printer size={18} />
+                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Print Payslip">
+                      <Printer size={18} weight="duotone" />
                     </button>
                   </div>
                 </td>

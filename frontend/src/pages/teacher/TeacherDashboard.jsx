@@ -448,6 +448,27 @@ function TeacherDashboard({ user, onLogout }) {
 
   return (
     <div style={S.container}>
+      <style>{`
+        @media (max-width: 1024px) {
+          .mobile-menu-btn { display: block !important; }
+          .sidebar { 
+            left: -280px !important; 
+            transition: all 0.3s ease !important;
+            box-shadow: none !important;
+          }
+          .sidebar.mobile-open { 
+            left: 0 !important; 
+            box-shadow: 10px 0 30px rgba(0,0,0,0.2) !important;
+            z-index: 1002 !important;
+          }
+          .main-content { margin-left: 0 !important; padding: 20px !important; }
+          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
+          .stats-grid { grid-template-columns: 1fr !important; }
+          .header { flex-direction: column; align-items: flex-start !important; gap: 16px; }
+        }
+      `}</style>
       <div style={S.bgOrb1}></div>
       <div style={S.bgOrb2}></div>
       <div style={S.bgOrb3}></div>
@@ -472,7 +493,7 @@ function TeacherDashboard({ user, onLogout }) {
 
         <div style={S.userBadge}>
           <UserCircle size={20} weight="duotone" />
-          <span>{user.department_name ? `Lancers ${user.department_name}` : 'Lancers Teacher'}</span>
+          <span>{user.department_name ? `${user.department_name} • Teacher` : 'Lancers Faculty'}</span>
           <div style={S.liveIndicator}></div>
         </div>
 
@@ -513,8 +534,8 @@ function TeacherDashboard({ user, onLogout }) {
       <main style={S.main} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>{user.department_name || 'Department Hub'}</h1>
-            <p style={S.subtitle}>Welcome back, <span style={S.userName}>{user.name}</span></p>
+            <h1 style={S.title}>{user.department_name || 'Faculty Hub'}</h1>
+            <p style={S.subtitle}>Teacher Portal • Welcome back, <span style={S.userName}>{user.name}</span></p>
           </div>
           <div style={S.dateBadge}>
             <CalendarBlank size={18} /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}

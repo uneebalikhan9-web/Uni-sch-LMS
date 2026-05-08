@@ -195,7 +195,7 @@ export default function TDModals({
                 <label style={S.inputLabel}>Student</label>
                 <select required value={newGrade.student_id} onChange={e => setNewGrade({...newGrade, student_id: e.target.value})} style={S.input}>
                   <option value="">Select Student</option>
-                  {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  {students.map(s => <option key={s.student_id} value={s.student_id}>{s.name}</option>)}
                 </select>
               </div>
               <div style={S.inputGroup}>

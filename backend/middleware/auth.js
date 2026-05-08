@@ -19,9 +19,11 @@ const verifyToken = async (req, res, next) => {
     const { pool } = require('../config/database');
     if (decoded.role === 'student') {
       const [student] = await pool.query('SELECT id FROM students WHERE user_id = ?', [decoded.id]);
+      console.log(`[AUTH DEBUG] Student Role. User ID: ${decoded.id}, Student ID found: ${student[0]?.id}`);
       if (student.length > 0) req.user.student_id = student[0].id;
     } else if (['teacher', 'principal', 'admin', 'bd_agent'].includes(decoded.role)) {
       const [employee] = await pool.query('SELECT id FROM employees WHERE user_id = ?', [decoded.id]);
+      console.log(`[AUTH DEBUG] Employee Role (${decoded.role}). User ID: ${decoded.id}, Employee ID found: ${employee[0]?.id}`);
       if (employee.length > 0) req.user.employee_id = employee[0].id;
     }
 

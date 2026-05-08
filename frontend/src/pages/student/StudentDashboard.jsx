@@ -126,7 +126,9 @@ function StudentDashboard({ user, onLogout }) {
   const fetchTimetable = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/timetables/student-timetable`, { headers: { 'Authorization': `Bearer ${token}` } })
-      const data = await response.json(); if (data.success) setTimetable(data.timetable || [])
+      const data = await response.json(); 
+      console.log('[DEBUG] Student Timetable API Response:', data);
+      if (data.success) setTimetable(data.timetable || [])
     } catch (error) { console.error(error) }
   }
 
@@ -428,11 +430,11 @@ function StudentDashboard({ user, onLogout }) {
         {!(activePage === 'labs' && selectedLab) && (
           <header style={{...S.header, marginBottom:'40px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div>
-              <h1 style={{...S.title, fontSize:'2.5rem', fontWeight:'800', letterSpacing:'-1px', background:'linear-gradient(135deg, #fff 0%, #a5b4fc 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>{user.department_name || 'Lancers Academic Portal'}</h1>
-              <p style={{...S.subtitle, fontSize:'1.1rem', color:'#94a3b8', marginTop:'8px'}}>Welcome back, <span style={{color:'#818cf8', fontWeight:'700'}}>{user.name}</span> ✨</p>
+              <h1 style={{...S.title, fontSize:'2.5rem', fontWeight:'800', letterSpacing:'-1px', background:'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>{user.department_name || 'Lancers Academic Portal'}</h1>
+              <p style={{...S.subtitle, fontSize:'1.1rem', color:'#64748b', marginTop:'8px'}}>Welcome back, <span style={{color:'#4f46e5', fontWeight:'700'}}>{user.name}</span> ✨</p>
             </div>
-            <div style={{...S.dateBadge, padding:'12px 20px', background:'rgba(255, 255, 255, 0.05)', border:'1px solid rgba(255, 255, 255, 0.1)', borderRadius:'16px', color:'#fff', display:'flex', alignItems:'center', gap:'10px', fontWeight:'600'}}>
-              <CalendarBlank size={20} weight="duotone" color="#818cf8" /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+            <div style={{...S.dateBadge, padding:'12px 20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'16px', color:'#1e293b', display:'flex', alignItems:'center', gap:'10px', fontWeight:'600', boxShadow:'0 4px 12px rgba(0,0,0,0.03)'}}>
+              <CalendarBlank size={20} weight="duotone" color="#4f46e5" /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
             </div>
           </header>
         )}

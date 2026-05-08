@@ -18,7 +18,7 @@ router.use(isTeacher);
 // Get pending requests (both Course Enrollments and Class Registrations) for teacher's courses/classes
 router.get('/pending-enrollments', async (req, res) => {
   try {
-    const teacherId = req.user.id;
+    const teacherId = req.user.employee_id;
 
     // 1. Get pending Course enrollments
     const [courseRequests] = await pool.query(`
@@ -61,7 +61,7 @@ router.get('/pending-enrollments', async (req, res) => {
 // Approve enrollment request
 router.post('/enrollments/:enrollmentId/approve', async (req, res) => {
   const { enrollmentId } = req.params;
-  const teacherId = req.user.id;
+  const teacherId = req.user.employee_id;
   
   console.log(`[TeacherAPI] Approval attempt - Enrollment ID: ${enrollmentId}, Teacher: ${teacherId}`);
 
@@ -102,7 +102,7 @@ router.post('/enrollments/:enrollmentId/approve', async (req, res) => {
 router.post('/class-requests/:requestId/approve', async (req, res) => {
   try {
     const { requestId } = req.params;
-    const teacherId = req.user.id;
+    const teacherId = req.user.employee_id;
 
     const [request] = await pool.query(`
       SELECT sc.id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
@@ -120,7 +120,7 @@ router.post('/class-requests/:requestId/approve', async (req, res) => {
 router.post('/class-requests/:requestId/reject', async (req, res) => {
   try {
     const { requestId } = req.params;
-    const teacherId = req.user.id;
+    const teacherId = req.user.employee_id;
 
     const [request] = await pool.query(`
       SELECT sc.id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
@@ -141,7 +141,7 @@ router.post('/class-requests/:requestId/reject', async (req, res) => {
 // Get students in teacher's campus or courses/classes
 router.get('/students', async (req, res) => {
   try {
-    const { campus_id, id: teacherId } = req.user;
+    const { campus_id, employee_id: teacherId } = req.user;
     const [students] = await pool.query(`
       SELECT DISTINCT u.id as user_id, s.id as student_id, u.name, u.email, s.roll_number, s.semester, u.created_at,
              s.father_name, s.father_cnic, s.last_education, s.father_number, s.bform_number,
@@ -216,7 +216,7 @@ router.post('/students', async (req, res) => {
 router.get('/courses/:courseId/assignments', async (req, res) => {
     try {
       const { courseId } = req.params;
-      const teacherId = req.user.id;
+      const teacherId = req.user.employee_id;
       const [courses] = await pool.query('SELECT id FROM courses WHERE id = ? AND teacher_id = ?', [courseId, teacherId]);
       if (courses.length === 0) return res.status(403).json({ success: false, message: 'Access denied' });
       const [assignments] = await pool.query('SELECT a.*, COUNT(DISTINCT s.id) as total_submissions FROM assignments a LEFT JOIN submissions s ON a.id = s.assignment_id WHERE a.course_id = ? GROUP BY a.id ORDER BY a.created_at DESC', [courseId]);
@@ -245,7 +245,7 @@ router.post('/submissions/:submissionId/grade', async (req, res) => {
     try {
       const { submissionId } = req.params;
       const { marks_obtained, feedback } = req.body;
-      const teacherId = req.user.id;
+      const teacherId = req.user.employee_id;
       const [existing] = await pool.query('SELECT id FROM marks WHERE submission_id = ?', [submissionId]);
       if (existing.length > 0) {
         await pool.query('UPDATE marks SET marks_obtained = ?, feedback = ?, graded_by = ?, graded_at = NOW() WHERE submission_id = ?', [marks_obtained, feedback, teacherId, submissionId]);
@@ -257,8 +257,13 @@ router.post('/submissions/:submissionId/grade', async (req, res) => {
 });
 
 router.get('/courses', async (req, res) => {
+    const fs = require('fs');
+    const logFile = 'debug_teacher_courses.log';
+    const timestamp = new Date().toISOString();
     try {
-      const teacherId = req.user.id;
+      const teacherId = req.user.employee_id;
+      fs.appendFileSync(logFile, `${timestamp} - Fetching courses for teacher_id: ${teacherId} (User ID: ${req.user.id})\n`);
+
       const [courses] = await pool.query(`
         SELECT c.*, cl.name as class_name, COUNT(DISTINCT CASE WHEN e.status = 'approved' THEN e.id END) as enrolled_students
         FROM courses c
@@ -268,13 +273,23 @@ router.get('/courses', async (req, res) => {
         GROUP BY c.id
         ORDER BY c.created_at DESC
       `, [teacherId]);
+      
+      fs.appendFileSync(logFile, `${timestamp} - Found ${courses.length} courses\n`);
       res.status(200).json({ success: true, courses: courses });
-    } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
+    } catch (err) { 
+      fs.appendFileSync(logFile, `${timestamp} - ERROR: ${err.message}\n`);
+      res.status(500).json({ success: false, message: 'Error' }); 
+    }
 });
 
 router.get('/stats', async (req, res) => {
+    const fs = require('fs');
+    const logFile = 'debug_teacher_stats.log';
+    const timestamp = new Date().toISOString();
     try {
-      const teacherId = req.user.id;
+      const teacherId = req.user.employee_id;
+      fs.appendFileSync(logFile, `${timestamp} - Fetching stats for teacher_id: ${teacherId}\n`);
+
       const [[{ total_courses }]] = await pool.query('SELECT COUNT(*) as total_courses FROM courses WHERE teacher_id = ?', [teacherId]);
       const [[{ total_students }]] = await pool.query('SELECT COUNT(DISTINCT e.student_id) as total_students FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE c.teacher_id = ? AND e.status = "approved"', [teacherId]);
       const [[{ total_classes }]] = await pool.query('SELECT COUNT(DISTINCT class_id) as total_classes FROM courses WHERE teacher_id = ?', [teacherId]);
@@ -292,8 +307,10 @@ router.get('/stats', async (req, res) => {
         ORDER BY e.enrolled_at DESC LIMIT 5
       `, [teacherId]);
       
+      fs.appendFileSync(logFile, `${timestamp} - Stats: Courses:${total_courses}, Students:${total_students}, Classes:${total_classes}\n`);
       res.status(200).json({ success: true, stats: { total_courses, total_students, total_classes, total_assignments, total_graded, total_pending, recent_students } });
     } catch (err) { 
+      fs.appendFileSync(logFile, `${timestamp} - ERROR: ${err.message}\n`);
       console.error('Teacher stats error:', err);
       res.status(500).json({ success: false, message: 'Error fetching stats' }); 
     }

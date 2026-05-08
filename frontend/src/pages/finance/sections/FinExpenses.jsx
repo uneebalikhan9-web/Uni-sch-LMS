@@ -41,11 +41,11 @@ const FinExpenses = ({ expenses, onAction }) => {
             <div style={{textAlign: 'right'}}>
               <div className="fin-expense-amount">₹{(e.amount || 0).toLocaleString()}</div>
               <button 
-                className="fin-icon-btn del" 
-                style={{marginTop: '12px'}}
+                style={{ marginTop: '12px', background: '#fef2f2', color: '#ef4444', border: 'none', padding: '8px', borderRadius: '8px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                 onClick={() => handleDelete(e.id)}
+                title="Delete Expense"
               >
-                <Trash size={16} />
+                <Trash size={16} weight="bold" />
               </button>
             </div>
           </div>

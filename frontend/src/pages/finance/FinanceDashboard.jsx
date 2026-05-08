@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { 
   ChartPie, CreditCard, Users, Buildings, 
   FileText, SignOut, List, CalendarBlank, 
-  Download, Plus
+  Download, Plus, ChatCircle
 } from "@phosphor-icons/react";
+import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -31,6 +32,7 @@ const NavItem = ({ active, icon, label, count, onClick }) => (
 );
 
 const FinanceDashboard = ({ user, onLogout }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
@@ -130,6 +132,10 @@ const FinanceDashboard = ({ user, onLogout }) => {
         <List size={24} weight="bold" />
       </button>
 
+      {mobileMenuOpen && (
+        <div className="fin-sidebar-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+      )}
+
       <aside className={`fin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="fin-logo-wrapper">
           <div className="fin-logo-icon"><Buildings size={24} weight="fill" /></div>
@@ -143,11 +149,12 @@ const FinanceDashboard = ({ user, onLogout }) => {
         </div>
 
         <nav className="fin-nav">
-          <NavItem active={activeTab === 'overview'} onClick={() => setActiveTab('overview')} icon={<ChartPie size={20} />} label="Overview" />
-          <NavItem active={activeTab === 'fees'} onClick={() => setActiveTab('fees')} icon={<CreditCard size={20} />} label="Fee Management" count={challans.filter(c => c.status === 'overdue').length} />
-          <NavItem active={activeTab === 'payroll'} onClick={() => setActiveTab('payroll')} icon={<Users size={20} />} label="Payroll" count={payroll.filter(p => p.status === 'pending').length} />
-          <NavItem active={activeTab === 'expenses'} onClick={() => setActiveTab('expenses')} icon={<Buildings size={20} />} label="Expenses" />
-          <NavItem active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} icon={<FileText size={20} />} label="Reports" />
+          <NavItem active={false} onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} icon={<ChatCircle size={20} />} label="Chat" />
+          <NavItem active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} icon={<ChartPie size={20} />} label="Overview" />
+          <NavItem active={activeTab === 'fees'} onClick={() => { setActiveTab('fees'); setMobileMenuOpen(false); }} icon={<CreditCard size={20} />} label="Fee Management" count={challans.filter(c => c.status === 'overdue').length} />
+          <NavItem active={activeTab === 'payroll'} onClick={() => { setActiveTab('payroll'); setMobileMenuOpen(false); }} icon={<Users size={20} />} label="Payroll" count={payroll.filter(p => p.status === 'pending').length} />
+          <NavItem active={activeTab === 'expenses'} onClick={() => { setActiveTab('expenses'); setMobileMenuOpen(false); }} icon={<Buildings size={20} />} label="Expenses" />
+          <NavItem active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Reports" />
         </nav>
 
         <button onClick={onLogout} className="fin-logout-btn">

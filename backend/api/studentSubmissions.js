@@ -10,7 +10,7 @@ const router = express.Router();
 router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'), async (req, res) => {
   try {
     const { assignmentId } = req.params;
-    const studentId = req.user.id;
+    const studentId = req.user.student_id;
     const { submission_text } = req.body;
     
     // Check if already submitted
@@ -93,7 +93,7 @@ router.get('/:submissionId/download', verifyToken, async (req, res) => {
 router.get('/course/:courseId', verifyToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const studentId = req.user.id;
+    const studentId = req.user.student_id;
     
     const [assignments] = await pool.query(`
       SELECT 
@@ -133,7 +133,8 @@ router.get('/assignment/:assignmentId', verifyToken, async (req, res) => { // Re
         u.name as student_name,
         u.email as student_email
       FROM submissions s
-      JOIN users u ON s.student_id = u.id
+      JOIN students st ON s.student_id = st.id
+      JOIN users u ON st.user_id = u.id
       WHERE s.assignment_id = ?
       ORDER BY s.submitted_at DESC
     `, [assignmentId]);
@@ -150,7 +151,7 @@ router.put('/:id/grade', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { marks_obtained, feedback } = req.body;
-    const teacher_id = req.user.id;
+    const teacher_id = req.user.employee_id;
 
     await pool.query(
       'UPDATE submissions SET marks_obtained = ?, feedback = ?, graded_by = ?, graded_at = NOW() WHERE id = ?',

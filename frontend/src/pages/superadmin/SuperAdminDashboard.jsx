@@ -49,7 +49,6 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [departments, setDepartments]     = useState([]);
   const [hods, setHods]                   = useState([]);
   const [bds, setBds]                     = useState([]);
-  const [financeManagers, setFinanceManagers] = useState([]);
   const [isLoading, setIsLoading]         = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -111,14 +110,12 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
         fetch(`${API}/superadmin/overview`, { headers }).then(r => r.json()),
         fetch(`${API}/superadmin/campuses`, { headers }).then(r => r.json()),
         fetch(`${API}/superadmin/principals`, { headers }).then(r => r.json()),
-        fetch(`${API}/superadmin/bds`, { headers }).then(r => r.json()),
-        fetch(`${API}/superadmin/finance-managers`, { headers }).then(r => r.json()),
+        fetch(`${API}/superadmin/bds`, { headers }).then(r => r.json())
       ]);
       if (ov.success) { setOverview(ov.overview || {}); setDepartmentStats(ov.campusStats || []); }
       if (cp.success) setDepartments(cp.campuses || []);
       if (pr.success) setHods(pr.principals || []);
       if (bdRes.success) setBds(bdRes.bds || []);
-      if (fmRes.success) setFinanceManagers(fmRes.financeManagers || []);
     } catch (e) { console.error(e); }
     setIsLoading(false);
   };
@@ -212,10 +209,12 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   const handleAddHOD = async (e) => {
     e.preventDefault();
-    const res = await fetch(`${API}/superadmin/principals`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(newHOD) });
+    const body = editingItem ? { ...editingItem } : newHOD;
+    const url = editingItem ? `${API}/superadmin/principals/${editingItem.id}` : `${API}/superadmin/principals`;
+    const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await res.json();
-    if (data.success) { showToast("HOD created!", "success"); setShowAddModal(false); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
-    else showToast(data.message || "Error creating HOD", "error");
+    if (data.success) { showToast(editingItem ? "HOD updated!" : "HOD created!", "success"); setShowAddModal(false); setEditingItem(null); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
+    else showToast(data.message || "Error saving HOD", "error");
   };
 
   const handleAddBD = async (e) => {
@@ -382,6 +381,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             hods={hods} departments={departments}
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newHOD={newHOD} setNewHOD={setNewHOD}
+            editingItem={editingItem} setEditingItem={setEditingItem}
             onAdd={handleAddHOD}
             onDelete={handleDeleteHOD}
             showHODModal={showHODModal} setShowHODModal={setShowHODModal}
@@ -522,7 +522,31 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           ))}
         </div>
 
-        <div style={S.systemStatus}>
+        <div style={{...S.platformStats, marginTop: '20px'}}>
+          <h4 style={S.platformStatsTitle}>Security & Health</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                <span>Server Capacity</span>
+                <span style={{ color: '#4f46e5' }}>32%</span>
+              </div>
+              <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '32%', height: '100%', background: '#4f46e5', borderRadius: '4px' }}></div>
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                <span>Database Load</span>
+                <span style={{ color: '#10b981' }}>18%</span>
+              </div>
+              <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ width: '18%', height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{...S.systemStatus, marginTop: '20px'}}>
           <div style={S.systemStatusDot}></div>
           <span>All systems operational</span>
         </div>
