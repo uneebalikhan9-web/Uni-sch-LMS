@@ -91,6 +91,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   useEffect(() => { if (activeTab === 'reports') fetchReports(); }, [activeTab]);
   useEffect(() => {
     const staffRoles = {
+      rector: 'rector',
       hr: 'hr_manager',
       finance: 'finance_manager',
       exams: 'exam_controller',
@@ -285,6 +286,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   // ─── Sidebar Nav Items ────────────────────────────────────────
   const navItems = [
     ['overview',    'VC Overview',       <ChartBar   size={20} />],
+    ['rector',      'Rectorate / Pro-VC', <Buildings size={20} />],
     ['campuses',    'Academic Depts',    <Buildings  size={20} />],
     ['principals',  'Dean & HODs',       <UserCircle size={20} />],
     ['bd',          'BD Management',     <IdentificationCard size={20} />],
@@ -401,6 +403,16 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             selectedBDDetails={selectedBDDetails} isBDDetailsLoading={isBDDetailsLoading}
             onViewDetails={handleViewBDDetails}
             editingItem={editingItem} setEditingItem={setEditingItem}
+          />
+        )}
+
+        {activeTab === "rector" && (
+          <SAStaffManagement 
+            title="Rectorate / Pro-VC" role="rector" icon={Buildings}
+            staffList={staffData} departments={departments}
+            showAddModal={showAddModal} setShowAddModal={setShowAddModal}
+            newItem={newStaff} setNewItem={setNewStaff}
+            onAdd={handleAddStaff} onDelete={handleDeleteStaff}
           />
         )}
 

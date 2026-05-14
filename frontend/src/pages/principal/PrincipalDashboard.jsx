@@ -166,8 +166,30 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
 
   const handleAddSubmit = async (e) => {
     e.preventDefault();
-    const endpointMap = {teachers:'principal/teachers',students:'students',classes:'classes',courses:'courses',labs:'labs'};
-    const bodyMap     = {teachers:newPerson,students:newPerson,classes:newClass,courses:newCourse,labs:newLab};
+    const endpointMap = {
+      teachers: 'principal/teachers',
+      students: 'students',
+      classes: 'classes',
+      courses: 'courses',
+      labs: 'labs',
+      exams: 'exams',
+      finance: 'finance',
+      timetable: 'timetables',
+      library: 'library',
+      feedback: 'feedback'
+    };
+    const bodyMap = {
+      teachers: newPerson,
+      students: newPerson,
+      classes: newClass,
+      courses: newCourse,
+      labs: newLab,
+      exams: {}, // Placeholders for now
+      finance: {},
+      timetable: newTimetableEntry,
+      library: {},
+      feedback: {}
+    };
     let url    = `${API}/${endpointMap[activeTab]}`;
     let method = 'POST';
     let body   = editingItem || bodyMap[activeTab];
@@ -293,12 +315,12 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     ['students',      'Student Lifecycle', <UserCircle size={20}/>,           students.length],
     ['classes',       'Academic Groups',   <Buildings size={20}/>,            classes.length],
     ['courses',       'Programs & Courses', <BookOpen size={20}/>,             courses.filter(c=>c.status==='active').length],
-    ['exams',         'Exam & Results',     <FileText size={20}/>,             null],
-    ['finance',       'Dept. Finance',     <ShieldCheck size={20}/>,          null],
     ['timetable',     'Academic Schedule', <Clock size={20}/>,                timetables.length],
     ['labs',          'Lab & Assets',      <SquaresFour size={20}/>,          labs.length],
-    ['library',       'Research Resources', <BookOpen size={20}/>,             null],
-    ['feedback',      'Quality Assurance', <ChartLine size={20} weight="duotone"/>, null],
+    // ['exams',      'Exam & Results',     <FileText size={20}/>,             null],
+    // ['finance',    'Dept. Finance',     <ShieldCheck size={20}/>,          null],
+    // ['library',    'Research Resources', <BookOpen size={20}/>,             null],
+    // ['feedback',   'Quality Assurance', <ChartLine size={20} weight="duotone"/>, null],
     ['pending',       'Enrollment Queue',  <UserPlus size={20}/>,             pendingStudents.length],
   ];
 

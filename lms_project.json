@@ -1,0 +1,439 @@
+{
+  "project": {
+    "name": "Lancers Tech Nexus LMS",
+    "version": "1.0.0",
+    "description": "A full-stack University Learning Management System built for institutional management, academic tracking, and student-teacher interaction.",
+    "type": "Full-Stack Web Application",
+    "status": "In Development",
+    "repository": "uneebalikhan9-web/Newlms"
+  },
+
+  "tech_stack": {
+    "frontend": {
+      "framework": "React 18.3.1",
+      "bundler": "Vite 5.4.2",
+      "routing": "React Router DOM 6.26.0",
+      "styling": "Vanilla CSS + Tailwind CSS",
+      "charts": "Chart.js 4.5.1 + react-chartjs-2",
+      "icons": "@phosphor-icons/react 2.1.10",
+      "http_client": "Axios 1.13.5",
+      "realtime": "Socket.io-client 4.8.3",
+      "code_editor": "@monaco-editor/react 4.7.0",
+      "whiteboard": "tldraw 4.4.0",
+      "excel": "xlsx 0.18.5"
+    },
+    "backend": {
+      "runtime": "Node.js",
+      "framework": "Express 4.18.2",
+      "database": "MySQL (mysql2 3.6.5)",
+      "authentication": "JWT (jsonwebtoken 9.0.2)",
+      "password_hashing": "bcrypt 5.1.1",
+      "realtime": "Socket.io 4.8.3",
+      "file_uploads": "Multer 2.0.2",
+      "email": "Nodemailer 8.0.1",
+      "cors": "cors 2.8.5",
+      "env": "dotenv 16.3.1",
+      "dev_server": "Nodemon 3.0.2"
+    }
+  },
+
+  "portals": [
+    {
+      "id": "superadmin",
+      "name": "Super Admin Portal",
+      "role": "superadmin",
+      "dashboard_file": "SuperAdminDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Top-level institutional control. Manages all users, departments, HODs, finance managers, BD users, staff, and system-wide reports.",
+      "sections": [
+        "SAOverview.jsx",
+        "SADepartments.jsx",
+        "SAHODs.jsx",
+        "SABDUsers.jsx",
+        "SAFinanceManagers.jsx",
+        "SAStaffManagement.jsx",
+        "SAReports.jsx"
+      ],
+      "backend_api": "/api/superadmin",
+      "api_file": "superadmin.js"
+    },
+    {
+      "id": "rector",
+      "name": "Rector / Pro-VC Portal",
+      "role": "rector",
+      "dashboard_file": "RectorDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Executive-level oversight dashboard. Provides institutional KPIs, strategic insights, and high-level data visualization.",
+      "backend_api": "/api/rector",
+      "api_file": "rector.js"
+    },
+    {
+      "id": "principal",
+      "name": "Principal / HOD Portal",
+      "role": "principal",
+      "dashboard_file": "PrincipalDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Department head management. Oversees faculty, students, courses, attendance, and academic performance within their department.",
+      "backend_api": "/api/principal",
+      "api_file": "principal.js"
+    },
+    {
+      "id": "teacher",
+      "name": "Teacher Portal",
+      "role": "teacher",
+      "dashboard_file": "TeacherDashboard.jsx",
+      "route": "/teacher/dashboard",
+      "description": "Faculty management portal. Handles course delivery, student grading, assignments, attendance, timetable, lab usage, and reports.",
+      "sections": [
+        "TDOverview.jsx",
+        "TDStudents.jsx",
+        "TDAssignments.jsx",
+        "TDGrades.jsx",
+        "TDClasses.jsx",
+        "TDTimetable.jsx",
+        "TDLabUsage.jsx",
+        "TDPending.jsx",
+        "TDReports.jsx",
+        "TDProfile.jsx",
+        "TDModals.jsx"
+      ],
+      "backend_api": "/api/teachers",
+      "api_file": "teachers.js"
+    },
+    {
+      "id": "student",
+      "name": "Student Portal",
+      "role": "student",
+      "dashboard_file": "StudentDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Student self-service portal. Provides access to courses, grades, assignments, attendance, timetable, labs, and fee challans.",
+      "sections": [
+        "SDOverview.jsx",
+        "SDAssignments.jsx",
+        "SDAttendance.jsx",
+        "SDGrades.jsx",
+        "SDLabs.jsx",
+        "SDTimetable.jsx",
+        "SDRegistration.jsx",
+        "SDCourseDetail.jsx",
+        "SDRightPanel.jsx",
+        "SDModals.jsx"
+      ],
+      "backend_api": "/api/students",
+      "api_file": "students.js"
+    },
+    {
+      "id": "finance",
+      "name": "Finance Portal",
+      "role": "finance",
+      "dashboard_file": "FinanceDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Financial management dashboard. Handles fee challans, student payments, pending dues, and financial reports.",
+      "backend_api": "/api/finance",
+      "api_file": "finance.js"
+    },
+    {
+      "id": "admissions",
+      "name": "Admissions Portal",
+      "role": "admissions",
+      "dashboard_file": "AdmissionsDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Admissions management dashboard. Manages new student applications, enrollment approvals, and onboarding workflows.",
+      "backend_api": "/api/admissions",
+      "api_file": "admissions.js"
+    },
+    {
+      "id": "registrar",
+      "name": "Registrar Portal",
+      "role": "registrar",
+      "dashboard_file": "RegistrarDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Academic records management. Handles student registration, course enrollment, transcripts, and official academic documentation.",
+      "backend_api": "/api/registrar",
+      "api_file": "registrar.js"
+    },
+    {
+      "id": "hr",
+      "name": "HR Portal",
+      "role": "hr",
+      "dashboard_file": "HRDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Human resources management. Handles staff records, job postings, applications, leave management, and employment data.",
+      "backend_api": "/api/hr",
+      "api_file": "hr.js"
+    },
+    {
+      "id": "it",
+      "name": "IT Portal",
+      "role": "it",
+      "dashboard_file": "ITDashboard.jsx",
+      "route": "/dashboard",
+      "description": "IT infrastructure management. Manages lab systems, equipment, software licenses, maintenance tickets, and user access.",
+      "backend_api": "/api/it",
+      "api_file": "it.js"
+    },
+    {
+      "id": "library",
+      "name": "Library Portal",
+      "role": "library",
+      "dashboard_file": "LibraryDashboard.jsx",
+      "route": "/dashboard",
+      "description": "Library resource management. Handles book inventory, lending records, return tracking, and student library access.",
+      "backend_api": "/api/library",
+      "api_file": "library.js"
+    },
+    {
+      "id": "bd",
+      "name": "Business Development Portal",
+      "role": "bd",
+      "dashboard_file": "bd/ (folder)",
+      "route": "/dashboard",
+      "description": "Business development and partnerships dashboard. Manages institutional collaborations, job postings, and career services.",
+      "backend_api": "/api/bd",
+      "api_file": "bd.js"
+    }
+  ],
+
+  "public_pages": [
+    {
+      "name": "Sign In",
+      "route": "/signin",
+      "file": "SignIn.jsx",
+      "description": "Student login page with JWT authentication."
+    },
+    {
+      "name": "Teacher Sign In",
+      "route": "/teacher/signin",
+      "file": "TeacherSignIn.jsx",
+      "description": "Dedicated teacher login portal."
+    },
+    {
+      "name": "Sign Up",
+      "route": "/signup",
+      "file": "SignUp.jsx",
+      "description": "New student registration page."
+    },
+    {
+      "name": "Forgot Password",
+      "route": "/forgot-password",
+      "file": "ForgotPassword.jsx",
+      "description": "Password recovery via email OTP."
+    },
+    {
+      "name": "Verify OTP",
+      "route": "/verify-otp",
+      "file": "VerifyOTP.jsx",
+      "description": "OTP verification for password reset flow."
+    },
+    {
+      "name": "Reset Password",
+      "route": "/reset-password/:token",
+      "file": "ResetPassword.jsx",
+      "description": "Secure password reset using token."
+    },
+    {
+      "name": "Apply Page",
+      "route": "/apply / /apply/:jobId",
+      "file": "ApplyPage.jsx",
+      "description": "Job/opportunity application page linked from BD portal."
+    }
+  ],
+
+  "protected_pages": [
+    {
+      "name": "Dashboard (Role-Based)",
+      "route": "/dashboard",
+      "file": "Dashboard.jsx",
+      "description": "Role-aware router that renders the correct portal based on logged-in user role."
+    },
+    {
+      "name": "Courses",
+      "route": "/courses",
+      "file": "Courses.jsx",
+      "description": "Course catalog and enrollment management page."
+    },
+    {
+      "name": "Analytics",
+      "route": "/analytics",
+      "file": "Analytics.jsx",
+      "description": "Institutional KPI and data visualization dashboard."
+    },
+    {
+      "name": "Student Assignments",
+      "route": "/assignments",
+      "file": "StudentAssignments.jsx",
+      "description": "Standalone assignment submission page for students."
+    },
+    {
+      "name": "Pending Students",
+      "route": "/pending-students",
+      "file": "PendingStudents.jsx",
+      "description": "List of students awaiting approval or enrollment completion."
+    },
+    {
+      "name": "Lab Player",
+      "route": "/labs/:labId",
+      "file": "LabPlayer.jsx",
+      "description": "Interactive virtual lab environment with Monaco code editor."
+    },
+    {
+      "name": "Chat",
+      "route": "/chat",
+      "file": "Chat.jsx",
+      "description": "Real-time messaging with Socket.io between users."
+    }
+  ],
+
+  "backend_api_routes": {
+    "auth": {
+      "base": "/api",
+      "file": "auth.js",
+      "endpoints": ["POST /api/signup", "POST /api/signin"]
+    },
+    "forgot_password": {
+      "base": "/api",
+      "file": "forgotPassword.js",
+      "endpoints": ["POST /api/forgot-password", "POST /api/verify-otp", "POST /api/reset-password"]
+    },
+    "users": { "base": "/api/users", "file": "users.js" },
+    "teachers": { "base": "/api/teachers", "file": "teachers.js" },
+    "students": { "base": "/api/students", "file": "students.js" },
+    "courses": { "base": "/api/courses", "file": "courses.js" },
+    "assignments": { "base": "/api/assignments", "file": "assignments.js + assignmentFiles.js" },
+    "submissions": { "base": "/api/submissions", "file": "studentSubmissions.js" },
+    "attendance": { "base": "/api/attendance", "file": "attendance.js" },
+    "grades": { "base": "/api/grades", "file": "grades.js" },
+    "progress": { "base": "/api/progress", "file": "progress.js" },
+    "timetables": { "base": "/api/timetables", "file": "timetables.js" },
+    "classes": { "base": "/api/classes", "file": "classes.js" },
+    "challans": { "base": "/api/challans", "file": "challans.js" },
+    "labs": { "base": "/api/labs", "file": "labs.js" },
+    "chat": { "base": "/api/chat", "file": "chat.js" },
+    "feedback": { "base": "/api/feedback", "file": "feedback.js" },
+    "logs": { "base": "/api/logs", "file": "logs.js" },
+    "pending_students": { "base": "/api/pending-students", "file": "pending-students.js" },
+    "admin": { "base": "/api/admin", "file": "admin.js" },
+    "superadmin": { "base": "/api/superadmin", "file": "superadmin.js" },
+    "principal": { "base": "/api/principal", "file": "principal.js" },
+    "rector": { "base": "/api/rector", "file": "rector.js" },
+    "hr": { "base": "/api/hr", "file": "hr.js" },
+    "finance": { "base": "/api/finance", "file": "finance.js" },
+    "admissions": { "base": "/api/admissions", "file": "admissions.js" },
+    "registrar": { "base": "/api/registrar", "file": "registrar.js" },
+    "library": { "base": "/api/library", "file": "library.js" },
+    "it": { "base": "/api/it", "file": "it.js" },
+    "exams": { "base": "/api/exams", "file": "exams.js" },
+    "reports": { "base": "/api/reports", "file": "reports.js" },
+    "bd": { "base": "/api/bd", "file": "bd.js" }
+  },
+
+  "shared_components": [
+    {
+      "name": "ProtectedRoute",
+      "file": "ProtectedRoute.jsx",
+      "description": "Wraps routes that require authentication. Redirects to signin if no token."
+    },
+    {
+      "name": "PublicRoute",
+      "file": "PublicRoute.jsx",
+      "description": "Wraps public pages. Redirects logged-in users away from login/signup."
+    },
+    {
+      "name": "Toast",
+      "file": "Toast.jsx",
+      "description": "Global toast notification system using React Context."
+    },
+    {
+      "name": "ConfirmModal",
+      "file": "ConfirmModal.jsx",
+      "description": "Reusable confirmation dialog modal."
+    },
+    {
+      "name": "FeedbackModal",
+      "file": "FeedbackModal.jsx",
+      "description": "Student/teacher feedback submission modal."
+    },
+    {
+      "name": "LoadingSpinner",
+      "file": "LoadingSpinner.jsx",
+      "description": "Global loading indicator component."
+    },
+    {
+      "name": "Whiteboard",
+      "file": "Whiteboard.jsx",
+      "description": "Interactive whiteboard powered by tldraw."
+    }
+  ],
+
+  "realtime_features": {
+    "technology": "Socket.io",
+    "events": [
+      {
+        "event": "chat:join",
+        "description": "User joins their personal Socket room on login."
+      },
+      {
+        "event": "chat:typing",
+        "description": "Broadcasts typing indicator to the receiver."
+      },
+      {
+        "event": "chat:stop_typing",
+        "description": "Clears typing indicator for receiver."
+      }
+    ]
+  },
+
+  "user_roles": [
+    "superadmin",
+    "rector",
+    "principal",
+    "teacher",
+    "student",
+    "finance",
+    "admissions",
+    "registrar",
+    "hr",
+    "it",
+    "library",
+    "bd"
+  ],
+
+  "database": {
+    "type": "MySQL",
+    "schema_file": "master_nexus_schema.sql",
+    "config_file": "backend/config/database.js",
+    "notable_scripts": [
+      "init_db.js",
+      "seed_admin.js",
+      "seed_uk_classes.js",
+      "seed_uk_client_demo.js",
+      "setup_registrar_db.js",
+      "fix_db.js",
+      "fix_missing_tables.js",
+      "fix_teacher_ids.js",
+      "migrate_academic.js"
+    ]
+  },
+
+  "server": {
+    "port": 5000,
+    "entry_point": "backend/server.js",
+    "start_command": "node server.js",
+    "dev_command": "nodemon server.js",
+    "frontend_port": 5173,
+    "frontend_dev_command": "npm run dev"
+  },
+
+  "file_structure": {
+    "root": "University Lancers tech Lms/",
+    "backend": "backend/",
+    "frontend": "frontend/",
+    "frontend_src": "frontend/src/",
+    "pages": "frontend/src/pages/",
+    "components": "frontend/src/components/",
+    "api_routes": "backend/api/",
+    "middleware": "backend/middleware/",
+    "config": "backend/config/",
+    "uploads": "backend/uploads/"
+  }
+}

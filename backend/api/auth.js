@@ -52,7 +52,7 @@ router.post('/signup', async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Insert user into database with pending approval status
     const [result] = await pool.query(
@@ -225,7 +225,7 @@ router.post('/signin', async (req, res) => {
         employee_id: user.employee_id || null
       },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }  // ✅ 24h expiry — reduced from 7d for security
     );
 
     return res.status(200).json({
@@ -280,7 +280,7 @@ router.post('/teacher/signup', async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Insert teacher into database
     const [result] = await pool.query(
@@ -301,7 +301,7 @@ router.post('/teacher/signup', async (req, res) => {
     const token = jwt.sign(
       { id: result.insertId, email: email, role: 'teacher' },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }  // ✅ 24h expiry
     );
 
     res.status(201).json({
@@ -377,7 +377,7 @@ router.post('/teacher/signin', async (req, res) => {
         employee_id: user.employee_id || null
       },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }  // ✅ 24h expiry
     );
 
     res.status(200).json({
@@ -407,22 +407,47 @@ router.post('/teacher/signin', async (req, res) => {
 router.post('/verify-otp', async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const MAX_ATTEMPTS = 3;
 
     if (!email || !otp) {
       return res.status(400).json({ success: false, message: 'Email and OTP required' });
     }
 
-    // Find the latest valid OTP in database
+    // 1. Get the current OTP record
     const [records] = await pool.query(
-      'SELECT * FROM otp_verifications WHERE email = ? AND otp = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
-      [email, otp]
+      'SELECT * FROM otp_verifications WHERE email = ? AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1',
+      [email]
     );
 
     if (records.length === 0) {
-      return res.status(401).json({ success: false, message: 'Invalid or expired code' });
+      return res.status(401).json({ success: false, message: 'No active OTP found. Please request a new one.' });
     }
 
-    // OTP is valid! Now get the user and issue the token
+    const record = records[0];
+
+    // 2. Check if the code matches
+    if (record.otp !== otp) {
+      const newAttempts = (record.attempts || 0) + 1;
+      
+      if (newAttempts >= MAX_ATTEMPTS) {
+        // Lockout: Delete the OTP if too many failed attempts
+        await pool.query('DELETE FROM otp_verifications WHERE id = ?', [record.id]);
+        return res.status(403).json({ 
+          success: false, 
+          message: 'Too many failed attempts. This verification code is now invalid. Please request a new one.' 
+        });
+      }
+
+      // Increment attempts
+      await pool.query('UPDATE otp_verifications SET attempts = ? WHERE id = ?', [newAttempts, record.id]);
+      
+      return res.status(401).json({ 
+        success: false, 
+        message: `Invalid code. ${MAX_ATTEMPTS - newAttempts} attempts remaining.` 
+      });
+    }
+
+    // 3. OTP is valid! Now get the user and issue the token
     const [users] = await pool.query(
       `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id
        FROM users u 
@@ -448,7 +473,7 @@ router.post('/verify-otp', async (req, res) => {
         employee_id: user.employee_id || null
       },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '24h' }  // ✅ 24h expiry
     );
 
     res.status(200).json({

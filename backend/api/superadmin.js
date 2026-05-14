@@ -175,7 +175,7 @@ router.post('/principals', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Department not found' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, 'principal', campus_id, true]
@@ -207,7 +207,7 @@ router.put('/principals/:id', async (req, res) => {
     let params = [name, email, campus_id || null];
 
     if (password && password.trim() !== '') {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       query += ', password = ?';
       params.push(hashedPassword);
     }
@@ -315,7 +315,7 @@ router.post('/bds', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, 'bd_agent', true, campus_id || null]
@@ -347,7 +347,7 @@ router.put('/bds/:id', async (req, res) => {
     let params = [name, email, campus_id || null];
 
     if (password && password.trim() !== '') {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       query += ', password = ?';
       params.push(hashedPassword);
     }
@@ -473,7 +473,7 @@ router.post('/staff', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, role, campus_id, true]

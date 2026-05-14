@@ -80,9 +80,16 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 // Verify Reset Token
-router.get('/verify-reset-token/:token', async (req, res) => {
+router.post('/verify-reset-token', async (req, res) => {
   try {
-    const { token } = req.params;
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Token is required'
+      });
+    }
 
     const [tokens] = await pool.query(
       `SELECT t.*, u.email 
@@ -153,7 +160,7 @@ router.post('/reset-password', async (req, res) => {
     const tokenData = tokens[0];
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update user password
     await pool.query(

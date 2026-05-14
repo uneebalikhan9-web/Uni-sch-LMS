@@ -1,13 +1,13 @@
 const express = require('express');
 const path = require('path');
 const { pool } = require('../config/database');
-const { verifyToken, isStudent } = require('../middleware/auth');
-const { uploadSubmission } = require('../middleware/upload');
+const { verifyToken, isTeacher, isStudent } = require('../middleware/auth');
+const { uploadSubmission, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
 
 // Student uploads submission file
-router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'), async (req, res) => {
+router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'), handleUploadError, async (req, res) => {
   try {
     const { assignmentId } = req.params;
     const studentId = req.user.student_id;
@@ -147,7 +147,7 @@ router.get('/assignment/:assignmentId', verifyToken, async (req, res) => { // Re
 });
 
 // Teacher: Grade a submission
-router.put('/:id/grade', verifyToken, async (req, res) => {
+router.put('/:id/grade', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
     const { marks_obtained, feedback } = req.body;

@@ -110,7 +110,7 @@ router.post('/teachers', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, 'teacher', campusId, true]
@@ -152,7 +152,7 @@ router.put('/teachers/:id', async (req, res) => {
     }
 
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       await pool.query('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPassword, id]);
     } else {
       await pool.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, id]);
@@ -272,7 +272,7 @@ router.post('/students', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email already exists' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const semNum = req.body.semester || 1;
     const rollNumber = await generateRollNumber(campusId, semNum);
 
@@ -323,7 +323,7 @@ router.put('/students/:id', async (req, res) => {
     }
 
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       await pool.query('UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?', [name, email, hashedPassword, id]);
     } else {
       await pool.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, id]);

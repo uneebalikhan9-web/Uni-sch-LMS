@@ -2,12 +2,12 @@ const express = require('express');
 const path = require('path');
 const { pool } = require('../config/database');
 const { verifyToken, isTeacher } = require('../middleware/auth');
-const { uploadAssignment } = require('../middleware/upload');
+const { uploadAssignment, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
 
 // Teacher uploads assignment file
-router.post('/:assignmentId/upload', verifyToken, isTeacher, uploadAssignment.single('file'), async (req, res) => {
+router.post('/:assignmentId/upload', verifyToken, isTeacher, uploadAssignment.single('file'), handleUploadError, async (req, res) => {
   try {
     const { assignmentId } = req.params;
     

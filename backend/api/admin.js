@@ -77,7 +77,7 @@ router.post('/teachers', async (req, res) => {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create teacher
     const [result] = await pool.query(
@@ -125,7 +125,7 @@ router.put('/teachers/:id', async (req, res) => {
 
     // If password is provided, hash it
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       await pool.query(
         'UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?',
         [name, email, hashedPassword, id]
@@ -262,7 +262,7 @@ router.post('/students', async (req, res) => {
 
     // Generate Roll Number
     const rollNumber = await generateRollNumber(campus_id || req.user.campus_id, semester || 1);
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // 1. Create user
     const [uResult] = await connection.query(
@@ -312,7 +312,7 @@ router.put('/students/:id', async (req, res) => {
 
     // If password is provided, hash it
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       await pool.query(
         'UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?',
         [name, email, hashedPassword, id]

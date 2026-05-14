@@ -1,5 +1,11 @@
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
+
+// Security Gate: Prevent accidental data wipe in production
+if (process.env.NODE_ENV === 'production') {
+  console.error('\n❌ [CRITICAL] Seed scripts are DISABLED in production environment to prevent data loss.');
+  process.exit(1);
+}
 require('dotenv').config({ path: './backend/.env' });
 
 async function seedSuperAdmin() {

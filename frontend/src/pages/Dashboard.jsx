@@ -13,6 +13,7 @@ import ExamsDashboard from './exams/ExamsDashboard'
 import LibraryDashboard from './library/LibraryDashboard'
 import ITDashboard from './it/ITDashboard'
 import LabAssistantDashboard from './lab/LabAssistantDashboard'
+import RectorDashboard from './rector/RectorDashboard'
 import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
@@ -73,6 +74,10 @@ function Dashboard() {
 
   if (userRole === 'principal') {
     return <PrincipalDashboard user={user} onLogout={handleLogout} />
+  }
+
+  if (userRole === 'rector') {
+    return <RectorDashboard user={user} onLogout={handleLogout} />
   }
 
   if (userRole === 'bd_agent') {

@@ -19,11 +19,9 @@ const verifyToken = async (req, res, next) => {
     const { pool } = require('../config/database');
     if (decoded.role === 'student') {
       const [student] = await pool.query('SELECT id FROM students WHERE user_id = ?', [decoded.id]);
-      console.log(`[AUTH DEBUG] Student Role. User ID: ${decoded.id}, Student ID found: ${student[0]?.id}`);
       if (student.length > 0) req.user.student_id = student[0].id;
-    } else if (['teacher', 'principal', 'admin', 'bd_agent'].includes(decoded.role)) {
+    } else if (['teacher', 'principal', 'admin', 'bd_agent', 'rector'].includes(decoded.role)) {
       const [employee] = await pool.query('SELECT id FROM employees WHERE user_id = ?', [decoded.id]);
-      console.log(`[AUTH DEBUG] Employee Role (${decoded.role}). User ID: ${decoded.id}, Employee ID found: ${employee[0]?.id}`);
       if (employee.length > 0) req.user.employee_id = employee[0].id;
     }
 
@@ -45,10 +43,11 @@ const verifyToken = async (req, res, next) => {
 
 // Middleware to check if user is a teacher
 const isTeacher = (req, res, next) => {
-  if (req.user.role !== 'teacher') {
+  const allowed = ['teacher', 'principal', 'admin', 'super_admin'];
+  if (!allowed.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Teachers only.'
+      message: 'Access denied. Teachers/Admins only.'
     });
   }
   next();
@@ -111,7 +110,8 @@ const isBDAgent = (req, res, next) => {
 
 // Chat: HOD, Admin, Teacher, Student can use chat. Super Admin cannot.
 const isChatUser = (req, res, next) => {
-  const allowed = ['admin', 'principal', 'teacher', 'student', 'bd_agent'];
+  const allowed = ['admin', 'principal', 'teacher', 'student', 'bd_agent', 'rector'];
+
   if (!allowed.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
@@ -161,6 +161,17 @@ const isLibrarian = (req, res, next) => {
   next();
 };
 
+// Middleware to check if user is a Rector
+const isRector = (req, res, next) => {
+  if (req.user.role !== 'rector' && req.user.role !== 'super_admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Rector only.'
+    });
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
   isTeacher,
@@ -174,5 +185,6 @@ module.exports = {
   isHRManager,
   isRegistrar,
   isAdmissionOfficer,
-  isLibrarian
+  isLibrarian,
+  isRector
 };

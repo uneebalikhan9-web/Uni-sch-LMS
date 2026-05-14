@@ -34,13 +34,8 @@ export default function PDDataTable({
     return tab.slice(0, -1);
   };
 
-  const showAddButton =
-    activeTab !== 'pending' &&
-    activeTab !== 'timetable' &&
-    activeTab !== 'history' &&
-    activeTab !== 'lab_reports' &&
-    activeTab !== 'feedback' &&
-    activeTab !== 'course_reports';
+  const unimplementedTabs = ['exams', 'finance', 'library', 'feedback', 'lab_reports', 'course_reports', 'timetable', 'history'];
+  const showAddButton = activeTab !== 'pending' && !unimplementedTabs.includes(activeTab);
 
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">

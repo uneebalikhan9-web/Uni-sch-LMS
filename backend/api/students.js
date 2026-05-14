@@ -19,18 +19,21 @@ const canManageStudents = (req, res, next) => {
   }
 };
 
+const { logAudit } = require('../utils/logger');
+
 // Apply authentication to all routes
 router.use(verifyToken);
 router.use(canManageStudents);
 
-// Get All Students (Filtered by campus)
+// Get All Students (Filtered by campus with Pagination)
 router.get('/', async (req, res) => {
   try {
     const { role, campus_id } = req.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+
     let query = `
-      SELECT u.id, u.name, u.email, u.phone, u.status, u.profile_image,
-             s.id as student_id, s.roll_number, s.semester, s.academic_status,
-             p.name as program_name, c.name as campus_name
       FROM users u
       JOIN students s ON u.id = s.user_id
       LEFT JOIN programs p ON s.program_id = p.id
@@ -44,10 +47,30 @@ router.get('/', async (req, res) => {
       params.push(campus_id);
     }
 
-    query += ` ORDER BY s.roll_number ASC`;
-    const [students] = await pool.query(query, params);
+    // 1. Get total count for pagination metadata
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) as total ${query}`, params);
 
-    res.json({ success: true, students });
+    // 2. Get paginated data
+    const selectFields = `
+      SELECT u.id, u.name, u.email, u.phone, u.status, u.profile_image,
+             s.id as student_id, s.roll_number, s.semester, s.academic_status,
+             p.name as program_name, c.name as campus_name
+    `;
+    const [students] = await pool.query(
+      `${selectFields} ${query} ORDER BY s.roll_number ASC LIMIT ? OFFSET ?`, 
+      [...params, limit, offset]
+    );
+
+    res.json({ 
+      success: true, 
+      students,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Get students error:', error);
     res.status(500).json({ success: false, message: 'Error fetching students' });
@@ -71,7 +94,7 @@ router.post('/', async (req, res) => {
 
     const semNum = semester || 1;
     const rollNumber = await generateRollNumber(campus_id, semNum);
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const [result] = await pool.query(
       `INSERT INTO users (
@@ -110,6 +133,17 @@ router.post('/', async (req, res) => {
       student_id: studentId,
       roll_number: rollNumber
     });
+
+    // Audit Log
+    logAudit({
+      userId: req.user.id,
+      action: 'CREATE_STUDENT',
+      targetId: studentId,
+      targetTable: 'students',
+      newValue: { name, email, rollNumber },
+      ip: req.ip
+    });
+
   } catch (error) {
     console.error('Create student error:', error);
     res.status(500).json({ success: false, message: 'Error creating student' });
@@ -208,7 +242,7 @@ router.put('/:id', async (req, res) => {
     let userParams = [name, email];
 
     if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 12);
       userQuery += `, password = ? WHERE id = ?`;
       userParams.push(hashedPassword, id);
     } else {

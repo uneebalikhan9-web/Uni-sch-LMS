@@ -9,8 +9,12 @@ const pool = mysql.createPool({
   password: String(process.env.DB_PASSWORD || process.env.DB_PASS || ''),
   database: process.env.DB_NAME || 'university_lms',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
+  connectionLimit: 50, // Increased for 12 portals x high concurrency
+  maxIdle: 10, // Max idle connections, the pool will keep these open
+  idleTimeout: 60000, // Idle connections timeout in milliseconds
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0
 });
 
 const promisePool = pool;

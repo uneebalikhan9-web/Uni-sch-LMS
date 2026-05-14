@@ -157,6 +157,7 @@ router.get('/students', async (req, res) => {
         OR c.teacher_id = ? 
         OR cl.teacher_id = ?
       )
+      GROUP BY s.id
       ORDER BY u.name
     `, [campus_id, teacherId, teacherId]);
     res.status(200).json({ success: true, students });
@@ -186,7 +187,7 @@ router.post('/students', async (req, res) => {
     }
 
     const rollNumber = await generateRollNumber(campus_id, semester || 1);
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // 1. Create user
     const [uResult] = await connection.query(

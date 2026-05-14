@@ -3,8 +3,11 @@ const router = express.Router();
 const { pool: db } = require('../config/database');
 const { verifyToken, isHRManager } = require('../middleware/auth');
 
-// Get HR Dashboard Stats
-router.get('/stats', verifyToken, async (req, res) => {
+router.use(verifyToken);
+router.use(isHRManager);
+
+// Middleware is now applied globally to the router
+router.get('/stats', async (req, res) => {
     try {
         const [totalRes] = await db.query('SELECT COUNT(*) as count FROM users');
         const total = totalRes[0].count;

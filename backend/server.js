@@ -2,46 +2,123 @@ const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const { testConnection } = require('./config/database');
+
+// ─── Rate Limiters ────────────────────────────────────────────────────────────
+// Sign In: max 10 attempts per 15 minutes per IP (brute-force protection)
+const signinLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { success: false, message: 'Too many login attempts. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Sign Up: max 5 registrations per hour per IP (spam protection)
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { success: false, message: 'Too many accounts created from this IP. Please try again after 1 hour.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Forgot Password: max 5 requests per 15 minutes per IP
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { success: false, message: 'Too many password reset requests. Please try again after 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// Socket.io for real-time chat (CORS for frontend)
+// ─── CORS Allowlist ───────────────────────────────────────────────────────────
+// Reads allowed origins from .env (comma-separated). Falls back to localhost.
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5174,http://localhost:3000')
+  .split(',')
+  .map(o => o.trim());
+
+console.log(`[CORS] Allowed Origins: ${ALLOWED_ORIGINS.join(', ')}`);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Socket.io for real-time chat (same CORS allowlist)
 const io = new Server(server, {
   cors: { 
-    origin: "*",
-    methods: ["GET", "POST"]
+    origin: ALLOWED_ORIGINS,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 app.set('io', io);
 
+// ─── Socket.io Authentication Middleware ──────────────────────────────────────
+const jwt = require('jsonwebtoken');
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if (!token) {
+    return next(new Error('Authentication error: Token missing'));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    socket.user = decoded; // Store user info in socket object
+    next();
+  } catch (err) {
+    next(new Error('Authentication error: Invalid token'));
+  }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 io.on('connection', (socket) => {
-  socket.on('chat:join', (userId) => {
-    if (userId) {
-      socket.join(`user_${userId}`);
-    }
-  });
+  const userId = socket.user.id;
+  console.log(`⚡ Socket connected: User ${userId}`);
+  
+  // Automatically join private room based on authenticated ID
+  socket.join(`user_${userId}`);
 
   socket.on('chat:typing', (data) => {
     if (data.receiver_id) {
-      io.to(`user_${data.receiver_id}`).emit('chat:typing', { sender_id: data.sender_id });
+      io.to(`user_${data.receiver_id}`).emit('chat:typing', { sender_id: userId });
     }
   });
 
   socket.on('chat:stop_typing', (data) => {
     if (data.receiver_id) {
-      io.to(`user_${data.receiver_id}`).emit('chat:stop_typing', { sender_id: data.sender_id });
+      io.to(`user_${data.receiver_id}`).emit('chat:stop_typing', { sender_id: userId });
     }
   });
-  socket.on('disconnect', () => {});
+
+  socket.on('disconnect', () => {
+    console.log(`🔌 Socket disconnected: User ${userId}`);
+  });
 });
 
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));              // ✅ Restricted CORS — only trusted origins
+app.options('*', cors(corsOptions));     // ✅ Handle preflight requests
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -59,12 +136,16 @@ console.log('Loading routes...');
 try {
   // Routes - load one by one to find the issue
   console.log('Loading auth routes...');
+  app.post('/api/signin', signinLimiter);   // ✅ Rate limit: 10 req / 15 min
+  app.post('/api/signup', signupLimiter);   // ✅ Rate limit: 5 req / 1 hr
   app.use('/api', require('./api/auth'));
-  console.log('✓ Auth routes loaded');
+  console.log('✓ Auth routes loaded (rate-limited)');
   
   console.log('Loading forgot password routes...');
+  app.post('/api/forgot-password', forgotPasswordLimiter); // ✅ Rate limit: 5 req / 15 min
+  app.post('/api/verify-otp', forgotPasswordLimiter);      // ✅ Same limit on OTP
   app.use('/api', require('./api/forgotPassword'));
-  console.log('✓ Forgot password routes loaded');
+  console.log('✓ Forgot password routes loaded (rate-limited)');
   
   console.log('Loading users routes...');
   app.use('/api/users', require('./api/users'));
@@ -153,16 +234,24 @@ try {
   app.use('/api/chat', require('./api/chat'));
   console.log('✓ Chat routes loaded');
 
+  const { verifyToken, isHRManager, isFinanceManager, isRegistrar, isRector, isAdmissionOfficer, isLibrarian, isSuperAdmin, isPrincipal, isBDAgent } = require('./middleware/auth');
+
   console.log('Loading institutional routes...');
-  app.use('/api/hr', require('./api/hr'));
-  app.use('/api/finance', require('./api/finance'));
-  app.use('/api/registrar', require('./api/registrar'));
-  app.use('/api/admissions', require('./api/admissions'));
-  app.use('/api/library', require('./api/library'));
-  app.use('/api/it', require('./api/it'));
-  app.use('/api/exams', require('./api/exams'));
-  app.use('/api/reports', require('./api/reports'));
-  console.log('✓ Institutional routes loaded');
+  app.use('/api/hr', verifyToken, isHRManager, require('./api/hr'));
+  app.use('/api/finance', verifyToken, isFinanceManager, require('./api/finance'));
+  app.use('/api/registrar', verifyToken, isRegistrar, require('./api/registrar'));
+  app.use('/api/rector', verifyToken, isRector, require('./api/rector'));
+  app.use('/api/admissions', verifyToken, isAdmissionOfficer, require('./api/admissions'));
+  app.use('/api/library', verifyToken, isLibrarian, require('./api/library'));
+  app.use('/api/superadmin', verifyToken, isSuperAdmin, require('./api/superadmin'));
+  app.use('/api/principal', verifyToken, isPrincipal, require('./api/principal'));
+  app.use('/api/bd', verifyToken, isBDAgent, require('./api/bd'));
+  
+  // IT and Exams usually need specific management
+  app.use('/api/it', verifyToken, require('./api/it')); 
+  app.use('/api/exams', verifyToken, require('./api/exams'));
+  app.use('/api/reports', verifyToken, require('./api/reports'));
+  console.log('✓ Institutional routes loaded (strictly authorized)');
   
   console.log('\n✅ All routes loaded successfully!\n');
   

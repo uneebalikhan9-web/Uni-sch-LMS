@@ -1,20 +1,11 @@
 const express = require('express');
 const { pool } = require('../config/database');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, isFinanceManager } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Finance access: finance_manager, principal, super_admin
-const isFinance = (req, res, next) => {
-  const allowed = ['finance_manager', 'principal', 'super_admin', 'admin'];
-  if (!allowed.includes(req.user.role)) {
-    return res.status(403).json({ success: false, message: 'Finance access only.' });
-  }
-  next();
-};
-
 router.use(verifyToken);
-router.use(isFinance);
+router.use(isFinanceManager);
 
 // ==================== OVERVIEW ====================
 

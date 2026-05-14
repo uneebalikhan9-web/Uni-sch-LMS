@@ -27,7 +27,11 @@ function ResetPassword() {
 
   const verifyToken = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/verify-reset-token/${token}`);
+      const response = await fetch(`${API_BASE_URL}/api/verify-reset-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token }),
+      });
       const data = await response.json();
       if (data.success) {
         setTokenValid(true);

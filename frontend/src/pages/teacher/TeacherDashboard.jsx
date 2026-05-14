@@ -25,6 +25,8 @@ import TDProfile from './sections/TDProfile';
 import TDAssignments from './sections/TDAssignments';
 import TDModals from './sections/TDModals';
 
+import TDAttendance from './sections/TDAttendance';
+
 const SidebarBtn = ({ active, icon, label, count, onClick }) => (
   <button 
     onClick={onClick} 
@@ -320,10 +322,11 @@ function TeacherDashboard({ user, onLogout }) {
       return;
     }
 
-    if (!gradingSubmission) return;
+    const submissionToGrade = gradingSubmission || selectedSubmissionStudent;
+    if (!submissionToGrade) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/submissions/${gradingSubmission.id}/grade`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/submissions/${submissionToGrade.id}/grade`, {
+        method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(gradeData)
       });
@@ -425,6 +428,8 @@ function TeacherDashboard({ user, onLogout }) {
             showToast={showToast}
           />
         )
+      case 'attendance':
+        return <TDAttendance teacherClasses={teacherClasses} token={token} showToast={showToast} />
       case 'lab-usage':
         return <TDLabUsage labUsage={labUsage} loadingLabs={loadingLabs} />
       case 'students':
@@ -502,6 +507,7 @@ function TeacherDashboard({ user, onLogout }) {
           {[
             ['overview', 'Overview', <House size={20} />, null],
             ['classes', 'Classes', <Buildings size={20} />, teacherClasses.length],
+            ['attendance', 'Attendance', <CheckCircle size={20} />, null],
             ['assignments', 'Assignments', <FileText size={20} />, assignments.length],
             ['timetable', 'Schedule', <Clock size={20} />, timetable.length],
             ['students', 'Students', <UserPlus size={20} />, students.length],

@@ -28,8 +28,8 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
               </tr>
             </thead>
             <tbody>
-              {campusStudents.map(student => (
-                <tr key={student.student_id} style={S.tableRow}>
+              {campusStudents.map((student, index) => (
+                <tr key={`${student.student_id}-${index}`} style={S.tableRow}>
                   <td style={S.td}>
                     <div 
                       style={{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' }}

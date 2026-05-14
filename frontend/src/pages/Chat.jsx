@@ -66,11 +66,14 @@ function Chat() {
 
   useEffect(() => {
     if (!user) return
-    socketRef.current = io(SOCKET_URL, { transports: ['websocket', 'polling'] })
-    const socket = socketRef.current
-    socket.emit('chat:join', user.id)
+    const token = sessionStorage.getItem('token')
+    socketRef.current = io(SOCKET_URL, { 
+      transports: ['websocket', 'polling'],
+      auth: { token } // Securely pass token during handshake
+    })
+    
     return () => {
-      socket.disconnect()
+      if (socketRef.current) socketRef.current.disconnect()
     }
   }, [user])
 

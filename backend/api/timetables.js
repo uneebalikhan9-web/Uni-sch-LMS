@@ -82,9 +82,7 @@ router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
 
     fs.appendFileSync(logFile, `${timestamp} - Found ${timetable.length} entries\n`);
 
-    if (timetable.length === 0) {
-      timetable.push({ id: 0, day_of_week: 'Saturday', start_time: '09:00:00', end_time: '11:00:00', course_title: 'MOCK: SQL RETURNED EMPTY', teacher_name: 'Debug', class_name: 'TEST', room_number: '1' });
-    }
+    // Remove mock data to avoid confusion
 
     res.status(200).json({ success: true, timetable });
   } catch (error) {
