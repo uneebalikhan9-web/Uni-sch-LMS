@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar, FileText, Users } from "@phosphor-icons/react";
+import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar, FileText, Users, ArrowClockwise, Printer, UploadSimple } from "@phosphor-icons/react";
 import { S } from './TDStyles';
 import API_BASE_URL from '../../../config/api';
 
@@ -144,8 +144,8 @@ export default function TDModals({
                   <p style={{color:'#64748b', fontSize:'14px', maxWidth:'400px', margin:'0 auto 24px'}}>
                     We couldn't find student-wise breakdowns for this course report.
                   </p>
-                  <button onClick={() => fetchReportDetails(selectedReport)} style={{...S.cancelBtn, background:'#f1f5f9', padding:'10px 20px', fontSize:'14px'}}>
-                    🔄 Try Refreshing
+                  <button onClick={() => fetchReportDetails(selectedReport)} style={{...S.cancelBtn, background:'#f1f5f9', padding:'10px 20px', fontSize:'14px', display:'inline-flex', alignItems:'center', gap:'8px'}}>
+                    <ArrowClockwise size={18} weight="bold" /> Try Refreshing
                   </button>
                 </div>
               )}
@@ -153,7 +153,9 @@ export default function TDModals({
             
             <div style={S.modalFooter}>
               <button style={S.cancelBtn} onClick={() => setShowReportModal(false)}>Close Report</button>
-              <button style={{...S.submitBtn, background:'#1e293b'}} onClick={() => window.print()}>🖨️ Print PDF</button>
+              <button style={{...S.submitBtn, background:'#1e293b', display:'inline-flex', alignItems:'center', gap:'8px'}} onClick={() => window.print()}>
+                <Printer size={18} weight="fill" /> Print PDF
+              </button>
             </div>
           </div>
         </div>
@@ -345,8 +347,8 @@ export default function TDModals({
                   accept=".csv, .xlsx, .xls"
                   onChange={(e) => handleBulkStudentUpload(e.target.files[0])}
                 />
-                <label htmlFor="bulk-upload" style={{display:'inline-block', padding:'10px 24px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem'}}>
-                  📁 Choose File
+                <label htmlFor="bulk-upload" style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'10px 24px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem'}}>
+                  <UploadSimple size={18} weight="bold" /> Choose File
                 </label>
               </div>
 

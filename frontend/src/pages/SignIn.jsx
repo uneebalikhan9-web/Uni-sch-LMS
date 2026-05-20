@@ -11,6 +11,7 @@ function SignIn() {
     email: '',
     password: ''
   })
+  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false) // Eye toggle state
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -47,6 +48,14 @@ function SignIn() {
 
         sessionStorage.setItem('user', JSON.stringify(data.user))
         sessionStorage.setItem('token', data.token)
+        
+        if (rememberMe) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('token', data.token)
+        } else {
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+        }
         
         if (data.user.role === 'teacher') {
           navigate('/teacher/dashboard')
@@ -157,11 +166,11 @@ function SignIn() {
 
             <div className="form-aux-options">
               <label className="custom-checkbox">
-                <input type="checkbox" />
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                 <span className="checkmark"></span>
                 <span className="label-text">Remember me</span>
               </label>
-              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
+              {/* <Link to="/forgot-password" className="forgot-link">Forgot password?</Link> */}
             </div>
 
             <button type="submit" className="prime-btn" disabled={loading}>

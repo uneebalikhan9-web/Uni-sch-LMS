@@ -46,6 +46,7 @@ function Dashboard() {
         sessionStorage.setItem('user', JSON.stringify(data.user))
       } catch (e) {
         console.error("Session verification failed", e)
+        localStorage.clear()
         sessionStorage.clear()
         navigate('/signin')
       } finally {
@@ -57,6 +58,7 @@ function Dashboard() {
   }, [navigate])
 
   const handleLogout = () => {
+    localStorage.clear()
     sessionStorage.clear() // Remove everything
     navigate('/signin')
   }
@@ -134,7 +136,7 @@ function Dashboard() {
       <h2>Detecting Portal: {userRole}</h2>
       <p>Please wait while we redirect you...</p>
       <button 
-        onClick={() => { sessionStorage.clear(); window.location.href = '/'; }} 
+        onClick={() => { localStorage.clear(); sessionStorage.clear(); window.location.href = '/'; }} 
         style={{ marginTop: '20px', padding: '10px 20px', borderRadius: '10px', border: 'none', background: '#4f46e5', color: 'white', cursor: 'pointer' }}
       >
         Reset Session & Login Again

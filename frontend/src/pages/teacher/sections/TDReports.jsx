@@ -17,7 +17,7 @@ export default function TDReports({ myReports, reportsLoading, onViewDetails }) 
       ) : myReports.length === 0 ? (
         <div style={S.emptyState}>
           <ChartLine size={48} weight="duotone" />
-          <p style={{ marginTop:'12px' }}>No reports yet. Go to My Classes, open a course, and click ✅ Complete to generate your first report.</p>
+          <p style={{ marginTop:'12px' }}>No reports yet. Go to My Classes, open a course, and click "Complete" to generate your first report.</p>
         </div>
       ) : (
         <div style={{ overflowX:'auto' }}>

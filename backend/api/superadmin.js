@@ -490,6 +490,37 @@ router.post('/staff', async (req, res) => {
   }
 });
 
+// Update any staff member
+router.put('/staff/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, campus_id } = req.body;
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: 'Staff member not found' });
+    }
+
+    let query = 'UPDATE users SET name = ?, email = ?, campus_id = ?';
+    let params = [name, email, campus_id];
+
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 12);
+      query += ', password = ?';
+      params.push(hashedPassword);
+    }
+
+    query += ' WHERE id = ?';
+    params.push(id);
+
+    await pool.query(query, params);
+    res.json({ success: true, message: 'Staff member updated successfully' });
+  } catch (error) {
+    console.error('Update staff error:', error);
+    res.status(500).json({ success: false, message: 'Error updating staff member' });
+  }
+});
+
 // Delete any staff member
 router.delete('/staff/:id', async (req, res) => {
   try {

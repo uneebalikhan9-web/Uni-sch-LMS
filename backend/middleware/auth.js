@@ -108,9 +108,9 @@ const isBDAgent = (req, res, next) => {
   next();
 };
 
-// Chat: HOD, Admin, Teacher, Student can use chat. Super Admin cannot.
+// Chat: HOD, Admin, Teacher, Student, and Institutional Masters can use chat. Super Admin cannot.
 const isChatUser = (req, res, next) => {
-  const allowed = ['admin', 'principal', 'teacher', 'student', 'bd_agent', 'rector'];
+  const allowed = ['admin', 'principal', 'teacher', 'student', 'bd_agent', 'rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager', 'librarian'];
 
   if (!allowed.includes(req.user.role)) {
     return res.status(403).json({
@@ -155,7 +155,7 @@ const isAdmissionOfficer = (req, res, next) => {
 
 // Middleware to check if user is a Librarian
 const isLibrarian = (req, res, next) => {
-  if (!['library_manager', 'super_admin'].includes(req.user.role)) {
+  if (!['library_manager', 'librarian', 'super_admin'].includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Access denied. Librarians only.' });
   }
   next();

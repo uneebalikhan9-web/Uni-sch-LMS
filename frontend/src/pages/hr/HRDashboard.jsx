@@ -1,14 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import React, { useState, useEffect, useRef } from 'react';
+import { Chart } from 'chart.js/auto';
 import { 
   Users, CheckCircle, Calendar, Briefcase, 
   UserPlus, Megaphone, Check, X, Pencil, Trash,
@@ -27,7 +18,11 @@ const HRDashboard = ({ user, onLogout }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
   const [loading, setLoading] = useState(true);
   const { showToast } = useToast();
 
@@ -55,6 +50,54 @@ const HRDashboard = ({ user, onLogout }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (chartRef.current && activeTab === 'dashboard' && attendanceTrend.length > 0) {
+      if (chartInstance.current) chartInstance.current.destroy();
+      const ctx = chartRef.current.getContext('2d');
+      const grad = ctx.createLinearGradient(0, 0, 0, 300);
+      grad.addColorStop(0, 'rgba(79, 70, 229, 0.85)');
+      grad.addColorStop(1, 'rgba(129, 140, 248, 0.15)');
+
+      chartInstance.current = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6'],
+          datasets: [{
+            label: 'Attendance %',
+            data: attendanceTrend,
+            backgroundColor: grad,
+            borderRadius: 12,
+            borderWidth: 0,
+            barPercentage: 0.5,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#cbd5e1' }
+          },
+          scales: {
+            y: {
+              min: 50,
+              max: 100,
+              grid: { color: 'rgba(241, 245, 249, 0.8)' },
+              ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", weight: 600 } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", weight: 600 } }
+            }
+          }
+        }
+      });
+    }
+    return () => {
+      if (chartInstance.current) chartInstance.current.destroy();
+    };
+  }, [activeTab, attendanceTrend]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -109,6 +152,20 @@ const HRDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const handleLeaveAction = async (id, status) => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/hr/leave-requests/${id}/status`, { status }, config);
+      if (res.data.success) {
+        showToast(`Leave request successfully ${status.toLowerCase()}!`, 'success');
+        fetchDashboardData();
+      } else {
+        showToast(res.data.message || 'Action failed', 'error');
+      }
+    } catch (err) {
+      showToast('Failed to update leave request status', 'error');
+    }
+  };
+
   const navItems = [
     { id: 'dashboard', label: 'Overview', icon: <ChartLineUp size={20} /> },
     { id: 'employees', label: 'Personnel', icon: <Users size={20} /> },
@@ -126,46 +183,155 @@ const HRDashboard = ({ user, onLogout }) => {
   );
 
   return (
-    <div className="hr-container">
+    <div 
+      className="hr-container dashboard-wrapper"
+      style={{
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        minHeight: '100vh',
+        position: 'relative',
+        width: '100%',
+        overflowX: 'hidden'
+      }}
+    >
       {/* Sidebar Overlay */}
       {sidebarOpen && isMobile && (
-        <div className="hr-sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
+        <div 
+          className="sidebar-backdrop" 
+          onClick={() => setSidebarOpen(false)}
+        ></div>
+      )}
+
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!isMobile && !leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 2000,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
+        </button>
       )}
 
       {/* Sidebar */}
-      <aside className={`hr-sidebar ${isMobile && !sidebarOpen ? 'closed' : ''} ${sidebarOpen ? 'open' : ''}`}>
-        <div className="hr-logo-section">
-          <div className="hr-logo-text">Lancers<span className="hr-logo-accent">Tech</span></div>
-          <div style={{ color: 'var(--hr-text-muted)', fontSize: 11, fontWeight: 700, marginTop: 4, letterSpacing: 1 }}>HR COMMAND CENTER</div>
-        </div>
+      <aside style={{
+        width: '280px',
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+        color: '#e2e8f0',
+        position: 'fixed',
+        height: '100vh',
+        zIndex: 1000,
+        left: 0,
+        top: 0,
+        transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : (leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'),
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`sidebar hr-sidebar ${isMobile && !sidebarOpen ? 'closed' : ''} ${sidebarOpen ? 'open mobile-open' : ''} ${leftSidebarOpen ? '' : 'collapsed'}`}>
         
-        <nav className="hr-nav">
-          <div 
-            onClick={() => { navigate('/chat'); if (isMobile) setSidebarOpen(false); }} 
-            className="hr-nav-item"
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        {!isMobile && (
+          <button
+            onClick={() => setLeftSidebarOpen(false)}
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: '#4f46e5',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            className="sidebar-toggle-btn left-close-btn"
+            title="Close sidebar"
           >
-            <ChatCircle size={20} /> <span>Chat</span>
-          </div>
-          {navItems.map(item => (
-            <div 
-              key={item.id} 
-              onClick={() => { setActiveTab(item.id); if (isMobile) setSidebarOpen(false); }} 
-              className={`hr-nav-item ${activeTab === item.id ? 'active' : ''}`}
-            >
-              {item.icon} <span>{item.label}</span>
-            </div>
-          ))}
-        </nav>
-
-        <div style={{ padding: '0 1.2rem', marginBottom: 30 }}>
-          <button onClick={onLogout} className="hr-nav-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#ef4444' }}>
-            <SignOut size={20} /> <span>Log Out</span>
+            ‹
           </button>
+        )}
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '32px 20px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div className="hr-logo-section">
+            <div className="hr-logo-text">Lancers<span className="hr-logo-accent">Tech</span></div>
+            <div style={{ color: 'var(--hr-text-muted)', fontSize: 11, fontWeight: 700, marginTop: 4, letterSpacing: 1 }}>HR COMMAND CENTER</div>
+          </div>
+          
+          <nav className="hr-nav">
+            <div 
+              onClick={() => { navigate('/chat'); if (isMobile) setSidebarOpen(false); }} 
+              className="hr-nav-item"
+            >
+              <ChatCircle size={20} /> <span>Chat</span>
+            </div>
+            {navItems.map(item => (
+              <div 
+                key={item.id} 
+                onClick={() => { setActiveTab(item.id); if (isMobile) setSidebarOpen(false); }} 
+                className={`hr-nav-item ${activeTab === item.id ? 'active' : ''}`}
+              >
+                {item.icon} <span>{item.label}</span>
+              </div>
+            ))}
+          </nav>
+
+          <div style={{ padding: '0 1.2rem', marginBottom: 30, marginTop: 'auto' }}>
+            <button onClick={onLogout} className="hr-nav-item" style={{ width: '100%', border: 'none', background: 'transparent', color: '#ef4444', padding: '14px 18px' }}>
+              <SignOut size={20} /> <span>Log Out</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className={`hr-main ${isMobile ? 'full-width' : ''}`}>
+      <main style={{
+        flex: 1,
+        marginLeft: isMobile ? '0' : (leftSidebarOpen ? '304px' : '24px'),
+        marginRight: isMobile ? '0' : (rightPanelOpen ? '344px' : '24px'),
+        transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        minWidth: 0,
+        boxSizing: 'border-box',
+        padding: isMobile ? '16px' : '32px',
+      }} className="hr-main">
         <header className="hr-header">
           <div className="hr-header-left">
             {isMobile && <List size={28} weight="bold" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ cursor: 'pointer', color: 'var(--hr-primary)' }} />}
@@ -173,7 +339,7 @@ const HRDashboard = ({ user, onLogout }) => {
           </div>
           
           <div className="hr-header-right">
-            <Bell size={24} color="var(--hr-text-muted)" />
+            <Bell size={24} color="var(--hr-text-muted)" style={{ cursor: 'pointer' }} />
             <div className="hr-user-pill">
               <UserCircle size={24} color="var(--hr-text-muted)" />
               <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--hr-text-main)' }}>{user?.name || 'HR Admin'}</span>
@@ -191,11 +357,21 @@ const HRDashboard = ({ user, onLogout }) => {
                 <MetricCard icon={<Briefcase size={28} weight="duotone" />} value={stats.openVacancies} label="Open Vacancies" />
               </div>
 
+              {/* Attendance & Trend Analytics Section */}
+              <div className="hr-card animate-fadeIn" style={{ padding: '1.8rem', marginBottom: '2rem' }}>
+                <h3 style={{ fontWeight: 800, marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ChartLineUp size={22} color="#4f46e5" /> Daily Attendance Analytics & Trend
+                </h3>
+                <div style={{ height: '280px', position: 'relative' }}>
+                  <canvas ref={chartRef} key={`${leftSidebarOpen}-${rightPanelOpen}`} />
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: isMobile ? '1rem' : '2rem' }}>
                 <div className="hr-card" style={{ padding: isMobile ? '1rem' : '1.8rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ fontWeight: 800, fontSize: isMobile ? '1rem' : '1.2rem' }}>Personnel Overview</h3>
-                    <button onClick={() => setActiveTab('employees')} style={{ border: 'none', background: '#eef2ff', color: '#4f46e5', padding: '6px 12px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700 }}>View All</button>
+                    <button onClick={() => setActiveTab('employees')} style={{ border: 'none', background: '#eef2ff', color: '#4f46e5', padding: '6px 12px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>View All</button>
                   </div>
                   <div className="hr-table-container">
                     <table className="hr-table">
@@ -238,7 +414,28 @@ const HRDashboard = ({ user, onLogout }) => {
             <div className="hr-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ fontWeight: 800 }}>Employee Management</h2>
-                <button onClick={() => { setEditingItem(null); setModalType('employee'); setShowModal(true); }} className="hr-nav-item active" style={{ padding: '8px 20px', borderRadius: 12, fontSize: '0.9rem' }}><Plus size={18} weight="bold" /> Add Employee</button>
+                <button 
+                  onClick={() => { setEditingItem(null); setModalType('employee'); setShowModal(true); }} 
+                  style={{ 
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#fff',
+                    padding: '10px 24px',
+                    borderRadius: '14px',
+                    fontSize: '0.85rem',
+                    fontWeight: '800',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 8px 20px -6px rgba(79, 70, 229, 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(79, 70, 229, 0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(79, 70, 229, 0.4)'; }}
+                >
+                  <Plus size={18} weight="bold" /> Add Employee
+                </button>
               </div>
               <div className="hr-table-container">
                 <table className="hr-table">
@@ -289,8 +486,8 @@ const HRDashboard = ({ user, onLogout }) => {
                         <td><span className="hr-badge hr-badge-leave">{req.status}</span></td>
                         <td>
                           <div style={{ display: 'flex', gap: 10 }}>
-                            <Check size={18} color="#10b981" weight="bold" style={{ cursor: 'pointer' }} />
-                            <X size={18} color="#ef4444" weight="bold" style={{ cursor: 'pointer' }} />
+                            <Check size={18} color="#10b981" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Approved')} />
+                            <X size={18} color="#ef4444" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Rejected')} />
                           </div>
                         </td>
                       </tr>
@@ -315,7 +512,7 @@ const HRDashboard = ({ user, onLogout }) => {
                       <tr key={i}>
                         <td style={{ fontWeight: 700 }}>{emp.name}</td>
                         <td>{emp.department || 'N/A'}</td>
-                        <td style={{ fontWeight: 800 }}>₹{(45000 + (i * 2000)).toLocaleString()}</td>
+                        <td style={{ fontWeight: 800 }}>Rs. {(45000 + (i * 2000)).toLocaleString()}</td>
                         <td>May 2024</td>
                         <td><span className="hr-badge hr-badge-active">Paid</span></td>
                       </tr>
@@ -330,7 +527,28 @@ const HRDashboard = ({ user, onLogout }) => {
             <div className="hr-card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h2 style={{ fontWeight: 800 }}>Job Postings & Recruitment</h2>
-                <button onClick={() => { setEditingItem(null); setModalType('job'); setShowModal(true); }} className="hr-nav-item active" style={{ padding: '8px 20px', borderRadius: 12, fontSize: '0.9rem' }}><Megaphone size={18} weight="bold" /> New Vacancy</button>
+                <button 
+                  onClick={() => { setEditingItem(null); setModalType('job'); setShowModal(true); }} 
+                  style={{ 
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    color: '#fff',
+                    padding: '10px 24px',
+                    borderRadius: '14px',
+                    fontSize: '0.85rem',
+                    fontWeight: '800',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 8px 20px -6px rgba(79, 70, 229, 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(79, 70, 229, 0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(79, 70, 229, 0.4)'; }}
+                >
+                  <Megaphone size={18} weight="bold" /> New Vacancy
+                </button>
               </div>
               <div className="hr-table-container">
                 <table className="hr-table">
@@ -360,6 +578,201 @@ const HRDashboard = ({ user, onLogout }) => {
           )}
         </div>
       </main>
+
+      {/* Floating open button for RIGHT panel — only visible when right panel is CLOSED */}
+      {!isMobile && !rightPanelOpen && (
+        <button
+          onClick={() => setRightPanelOpen(true)}
+          style={{
+            position: 'fixed',
+            right: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 2000,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px 0 0 12px',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn right-open-btn"
+          title="Open profile panel"
+        >
+          ‹
+        </button>
+      )}
+
+      {/* ── Right Panel ── */}
+      <aside style={{
+        width: isMobile ? '100%' : '320px',
+        background: '#fff',
+        borderLeft: isMobile ? 'none' : '1px solid #e2e8f0',
+        borderTop: isMobile ? '1px solid #e2e8f0' : 'none',
+        position: isMobile ? 'relative' : 'fixed',
+        right: 0,
+        top: 0,
+        height: isMobile ? 'auto' : '100vh',
+        zIndex: 10,
+        boxShadow: isMobile ? 'none' : '-10px 0 30px -10px rgba(0, 0, 0, 0.05)',
+        transform: isMobile ? 'none' : (rightPanelOpen ? 'translateX(0)' : 'translateX(100%)'),
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`right-panel ${isMobile ? '' : (rightPanelOpen ? '' : 'collapsed')}`}>
+
+        {/* ← Close arrow centered on LEFT edge of the right panel */}
+        {!isMobile && (
+          <button
+            onClick={() => setRightPanelOpen(false)}
+            style={{
+              position: 'absolute',
+              left: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: '#4f46e5',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '10px 0 0 10px',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            className="sidebar-toggle-btn right-close-btn"
+            title="Close profile panel"
+          >
+            ›
+          </button>
+        )}
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: isMobile ? 'auto' : '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: isMobile ? '24px 16px' : '32px 24px',
+          overflowY: isMobile ? 'visible' : 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          
+          {/* HR Admin Profile Card */}
+          <div style={{
+            textAlign: 'center',
+            padding: '28px',
+            background: '#f8fafc',
+            borderRadius: '32px',
+            border: '1px solid #e2e8f0',
+            marginBottom: '32px',
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              background: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)',
+              color: '#fff',
+              borderRadius: '28px',
+              margin: '0 auto 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '32px',
+              fontWeight: '800',
+              boxShadow: '0 15px 25px -10px rgba(79, 70, 229, 0.4)',
+            }}>{user?.name ? user.name.charAt(0).toUpperCase() : 'H'}</div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{user?.name || 'HR Manager'}</h3>
+            <span style={{
+              display: 'inline-block',
+              padding: '6px 16px',
+              background: '#eef2ff',
+              color: '#4f46e5',
+              borderRadius: '30px',
+              fontSize: '0.75rem',
+              fontWeight: '800',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}>HR COMMAND CENTER</span>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Active Present</span>
+                <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#10b981' }}>{stats.activePresent || 0}</span>
+              </div>
+              <div style={{ borderLeft: '1px solid #e2e8f0' }}></div>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Staff Strength</span>
+                <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#4f46e5' }}>{stats.totalStaff || 0}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Insights */}
+          <div style={{
+            background: '#fff',
+            borderRadius: '24px',
+            border: '1px solid #e2e8f0',
+            padding: '24px',
+            marginBottom: '24px',
+          }}>
+            <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={20} color="#4f46e5" /> Quick Insights
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>Hiring Velocity</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#4f46e5' }}>High</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>Leave Rate</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#eab308' }}>Low</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>System Status</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#10b981' }}>Optimal</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity Log */}
+          <div style={{
+            background: '#fff',
+            borderRadius: '24px',
+            border: '1px solid #e2e8f0',
+            padding: '24px',
+          }}>
+            <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Timer size={20} color="#4f46e5" /> HR Actions Log
+            </h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {employees.slice(0, 3).map((emp, idx) => (
+                <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', borderBottom: idx < 2 ? '1px solid #f1f5f9' : 'none', paddingBottom: '10px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4f46e5', marginTop: '6px' }}></div>
+                  <div>
+                    <p style={{ fontSize: '0.8rem', fontWeight: '700', color: '#0f172a' }}>{emp.name} is Active</p>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Designation: {emp.designation || 'Staff'}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+        </div>
+      </aside>
 
       <HRModals 
         show={showModal} 

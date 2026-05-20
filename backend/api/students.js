@@ -10,9 +10,10 @@ const { generateRollNumber } = require('../utils/rollNumber');
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-// Helper to check if role is Principal or Teacher (authorized to manage students)
+// Helper to check if role is authorized to manage students
 const canManageStudents = (req, res, next) => {
-  if (req.user.role === 'principal' || req.user.role === 'teacher' || req.user.role === 'superadmin') {
+  const allowedRoles = ['principal', 'teacher', 'superadmin', 'hod', 'dean', 'rector'];
+  if (allowedRoles.includes(req.user.role)) {
     next();
   } else {
     res.status(403).json({ success: false, message: 'Unauthorized to manage students' });
@@ -162,7 +163,9 @@ router.post('/bulk', upload.single('file'), async (req, res) => {
   let count = 0;
 
   fs.createReadStream(req.file.path)
-    .pipe(csv())
+    .pipe(csv({
+      mapHeaders: ({ header }) => header ? header.trim().toLowerCase().replace(/^\uFEFF/, '') : ''
+    }))
     .on('data', (row) => {
       // row keys should match CSV headers: name, email, password, semester, father_name, father_cnic, last_education, father_number, bform_number
       students.push(row);
@@ -222,6 +225,69 @@ router.post('/bulk', upload.single('file'), async (req, res) => {
       });
     });
 });
+
+// Bulk student upload (JSON Array from Data Sheet)
+router.post('/bulk-json', express.json(), async (req, res) => {
+  const { students } = req.body;
+  if (!students || !Array.isArray(students)) {
+    return res.status(400).json({ success: false, message: 'Invalid data format' });
+  }
+
+  const campus_id = req.user.campus_id;
+  const errors = [];
+  let count = 0;
+
+  for (const student of students) {
+    try {
+      const { name, email, password, semester, father_name, father_cnic, last_education, father_number, bform_number } = student;
+      
+      if (!name || !email) continue;
+
+      // Check if exists
+      const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+      if (existing.length > 0) {
+        errors.push(`${email} already exists`);
+        continue;
+      }
+
+      const semNum = semester || 1;
+      const rollNumber = await generateRollNumber(campus_id, semNum);
+      const hashedPassword = await bcrypt.hash(password || 'Password123', 10);
+
+      const [result] = await pool.query(
+        `INSERT INTO users (
+          name, email, password, role, campus_id, is_approved
+        ) VALUES (?, ?, ?, ?, ?, ?)`,
+        [name, email, hashedPassword, 'student', campus_id, true]
+      );
+
+      const userId = result.insertId;
+      
+      await pool.query(
+        `INSERT INTO students (
+          user_id, roll_number, semester, admission_year,
+          father_name, father_cnic, last_education, father_number, bform_number
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          userId, rollNumber, semNum, new Date().getFullYear(),
+          father_name || null, father_cnic || null, last_education || null, father_number || null, bform_number || null
+        ]
+      );
+      count++;
+    } catch (err) {
+      console.error('Bulk JSON row error:', err);
+      errors.push(`Error adding ${student.email || 'unknown'}`);
+    }
+  }
+
+  res.json({
+    success: true,
+    message: `Successfully added ${count} students`,
+    count,
+    errors: errors.length > 0 ? errors : null
+  });
+});
+
 
 // Update student
 router.put('/:id', async (req, res) => {

@@ -39,6 +39,51 @@ export const AddBookModal = ({ onClose, onSave }) => {
   );
 };
 
+export const ManageBookModal = ({ book, onClose, onSave, onDelete }) => {
+  const [formData, setFormData] = useState({ 
+    isbn: book?.isbn || '', 
+    title: book?.title || '', 
+    author: book?.author || '', 
+    rack: book?.rack_location || '' 
+  });
+
+  return (
+    <div className="lib-modal-overlay">
+      <div className="lib-modal">
+        <div className="lib-modal-header">
+          <h2><Books size={24} weight="bold" color="#0891b2" /> Manage Book</h2>
+          <button className="close-btn" onClick={onClose}><X size={20} /></button>
+        </div>
+        <div className="lib-modal-body">
+          <div className="form-group">
+            <label>ISBN / Book ID</label>
+            <input type="text" placeholder="e.g. ISBN-90210" value={formData.isbn} onChange={(e) => setFormData({...formData, isbn: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Book Title</label>
+            <input type="text" placeholder="Enter full title" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Author</label>
+            <input type="text" placeholder="Primary Author" value={formData.author} onChange={(e) => setFormData({...formData, author: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Rack Location</label>
+            <input type="text" placeholder="e.g. A12" value={formData.rack} onChange={(e) => setFormData({...formData, rack: e.target.value})} />
+          </div>
+        </div>
+        <div className="lib-modal-footer" style={{ justifyContent: 'space-between' }}>
+          <button className="btn-secondary" style={{ color: '#ef4444', borderColor: '#fca5a5' }} onClick={() => onDelete(book.id)}>Delete Book</button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn-primary" onClick={() => onSave(book.id, formData)}>Save Changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const IssueBookModal = ({ onClose, onSave, members, books }) => {
   const [formData, setFormData] = useState({ member_id: '', book_id: '', due_date: '' });
 

@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
+// import ForgotPassword from './pages/ForgotPassword'
+// import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import TeacherSignIn from './pages/TeacherSignIn'
 import Courses from './pages/Courses'
@@ -18,6 +18,12 @@ import VerifyOTP from './pages/VerifyOTP'
 import { ToastProvider } from './components/Toast'
 
 function App() {
+  // Restore session from localStorage if "Remember me" was used
+  if (localStorage.getItem('token') && !sessionStorage.getItem('token')) {
+    sessionStorage.setItem('user', localStorage.getItem('user'))
+    sessionStorage.setItem('token', localStorage.getItem('token'))
+  }
+
   return (
     <ToastProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -28,8 +34,8 @@ function App() {
           <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
           <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
           <Route path="/teacher/signin" element={<PublicRoute><TeacherSignIn /></PublicRoute>} />
-          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          {/* <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} /> */}
+          {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
           <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
           
           {/* Protected Routes - Only accessible if logged in */}

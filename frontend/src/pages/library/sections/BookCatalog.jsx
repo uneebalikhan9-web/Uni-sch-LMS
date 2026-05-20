@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { MagnifyingGlass, Plus, Funnel, Books } from '@phosphor-icons/react';
 
-const BookCatalog = ({ books, onAdd }) => {
+const BookCatalog = ({ books, onAdd, onManage }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
 
@@ -71,7 +71,7 @@ const BookCatalog = ({ books, onAdd }) => {
                   </span>
                 </td>
                 <td>
-                  <button style={{ background: 'transparent', border: 'none', color: '#0891b2', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}>Manage</button>
+                  <button onClick={() => onManage(book)} style={{ background: 'transparent', border: 'none', color: '#0891b2', fontWeight: 800, cursor: 'pointer', fontSize: '0.85rem' }}>Manage</button>
                 </td>
               </tr>
             ))}

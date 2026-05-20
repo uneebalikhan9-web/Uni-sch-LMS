@@ -365,26 +365,40 @@ router.delete('/students/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student not found in your campus' });
     }
 
+    // Get the real student record ID
+    const [[studentRow]] = await connection.query(
+      'SELECT id FROM students WHERE user_id = ?',
+      [id]
+    );
+    const studentRealId = studentRow ? studentRow.id : null;
+
     await connection.beginTransaction();
 
-    // Clean up all related records to avoid foreign key constraint errors
-    // 1. Delete marks for this student's submissions
-    await connection.query(`
-      DELETE m FROM marks m 
-      INNER JOIN submissions s ON m.submission_id = s.id 
-      WHERE s.student_id = ?
-    `, [id]).catch(() => {});
-    // 2. Delete submissions
-    await connection.query('DELETE FROM submissions WHERE student_id = ?', [id]).catch(() => {});
-    // 3. Delete enrollments
-    await connection.query('DELETE FROM enrollments WHERE student_id = ?', [id]).catch(() => {});
-    // 4. Delete attendance records
-    await connection.query('DELETE FROM attendance WHERE student_id = ?', [id]).catch(() => {});
-    // 5. Delete progress records
-    await connection.query('DELETE FROM student_progress WHERE student_id = ?', [id]).catch(() => {});
-    // 6. Delete challans
-    await connection.query('DELETE FROM challans WHERE student_id = ?', [id]).catch(() => {});
-    // 7. Finally delete the user
+    if (studentRealId) {
+      // Clean up all related records to avoid foreign key constraint errors
+      // 1. Delete marks for this student's submissions
+      await connection.query(`
+        DELETE m FROM marks m 
+        INNER JOIN submissions s ON m.submission_id = s.id 
+        WHERE s.student_id = ?
+      `, [studentRealId]).catch(() => {});
+      // 2. Delete submissions
+      await connection.query('DELETE FROM submissions WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 3. Delete enrollments
+      await connection.query('DELETE FROM enrollments WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 4. Delete attendance records
+      await connection.query('DELETE FROM attendance WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 5. Delete progress records
+      await connection.query('DELETE FROM student_progress WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 6. Delete challans
+      await connection.query('DELETE FROM finance_challans WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 7. Delete student_classes associations
+      await connection.query('DELETE FROM student_classes WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 8. Delete student profile
+      await connection.query('DELETE FROM students WHERE id = ?', [studentRealId]).catch(() => {});
+    }
+
+    // 9. Finally delete the user
     await connection.query('DELETE FROM users WHERE id = ?', [id]);
 
     await connection.commit();

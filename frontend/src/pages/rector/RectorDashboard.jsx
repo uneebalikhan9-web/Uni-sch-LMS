@@ -23,6 +23,7 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
   const [researchData, setResearchData] = useState([]);
   const [complianceData, setComplianceData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
 
   const fetchDashboardData = async () => {
     try {
@@ -30,12 +31,13 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
       const token = sessionStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [statsRes, deptRes, facRes, stuRes, compRes] = await Promise.all([
+      const [statsRes, deptRes, facRes, stuRes, compRes, resRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/rector/stats`, { headers }).then(r => r.json()),
         fetch(`${API_BASE_URL}/api/rector/departments`, { headers }).then(r => r.json()),
         fetch(`${API_BASE_URL}/api/rector/faculty`, { headers }).then(r => r.json()),
         fetch(`${API_BASE_URL}/api/rector/students`, { headers }).then(r => r.json()),
         fetch(`${API_BASE_URL}/api/rector/compliance`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/rector/research`, { headers }).then(r => r.json()),
       ]);
 
       if (statsRes.success) setStats(statsRes.stats);
@@ -43,6 +45,7 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
       if (facRes.success) setFacultyData(facRes.faculty);
       if (stuRes.success) setStudentData(stuRes.trends);
       if (compRes.success) setComplianceData(compRes.compliance);
+      if (resRes && resRes.success) setResearchData(resRes.research);
     } catch (error) {
       console.error('Error fetching rector data:', error);
     } finally {
@@ -72,64 +75,144 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
   );
 
   return (
-    <div style={S.container}>
+    <div style={S.container} className="dashboard-wrapper">
       <div style={S.bgOrb1} /><div style={S.bgOrb2} />
 
-      {/* Sidebar */}
-      <aside style={S.sidebar}>
-        <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><Buildings size={24} weight="fill"/></div>
-          <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
-        </div>
-
-        <div style={S.rectorBadge}>
-          <div style={S.liveIndicator} />
-          <span>PRO-VC / RECTORATE OFFICE</span>
-        </div>
-
-        <nav style={S.nav}>
-          <button onClick={() => navigate('/chat')} style={S.navBtn}>
-            <ChatCircle size={22} />
-            <span>Institutional Chat</span>
-          </button>
-          {navItems.map(item => (
-            <button 
-              key={item.id} 
-              onClick={() => setActiveTab(item.id)}
-              style={{...S.navBtn, ...(activeTab === item.id ? S.navBtnActive : {})}}
-            >
-              <item.icon size={22} weight={activeTab === item.id ? "fill" : "regular"} />
-              <span>{item.label}</span>
-              {activeTab === item.id && <div style={S.activeIndicator} />}
-            </button>
-          ))}
-        </nav>
-
-        <button onClick={onLogout} style={S.logoutBtn}>
-          <SignOut size={22} weight="bold" />
-          <span>Terminate Session</span>
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 20,
+            background: '#1e3a8a',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(30,58,138,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
         </button>
+      )}
+
+      {/* Sidebar */}
+      <aside style={{
+        ...S.sidebar,
+        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`sidebar ${leftSidebarOpen ? '' : 'collapsed'}`}>
+        
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        <button
+          onClick={() => setLeftSidebarOpen(false)}
+          style={{
+            position: 'absolute',
+            right: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 30,
+            background: '#1e3a8a',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 10px 10px 0',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 14px rgba(30,58,138,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-close-btn"
+          title="Close sidebar"
+        >
+          ‹
+        </button>
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '32px 20px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div style={S.logoWrapper}>
+            <div style={S.logoIcon}><Buildings size={24} weight="fill"/></div>
+            <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
+          </div>
+
+          <div style={S.rectorBadge}>
+            <div style={S.liveIndicator} />
+            <span>PRO-VC / RECTORATE OFFICE</span>
+          </div>
+
+          <nav style={S.nav}>
+            <button onClick={() => navigate('/chat')} style={S.navBtn}>
+              <ChatCircle size={22} />
+              <span>Institutional Chat</span>
+            </button>
+            {navItems.map(item => (
+              <button 
+                key={item.id} 
+                onClick={() => setActiveTab(item.id)}
+                style={{...S.navBtn, ...(activeTab === item.id ? S.navBtnActive : {})}}
+              >
+                <item.icon size={22} weight={activeTab === item.id ? "fill" : "regular"} />
+                <span>{item.label}</span>
+                {activeTab === item.id && <div style={S.activeIndicator} />}
+              </button>
+            ))}
+          </nav>
+
+          <button onClick={onLogout} style={S.logoutBtn}>
+            <SignOut size={22} weight="bold" />
+            <span>Terminate Session</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
-      <main style={S.main}>
+      <main style={{
+        ...S.main,
+        marginLeft: leftSidebarOpen ? '280px' : '24px',
+        transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }} className="main-content">
         <header style={S.header}>
           <div>
             <h1 style={S.title}>Rectorate Dashboard</h1>
             <p style={S.subtitle}>{navItems.find(n => n.id === activeTab)?.label} — {user.name}</p>
           </div>
           <div style={{display:'flex', gap:'20px', alignItems:'center'}}>
-            <div style={{position:'relative'}}>
-               <MagnifyingGlass size={20} style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'#64748b'}} />
-               <input placeholder="Search records..." style={{padding:'10px 15px 10px 40px', borderRadius:'12px', border:'1px solid #e2e8f0', width:'250px'}} />
-            </div>
             <div style={{width:'45px', height:'45px', borderRadius:'12px', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', border:'1px solid #e2e8f0', color:'#1e3a8a', cursor:'pointer'}}>
               <Bell size={22} weight="duotone" />
             </div>
           </div>
         </header>
 
-        {activeTab === 'overview' && <RDOverview stats={stats} departments={departments} />}
+        {activeTab === 'overview' && <RDOverview stats={stats} departments={departments} leftSidebarOpen={leftSidebarOpen} />}
         
         {(activeTab === 'academic' || activeTab === 'finance') && <RDStrategy activeTab={activeTab} />}
 

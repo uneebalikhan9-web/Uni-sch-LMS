@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import {
   Buildings, BookOpen, ChalkboardTeacher, CalendarBlank,
   Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X, GraduationCap
@@ -171,7 +172,7 @@ export function ClassCoursesModal({ show, selectedClass, onClose, courses }) {
 }
 
 // ─── Add / Edit Modal ─────────────────────────────────────────────────────────
-export function AddEditModal({ show, onClose, activeTab, editingItem, setEditingItem, newPerson, setNewPerson, newClass, setNewClass, newCourse, setNewCourse, newLab, setNewLab, teachers, classes, onSubmit, handleBulkStudentUpload }) {
+export function AddEditModal({ show, onClose, activeTab, editingItem, setEditingItem, newPerson, setNewPerson, newClass, setNewClass, newCourse, setNewCourse, newLab, setNewLab, teachers, classes, onSubmit, onOpenDataSheet }) {
   if (!show) return null;
   const singularTab = (tab) => {
     if (tab === 'classes') return 'class';
@@ -222,9 +223,11 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
             <div style={{maxHeight:'50vh', overflowY:'auto', paddingRight:'10px', marginBottom:'20px'}}>
               {!editingItem && (
                 <div style={{marginBottom:'24px', padding:'20px', background:'#f8fafc', border:'2px dashed #e2e8f0', borderRadius:'16px', textAlign:'center'}}>
-                  <h4 style={{margin:'0 0 8px', color:'#0f172a'}}>Bulk Upload Students</h4>
-                  <input type="file" id="bulk-pd" hidden accept=".csv, .xlsx, .xls" onChange={(e) => handleBulkStudentUpload(e.target.files[0])} />
-                  <label htmlFor="bulk-pd" style={{display:'inline-block', padding:'8px 20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.85rem'}}>📁 Upload Excel/CSV</label>
+                  <h4 style={{margin:'0 0 8px', color:'#0f172a'}}>Bulk Entry Options</h4>
+                  <button type="button" onClick={onOpenDataSheet} style={{display:'inline-block', padding:'10px 24px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
+                    📝 Open Excel-style Data Sheet
+                  </button>
+                  <p style={{marginTop:'8px', fontSize:'11px', color:'#64748b'}}>Quickly add multiple students at once without needing any file uploads.</p>
                 </div>
               )}
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
@@ -425,6 +428,97 @@ function InfoRow({ label, value, icon, isLink }) {
         ) : (
           <p style={{ margin:'3px 0 0', fontSize:'15px', color:'#1e293b', fontWeight:700 }}>{value}</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Excel-like Data Sheet Modal ─────────────────────────────────────────────
+export function StudentDataSheetModal({ show, onClose, onSaveAll }) {
+  const getEmptyRow = () => ({ name:'', email:'', password:'Password123', semester:1, father_name:'', father_cnic:'', bform_number:'' });
+  const [rows, setRows] = useState([getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow()]);
+
+  if (!show) return null;
+
+  const handleCellChange = (index, field, value) => {
+    const newRows = [...rows];
+    newRows[index][field] = value;
+    setRows(newRows);
+  };
+
+  const handleAddRows = () => {
+    setRows([...rows, getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow()]);
+  };
+
+  const handleSave = () => {
+    // Filter out completely empty rows, but require name and email for valid ones
+    const validRows = rows.filter(r => r.name.trim() !== '' && r.email.trim() !== '');
+    if (validRows.length === 0) {
+      alert("Please fill in at least the Name and Email for one student.");
+      return;
+    }
+    onSaveAll(validRows);
+    setRows([getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow()]);
+  };
+
+  const handleClose = () => {
+    setRows([getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow()]);
+    onClose();
+  };
+
+  return (
+    <div style={S.modalOverlay} onClick={handleClose}>
+      <div style={{ ...S.modal, width:'95%', maxWidth:'1200px', padding:'0' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
+        <div style={{...S.modalHeader, padding:'20px 24px', borderBottom:'1px solid #e2e8f0', marginBottom:'0'}}>
+          <div>
+            <h3 style={{...S.modalTitle, margin:0}}>📝 Bulk Student Entry Sheet</h3>
+            <p style={{margin:'4px 0 0', fontSize:'13px', color:'#64748b'}}>Enter multiple student details directly in the grid. Rows without Name and Email will be ignored.</p>
+          </div>
+          <button onClick={handleClose} style={S.modalClose}>×</button>
+        </div>
+        
+        <div style={{ overflowX:'auto', maxHeight:'65vh', padding:'24px' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', minWidth:'1000px' }}>
+            <thead>
+              <tr style={{ background:'#f8fafc' }}>
+                <th style={{ padding:'12px', textAlign:'center', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0', width:'40px' }}>#</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>Full Name *</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>Email Address *</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0', width:'100px' }}>Sem *</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>Password</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>Father's Name</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>Father's CNIC</th>
+                <th style={{ padding:'12px', textAlign:'left', fontSize:'12px', color:'#64748b', fontWeight:700, borderBottom:'2px solid #e2e8f0' }}>B-Form / CNIC</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} style={{ borderBottom:'1px solid #f1f5f9' }}>
+                  <td style={{ padding:'8px', textAlign:'center', color:'#94a3b8', fontSize:'13px' }}>{i + 1}</td>
+                  <td style={{ padding:'8px' }}><input value={row.name} onChange={e => handleCellChange(i, 'name', e.target.value)} placeholder="Student Name" style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                  <td style={{ padding:'8px' }}><input value={row.email} onChange={e => handleCellChange(i, 'email', e.target.value)} placeholder="student@example.com" style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                  <td style={{ padding:'8px' }}>
+                    <select value={row.semester} onChange={e => handleCellChange(i, 'semester', parseInt(e.target.value))} style={{...S.input, marginBottom:0, padding:'8px 12px'}}>
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td style={{ padding:'8px' }}><input value={row.password} onChange={e => handleCellChange(i, 'password', e.target.value)} placeholder="Default..." style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                  <td style={{ padding:'8px' }}><input value={row.father_name} onChange={e => handleCellChange(i, 'father_name', e.target.value)} placeholder="Father Name" style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                  <td style={{ padding:'8px' }}><input value={row.father_cnic} onChange={e => handleCellChange(i, 'father_cnic', e.target.value)} placeholder="xxxxx-xxxxxxx-x" style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                  <td style={{ padding:'8px' }}><input value={row.bform_number} onChange={e => handleCellChange(i, 'bform_number', e.target.value)} placeholder="Student CNIC" style={{...S.input, marginBottom:0, padding:'8px 12px'}} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={handleAddRows} style={{ marginTop:'16px', padding:'8px 16px', background:'#f1f5f9', color:'#475569', border:'1px dashed #cbd5e1', borderRadius:'8px', cursor:'pointer', fontSize:'13px', fontWeight:600, width:'100%' }}>
+            + Add 5 More Rows
+          </button>
+        </div>
+        
+        <div style={{...S.modalActions, padding:'20px 24px', borderTop:'1px solid #e2e8f0', background:'#f8fafc', borderRadius:'0 0 24px 24px', margin:0}}>
+          <button type="button" onClick={handleClose} style={S.cancelBtn}>Cancel</button>
+          <button type="button" onClick={handleSave} style={{...S.saveBtn, padding:'0 32px'}}>Save All Students</button>
+        </div>
       </div>
     </div>
   );

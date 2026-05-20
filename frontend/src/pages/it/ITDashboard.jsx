@@ -183,7 +183,7 @@ const ITDashboard = ({ user, onLogout }) => {
         <header className="it-header">
           <div className="it-header-left">
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <button className="mobile-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} style={{ display: 'none' }}>
+              <button className="mobile-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
                 <List size={24} />
               </button>
               <h1>{navItems.find(n => n.id === activeTab)?.label}</h1>

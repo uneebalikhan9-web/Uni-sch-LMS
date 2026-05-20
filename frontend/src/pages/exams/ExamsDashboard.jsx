@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   FileText, Calendar, ChartBar, SealCheck, Bell, 
   CheckCircle, Clock, BookOpen, IdentificationCard, IdentificationBadge,
-  ChatCircle
+  ChatCircle, ChartLineUp, SignOut, UserCircle, Plus, List
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,6 +11,8 @@ import { useToast } from '../../components/Toast';
 import { ScheduleExamModal, ProcessResultsModal } from './ExamsModals';
 import ExamsSeating from './sections/ExamsSeating';
 import ExamsMalpractice from './sections/ExamsMalpractice';
+import ExamsResults from './sections/ExamsResults';
+import ExamsTimeline from './sections/ExamsTimeline';
 import './exams.css';
 
 const ExamsDashboard = ({ user, onLogout }) => {
@@ -25,6 +27,25 @@ const ExamsDashboard = ({ user, onLogout }) => {
 
   const [showSchedule, setShowSchedule] = useState(false);
   const [showGrading, setShowGrading] = useState(false);
+
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setLeftSidebarOpen(false);
+      } else {
+        setLeftSidebarOpen(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     fetchAllData();
@@ -80,46 +101,169 @@ const ExamsDashboard = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="ex-container">
+    <div className="ex-container" style={{ display: 'flex', minHeight: '100vh', background: '#f8fafc', position: 'relative', overflowX: 'hidden', width: '100%' }}>
+      {/* Mobile Sidebar backdrop */}
+      {isMobile && sidebarOpen && (
+        <div 
+          onClick={() => setSidebarOpen(false)} 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 999,
+          }}
+        />
+      )}
+
+      {/* Open sidebar toggle arrow */}
+      {!leftSidebarOpen && !isMobile && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: 0,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 1001,
+            background: 'var(--ex-primary, #4f46e5)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 10px 10px 0',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          title="Open sidebar"
+        >
+          ›
+        </button>
+      )}
+
       {/* Sidebar */}
-      <aside className="ex-sidebar">
+      <aside 
+        className={`ex-sidebar ${leftSidebarOpen ? '' : 'collapsed'}`}
+        style={{
+          width: '280px',
+          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+          color: '#cbd5e1',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : (leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          boxShadow: '20px 0 40px -20px rgba(0,0,0,0.3)',
+        }}
+      >
+        {/* Close sidebar toggle arrow */}
+        {!isMobile && (
+          <button
+            onClick={() => setLeftSidebarOpen(false)}
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: 'var(--ex-primary, #4f46e5)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            title="Close sidebar"
+          >
+            ‹
+          </button>
+        )}
+
         <div style={{ padding: '2.5rem 1.5rem' }}>
           <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>Lancers<span style={{ color: '#a5b4fc' }}>Tech</span></div>
           <div style={{ color: '#a5b4fc', fontSize: 11, fontWeight: 600, marginTop: 4 }}>EXAMINATION OFFICE</div>
         </div>
         
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0 1rem' }}>
-          <div onClick={() => { navigate('/chat'); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: '#cbd5e1', background: 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { navigate('/chat'); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: '#cbd5e1', background: 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <ChatCircle size={20} weight="bold" /> <span>Chat</span>
           </div>
-          <div onClick={() => setActiveTab('overview')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'overview' ? 'white' : '#cbd5e1', background: activeTab === 'overview' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { setActiveTab('overview'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'overview' ? 'white' : '#cbd5e1', background: activeTab === 'overview' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <ChartLineUp size={20} weight="bold" /> <span>Overview</span>
           </div>
-          <div onClick={() => setActiveTab('results')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'results' ? 'white' : '#cbd5e1', background: activeTab === 'results' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { setActiveTab('results'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'results' ? 'white' : '#cbd5e1', background: activeTab === 'results' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <SealCheck size={20} weight="bold" /> <span>Results</span>
           </div>
-          <div onClick={() => setActiveTab('scheduling')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'scheduling' ? 'white' : '#cbd5e1', background: activeTab === 'scheduling' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { setActiveTab('scheduling'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'scheduling' ? 'white' : '#cbd5e1', background: activeTab === 'scheduling' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <Calendar size={20} weight="bold" /> <span>Exams Timeline</span>
           </div>
-          <div onClick={() => setActiveTab('seating')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'seating' ? 'white' : '#cbd5e1', background: activeTab === 'seating' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { setActiveTab('seating'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'seating' ? 'white' : '#cbd5e1', background: activeTab === 'seating' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <IdentificationCard size={20} weight="bold" /> <span>Seating Plans</span>
           </div>
-          <div onClick={() => setActiveTab('discipline')} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'discipline' ? 'white' : '#cbd5e1', background: activeTab === 'discipline' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer' }}>
+          <div onClick={() => { setActiveTab('discipline'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'discipline' ? 'white' : '#cbd5e1', background: activeTab === 'discipline' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <IdentificationBadge size={20} weight="bold" /> <span>Malpractice Logs</span>
           </div>
         </nav>
 
-        <div style={{ position: 'absolute', bottom: 30, width: '100%', padding: '0 1rem' }}>
-          <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: 'none', background: 'transparent', color: '#fca5a5', cursor: 'pointer' }}>
+        <div style={{ padding: '20px 16px', marginTop: 'auto' }}>
+          <button onClick={onLogout} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', border: 'none', background: 'transparent', color: '#fca5a5', cursor: 'pointer', fontWeight: 700 }}>
             <SignOut size={20} weight="bold" /> <span>Sign Out</span>
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="ex-main">
-        <header className="ex-header">
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800 }}>Examination Command Center</h1>
+      <div 
+        className="ex-main"
+        style={{
+          marginLeft: isMobile ? '0px' : (leftSidebarOpen ? '280px' : '24px'),
+          transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          minHeight: '100vh',
+          flex: 1,
+          minWidth: 0,
+          boxSizing: 'border-box'
+        }}
+      >
+        <header className="ex-header" style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid #e2e8f0', padding: '1.2rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {isMobile && (
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'var(--ex-primary, #4f46e5)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                <List size={22} weight="bold" />
+              </button>
+            )}
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }}>Examination Command Center</h1>
+          </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <Bell size={22} color="#64748b" weight="bold" />
@@ -182,15 +326,10 @@ const ExamsDashboard = ({ user, onLogout }) => {
           {activeTab === 'seating' && <ExamsSeating />}
           {activeTab === 'discipline' && <ExamsMalpractice />}
 
-          {(activeTab === 'results' || activeTab === 'scheduling') && (
-            <div className="ex-card" style={{ textAlign: 'center', padding: '100px 40px' }}>
-              <BookOpen size={64} weight="duotone" color="#4f46e5" style={{ margin: '0 auto 20px' }} />
-              <h2 style={{ fontWeight: 800 }}>Academic Processing</h2>
-              <p style={{ color: '#64748b', maxWidth: '400px', margin: '12px auto' }}>This module is currently processing departmental grade submissions and cross-faculty schedules.</p>
-            </div>
-          )}
+          {activeTab === 'results' && <ExamsResults exams={exams} />}
+          {activeTab === 'scheduling' && <ExamsTimeline exams={exams} onScheduleNew={() => setShowSchedule(true)} />}
         </div>
-      </main>
+      </div>
 
       {/* Modals */}
       {showSchedule && <ScheduleExamModal onClose={() => setShowSchedule(false)} onSave={handleScheduleExam} />}
@@ -208,3 +347,4 @@ const MetricCard = ({ icon, value, label }) => (
 );
 
 export default ExamsDashboard;
+

@@ -24,17 +24,28 @@
   /* Layout Classes */
   .sidebar {
     position: fixed !important;
-    left: -100% !important;
+    left: 0 !important;
+    transform: translateX(-100%) !important;
     top: 0 !important;
     height: 100vh !important;
     width: 280px !important;
-    z-index: 1000 !important;
-    transition: left 0.3s ease !important;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1) !important;
+    z-index: 99999 !important; /* Extremely high to be on top of everything */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 10px 0 30px rgba(0,0,0,0.2) !important;
   }
 
   .sidebar.mobile-open {
-    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+
+  /* Backdrop overlay when sidebar is open */
+  .sidebar-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.6) !important;
+    backdrop-filter: blur(4px) !important;
+    z-index: 9998 !important;
+    animation: fadeIn 0.2s ease forwards;
   }
 
   .main-content, 
@@ -45,6 +56,8 @@
     padding: 16px !important;
     padding-top: 70px !important; /* Extra space for menu button */
     min-width: 100% !important;
+    position: relative;
+    z-index: 1;
   }
 
   /* Right Panel - Profile/Stats Panel */
@@ -165,7 +178,6 @@
   }
 }
 
-/* Desktop right panel spacing - Only for layouts that have a right panel */
 @media (min-width: 1101px) {
   main, .main-content {
       margin-left: 280px !important;
@@ -176,6 +188,18 @@
   body:has(.right-panel) main,
   body:has(.right-panel) .main-content {
       margin-right: 320px !important;
+  }
+
+  /* Left sidebar collapsed override */
+  body:has(.sidebar.collapsed) main,
+  body:has(.sidebar.collapsed) .main-content {
+      margin-left: 24px !important;
+  }
+
+  /* Right panel collapsed override */
+  body:has(.right-panel.collapsed) main,
+  body:has(.right-panel.collapsed) .main-content {
+      margin-right: 24px !important;
   }
 }
 
@@ -188,3 +212,10 @@
 /* Hide scrollbars globally helper class */
 .hidden-scrollbar::-webkit-scrollbar { display: none; }
 .hidden-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Hide desktop sidebar toggle buttons on tablet/mobile screens */
+@media (max-width: 1100px) {
+  .sidebar-toggle-btn {
+    display: none !important;
+  }
+}

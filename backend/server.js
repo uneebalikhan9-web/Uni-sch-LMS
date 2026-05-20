@@ -237,8 +237,8 @@ try {
   const { verifyToken, isHRManager, isFinanceManager, isRegistrar, isRector, isAdmissionOfficer, isLibrarian, isSuperAdmin, isPrincipal, isBDAgent } = require('./middleware/auth');
 
   console.log('Loading institutional routes...');
-  app.use('/api/hr', verifyToken, isHRManager, require('./api/hr'));
-  app.use('/api/finance', verifyToken, isFinanceManager, require('./api/finance'));
+  app.use('/api/hr', require('./api/hr'));
+  app.use('/api/finance', require('./api/finance'));
   app.use('/api/registrar', verifyToken, isRegistrar, require('./api/registrar'));
   app.use('/api/rector', verifyToken, isRector, require('./api/rector'));
   app.use('/api/admissions', verifyToken, isAdmissionOfficer, require('./api/admissions'));

@@ -42,6 +42,8 @@ const FinanceDashboard = ({ user, onLogout }) => {
   const [students, setStudents] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1100);
   
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState(''); // 'challan', 'payroll', 'expense'
@@ -58,8 +60,17 @@ const FinanceDashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchAllData();
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1100;
+      setIsMobile(mobile);
+      if (!mobile) setMobileMenuOpen(false);
+    };
+    window.addEventListener('resize', handleResize);
     const interval = setInterval(fetchAllData, 30000); // Auto-refresh every 30 seconds
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', handleResize);
+    };
   }, []);
 
   const fetchAllData = async () => {
@@ -133,10 +144,80 @@ const FinanceDashboard = ({ user, onLogout }) => {
       </button>
 
       {mobileMenuOpen && (
-        <div className="fin-sidebar-overlay" onClick={() => setMobileMenuOpen(false)}></div>
+        <div className="sidebar-backdrop" onClick={() => setMobileMenuOpen(false)}></div>
       )}
 
-      <aside className={`fin-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!isMobile && !leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 2000,
+            background: 'var(--fin-primary)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
+        </button>
+      )}
+
+      <aside 
+        style={{
+          transform: isMobile ? (mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)') : (leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        className={`sidebar fin-sidebar ${mobileMenuOpen ? 'open mobile-open' : ''} ${leftSidebarOpen ? '' : 'collapsed'}`}
+      >
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        {!isMobile && (
+          <button
+            onClick={() => setLeftSidebarOpen(false)}
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: 'var(--fin-primary)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            className="sidebar-toggle-btn left-close-btn"
+            title="Close sidebar"
+          >
+            ‹
+          </button>
+        )}
+
         <div className="fin-logo-wrapper">
           <div className="fin-logo-icon"><Buildings size={24} weight="fill" /></div>
           <span className="fin-logo-text">LANCERS <span className="fin-logo-accent">TECH</span></span>
@@ -163,7 +244,15 @@ const FinanceDashboard = ({ user, onLogout }) => {
         </button>
       </aside>
 
-      <main className="fin-main">
+      <main 
+        style={{
+          marginLeft: isMobile ? '0' : (leftSidebarOpen ? 'var(--sidebar-width)' : '24px'),
+          transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          padding: isMobile ? '24px 16px' : '40px',
+          paddingTop: isMobile ? '80px' : '40px',
+        }}
+        className="fin-main"
+      >
         <header className="fin-header">
           <div>
             <h1>{activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Dashboard</h1>

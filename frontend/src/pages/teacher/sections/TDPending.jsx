@@ -1,6 +1,7 @@
 import { S } from "./TDStyles";
 import API_BASE_URL from "../../../config/api";
 import { useToast } from "../../../components/Toast";
+import { ClipboardText } from "@phosphor-icons/react";
 
 export default function TDPending({ pendingEnrollments, loadingPending, fetchPendingEnrollments }) {
   const token = sessionStorage.getItem('token');
@@ -25,7 +26,10 @@ export default function TDPending({ pendingEnrollments, loadingPending, fetchPen
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
         <div>
-          <h2 style={S.tableTitle}>📋 Pending Enrollment Requests</h2>
+          <h2 style={{ ...S.tableTitle, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <ClipboardText size={24} weight="duotone" style={{ color: '#4f46e5' }} />
+            Pending Enrollment Requests
+          </h2>
           <p style={S.tableSubtitle}>Students requesting to enroll in your courses</p>
         </div>
       </div>

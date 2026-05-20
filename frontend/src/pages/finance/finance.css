@@ -67,6 +67,10 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.fin-sidebar.collapsed {
+  transform: translateX(-100%) !important;
+}
+
 .fin-logo-wrapper {
   display: flex;
   align-items: center;
@@ -719,4 +723,282 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==================== CAMPUS EXPENSES ==================== */
+.fin-expense-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.fin-expense-card {
+  background: var(--fin-card-bg);
+  border: 1px solid var(--fin-border);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: var(--fin-shadow-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.fin-expense-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--fin-primary);
+  opacity: 0.8;
+}
+
+.fin-expense-card.utilities::before { background: var(--fin-primary); }
+.fin-expense-card.maintenance::before { background: var(--fin-warning); }
+.fin-expense-card.supplies::before { background: var(--fin-success); }
+.fin-expense-card.events::before { background: #c084fc; }
+.fin-expense-card.other::before { background: #64748b; }
+
+.fin-expense-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--fin-shadow-lg);
+  border-color: var(--fin-primary);
+}
+
+.fin-expense-main {
+  flex: 1;
+  padding-right: 16px;
+}
+
+.fin-expense-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--fin-primary-light);
+  color: var(--fin-primary);
+  margin-bottom: 12px;
+}
+
+.fin-expense-card.utilities .fin-expense-category { background: #f5f3ff; color: #6366f1; }
+.fin-expense-card.maintenance .fin-expense-category { background: #fffbeb; color: #d97706; }
+.fin-expense-card.supplies .fin-expense-category { background: #ecfdf5; color: #10b981; }
+.fin-expense-card.events .fin-expense-category { background: #fdf4ff; color: #c084fc; }
+.fin-expense-card.other .fin-expense-category { background: #f1f5f9; color: #64748b; }
+
+.fin-expense-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--fin-text-main);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.fin-expense-date {
+  font-size: 12px;
+  color: var(--fin-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.fin-expense-amount {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--fin-text-main);
+  letter-spacing: -0.02em;
+}
+
+.fin-expense-delete-btn {
+  background: #fef2f2;
+  color: var(--fin-danger);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-top: 12px;
+}
+
+.fin-expense-delete-btn:hover {
+  background: var(--fin-danger);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ==================== FEE RECEIPTS & INVOICES ==================== */
+.fin-receipt-card {
+  background: #ffffff;
+  border: 1px solid var(--fin-border);
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 650px;
+  margin: 0 auto;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  color: var(--fin-text-main);
+  position: relative;
+  overflow: hidden;
+}
+
+.fin-receipt-org {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 2px solid var(--fin-border);
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+}
+
+.fin-receipt-logo {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, var(--fin-primary) 0%, var(--fin-secondary) 100%);
+  color: white;
+  font-weight: 800;
+  font-size: 18px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px -4px rgba(99, 102, 241, 0.3);
+}
+
+.fin-receipt-org-info h4 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--fin-text-main);
+  margin-bottom: 4px;
+}
+
+.fin-receipt-org-info p {
+  font-size: 12px;
+  color: var(--fin-text-muted);
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.fin-receipt-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fin-receipt-title h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--fin-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.fin-receipt-no {
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--fin-primary-light);
+  color: var(--fin-primary);
+  padding: 6px 12px;
+  border-radius: 30px;
+}
+
+.fin-receipt-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 28px;
+  border: 1px solid #f1f5f9;
+}
+
+.fin-receipt-info div {
+  font-size: 13px;
+  color: var(--fin-text-muted);
+  font-weight: 600;
+}
+
+.fin-receipt-info strong {
+  color: var(--fin-text-main);
+  font-weight: 700;
+}
+
+.fin-receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 30px;
+}
+
+.fin-receipt-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--fin-text-muted);
+  border-bottom: 2px solid var(--fin-border);
+  padding: 12px 8px;
+  letter-spacing: 0.05em;
+}
+
+.fin-receipt-table td {
+  padding: 16px 8px;
+  font-size: 14px;
+  color: var(--fin-text-main);
+  border-bottom: 1px solid #f1f5f9;
+  font-weight: 600;
+}
+
+.fin-receipt-table .fin-total-row td {
+  border-top: 2px solid var(--fin-border);
+  border-bottom: none;
+  font-size: 15px;
+  color: var(--fin-text-main);
+  padding-top: 20px;
+}
+
+.fin-receipt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 40px;
+}
+
+.fin-signature {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fin-paid-stamp {
+  display: inline-flex;
+  align-items: center;
+  background: #ecfdf5;
+  color: #10b981;
+  border: 2px solid #10b981;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transform: rotate(-10deg);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
 }

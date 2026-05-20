@@ -142,4 +142,38 @@ router.post('/issue', async (req, res) => {
   }
 });
 
+// ==========================================
+// 8. UPDATE BOOK
+// ==========================================
+router.put('/books/:id', async (req, res) => {
+  const { isbn, title, author, rack } = req.body;
+  try {
+    await pool.query(
+      'UPDATE library_books SET isbn = ?, title = ?, author = ?, rack_location = ? WHERE id = ?',
+      [isbn, title, author, rack, req.params.id]
+    );
+    res.json({ success: true, message: 'Book updated successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==========================================
+// 9. DELETE BOOK
+// ==========================================
+router.delete('/books/:id', async (req, res) => {
+  try {
+    // First check if book is issued, we shouldn't delete issued books
+    const [[book]] = await pool.query('SELECT status FROM library_books WHERE id = ?', [req.params.id]);
+    if (book && book.status === 'Issued') {
+      return res.status(400).json({ success: false, message: 'Cannot delete an issued book.' });
+    }
+    
+    await pool.query('DELETE FROM library_books WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Book deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

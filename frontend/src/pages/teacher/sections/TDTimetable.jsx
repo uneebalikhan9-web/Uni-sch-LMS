@@ -31,7 +31,10 @@ export default function TDTimetable({ timetable }) {
         {hasEntries ? (
           Object.entries(grouped).map(([day, entries]) => entries.length > 0 && (
             <div key={day} style={daySection}>
-              <h4 style={dayHeading}>📅 {day}</h4>
+              <h4 style={dayHeading}>
+                <CalendarBlank size={18} weight="duotone" style={{ color: '#4f46e5' }} />
+                {day}
+              </h4>
               {entries.map(entry => (
                 <div key={entry.id} style={timetableSlot}>
                   <div>

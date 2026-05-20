@@ -1,6 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, User, UserCircle, MapPin, Plus, ArrowsLeftRight } from '@phosphor-icons/react';
-import { S } from './ADStyles';
+import { Calendar, User, Plus } from '@phosphor-icons/react';
 
 const AdmissionsInterviews = ({ interviews }) => {
   const currentInterviews = interviews || [];
@@ -9,37 +8,49 @@ const AdmissionsInterviews = ({ interviews }) => {
     alert('Opening interview scheduler...');
   };
 
+  const formatTime = (timeStr) => {
+    if (!timeStr) return '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let hour = parseInt(parts[0], 10);
+    const minute = parts[1];
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    hour = hour % 12;
+    hour = hour ? hour : 12;
+    return `${hour}:${minute} ${ampm}`;
+  };
+
   return (
     <div className="animate-fadeIn">
-      <div className="card">
-        <div className="card-header">
+      <div className="adm-card">
+        <div className="adm-card-header">
           <div>
-            <h2 className="card-title">Upcoming Interviews</h2>
+            <h2 className="adm-card-title">Upcoming Interviews</h2>
             <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Assessments and panel discussions for new candidates</p>
           </div>
-          <button onClick={handleSchedule} className="primary-btn">
+          <button onClick={handleSchedule} className="adm-primary-btn">
             <Plus size={18} weight="bold" /> New Schedule
           </button>
         </div>
 
-        <div className="interview-list">
+        <div className="adm-interview-list">
           {currentInterviews.map(interview => (
-            <div key={interview.id} className="interview-card">
-              <div className="interview-info">
+            <div key={interview.id} className="adm-interview-card">
+              <div className="adm-interview-info">
                 <h4>{interview.name}</h4>
-                <div className="interview-date">
+                <div className="adm-interview-date">
                   <Calendar size={16} weight="bold" />
-                  {new Date(interview.interview_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {interview.interview_time}
+                  {new Date(interview.interview_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })} at {formatTime(interview.interview_time)}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', color: '#64748b', marginTop: 4, fontWeight: 600 }}>
                   <User size={14} /> Panel: {interview.interviewer}
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
-                <div className="status-badge status-pending" style={{ padding: '4px 10px' }}>
+                <div className="adm-status-badge adm-status-pending" style={{ padding: '4px 10px' }}>
                   {interview.program || 'General'}
                 </div>
-                <button className="schedule-btn">
+                <button className="adm-schedule-btn">
                   Reschedule
                 </button>
               </div>

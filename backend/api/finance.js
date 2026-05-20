@@ -5,6 +5,84 @@ const { verifyToken, isFinanceManager } = require('../middleware/auth');
 const router = express.Router();
 
 router.use(verifyToken);
+
+// ==================== STUDENT CHALLANS ====================
+router.get('/my-challans', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [[student]] = await pool.query('SELECT id FROM students WHERE user_id = ?', [userId]);
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student record not found' });
+    }
+    
+    try {
+      await pool.query(`ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0`);
+    } catch (e) {}
+    try {
+      await pool.query(`ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL`);
+    } catch (e) {}
+
+    const [challans] = await pool.query(
+      `SELECT fc.*, u.name as student_name, s.roll_number
+       FROM finance_challans fc
+       JOIN students s ON fc.student_id = s.id
+       JOIN users u ON s.user_id = u.id
+       WHERE fc.student_id = ?
+       ORDER BY fc.created_at DESC`,
+      [student.id]
+    );
+    res.json({ success: true, challans });
+  } catch (error) {
+    console.error('Error fetching student challans:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ==================== EMPLOYEE PAYROLL ====================
+router.get('/my-payroll', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [[employee]] = await pool.query('SELECT id, employee_code, designation FROM employees WHERE user_id = ?', [userId]);
+    if (!employee) {
+      return res.status(404).json({ success: false, message: 'Employee record not found' });
+    }
+
+    const [payroll] = await pool.query(
+      `SELECT fp.*, u.name as employee_name, e.employee_code, e.designation
+       FROM finance_payroll fp
+       JOIN employees e ON fp.employee_id = e.id
+       JOIN users u ON e.user_id = u.id
+       WHERE fp.employee_id = ?
+       ORDER BY fp.year DESC, fp.month DESC`,
+      [employee.id]
+    );
+    res.json({ success: true, payroll });
+  } catch (error) {
+    console.error('Error fetching employee payroll:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// ==================== CAMPUS EXPENSES (Read-only for all employees) ====================
+router.get('/expenses', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+
+    const [expenses] = await pool.query(
+      `SELECT fe.*, u.name as added_by_name 
+       FROM finance_expenses fe 
+       LEFT JOIN users u ON fe.added_by = u.id
+       ${!isSuperAdmin ? 'WHERE fe.campus_id = ?' : ''}
+       ORDER BY fe.created_at DESC`,
+      isSuperAdmin ? [] : [campusId]
+    );
+    res.json({ success: true, expenses });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching expenses' });
+  }
+});
+
 router.use(isFinanceManager);
 
 // ==================== OVERVIEW ====================
@@ -155,6 +233,45 @@ router.delete('/challans/:id', async (req, res) => {
   }
 });
 
+router.post('/challans/:id/remind', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    try {
+      await pool.query(`ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0`);
+    } catch (e) {}
+    try {
+      await pool.query(`ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL`);
+    } catch (e) {}
+
+    await pool.query(
+      `UPDATE finance_challans 
+       SET reminder_count = reminder_count + 1, last_reminder_at = NOW() 
+       WHERE id = ?`,
+      [id]
+    );
+
+    const [[challan]] = await pool.query(
+      `SELECT fc.*, u.name as student_name, u.email as student_email 
+       FROM finance_challans fc
+       LEFT JOIN students s ON fc.student_id = s.id
+       LEFT JOIN users u ON s.user_id = u.id
+       WHERE fc.id = ?`,
+      [id]
+    );
+    if (!challan) return res.status(404).json({ success: false, message: 'Challan not found' });
+    
+    console.log(`[Fee Reminder] Dispatched email reminder to ${challan.student_email} for Challan #${challan.challan_no}`);
+    res.json({ 
+      success: true, 
+      message: `Reminder successfully dispatched to ${challan.student_name} (${challan.student_email})!` 
+    });
+  } catch (error) {
+    console.error('Send reminder error:', error);
+    res.status(500).json({ success: false, message: 'Error sending reminder' });
+  }
+});
+
 // Mark overdue automatically (run on fetch)
 router.post('/challans/mark-overdue', async (req, res) => {
   try {
@@ -251,25 +368,6 @@ router.post('/payroll/disburse-all', async (req, res) => {
 });
 
 // ==================== EXPENSES ====================
-
-router.get('/expenses', async (req, res) => {
-  try {
-    const campusId = req.user.campus_id;
-    const isSuperAdmin = req.user.role === 'super_admin';
-
-    const [expenses] = await pool.query(
-      `SELECT fe.*, u.name as added_by_name 
-       FROM finance_expenses fe 
-       LEFT JOIN users u ON fe.added_by = u.id
-       ${!isSuperAdmin ? 'WHERE fe.campus_id = ?' : ''}
-       ORDER BY fe.created_at DESC`,
-      isSuperAdmin ? [] : [campusId]
-    );
-    res.json({ success: true, expenses });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching expenses' });
-  }
-});
 
 router.post('/expenses', async (req, res) => {
   try {

@@ -16,13 +16,21 @@ Lancers Tech LMS is a premium, high-performance Institutional Management System 
 ### 👑 Vice Chancellor (Super Admin) Portal
 *   **Global Governance**: Monitor multiple campuses and departments from a single command center.
 *   **Strategic KPI Monitoring**: Platform-wide statistics on student intake, faculty performance, and financial health.
-*   **Administrative Provisioning**: Manage HODs, BD Agents, and high-level staff access.
-*   **Institutional Strategy**: Track national & global rankings and strategic plan KPIs.
+*   **Administrative Provisioning**: Manage HODs, BD Agents, HR Managers, IT Admins, and high-level staff access.
+*   **Institutional Strategy**: Track national & global rankings, server health, and strategic plan KPIs.
+
+### 🎓 Rectorate (Pro-VC) Dashboard
+*   **Institutional Overview**: High-level metrics for total enrollment, active research projects, and overall institutional GPA.
+*   **Academic Strategy & Financial Governance**: Analytical charts for Budget Utilization and Program Success Trajectories.
+*   **Faculty Oversight**: Real-time tracking of faculty designations, teaching loads, and departmental assignments.
+*   **Student Enrollment**: Yearly global enrollment trends, retention rates, and intake metrics.
+*   **Research & Innovation**: Management of ongoing research projects, lead PIs, funding amounts, and impact metrics.
+*   **Accreditation & Quality**: Monitoring program-level compliance, accreditation bodies (e.g., HEC/PEC), and audit risks.
 
 ### 💼 Business Development (BD) Portal
-*   **Lead Pipeline**: Track institutional leads from prospect to closed deals.
-*   **Recruitment Engine**: Manage job postings and track applicant status.
-*   **Global Analytics**: Access cross-departmental data to drive growth.
+*   **Lead Pipeline**: Track institutional leads from prospect to closed deals (Campus Leads).
+*   **Recruitment Engine**: Manage HR job postings, bulk hiring workflows, and track applicant statuses.
+*   **Global Analytics**: Access cross-departmental data to drive institutional growth.
 
 ### 🏢 HOD / Dean (Principal) Dashboard
 *   **Departmental Orchestration**: Manage faculty workloads, course assignments, and class sections.

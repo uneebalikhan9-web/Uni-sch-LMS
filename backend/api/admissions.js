@@ -48,10 +48,12 @@ router.get('/pipeline', async (req, res) => {
           id: row.id,
           name: row.name,
           program: row.program || 'N/A',
-          score: row.score ? `${row.score}%` : 'N/A'
+          score: row.score ? `${parseFloat(row.score).toFixed(2)}%` : 'N/A',
+          date: row.created_at ? new Date(row.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'N/A'
         });
       }
     });
+
 
     res.json({ success: true, pipeline });
   } catch (error) {

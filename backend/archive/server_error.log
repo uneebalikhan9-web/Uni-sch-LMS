@@ -1,0 +1,36 @@
+2026-05-13T08:46:19.810Z - Unhandled Error: Not allowed by CORS
+Stack: Error: Not allowed by CORS
+    at origin (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\server.js:56:16)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at expressInit (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\middleware\init.js:40:5)
+2026-05-13T08:46:32.983Z - Unhandled Error: Not allowed by CORS
+Stack: Error: Not allowed by CORS
+    at origin (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\server.js:56:16)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at expressInit (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\middleware\init.js:40:5)
+2026-05-13T08:46:46.983Z - Unhandled Error: Not allowed by CORS
+Stack: Error: Not allowed by CORS
+    at origin (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\server.js:56:16)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:219:13
+    at optionsCallback (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:199:9)
+    at corsMiddleware (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\cors\lib\index.js:204:7)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at expressInit (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\middleware\init.js:40:5)

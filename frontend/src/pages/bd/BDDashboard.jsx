@@ -44,6 +44,8 @@ if (!document.head.querySelector('[data-bd-styles]')) { _s.setAttribute('data-bd
 function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [stats, setStats] = useState({});
   const [pipeline, setPipeline] = useState([]);
   const [leads, setLeads] = useState([]);
@@ -207,7 +209,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
   );
 
   return (
-    <div style={S.container}>
+    <div style={S.container} className="dashboard-wrapper">
       <ConfirmModal 
         isOpen={confirmModal.isOpen} title={confirmModal.title} message={confirmModal.message}
         onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))} isDanger={confirmModal.isDanger}
@@ -218,49 +220,136 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
         <DotsThreeOutline size={24} weight="bold" />
       </button>
 
-      <aside style={S.sidebar} className={`sidebar hidden-scrollbar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div style={S.logoWrapper}>
-          <div style={{ ...S.logoIcon, background: 'linear-gradient(135deg, #4f46e5, #818cf8)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-            <BriefcaseIcon size={24} weight="fill" />
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 20,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
+        </button>
+      )}
+
+      {/* ── Left Sidebar ── */}
+      <aside style={{
+        ...S.sidebar,
+        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`sidebar ${leftSidebarOpen ? '' : 'collapsed'} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+        
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        <button
+          onClick={() => setLeftSidebarOpen(false)}
+          style={{
+            position: 'absolute',
+            right: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 30,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 10px 10px 0',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-close-btn"
+          title="Close sidebar"
+        >
+          ‹
+        </button>
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '32px 20px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div style={S.logoWrapper}>
+            <div style={{ ...S.logoIcon, background: 'linear-gradient(135deg, #4f46e5, #818cf8)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+              <BriefcaseIcon size={24} weight="fill" />
+            </div>
+            <span style={S.logoText}>LANCERS <span style={{ color: '#818cf8' }}>TECH</span></span>
           </div>
-          <span style={S.logoText}>LANCERS <span style={{ color: '#818cf8' }}>TECH</span></span>
+          <div style={S.bdBadge}>
+            <Briefcase size={16} weight="duotone" />
+            <span>{user.department_name || 'Lancers BD'}</span>
+            <div style={S.liveIndicator}></div>
+          </div>
+          <nav style={S.nav}>
+            {[
+              ['overview', 'Overview', <House size={20} />, null],
+              ['leads', 'Dept Leads', <Buildings size={20} />, stats.totalLeads],
+              ['jobs', 'Job Postings', <Briefcase size={20} />, stats.openJobs],
+              ['applicants', 'Applicants', <Users size={20} />, stats.totalApplicants],
+              ['bulkhires', 'Bulk Hire', <UserPlus size={20} />, stats.activeBatches],
+              ['all_campuses', 'Global Departments', <Buildings size={20} weight="duotone" />, globalStats.totalCampuses],
+              ['all_teachers', 'All Teachers', <ChalkboardTeacher size={20} />, globalStats.totalTeachers],
+              ['all_students', 'All Students', <Users size={20} weight="duotone" />, globalStats.totalStudents],
+              ['all_classes', 'All Classes', <BookOpen size={20} />, globalStats.totalClasses],
+              ['lab_usage', 'Lab Analytics', <Pulse size={20} weight="duotone" />, null],
+              ['course_reports', 'Course Reports', <ChartLine size={20} weight="duotone" />, allReports.length || null],
+            ].map(([tab, label, icon, count]) => (
+              <button
+                key={tab}
+                onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
+                style={{ ...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {}) }}
+                className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
+              >
+                {icon}
+                <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
+                {count > 0 && <span style={S.navBadge}>{count}</span>}
+                {activeTab === tab && <div style={S.activeIndicator}></div>}
+              </button>
+            ))}
+          </nav>
+          <button onClick={onLogout} style={S.logoutBtn} className="logout-btn"><SignOut size={20} /> <span>Sign Out</span></button>
         </div>
-        <div style={S.bdBadge}>
-          <Briefcase size={16} weight="duotone" />
-          <span>{user.department_name ? `Lancers ${user.department_name}` : 'Lancers BD'}</span>
-          <div style={S.liveIndicator}></div>
-        </div>
-        <nav style={S.nav}>
-          {[
-            ['overview', 'Overview', <House size={20} />, null],
-            ['leads', 'Dept Leads', <Buildings size={20} />, stats.totalLeads],
-            ['jobs', 'Job Postings', <Briefcase size={20} />, stats.openJobs],
-            ['applicants', 'Applicants', <Users size={20} />, stats.totalApplicants],
-            ['bulkhires', 'Bulk Hire', <UserPlus size={20} />, stats.activeBatches],
-            ['all_campuses', 'Global Departments', <Buildings size={20} weight="duotone" />, globalStats.totalCampuses],
-            ['all_teachers', 'All Teachers', <ChalkboardTeacher size={20} />, globalStats.totalTeachers],
-            ['all_students', 'All Students', <Users size={20} weight="duotone" />, globalStats.totalStudents],
-            ['all_classes', 'All Classes', <BookOpen size={20} />, globalStats.totalClasses],
-            ['lab_usage', 'Lab Analytics', <Pulse size={20} weight="duotone" />, null],
-            ['course_reports', 'Course Reports', <ChartLine size={20} weight="duotone" />, allReports.length || null],
-          ].map(([tab, label, icon, count]) => (
-            <button
-              key={tab}
-              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
-              style={{ ...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {}) }}
-              className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
-            >
-              {icon}
-              <span style={{ flex: 1, textAlign: 'left' }}>{label}</span>
-              {count > 0 && <span style={S.navBadge}>{count}</span>}
-              {activeTab === tab && <div style={S.activeIndicator}></div>}
-            </button>
-          ))}
-        </nav>
-        <button onClick={onLogout} style={S.logoutBtn} className="logout-btn"><SignOut size={20} /> <span>Sign Out</span></button>
       </aside>
 
-      <main style={S.main} className="main-content">
+      {/* ── Main Content ── */}
+      <main style={{
+        ...S.main,
+        marginLeft: leftSidebarOpen ? '280px' : '24px',
+        marginRight: rightPanelOpen ? '320px' : '24px',
+        transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }} className="main-content">
         <header style={S.header}>
           <div>
             <h1 style={S.title}>
@@ -276,7 +365,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
           </div>
         </header>
         
-        {activeTab === 'overview' && <BDOverview stats={stats} globalStats={globalStats} pipeline={pipeline} chartRef={chartRef} LEAD_COLORS={LEAD_COLORS} />}
+        {activeTab === 'overview' && <BDOverview stats={stats} globalStats={globalStats} pipeline={pipeline} chartRef={chartRef} LEAD_COLORS={LEAD_COLORS} key={`${leftSidebarOpen}-${rightPanelOpen}`} />}
         {activeTab === 'leads' && <BDLeads leads={leads} openEdit={openEdit} handleDelete={handleDelete} LEAD_COLORS={LEAD_COLORS} />}
         {activeTab === 'jobs' && <BDJobs jobs={jobs} openEdit={openEdit} handleDelete={handleDelete} showToast={showToast} />}
         {activeTab === 'applicants' && <BDApplicants applicants={applicants} handleApplicantStatus={handleApplicantStatus} handleDelete={handleDelete} APPLICANT_STATUSES={APPLICANT_STATUSES} />}
@@ -317,29 +406,104 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
         )}
       </main>
 
-      <aside style={S.rightPanel} className="right-panel hidden-scrollbar">
-        <div style={S.profileCard}>
-          <div style={{ ...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #818cf8)' }}>{user.name.charAt(0)}</div>
-          <h3 style={S.profileName}>{user.name}</h3>
-          <span style={S.roleBadge}>BD Manager</span>
-          <div style={S.profileStats}>
-            <div style={S.profileStat}><span style={S.profileStatLabel}>Won Deals</span><span style={S.profileStatValue}>{stats.wonLeads || 0}</span></div>
-            <div style={S.profileStat}><span style={S.profileStatLabel}>Leads</span><span style={S.profileStatValue}>{stats.totalLeads || 0}</span></div>
+      {/* Floating open button for RIGHT panel — only visible when right panel is CLOSED */}
+      {!rightPanelOpen && (
+        <button
+          onClick={() => setRightPanelOpen(true)}
+          style={{
+            position: 'fixed',
+            right: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 20,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px 0 0 12px',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn right-open-btn"
+          title="Open profile panel"
+        >
+          ‹
+        </button>
+      )}
+
+      {/* ── Right Panel ── */}
+      <aside style={{
+        ...S.rightPanel,
+        transform: rightPanelOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`right-panel ${rightPanelOpen ? '' : 'collapsed'}`}>
+
+        {/* ← Close arrow centered on LEFT edge of the right panel */}
+        <button
+          onClick={() => setRightPanelOpen(false)}
+          style={{
+            position: 'absolute',
+            left: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 30,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px 0 0 10px',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn right-close-btn"
+          title="Close profile panel"
+        >
+          ›
+        </button>
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '32px 24px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div style={S.profileCard}>
+            <div style={{ ...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #818cf8)' }}>{user.name.charAt(0)}</div>
+            <h3 style={S.profileName}>{user.name}</h3>
+            <span style={S.roleBadge}>BD Manager</span>
+            <div style={S.profileStats}>
+              <div style={S.profileStat}><span style={S.profileStatLabel}>Won Deals</span><span style={S.profileStatValue}>{stats.wonLeads || 0}</span></div>
+              <div style={S.profileStat}><span style={S.profileStatLabel}>Leads</span><span style={S.profileStatValue}>{stats.totalLeads || 0}</span></div>
+            </div>
           </div>
-        </div>
-        <div style={S.quickStatsCard}>
-          <h4 style={S.quickStatsTitle}>Quick Insights</h4>
-          <div style={S.quickStatsList}>
-            <div style={S.quickStatItem}><span style={S.quickStatLabel}>Hiring Velocity</span><span style={S.quickStatValue}>High</span></div>
-            <div style={S.quickStatItem}><span style={S.quickStatLabel}>Lead Conversion</span><span style={S.quickStatValue}>{stats.totalLeads ? Math.round((stats.wonLeads / stats.totalLeads) * 100) : 0}%</span></div>
-            <div style={S.quickStatItem}><span style={S.quickStatLabel}>Platform Health</span><span style={S.quickStatValue}>Optimal</span></div>
+          <div style={S.quickStatsCard}>
+            <h4 style={S.quickStatsTitle}>Quick Insights</h4>
+            <div style={S.quickStatsList}>
+              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Hiring Velocity</span><span style={S.quickStatValue}>High</span></div>
+              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Lead Conversion</span><span style={S.quickStatValue}>{stats.totalLeads ? Math.round((stats.wonLeads / stats.totalLeads) * 100) : 0}%</span></div>
+              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Platform Health</span><span style={S.quickStatValue}>Optimal</span></div>
+            </div>
           </div>
-        </div>
-        <div style={S.shareCard}>
-          <div style={S.shareHeader}><Briefcase size={20} /> Recruitment Link</div>
-          <p style={S.shareText}>Public link for candidates to apply to your open postings.</p>
-          <code style={S.shareCode}>{window.location.origin}/apply</code>
-          <button onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply`); showToast('Link copied!', 'success'); }} style={S.shareBtn} className="share-btn">Copy Share Link</button>
         </div>
       </aside>
 

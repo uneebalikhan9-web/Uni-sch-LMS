@@ -1,6 +1,5 @@
 import React from 'react';
-import { User, Student, MapPin, CheckCircle, DotsThree, Briefcase, GraduationCap, Calendar, ArrowRight } from '@phosphor-icons/react';
-import { S } from './ADStyles';
+import { User, Student, CheckCircle, Briefcase, GraduationCap } from '@phosphor-icons/react';
 
 const AdmissionsPipeline = ({ stages }) => {
   const currentStages = stages || {
@@ -32,25 +31,25 @@ const AdmissionsPipeline = ({ stages }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="pipeline-stages hidden-scrollbar">
+      <div className="adm-pipeline-stages hidden-scrollbar">
         {Object.entries(currentStages).map(([stageName, applicants]) => {
           const color = stageColors[stageName] || '#64748b';
           
           return (
-            <div key={stageName} className="stage-column">
-              <div className="stage-title">
+            <div key={stageName} className="adm-stage-column">
+              <div className="adm-stage-title">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ color: color }}>{getStageIcon(stageName)}</div>
                   <span>{stageName}</span>
                 </div>
-                <span className="stage-count">{applicants.length}</span>
+                <span className="adm-stage-count">{applicants.length}</span>
               </div>
               
               <div className="applicant-list">
                 {applicants.map(applicant => (
-                  <div key={applicant.id} className="applicant-card">
-                    <div className="applicant-name">{applicant.name}</div>
-                    <div className="applicant-detail">#{applicant.id.toString().padStart(4, '0')} • {applicant.program}</div>
+                  <div key={applicant.id} className="adm-applicant-card">
+                    <div className="adm-applicant-name">{applicant.name}</div>
+                    <div className="adm-applicant-detail">#{applicant.id.toString().padStart(4, '0')} • {applicant.program}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
                       <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 600 }}>{applicant.date || 'N/A'}</div>
                       {applicant.score && (

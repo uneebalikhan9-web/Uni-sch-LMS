@@ -14,7 +14,9 @@ import {
   X,
   Spinner,
   SignOut,
-  ChatCircle
+  ChatCircle,
+  CaretLeft,
+  CaretRight
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import './registrar.css';
@@ -30,8 +32,16 @@ const RegistrarDashboard = ({ user, onLogout }) => {
   // Navigation & UI States
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [activeNav, setActiveNav] = useState('overview');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Data States
   const [stats, setStats] = useState({ totalEnrolled: 0, degreesIssued: 0, pendingVerifications: 0, transcriptRequests: 0 });
@@ -148,32 +158,114 @@ const RegistrarDashboard = ({ user, onLogout }) => {
   ];
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-container" style={{ position: 'relative', display: 'flex', minHeight: '100vh', overflowX: 'hidden' }}>
+      
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!isMobile && !leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 2000,
+            background: 'var(--reg-primary, #4f46e5)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
+        </button>
+      )}
+
       <div className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} onClick={() => setSidebarOpen(false)} />
 
-      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="logo">
-            <div className="logo-icon">🎓</div>
-            <span>Lancers<span style={{ color: 'var(--reg-primary-light, #818cf8)' }}>Tech</span></span>
+      <aside 
+        className={`sidebar ${sidebarOpen ? 'open mobile-open' : ''} ${leftSidebarOpen ? '' : 'collapsed'}`}
+        style={{
+          transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : (leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)'),
+          transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          zIndex: 1000,
+          width: '280px',
+        }}
+      >
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        {!isMobile && (
+          <button
+            onClick={() => setLeftSidebarOpen(false)}
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: 'var(--reg-primary, #4f46e5)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            className="sidebar-toggle-btn left-close-btn"
+            title="Close sidebar"
+          >
+            ‹
+          </button>
+        )}
+
+        <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="logo" style={{ gap: '12px' }}>
+            <div className="logo-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--reg-primary) 0%, #818cf8 100%)', boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)' }}>
+              <GraduationCap size={22} weight="fill" color="white" />
+            </div>
+            <span>Lancers<span style={{ color: '#818cf8' }}>Tech</span></span>
           </div>
-          <div style={{ color: '#64748b', fontSize: '11px', fontWeight: 700, marginTop: '8px', letterSpacing: '1px', textTransform: 'uppercase' }}></div>
+
+          <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} style={{ display: 'none', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', outline: 'none' }}>
+            <X size={20} weight="bold" />
+          </button>
         </div>
         <nav className="nav-links">
-          <div className="nav-item" onClick={() => { navigate('/chat'); setSidebarOpen(false); }}>
+          <div className="nav-item" onClick={() => { navigate('/chat'); setSidebarOpen(false); }} style={{ justifyContent: 'flex-start', padding: '12px 16px' }}>
             <ChatCircle size={22} weight="regular" />
             <span>Chat</span>
           </div>
           {navItems.map((item) => (
-            <div key={item.id} className={`nav-item ${activeNav === item.id ? 'active' : ''}`} onClick={() => { setActiveNav(item.id); setSidebarOpen(false); }}>
+            <div key={item.id} className={`nav-item ${activeNav === item.id ? 'active' : ''}`} onClick={() => { setActiveNav(item.id); setSidebarOpen(false); }} style={{ justifyContent: 'flex-start', padding: '12px 16px' }}>
               <item.icon size={22} weight={activeNav === item.id ? 'fill' : 'regular'} />
               <span>{item.label}</span>
             </div>
           ))}
         </nav>
         
-        <div className="sidebar-bottom">
-          <button onClick={onLogout} className="logout-btn">
+        <div className="sidebar-bottom" style={{ padding: '20px 16px' }}>
+          <button onClick={onLogout} className="logout-btn" style={{ justifyContent: 'flex-start', padding: '14px 18px' }}>
             <SignOut size={20} weight="bold" />
             <span>Sign Out</span>
           </button>
@@ -184,7 +276,16 @@ const RegistrarDashboard = ({ user, onLogout }) => {
         </div>
       </aside>
 
-      <main className="main-content">
+      <main 
+        className="main-content" 
+        style={{
+          marginLeft: isMobile ? '0px' : (leftSidebarOpen ? '280px' : '24px'),
+          transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          minHeight: '100vh',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      >
         <header className="top-header">
           <div className="header-left">
             <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>

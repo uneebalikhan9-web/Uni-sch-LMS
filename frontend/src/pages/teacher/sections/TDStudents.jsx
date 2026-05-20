@@ -1,4 +1,4 @@
-import { PlusCircle } from "@phosphor-icons/react";
+import { PlusCircle, Users } from "@phosphor-icons/react";
 import { S } from "./TDStyles";
 
 export default function TDStudents({ campusStudents, loadingStudents, setShowAddStudentModal, onOpenStudentProfile }) {
@@ -6,7 +6,10 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
         <div>
-          <h2 style={S.tableTitle}>👥 Student Directory</h2>
+          <h2 style={{ ...S.tableTitle, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Users size={24} weight="duotone" style={{ color: '#4f46e5' }} />
+            Student Directory
+          </h2>
           <p style={S.tableSubtitle}>Manage and view students in your department</p>
         </div>
         <button onClick={() => setShowAddStudentModal(true)} style={S.addBtn} className="add-btn">

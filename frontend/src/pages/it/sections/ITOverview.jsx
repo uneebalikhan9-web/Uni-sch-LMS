@@ -4,7 +4,7 @@ import { Users, Ticket, Cpu, Pulse, ClockCounterClockwise } from '@phosphor-icon
 const ITOverview = ({ stats, logs }) => {
   return (
     <div className="it-overview">
-      <div className="it-grid">
+      <div className="it-metrics-grid">
         <div className="it-card">
           <div className="it-stat-icon" style={{ background: '#eff6ff' }}>
             <Users size={24} weight="bold" color="#3b82f6" />

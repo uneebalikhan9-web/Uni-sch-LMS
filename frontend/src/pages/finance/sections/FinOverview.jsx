@@ -5,7 +5,7 @@ import {
   Receipt, Wallet
 } from "@phosphor-icons/react";
 
-const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
+const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true }) => (
   <div className="fin-metric-card">
     <div className="fin-metric-header">
       <span className="fin-metric-label">{title}</span>
@@ -13,7 +13,7 @@ const MetricCard = ({ title, value, change, icon: Icon, trend }) => (
         {Icon}
       </div>
     </div>
-    <div className="fin-metric-value">₹{value.toLocaleString()}</div>
+    <div className="fin-metric-value">{isCurrency ? `Rs. ${value.toLocaleString()}` : value}</div>
     {change && (
       <div className={`fin-metric-trend ${trend === 'up' ? 'fin-trend-up' : 'fin-trend-down'}`}>
         {trend === 'up' ? <ArrowUp size={14} weight="bold" /> : <ArrowDown size={14} weight="bold" />}
@@ -59,6 +59,7 @@ const FinOverview = ({ stats, challans, expenses }) => {
           change="+2.1%" 
           icon={<ChartPie size={24} weight="duotone" />}
           trend="up"
+          isCurrency={false}
         />
       </div>
 
@@ -80,11 +81,11 @@ const FinOverview = ({ stats, challans, expenses }) => {
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 220, width: '100%', justifyContent: 'center' }}>
                 <div 
                   style={{ width: 24, height: `${revenueData[idx] * 1.2}%`, maxHeight: '100%', background: 'linear-gradient(180deg, #4f46e5 0%, #6366f1 100%)', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out', position: 'relative', cursor: 'pointer' }}
-                  title={`Revenue: ₹${revenueData[idx].toFixed(0)}k`}
+                  title={`Revenue: Rs. ${revenueData[idx].toFixed(0)}k`}
                 />
                 <div 
                   style={{ width: 24, height: `${expenseData[idx] * 1.2}%`, maxHeight: '100%', background: '#e2e8f0', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out 0.2s', position: 'relative', cursor: 'pointer' }}
-                  title={`Expenses: ₹${expenseData[idx].toFixed(0)}k`}
+                  title={`Expenses: Rs. ${expenseData[idx].toFixed(0)}k`}
                 />
               </div>
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>{month}</span>
@@ -121,7 +122,7 @@ const FinOverview = ({ stats, challans, expenses }) => {
                   </div>
                 </td>
                 <td>Student Fee</td>
-                <td className="fin-bonus">₹{c.total_amount.toLocaleString()}</td>
+                <td className="fin-bonus">Rs. {c.total_amount.toLocaleString()}</td>
                 <td>{new Date(c.created_at).toLocaleDateString()}</td>
                 <td><span className={`fin-badge fin-badge-${c.status}`}>{c.status}</span></td>
               </tr>
@@ -138,7 +139,7 @@ const FinOverview = ({ stats, challans, expenses }) => {
                   </div>
                 </td>
                 <td>Expense</td>
-                <td className="fin-deduct">₹{e.amount.toLocaleString()}</td>
+                <td className="fin-deduct">Rs. {e.amount.toLocaleString()}</td>
                 <td>{new Date(e.expense_date || e.created_at).toLocaleDateString()}</td>
                 <td><span className="fin-badge fin-badge-paid">Paid</span></td>
               </tr>

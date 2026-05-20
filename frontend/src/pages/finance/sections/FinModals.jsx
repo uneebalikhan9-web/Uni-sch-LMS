@@ -31,8 +31,8 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
 
   const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' };
   const inputStyle = { width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#0f172a', outline: 'none', transition: 'all 0.2s' };
-  const inputFocusStyle = "this.style.borderColor='#4f46e5'; this.style.boxShadow='0 0 0 4px #e0e7ff'; this.style.background='white'";
-  const inputBlurStyle = "this.style.borderColor='#e2e8f0'; this.style.boxShadow='none'; this.style.background='#f8fafc'";
+  const handleFocus = (e) => { e.target.style.borderColor='#4f46e5'; e.target.style.boxShadow='0 0 0 4px #e0e7ff'; e.target.style.background='white'; };
+  const handleBlur = (e) => { e.target.style.borderColor='#e2e8f0'; e.target.style.boxShadow='none'; e.target.style.background='#f8fafc'; };
 
   const renderForm = () => {
     switch (type) {
@@ -41,26 +41,26 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
           <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Select Student</label>
-              <select name="student_id" style={inputStyle} value={formData.student_id ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
+              <select name="student_id" style={inputStyle} value={formData.student_id ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="">Select a student...</option>
                 {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.roll_number})</option>)}
               </select>
             </div>
             <div>
               <label style={labelStyle}>Tuition Fee</label>
-              <input type="number" name="tuition_fee" style={inputStyle} value={formData.tuition_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="tuition_fee" style={inputStyle} value={formData.tuition_fee ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Lab Fee</label>
-              <input type="number" name="lab_fee" style={inputStyle} value={formData.lab_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="lab_fee" style={inputStyle} value={formData.lab_fee ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Library Fee</label>
-              <input type="number" name="library_fee" style={inputStyle} value={formData.library_fee ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="library_fee" style={inputStyle} value={formData.library_fee ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Due Date</label>
-              <input type="date" name="due_date" style={inputStyle} value={formData.due_date ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="date" name="due_date" style={inputStyle} value={formData.due_date ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur} />
             </div>
           </div>
         );
@@ -69,28 +69,28 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
           <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Select Employee</label>
-              <select name="employee_id" style={inputStyle} value={formData.employee_id ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
+              <select name="employee_id" style={inputStyle} value={formData.employee_id ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="">Select an employee...</option>
                 {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.designation})</option>)}
               </select>
             </div>
             <div>
               <label style={labelStyle}>Month</label>
-              <select name="month" style={inputStyle} value={formData.month ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
+              <select name="month" style={inputStyle} value={formData.month ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur}>
                 {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
               <label style={labelStyle}>Basic Salary</label>
-              <input type="number" name="basic_salary" style={inputStyle} value={formData.basic_salary ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="basic_salary" style={inputStyle} value={formData.basic_salary ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Bonus</label>
-              <input type="number" name="bonus" style={inputStyle} value={formData.bonus ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="bonus" style={inputStyle} value={formData.bonus ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Deductions</label>
-              <input type="number" name="deductions" style={inputStyle} value={formData.deductions ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="deductions" style={inputStyle} value={formData.deductions ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
             </div>
           </div>
         );
@@ -99,11 +99,11 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
           <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Expense Title</label>
-              <input type="text" name="title" style={inputStyle} placeholder="e.g. Electricity Bill" value={formData.title ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="text" name="title" style={inputStyle} placeholder="e.g. Electricity Bill" value={formData.title ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
               <label style={labelStyle}>Category</label>
-              <select name="category" style={inputStyle} value={formData.category ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}>
+              <select name="category" style={inputStyle} value={formData.category ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="utilities">Utilities</option>
                 <option value="maintenance">Maintenance</option>
                 <option value="supplies">Supplies</option>
@@ -113,11 +113,11 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
             </div>
             <div>
               <label style={labelStyle}>Amount</label>
-              <input type="number" name="amount" style={inputStyle} value={formData.amount ?? ''} onChange={handleChange} required onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)} />
+              <input type="number" name="amount" style={inputStyle} value={formData.amount ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Description</label>
-              <textarea name="description" style={{...inputStyle, height: '100px', resize: 'none'}} value={formData.description ?? ''} onChange={handleChange} onFocus={(e)=>eval(inputFocusStyle)} onBlur={(e)=>eval(inputBlurStyle)}></textarea>
+              <textarea name="description" style={{...inputStyle, height: '100px', resize: 'none'}} value={formData.description ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur}></textarea>
             </div>
           </div>
         );

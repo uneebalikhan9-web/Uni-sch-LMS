@@ -31,14 +31,14 @@ export const ScheduleExamModal = ({ onClose, onSave }) => {
     };
 
     return (
-        <div className="lib-modal-overlay">
-            <div className="lib-modal">
-                <div className="lib-modal-header">
+        <div className="ex-modal-overlay">
+            <div className="ex-modal">
+                <div className="ex-modal-header">
                     <h2><Plus size={24} weight="bold" color="#4f46e5" /> Schedule New Exam</h2>
-                    <button className="close-btn" onClick={onClose}><X size={20} /></button>
+                    <button className="ex-modal-close" onClick={onClose}><X size={20} /></button>
                 </div>
-                <form onSubmit={handleSubmit} className="lib-modal-body">
-                    <div className="form-group">
+                <form onSubmit={handleSubmit} className="ex-modal-body">
+                    <div className="ex-form-group">
                         <label>Select Course</label>
                         <select 
                             required
@@ -49,17 +49,18 @@ export const ScheduleExamModal = ({ onClose, onSave }) => {
                             {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                         </select>
                     </div>
-                    <div className="form-group">
+                    <div className="ex-form-group">
                         <label>Exam Name (e.g. Final Term Spring 2026)</label>
                         <input 
                             required
                             type="text" 
                             value={formData.name} 
+                            placeholder="e.g. Midterm Examination"
                             onChange={e => setFormData({...formData, name: e.target.value})}
                         />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                        <div className="form-group">
+                        <div className="ex-form-group">
                             <label>Exam Date</label>
                             <input 
                                 required
@@ -68,7 +69,7 @@ export const ScheduleExamModal = ({ onClose, onSave }) => {
                                 onChange={e => setFormData({...formData, exam_date: e.target.value})}
                             />
                         </div>
-                        <div className="form-group">
+                        <div className="ex-form-group">
                             <label>Max Marks</label>
                             <input 
                                 type="number" 
@@ -77,17 +78,18 @@ export const ScheduleExamModal = ({ onClose, onSave }) => {
                             />
                         </div>
                     </div>
-                    <div className="form-group">
+                    <div className="ex-form-group">
                         <label>Room Number / Location</label>
                         <input 
                             type="text" 
+                            placeholder="e.g. Room 302"
                             value={formData.room_number} 
                             onChange={e => setFormData({...formData, room_number: e.target.value})}
                         />
                     </div>
-                    <div className="lib-modal-footer">
-                        <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
-                        <button type="submit" className="btn-primary" style={{ background: '#4f46e5' }}>Create Schedule</button>
+                    <div className="ex-modal-footer">
+                        <button type="button" className="ex-btn-secondary" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="ex-btn-primary">Create Schedule</button>
                     </div>
                 </form>
             </div>
@@ -106,9 +108,7 @@ export const ProcessResultsModal = ({ exam, onClose, onSave }) => {
                 const res = await axios.get(`${API_BASE_URL}/api/classes`, {
                     headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
                 });
-                // This is a simplification, ideally we fetch students for this specific exam/course
                 if (res.data.success) {
-                    // For demo, we'll use all students if we can't filter precisely
                     const allRes = await axios.get(`${API_BASE_URL}/api/users`, {
                         headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
                     });
@@ -129,24 +129,27 @@ export const ProcessResultsModal = ({ exam, onClose, onSave }) => {
     };
 
     return (
-        <div className="lib-modal-overlay">
-            <div className="lib-modal" style={{ maxWidth: '600px' }}>
-                <div className="lib-modal-header">
+        <div className="ex-modal-overlay">
+            <div className="ex-modal" style={{ maxWidth: '600px' }}>
+                <div className="ex-modal-header">
                     <h2><CheckCircle size={24} weight="bold" color="#10b981" /> Grading: {exam.name}</h2>
-                    <button className="close-btn" onClick={onClose}><X size={20} /></button>
+                    <button className="ex-modal-close" onClick={onClose}><X size={20} /></button>
                 </div>
-                <div className="lib-modal-body">
-                    <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: 20 }}>
+                <div className="ex-modal-body">
+                    <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 20px', fontWeight: 500 }}>
                         Enter marks for students enrolled in this course. Maximum marks: {exam.max_marks || 100}
                     </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
                         {students.map(s => (
-                            <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '12px', background: '#f8fafc', borderRadius: 12 }}>
-                                <div style={{ flex: 1, fontWeight: 700 }}>{s.name}</div>
+                            <div key={s.id} className="ex-student-grading-row">
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontWeight: 700, color: '#0f172a' }}>{s.name}</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: 2 }}>{s.email}</div>
+                                </div>
                                 <input 
                                     type="number" 
                                     placeholder="Marks"
-                                    style={{ width: '80px', padding: '8px', borderRadius: 8, border: '1.5px solid #e2e8f0' }}
+                                    style={{ width: '100px', padding: '8px 12px', borderRadius: 12, border: '1.5px solid #e2e8f0', fontWeight: 600, textAlign: 'center', background: '#f8fafc' }}
                                     value={results[s.id] || ''}
                                     onChange={e => setResults({...results, [s.id]: e.target.value})}
                                 />
@@ -154,11 +157,12 @@ export const ProcessResultsModal = ({ exam, onClose, onSave }) => {
                         ))}
                     </div>
                 </div>
-                <div className="lib-modal-footer">
-                    <button className="btn-secondary" onClick={onClose}>Cancel</button>
-                    <button className="btn-primary" style={{ background: '#10b981' }} onClick={handleSave}>Publish Results</button>
+                <div className="ex-modal-footer">
+                    <button className="ex-btn-secondary" onClick={onClose}>Cancel</button>
+                    <button className="ex-btn-primary" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.2)' }} onClick={handleSave}>Publish Results</button>
                 </div>
             </div>
         </div>
     );
 };
+

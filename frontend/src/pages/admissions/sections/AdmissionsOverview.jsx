@@ -1,6 +1,5 @@
 import React from 'react';
 import { Users, FileText, Calendar, GraduationCap, TrendUp, ChartLineUp } from '@phosphor-icons/react';
-import { S } from './ADStyles';
 
 const AdmissionsOverview = ({ stats, activities }) => {
   const metrics = [
@@ -25,32 +24,32 @@ const AdmissionsOverview = ({ stats, activities }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="metrics-grid">
+      <div className="adm-metrics-grid">
         {metrics.map((metric, idx) => (
-          <div key={idx} className="metric-card">
-            <div className="metric-header">
-              <span className="metric-label">{metric.title}</span>
-              <div className="metric-icon-box" style={{ background: `${metric.color}10`, color: metric.color }}>
+          <div key={idx} className="adm-metric-card">
+            <div className="adm-metric-header">
+              <span className="adm-metric-label">{metric.title}</span>
+              <div className="adm-metric-icon-box" style={{ background: `${metric.color}10`, color: metric.color }}>
                 <metric.icon size={22} weight="duotone" />
               </div>
             </div>
-            <div className="metric-value">{metric.value}</div>
-            <div className="metric-trend">
-              <div className="trend-badge">
+            <div className="adm-metric-value">{metric.value}</div>
+            <div className="adm-metric-trend">
+              <div className="adm-trend-badge">
                 <TrendUp size={14} weight="bold" />
                 <span>{metric.change}</span>
               </div>
-              <span className="trend-label">vs last month</span>
+              <span className="adm-trend-label">vs last month</span>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="funnel-activity-row">
-        <div className="card">
-          <div className="card-header">
+      <div className="adm-funnel-activity-row">
+        <div className="adm-card">
+          <div className="adm-card-header">
             <div>
-              <h2 className="card-title">Enrollment Velocity</h2>
+              <h2 className="adm-card-title">Enrollment Velocity</h2>
               <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Funnel conversion throughput</p>
             </div>
             <div style={{ background: '#f5f3ff', padding: '6px 14px', borderRadius: '10px', color: '#4f46e5', fontWeight: 700, fontSize: '0.75rem' }}>
@@ -58,27 +57,27 @@ const AdmissionsOverview = ({ stats, activities }) => {
             </div>
           </div>
           
-          <div className="funnel-container">
+          <div className="adm-funnel-container">
             {funnelData.map((stage, idx) => {
               const h = Math.max(stage.height, 10);
               return (
-                <div key={idx} className="funnel-bar-wrapper">
-                  <div className="bar-container">
-                    <div className="funnel-bar" style={{ height: `${h}%` }}>
-                      <div className="funnel-value">{stage.count}</div>
+                <div key={idx} className="adm-funnel-bar-wrapper">
+                  <div className="adm-bar-container">
+                    <div className="adm-funnel-bar" style={{ height: `${h}%` }}>
+                      <div className="adm-funnel-value">{stage.count}</div>
                     </div>
                   </div>
-                  <div className="funnel-label">{stage.stage}</div>
-                  <div className="funnel-percent">{Math.round(h)}%</div>
+                  <div className="adm-funnel-label">{stage.stage}</div>
+                  <div className="adm-funnel-percent">{Math.round(h)}%</div>
                 </div>
               )
             })}
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h2 className="card-title">Recent Logs</h2>
+        <div className="adm-card">
+          <div className="adm-card-header">
+            <h2 className="adm-card-title">Recent Logs</h2>
             <ChartLineUp size={20} color="#64748b" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

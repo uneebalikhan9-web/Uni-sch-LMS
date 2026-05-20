@@ -1,4 +1,4 @@
-import { Buildings, BookOpen, Users, GraduationCap, Trash } from "@phosphor-icons/react";
+import { Buildings, BookOpen, Users, GraduationCap, Trash, CheckCircle } from "@phosphor-icons/react";
 import { S } from "./TDStyles";
 
 export default function TDClasses({ teacherClasses, courses, selectedClassId, setSelectedClassId, fetchClassCourses, handleManageGrades, handleGenerateReport }) {
@@ -71,7 +71,9 @@ export default function TDClasses({ teacherClasses, courses, selectedClassId, se
                         {course.status !== 'completed' && (
                           <button onClick={() => handleGenerateReport(course.id, course.title)}
                             style={{ ...S.iconBtn, color:'#22c55e', fontSize:'10px', padding:'6px 10px', gap:'4px', display:'flex', alignItems:'center', background:'#dcfce7', borderRadius:'8px', border:'none', cursor:'pointer', fontWeight:600 }}
-                            title="Mark Complete & Generate Report">✅ Complete</button>
+                            title="Mark Complete & Generate Report">
+                            <CheckCircle size={14} weight="fill" /> Complete
+                          </button>
                         )}
                         <button style={S.deleteIconBtn}><Trash size={16} /></button>
                       </div>

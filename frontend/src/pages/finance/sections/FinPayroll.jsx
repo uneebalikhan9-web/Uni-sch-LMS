@@ -5,7 +5,7 @@ import {
 } from "@phosphor-icons/react";
 
 const FinPayroll = ({ payroll, onAction }) => {
-  const [filterMonth, setFilterMonth] = useState('January');
+  const [filterMonth, setFilterMonth] = useState('May');
   
   const handleDisburse = async (id) => {
     onAction('POST', `/payroll/${id}/disburse`);
@@ -63,10 +63,10 @@ const FinPayroll = ({ payroll, onAction }) => {
                 </td>
                 <td>{p.designation}</td>
                 <td>{p.month} {p.year}</td>
-                <td>₹{(p.basic_salary || 0).toLocaleString()}</td>
-                <td className="fin-bonus">₹{(p.bonus || 0).toLocaleString()}</td>
-                <td className="fin-deduct">₹{(p.deductions || 0).toLocaleString()}</td>
-                <td style={{ fontWeight: '700' }}>₹{(p.net_payable || 0).toLocaleString()}</td>
+                <td>Rs. {(p.basic_salary || 0).toLocaleString()}</td>
+                <td className="fin-bonus">Rs. {(p.bonus || 0).toLocaleString()}</td>
+                <td className="fin-deduct">Rs. {(p.deductions || 0).toLocaleString()}</td>
+                <td style={{ fontWeight: '700' }}>Rs. {(p.net_payable || 0).toLocaleString()}</td>
                 <td>
                   <span className={`fin-badge fin-badge-${p.status}`}>
                     {p.status}

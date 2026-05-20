@@ -215,6 +215,8 @@ function Chat() {
   }
 
   const handleLogout = () => {
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
     sessionStorage.removeItem('user')
     sessionStorage.removeItem('token')
     navigate('/signin')

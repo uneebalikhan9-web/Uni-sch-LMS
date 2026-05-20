@@ -1,0 +1,338 @@
+2026-05-13T15:29:49.062Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:29:49.079Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:29:49.088Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:29:49.096Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.108Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:29:49.118Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.138Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.163Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.172Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.183Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:29:49.192Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.198Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:29:49.203Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.066Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.090Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.095Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.101Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.107Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.114Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.137Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.145Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.155Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+2026-05-13T15:30:49.162Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.224Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.255Z - Token Error: Unknown database 'lancersnexus_mastercore'
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Unknown database 'lancersnexus_mastercore'
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:149:13)
+    at Route.dispatch (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\route.js:119:3)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:284:15
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+2026-05-13T15:30:49.260Z - Token Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+Token: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJub3VtYW5AZ21haWwuY29tIiwicm9sZSI6InByaW5jaXBhbCIsImNhbXB1c19pZCI6MSwic3R1ZGVudF9pZCI6bnVsbCwiZW1wbG95ZWVfaWQiOjEsImlhdCI6MTc3ODY4NTk2MSwiZXhwIjoxNzc4NzcyMzYxfQ.BxqUD3SuSe7YI4MrpYU8is5rZAOOKHLWBKz07I_qfcI
+Stack: Error: Table 'lancersnexus_mastercore.employees' doesn't exist
+    at PromisePool.query (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\mysql2\lib\promise\pool.js:36:22)
+    at verifyToken (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\middleware\auth.js:24:37)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)
+    at trim_prefix (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:328:13)
+    at C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:286:9
+    at Function.process_params (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:346:12)
+    at next (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:280:10)
+    at Function.handle (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:175:3)
+    at router (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\index.js:47:12)
+    at Layer.handle [as handle_request] (C:\Users\I.s computer\Desktop\University Lancers tech Lms\backend\node_modules\express\lib\router\layer.js:95:5)

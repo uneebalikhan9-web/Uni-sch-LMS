@@ -16,7 +16,7 @@ function MetricBox({ label, value, icon, color, trend }) {
   );
 }
 
-export default function TDOverview({ stats = {}, timetable = [], pendingCount = 0, setActivePage }) {
+export default function TDOverview({ stats = {}, timetable = [], pendingCount = 0, setActivePage, myLeaves = [] }) {
   const chartRef  = useRef(null);
   const chartInst = useRef(null);
   
@@ -106,6 +106,78 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
             <button onClick={() => setActivePage('grades')}      style={S.secondarySmallBtn}><ChalkboardTeacher size={18} /> Update Grades</button>
             <button onClick={() => setActivePage('assignments')} style={S.secondarySmallBtn}><FileText size={18} /> New Assignment</button>
           </div>
+        </div>
+
+        <div style={S.quickActionsCard}>
+          <h4 style={S.sectionTitle}>Leaves & Attendance</h4>
+          {myLeaves && myLeaves.length > 0 ? (
+            <div>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
+                borderRadius: '16px',
+                padding: '16px',
+                border: '1px solid rgba(79, 70, 229, 0.1)',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: '#1e293b' }}>{myLeaves[0].type} Leave</span>
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      background: myLeaves[0].status === 'Approved' ? 'rgba(16, 185, 129, 0.1)' : myLeaves[0].status === 'Rejected' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(245, 158, 11, 0.1)',
+                      color: myLeaves[0].status === 'Approved' ? '#10b981' : myLeaves[0].status === 'Rejected' ? '#ef4444' : '#f59e0b',
+                    }}>
+                      {myLeaves[0].status}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0, fontWeight: 600 }}>{myLeaves[0].days}</p>
+                </div>
+                <button 
+                  onClick={() => setActivePage('my-leaves')}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#4f46e5',
+                    fontSize: '0.8rem',
+                    fontWeight: 800,
+                    cursor: 'pointer'
+                  }}
+                >
+                  View All
+                </button>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', margin: 0 }}>
+                <strong>Reason:</strong> "{myLeaves[0].reason || 'N/A'}"
+              </p>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+              <p style={{ fontSize: '0.85rem', color: '#64748b', fontWeight: 600, margin: '0 0 16px 0' }}>No leave requests submitted yet.</p>
+              <button 
+                onClick={() => setActivePage('my-leaves')}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)',
+                  color: '#4f46e5',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Apply for Leave
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

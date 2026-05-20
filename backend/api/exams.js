@@ -75,9 +75,11 @@ router.get('/results/:examId', verifyToken, async (req, res) => {
         const [rows] = await pool.query(`
             SELECT er.*, u.name as student_name, s.roll_number 
             FROM exam_results er
+            JOIN exams e ON er.exam_id = e.id
+            JOIN enrollments en ON er.student_id = en.student_id AND e.course_id = en.course_id
             JOIN students s ON er.student_id = s.id
             JOIN users u ON s.user_id = u.id
-            WHERE er.exam_id = ?
+            WHERE er.exam_id = ? AND en.status = 'approved'
         `, [examId]);
         res.json({ success: true, results: rows });
     } catch (error) {
@@ -111,6 +113,24 @@ router.post('/results', verifyToken, async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     } finally {
         connection.release();
+    }
+});
+
+// Get My Exam Schedule (Student Role)
+router.get('/student-schedule', verifyToken, async (req, res) => {
+    try {
+        const studentId = req.user.student_id;
+        const [rows] = await pool.query(`
+            SELECT e.*, c.title as course_name 
+            FROM exams e
+            JOIN courses c ON e.course_id = c.id
+            JOIN enrollments en ON c.id = en.course_id
+            WHERE en.student_id = ? AND en.status = 'approved'
+            ORDER BY e.exam_date ASC
+        `, [studentId]);
+        res.json({ success: true, exams: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 

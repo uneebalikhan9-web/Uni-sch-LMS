@@ -4,8 +4,11 @@ import {
   Users, ChalkboardTeacher, GraduationCap, 
   ChartLineUp, ArrowUp, ArrowDown, DotsThree
 } from '@phosphor-icons/react';
+import { useToast } from '../../../components/Toast';
 
-const RDOverview = ({ stats = {}, departments = [] }) => {
+const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) => {
+  const { showToast } = useToast();
+
   const kpis = [
     { label: 'Total Enrollment', val: stats.totalEnrollment || '0', trend: stats.growthTrend || '+0%', up: true, icon: Users, color: '#3b82f6' },
     { label: 'Faculty Members', val: stats.facultyStrength || '0', trend: '+3%', up: true, icon: ChalkboardTeacher, color: '#8b5cf6' },
@@ -13,8 +16,12 @@ const RDOverview = ({ stats = {}, departments = [] }) => {
     { label: 'Uni. Ranking', val: '#42 National', trend: '-2', up: true, icon: ChartLineUp, color: '#f59e0b' },
   ];
 
+  const handleAction = (action) => {
+    showToast(`Action Triggered: ${action}. Processing request...`, 'success');
+  };
+
   return (
-    <div style={{display:'flex', flexDirection:'column', gap:'32px'}}>
+    <div style={{display:'flex', flexDirection:'column', gap:'32px'}} key={leftSidebarOpen ? 'open' : 'closed'}>
       {/* KPI Cards */}
       <div style={S.statsGrid}>
         {kpis.map((kpi, i) => (
@@ -67,7 +74,11 @@ const RDOverview = ({ stats = {}, departments = [] }) => {
           <h3 style={S.cardTitle}>Executive Actions</h3>
           <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
             {['Approve New Program', 'Faculty Appraisal Cycle', 'Accreditation Review', 'Budget Sign-off'].map((action, i) => (
-              <button key={i} style={{padding:'16px', background:'#f1f5f9', border:'none', borderRadius:'16px', color:'#1e3a8a', fontWeight:'700', fontSize:'0.9rem', cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between'}}>
+              <button 
+                key={i} 
+                onClick={() => handleAction(action)}
+                style={{padding:'16px', background:'#f1f5f9', border:'none', borderRadius:'16px', color:'#1e3a8a', fontWeight:'700', fontSize:'0.9rem', cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between'}}
+              >
                 {action} <span>→</span>
               </button>
             ))}

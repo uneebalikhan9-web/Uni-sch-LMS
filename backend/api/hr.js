@@ -4,6 +4,44 @@ const { pool: db } = require('../config/database');
 const { verifyToken, isHRManager } = require('../middleware/auth');
 
 router.use(verifyToken);
+
+// Get My Leave Requests (Universal for all portal roles)
+router.get('/my-leaves', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                id,
+                leave_type AS type,
+                CONCAT(DATE_FORMAT(start_date, '%b %d, %Y'), ' - ', DATE_FORMAT(end_date, '%b %d, %Y')) AS days,
+                status,
+                reason,
+                created_at
+            FROM hr_leave_requests
+            WHERE user_id = ?
+            ORDER BY created_at DESC
+        `;
+        const [requests] = await db.query(query, [req.user.id]);
+        res.json({ success: true, leaves: requests });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching your leaves', error: error.message });
+    }
+});
+
+// Submit New Leave Request (Universal for all portal roles)
+router.post('/my-leaves', async (req, res) => {
+    const { leave_type, start_date, end_date, reason } = req.body;
+    try {
+        await db.query(`
+            INSERT INTO hr_leave_requests (user_id, leave_type, start_date, end_date, status, reason)
+            VALUES (?, ?, ?, ?, 'pending', ?)
+        `, [req.user.id, leave_type || 'Casual', start_date, end_date, reason || '']);
+        
+        res.json({ success: true, message: 'Leave request submitted successfully to HR' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error submitting leave request', error: error.message });
+    }
+});
+
 router.use(isHRManager);
 
 // Middleware is now applied globally to the router
@@ -53,11 +91,28 @@ router.get('/employees', verifyToken, async (req, res) => {
                 u.role as system_role, 
                 u.status, 
                 u.created_at, 
-                e.designation as designation, 
-                d.name as department
+                COALESCE(e.designation, 
+                    CASE 
+                        WHEN u.role = 'teacher' THEN 'Lecturer'
+                        WHEN u.role = 'principal' THEN 'Head of Department'
+                        WHEN u.role = 'hr_manager' THEN 'HR Manager'
+                        WHEN u.role = 'finance_manager' THEN 'Finance Manager'
+                        ELSE 'Staff'
+                    END
+                ) as designation, 
+                COALESCE(d.name, 
+                    CASE 
+                        WHEN u.role = 'teacher' THEN 'Computer Science'
+                        WHEN u.role = 'principal' THEN 'Computer Science'
+                        WHEN u.role = 'hr_manager' THEN 'Human Resources'
+                        WHEN u.role = 'finance_manager' THEN 'Finance & Accounts'
+                        ELSE 'General Administration'
+                    END
+                ) as department
             FROM users u
             LEFT JOIN employees e ON u.id = e.user_id
             LEFT JOIN departments d ON e.department_id = d.id
+            WHERE u.role NOT IN ('student', 'super_admin')
             ORDER BY u.created_at DESC
         `;
         const [employees] = await db.query(query);
@@ -124,7 +179,14 @@ router.delete('/employees/:id', verifyToken, async (req, res) => {
 router.get('/leave-requests', verifyToken, async (req, res) => {
     try {
         const query = `
-            SELECT lr.*, u.name 
+            SELECT 
+                lr.id,
+                lr.user_id,
+                lr.status,
+                lr.reason,
+                lr.leave_type AS type,
+                CONCAT(DATE_FORMAT(lr.start_date, '%b %d, %Y'), ' - ', DATE_FORMAT(lr.end_date, '%b %d, %Y')) AS days,
+                u.name 
             FROM hr_leave_requests lr
             JOIN users u ON lr.user_id = u.id
             ORDER BY lr.created_at DESC
@@ -132,6 +194,17 @@ router.get('/leave-requests', verifyToken, async (req, res) => {
         const [requests] = await db.query(query);
         res.json(requests);
     } catch (e) { res.json([]); }
+});
+
+// Update Leave Request Status
+router.post('/leave-requests/:id/status', verifyToken, async (req, res) => {
+    const { status } = req.body;
+    try {
+        await db.query('UPDATE hr_leave_requests SET status = ? WHERE id = ?', [status, req.params.id]);
+        res.json({ success: true, message: `Leave request status updated to ${status}` });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error updating leave request status' });
+    }
 });
 
 // --- RECRUITMENT ---
@@ -153,6 +226,16 @@ router.post('/jobs', verifyToken, async (req, res) => {
         res.json({ success: true, message: 'Job vacancy posted' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error posting job' });
+    }
+});
+
+// Delete Job Posting
+router.delete('/jobs/:id', verifyToken, async (req, res) => {
+    try {
+        await db.query('DELETE FROM hr_job_postings WHERE id = ?', [req.params.id]);
+        res.json({ success: true, message: 'Job posting deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error deleting job posting' });
     }
 });
 

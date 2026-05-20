@@ -1,4 +1,4 @@
-import { Plus, Trash, Buildings, Users, Envelope, ShieldCheck, Calendar, UserCirclePlus } from "@phosphor-icons/react";
+import { Plus, Trash, Buildings, Users, Envelope, ShieldCheck, Calendar, UserCirclePlus, PencilSimple } from "@phosphor-icons/react";
 import { S } from "./SAStyles";
 
 export default function SAStaffManagement({
@@ -6,8 +6,14 @@ export default function SAStaffManagement({
   staffList, departments,
   showAddModal, setShowAddModal,
   newItem, setNewItem,
-  onAdd, onDelete
+  onAdd, onDelete,
+  editingItem, setEditingItem
 }) {
+  const handleOpenEdit = (item) => {
+    setEditingItem({ ...item, password: "" });
+    setShowAddModal(true);
+  };
+
   return (
     <>
       <div style={S.tableCard}>
@@ -18,7 +24,11 @@ export default function SAStaffManagement({
             </div>
             <h2 style={S.tableTitle}>{title}</h2>
           </div>
-          <button onClick={() => { setShowAddModal(true); }} style={S.addBtn} className="add-btn">
+          <button 
+            onClick={() => { setEditingItem(null); setShowAddModal(true); }} 
+            style={S.addBtn} 
+            className="add-btn"
+          >
             <UserCirclePlus size={18} weight="bold" />
             <span>Add {title.slice(0, -1)}</span>
           </button>
@@ -67,13 +77,24 @@ export default function SAStaffManagement({
                       </div>
                     </td>
                     <td style={{...S.td, textAlign: 'right'}}>
-                      <button 
-                        style={S.deleteBtn} 
-                        onClick={() => onDelete(item.id)} 
-                        title="Remove Member"
-                      >
-                        <Trash size={16} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                        <button 
+                          style={{...S.deleteBtn, color: '#4f46e5', borderColor: '#e0e7ff'}} 
+                          onClick={() => handleOpenEdit(item)} 
+                          title="Edit Member"
+                          className="edit-btn"
+                        >
+                          <PencilSimple size={16} />
+                        </button>
+                        <button 
+                          style={S.deleteBtn} 
+                          onClick={() => onDelete(item.id)} 
+                          title="Remove Member"
+                          className="delete-btn"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -83,12 +104,12 @@ export default function SAStaffManagement({
         </div>
       </div>
 
-      {/* Add Staff Modal */}
+      {/* Add/Edit Staff Modal */}
       {showAddModal && (
-        <div style={S.overlay} onClick={() => setShowAddModal(false)}>
+        <div style={S.overlay} onClick={() => { setShowAddModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={S.modalTitle}>Create New {title.slice(0, -1)}</h3>
+              <h3 style={S.modalTitle}>{editingItem ? `Edit ${title.slice(0, -1)}` : `Create New ${title.slice(0, -1)}`}</h3>
               <div style={{ padding: '8px', background: '#f5f3ff', color: '#4f46e5', borderRadius: '10px' }}>
                 <ShieldCheck size={24} weight="duotone" />
               </div>
@@ -100,8 +121,8 @@ export default function SAStaffManagement({
                 <input 
                   placeholder="e.g., Salman Khan" 
                   required
-                  value={newItem.name} 
-                  onChange={e => setNewItem({...newItem, name: e.target.value})} 
+                  value={editingItem ? editingItem.name : newItem.name} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, name: e.target.value}) : setNewItem({...newItem, name: e.target.value})} 
                   style={S.input} 
                 />
               </div>
@@ -112,21 +133,21 @@ export default function SAStaffManagement({
                   placeholder="staff@lancerstech.com" 
                   required 
                   type="email"
-                  value={newItem.email} 
-                  onChange={e => setNewItem({...newItem, email: e.target.value})} 
+                  value={editingItem ? editingItem.email : newItem.email} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, email: e.target.value}) : setNewItem({...newItem, email: e.target.value})} 
                   style={S.input} 
                 />
               </div>
               
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Password</label>
+                <label style={S.inputLabel}>Password {editingItem && "(leave blank to keep current)"}</label>
                 <input 
                   placeholder="••••••••" 
-                  required 
+                  required={!editingItem}
                   type="password" 
                   autoComplete="new-password"
-                  value={newItem.password} 
-                  onChange={e => setNewItem({...newItem, password: e.target.value})} 
+                  value={editingItem ? editingItem.password : newItem.password} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewItem({...newItem, password: e.target.value})} 
                   style={S.input} 
                 />
               </div>
@@ -135,8 +156,8 @@ export default function SAStaffManagement({
                 <label style={S.inputLabel}>Assign to Campus / Department</label>
                 <select 
                   required
-                  value={newItem.campus_id} 
-                  onChange={e => setNewItem({...newItem, campus_id: e.target.value})} 
+                  value={editingItem ? editingItem.campus_id : newItem.campus_id} 
+                  onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewItem({...newItem, campus_id: e.target.value})} 
                   style={S.input}
                 >
                   <option value="">Select a Campus...</option>
@@ -145,8 +166,8 @@ export default function SAStaffManagement({
               </div>
               
               <div style={S.modalActions}>
-                <button type="button" onClick={() => setShowAddModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>Create Account</button>
+                <button type="button" onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.cancelBtn}>Cancel</button>
+                <button type="submit" style={S.saveBtn}>{editingItem ? "Update Account" : "Create Account"}</button>
               </div>
             </form>
           </div>

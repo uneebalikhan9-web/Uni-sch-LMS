@@ -11,6 +11,7 @@ function TeacherSignIn() {
     email: '',
     password: ''
   })
+  const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -41,6 +42,14 @@ function TeacherSignIn() {
       if (data.success) {
         sessionStorage.setItem('user', JSON.stringify(data.user))
         sessionStorage.setItem('token', data.token)
+
+        if (rememberMe) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('token', data.token)
+        } else {
+          localStorage.removeItem('user')
+          localStorage.removeItem('token')
+        }
         navigate('/teacher/dashboard')
       } else {
         setError(data.message || 'Invalid email or password')
@@ -146,12 +155,12 @@ function TeacherSignIn() {
 
             <div className="form-aux-options">
               <label className="custom-checkbox">
-                <input type="checkbox" />
-                <span className="label-text">Remember me for 30 days</span>
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+                <span className="label-text">Remember me</span>
               </label>
-              <Link to="/forgot-password" style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'none' }}>
+              {/* <Link to="/forgot-password" style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'none' }}>
                 Forgot Password?
-              </Link>
+              </Link> */}
             </div>
 
             <button type="submit" className="prime-btn" disabled={loading}>

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Checks, X, FileText, FilePdf, Image, MagnifyingGlass, DownloadSimple } from '@phosphor-icons/react';
-import { S } from './ADStyles';
+import { FileText, FilePdf, Image, DownloadSimple } from '@phosphor-icons/react';
 
 const AdmissionsVerification = ({ documents, onAction }) => {
   const getFileIcon = (type) => {
@@ -11,19 +10,19 @@ const AdmissionsVerification = ({ documents, onAction }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="card">
-        <div className="card-header">
+      <div className="adm-card">
+        <div className="adm-card-header">
           <div>
-            <h2 className="card-title">Verification Center</h2>
+            <h2 className="adm-card-title">Verification Center</h2>
             <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Review applicant transcripts and credentials</p>
           </div>
-          <div className="status-badge status-pending">
+          <div className="adm-status-badge adm-status-pending">
             Pending: {documents.filter(d => d.status === 'pending').length}
           </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+          <table className="adm-data-table">
             <thead>
               <tr>
                 <th>Applicant</th>
@@ -52,7 +51,7 @@ const AdmissionsVerification = ({ documents, onAction }) => {
                   </td>
                   <td>{doc.date}</td>
                   <td>
-                    <span className={`status-badge status-${doc.status?.toLowerCase()}`}>
+                    <span className={`adm-status-badge adm-status-${doc.status?.toLowerCase()}`}>
                       {doc.status}
                     </span>
                   </td>
@@ -60,11 +59,11 @@ const AdmissionsVerification = ({ documents, onAction }) => {
                     <div style={{ display: 'flex', gap: 8 }}>
                       {doc.status === 'pending' ? (
                         <>
-                          <button onClick={() => onAction(doc.id, 'verified')} className="verify-btn">Verify</button>
-                          <button onClick={() => onAction(doc.id, 'rejected')} className="reject-btn">Reject</button>
+                          <button onClick={() => onAction(doc.id, 'verified')} className="adm-verify-btn">Verify</button>
+                          <button onClick={() => onAction(doc.id, 'rejected')} className="adm-reject-btn">Reject</button>
                         </>
                       ) : (
-                        <button className="schedule-btn"><DownloadSimple size={14} weight="bold" /> View File</button>
+                        <button className="adm-schedule-btn"><DownloadSimple size={14} weight="bold" /> View File</button>
                       )}
                     </div>
                   </td>

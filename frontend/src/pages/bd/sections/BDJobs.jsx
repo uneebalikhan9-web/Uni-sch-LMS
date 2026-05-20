@@ -19,6 +19,23 @@ export default function BDJobs({ jobs, openEdit, handleDelete, showToast }) {
           >
             Copy
           </button>
+          <button
+            onClick={() => { window.open(`${window.location.origin}/apply`, '_blank'); }}
+            style={{
+              background: 'rgba(255, 255, 255, 0.15)',
+              color: '#fff',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              padding: '12px 24px',
+              borderRadius: '16px',
+              cursor: 'pointer',
+              fontWeight: '800',
+              fontSize: '0.9rem',
+              transition: 'all 0.2s ease',
+              marginLeft: '8px'
+            }}
+          >
+            Open
+          </button>
         </div>
       </div>
 
@@ -42,10 +59,10 @@ export default function BDJobs({ jobs, openEdit, handleDelete, showToast }) {
                   <td style={S.tdName}>
                     {j.title}
                     <button
-                      onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/apply/${j.invite_token || j.id}`); showToast('Application link copied!', 'success'); }}
+                      onClick={() => { window.open(`${window.location.origin}/apply/${j.invite_token || j.id}`, '_blank'); }}
                       style={S.copyLinkBtn}
                     >
-                      🔗 Copy apply link
+                      🔗 Open Apply Page
                     </button>
                   </td>
                   <td style={S.td}>{j.subject || '—'}</td>

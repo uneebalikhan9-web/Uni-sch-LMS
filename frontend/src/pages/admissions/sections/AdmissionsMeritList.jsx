@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Medal, CheckCircle, Trophy, UserList, ArrowBendRightUp, ShareNetwork } from '@phosphor-icons/react';
-import { S } from './ADStyles';
+import { UserList, ArrowBendRightUp, ShareNetwork } from '@phosphor-icons/react';
 
 const AdmissionsMeritList = ({ meritList }) => {
   const [list, setList] = useState(meritList || []);
@@ -19,24 +18,24 @@ const AdmissionsMeritList = ({ meritList }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className="card">
-        <div className="card-header">
+      <div className="adm-card">
+        <div className="adm-card-header">
           <div>
-            <h2 className="card-title">Merit & Rankings</h2>
+            <h2 className="adm-card-title">Merit & Rankings</h2>
             <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Official candidate standing based on aggregate performance</p>
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={handleGenerate} className="secondary-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={handleGenerate} className="adm-secondary-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ArrowBendRightUp size={18} weight="bold" /> Generate
             </button>
-            <button onClick={handlePublish} className="primary-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={handlePublish} className="adm-primary-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ShareNetwork size={18} weight="bold" /> Publish
             </button>
           </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+          <table className="adm-data-table">
             <thead>
               <tr>
                 <th>Rank</th>
@@ -50,7 +49,7 @@ const AdmissionsMeritList = ({ meritList }) => {
               {list.map((student, idx) => (
                 <tr key={student.id || idx}>
                   <td>
-                    <div className="rank-badge">#{idx + 1}</div>
+                    <div className="adm-rank-badge">#{idx + 1}</div>
                   </td>
                   <td>
                     <div style={{ fontWeight: 700, color: '#0f172a' }}>{student.name}</div>
@@ -62,7 +61,7 @@ const AdmissionsMeritList = ({ meritList }) => {
                     <div style={{ fontWeight: 900, color: '#4f46e5', fontSize: '1.1rem' }}>{student.score}%</div>
                   </td>
                   <td>
-                    <span className="status-badge status-verified">
+                    <span className="adm-status-badge adm-status-verified">
                       {student.status || 'Selected'}
                     </span>
                   </td>

@@ -45,8 +45,8 @@ const getChatVisibilityFilter = (user) => {
       `,
       params: [myId, campusId, campusId]
     };
-  } else if (role === 'rector') {
-    // Rector sees EVERYONE across ALL campuses (except super_admin)
+  } else if (['rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager'].includes(role)) {
+    // Masters see EVERYONE across ALL campuses (except super_admin)
     return {
       condition: `u.id != ? AND u.role != 'super_admin'`,
       params: [myId]

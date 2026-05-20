@@ -9,7 +9,7 @@ import { S } from "./PDStyles";
 
 export default function PDOverview({
   teachers, students, classes, courses, pendingStudents,
-  logs, engagementData, setActiveTab, setShowAddModal
+  logs, engagementData, setActiveTab, setShowAddModal, rightPanelOpen, leftSidebarOpen
 }) {
   const chartRef  = useRef(null);
   const chartInst = useRef(null);
@@ -22,41 +22,50 @@ export default function PDOverview({
   useEffect(() => {
     if (!chartRef.current) return;
     if (chartInst.current) chartInst.current.destroy();
-    chartInst.current = new Chart(chartRef.current.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: engagementData.labels,
-        datasets: [{
-          label: 'Activity',
-          data: engagementData.data,
-          borderColor: '#7c3aed',
-          backgroundColor: 'rgba(124,58,237,0.1)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 5,
-          pointHoverRadius: 8,
-          pointBackgroundColor: '#7c3aed',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          borderWidth: 3,
-        }],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#94a3b8' },
+    
+    // Add a tiny 250ms delay so that the parent container has finished transitioning its width
+    // before Chart.js renders. This ensures the canvas has the correct container width.
+    const timer = setTimeout(() => {
+      chartInst.current = new Chart(chartRef.current.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: engagementData.labels,
+          datasets: [{
+            label: 'Activity',
+            data: engagementData.data,
+            borderColor: '#7c3aed',
+            backgroundColor: 'rgba(124,58,237,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#7c3aed',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 2,
+            borderWidth: 3,
+          }],
         },
-        scales: {
-          y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true, ticks: { stepSize: 5 } },
-          x: { grid: { display: false } },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#94a3b8' },
+          },
+          scales: {
+            y: { grid: { color: '#f1f5f9' }, border: { display: false }, beginAtZero: true, ticks: { stepSize: 5 } },
+            x: { grid: { display: false } },
+          },
+          animation: { duration: 1000, easing: 'easeInOutQuart' },
         },
-        animation: { duration: 1000, easing: 'easeInOutQuart' },
-      },
-    });
-    return () => { if (chartInst.current) chartInst.current.destroy(); };
-  }, [engagementData]);
+      });
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      if (chartInst.current) chartInst.current.destroy();
+    };
+  }, [engagementData, rightPanelOpen, leftSidebarOpen]);
 
   const metrics = [
     { label: 'Faculty Members', val: teachers.length,         color: '#7c3aed', trend: `+${Math.floor(teachers.length * 0.2) || 2}%` },
@@ -78,8 +87,8 @@ export default function PDOverview({
 
   return (
     <div style={S.overviewContainer}>
-      {/* Stats Grid */}
-      <div style={S.statsGrid} className="stats-grid">
+      {/* Stats Grid with dynamic layout keys */}
+      <div key={`${rightPanelOpen ? 'g-open' : 'g-closed'}-${leftSidebarOpen ? 'l-open' : 'l-closed'}`} style={S.statsGrid} className="stats-grid animate-slideUp">
         {metrics.map((m, i) => (
           <div key={m.label} style={S.metricCard} className="metric-card">
             <div style={S.metricIconWrapper(m.color)}>{icons[i]}</div>
@@ -92,8 +101,8 @@ export default function PDOverview({
         ))}
       </div>
 
-      {/* Chart */}
-      <div style={S.chartCard}>
+      {/* Chart Card */}
+      <div key={`${rightPanelOpen ? 'c-open' : 'c-closed'}-${leftSidebarOpen ? 'l-open' : 'l-closed'}`} style={S.chartCard} className="animate-slideUp">
         <div style={S.chartHeader}>
           <div>
             <h3 style={S.chartTitle}>Faculty & Student Engagement Analytics</h3>
@@ -108,7 +117,7 @@ export default function PDOverview({
       </div>
 
       {/* Bottom Grid — Quick Actions + Recent Activity */}
-      <div style={S.bottomGrid}>
+      <div key={`${rightPanelOpen ? 'b-open' : 'b-closed'}-${leftSidebarOpen ? 'l-open' : 'l-closed'}`} style={S.bottomGrid} className="animate-slideUp">
         <div style={S.quickActionsCard}>
           <h4 style={S.sectionTitle}>Quick Actions</h4>
           <div style={{ marginTop: '16px', ...S.actionsGrid }}>

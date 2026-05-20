@@ -51,6 +51,8 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [bds, setBds]                     = useState([]);
   const [isLoading, setIsLoading]         = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
+  const [rightPanelOpen, setRightPanelOpen]   = useState(true);
 
   // Add / Edit state
   const [showAddModal, setShowAddModal]   = useState(false);
@@ -59,6 +61,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   const [newHOD, setNewHOD]               = useState({ name: "", email: "", password: "", campus_id: "" });
   const [newBD, setNewBD]                 = useState({ name: "", email: "", password: "", campus_id: "" });
   const [newStaff, setNewStaff]           = useState({ name: "", email: "", password: "", campus_id: "" });
+  const [isSubmitting, setIsSubmitting]   = useState(false);
 
   // Staff lists
   const [staffData, setStaffData]         = useState([]);
@@ -191,7 +194,16 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           const data = await res.json();
           if (data.success) {
             showToast("Staff member removed", "success");
-            const staffRoles = { hr: 'hr_manager', finance: 'finance_manager', exams: 'exam_controller', library: 'librarian', admissions: 'admission_officer', it: 'it_admin', registrar: 'registrar' };
+            const staffRoles = { 
+              rector: 'rector',
+              hr: 'hr_manager', 
+              finance: 'finance_manager', 
+              exams: 'exam_controller', 
+              library: 'librarian', 
+              admissions: 'admission_officer', 
+              it: 'it_admin', 
+              registrar: 'registrar' 
+            };
             fetchStaff(staffRoles[activeTab]);
           } else showToast(data.message || "Error", "error");
         } catch { showToast("Error deleting staff", "error"); }
@@ -200,49 +212,76 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   const handleAddDepartment = async (e) => {
     e.preventDefault();
-    const body = editingItem ? { ...editingItem } : newDepartment;
-    const url = editingItem ? `${API}/superadmin/campuses/${editingItem.id}` : `${API}/superadmin/campuses`;
-    const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (data.success) { showToast(editingItem ? "Department updated!" : "Department created!", "success"); setShowAddModal(false); setEditingItem(null); setNewDepartment({ name: "", location: "" }); fetchData(); }
-    else showToast(data.message || "Error saving department", "error");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const body = editingItem ? { ...editingItem } : newDepartment;
+      const url = editingItem ? `${API}/superadmin/campuses/${editingItem.id}` : `${API}/superadmin/campuses`;
+      const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast(editingItem ? "Department updated!" : "Department created!", "success"); setShowAddModal(false); setEditingItem(null); setNewDepartment({ name: "", location: "" }); fetchData(); }
+      else showToast(data.message || "Error saving department", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddHOD = async (e) => {
     e.preventDefault();
-    const body = editingItem ? { ...editingItem } : newHOD;
-    const url = editingItem ? `${API}/superadmin/principals/${editingItem.id}` : `${API}/superadmin/principals`;
-    const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (data.success) { showToast(editingItem ? "HOD updated!" : "HOD created!", "success"); setShowAddModal(false); setEditingItem(null); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
-    else showToast(data.message || "Error saving HOD", "error");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const body = editingItem ? { ...editingItem } : newHOD;
+      const url = editingItem ? `${API}/superadmin/principals/${editingItem.id}` : `${API}/superadmin/principals`;
+      const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast(editingItem ? "HOD updated!" : "HOD created!", "success"); setShowAddModal(false); setEditingItem(null); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
+      else showToast(data.message || "Error saving HOD", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddBD = async (e) => {
     e.preventDefault();
-    const body = editingItem ? { ...editingItem } : newBD;
-    const url = editingItem ? `${API}/superadmin/bds/${editingItem.id}` : `${API}/superadmin/bds`;
-    const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    const data = await res.json();
-    if (data.success) { showToast(editingItem ? "BD User updated!" : "BD User created!", "success"); setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
-    else showToast(data.message || "Error saving BD User", "error");
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const body = editingItem ? { ...editingItem } : newBD;
+      const url = editingItem ? `${API}/superadmin/bds/${editingItem.id}` : `${API}/superadmin/bds`;
+      const res = await fetch(url, { method: editingItem ? 'PUT' : 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json();
+      if (data.success) { showToast(editingItem ? "BD User updated!" : "BD User created!", "success"); setShowAddModal(false); setEditingItem(null); setNewBD({ name: "", email: "", password: "", campus_id: "" }); fetchData(); }
+      else showToast(data.message || "Error saving BD User", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleAddStaff = async (e, role) => {
     e.preventDefault();
-    const res = await fetch(`${API}/superadmin/staff`, { 
-      method: 'POST', 
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ ...newStaff, role }) 
-    });
-    const data = await res.json();
-    if (data.success) { 
-      showToast(`${role.replace('_', ' ').toUpperCase()} created!`, "success"); 
-      setShowAddModal(false); 
-      setNewStaff({ name: "", email: "", password: "", campus_id: "" }); 
-      fetchStaff(role); 
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const body = editingItem ? { ...editingItem } : { ...newStaff, role };
+      const url = editingItem ? `${API}/superadmin/staff/${editingItem.id}` : `${API}/superadmin/staff`;
+      const res = await fetch(url, { 
+        method: editingItem ? 'PUT' : 'POST', 
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(body) 
+      });
+      const data = await res.json();
+      if (data.success) { 
+        showToast(editingItem ? "Staff member updated!" : `${role.replace('_', ' ').toUpperCase()} created!`, "success"); 
+        setShowAddModal(false); 
+        setEditingItem(null);
+        setNewStaff({ name: "", email: "", password: "", campus_id: "" }); 
+        fetchStaff(role); 
+      }
+      else showToast(data.message || "Error saving staff", "error");
+    } finally {
+      setIsSubmitting(false);
     }
-    else showToast(data.message || "Error creating staff", "error");
   };
 
   const handleViewHODDetails = async (id) => {
@@ -302,7 +341,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   // ─── Render ───────────────────────────────────────────────────
   return (
-    <div style={S.container}>
+    <div style={S.container} className="dashboard-wrapper">
       <ConfirmModal 
         isOpen={confirmModal.isOpen} title={confirmModal.title} message={confirmModal.message}
         onConfirm={confirmModal.onConfirm} onCancel={() => setConfirmModal(p => ({...p, isOpen: false}))}
@@ -318,39 +357,124 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
         <List size={24} weight="bold" />
       </button>
 
-      {/* ── Sidebar ── */}
-      <aside style={S.sidebar} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-        <div style={S.logoWrapper}>
-          <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
-          <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
-        </div>
-
-        <div style={S.globalBadge}>
-          <ShieldCheck size={14} weight="fill" />
-          <span>VC Institutional Master</span>
-        </div>
-
-        <nav style={S.nav}>
-          {navItems.map(([tab, label, icon]) => (
-            <button key={tab}
-              onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
-              style={{...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {})}}
-              className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
-            >
-              {icon}
-              <span>{label}</span>
-              {activeTab === tab && <div style={S.activeIndicator}></div>}
-            </button>
-          ))}
-        </nav>
-
-        <button onClick={onLogout} style={S.logoutBtn} className="logout-btn">
-          <SignOut size={20} /> <span>Sign Out</span>
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
+      {!leftSidebarOpen && (
+        <button
+          onClick={() => setLeftSidebarOpen(true)}
+          style={{
+            position: 'fixed',
+            left: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 20,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 12px 12px 0',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-open-btn"
+          title="Open sidebar"
+        >
+          ›
         </button>
+      )}
+
+      {/* ── Sidebar ── */}
+      <aside style={{
+        ...S.sidebar,
+        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''} ${leftSidebarOpen ? '' : 'collapsed'}`}>
+        
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
+        <button
+          onClick={() => setLeftSidebarOpen(false)}
+          style={{
+            position: 'absolute',
+            right: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 30,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '0 10px 10px 0',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn left-close-btn"
+          title="Close sidebar"
+        >
+          ‹
+        </button>
+
+        {/* Inner Scrollable Container Wrapper */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '32px 20px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div style={S.logoWrapper}>
+            <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+            <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+          </div>
+
+          <div style={S.globalBadge}>
+            <ShieldCheck size={14} weight="fill" />
+            <span>VC Institutional Master</span>
+          </div>
+
+          <nav style={S.nav}>
+            {navItems.map(([tab, label, icon]) => (
+              <button key={tab}
+                onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
+                style={{...S.navBtn, ...(activeTab === tab ? S.navBtnActive : {})}}
+                className={`nav-btn ${activeTab === tab ? 'active' : ''}`}
+              >
+                {icon}
+                <span>{label}</span>
+                {activeTab === tab && <div style={S.activeIndicator}></div>}
+              </button>
+            ))}
+          </nav>
+
+          <button onClick={onLogout} style={S.logoutBtn} className="logout-btn">
+            <SignOut size={20} /> <span>Sign Out</span>
+          </button>
+        </div>
       </aside>
 
       {/* ── Main Content ── */}
-      <main style={S.main} className="main-content">
+      <main style={{
+        ...S.main,
+        marginLeft: leftSidebarOpen ? '280px' : '24px',
+        marginRight: rightPanelOpen ? '320px' : '24px',
+        transition: 'margin-left 0.35s cubic-bezier(0.4,0,0.2,1), margin-right 0.35s cubic-bezier(0.4,0,0.2,1)',
+      }} className="main-content">
         <header style={S.header}>
           <div>
             <h1 style={S.title}>VC Institutional Master</h1>
@@ -364,7 +488,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
         {/* ── Tab Sections ── */}
         {activeTab === "overview" && (
-          <SAOverview overview={overview} departmentStats={departmentStats} />
+          <SAOverview overview={overview} departmentStats={departmentStats} key={`${leftSidebarOpen}-${rightPanelOpen}`} />
         )}
 
         {activeTab === "campuses" && (
@@ -413,6 +537,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -423,6 +548,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -433,6 +559,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -443,6 +570,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -453,6 +581,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -463,6 +592,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -473,6 +603,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -483,6 +614,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newItem={newStaff} setNewItem={setNewStaff}
             onAdd={handleAddStaff} onDelete={handleDeleteStaff}
+            editingItem={editingItem} setEditingItem={setEditingItem}
           />
         )}
 
@@ -498,69 +630,149 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
         )}
       </main>
 
+      {/* Floating open button — only visible when right panel is CLOSED */}
+      {!rightPanelOpen && (
+        <button
+          onClick={() => setRightPanelOpen(true)}
+          style={{
+            position: 'fixed',
+            right: '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 20,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px 0 0 12px',
+            width: '28px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn right-open-btn"
+          title="Open sidebar"
+        >
+          ‹
+        </button>
+      )}
+
       {/* ── Right Panel ── */}
-      <aside style={S.rightPanel} className="right-panel">
-        <div style={S.profileCard}>
-          <div style={{...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)'}}>
-            {user.name.charAt(0)}
-          </div>
-          <h3 style={S.profileName}>{user.name}</h3>
-          <span style={S.roleBadge}>Vice Chancellor</span>
-          <div style={S.profileStats}>
-            <div style={S.profileStat}>
-              <span style={S.profileStatLabel}>Last Login</span>
-              <span style={S.profileStatValue}>Today 09:24</span>
-            </div>
-            <div style={S.profileStat}>
-              <span style={S.profileStatLabel}>Role</span>
-              <span style={S.profileStatValue}>Main Department</span>
-            </div>
-          </div>
-        </div>
+      <aside style={{
+        ...S.rightPanel,
+        transform: rightPanelOpen ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
+        overflow: 'visible',
+        padding: 0,
+      }} className={`right-panel ${rightPanelOpen ? '' : 'collapsed'}`}>
 
-        <div style={S.platformStats}>
-          <h4 style={S.platformStatsTitle}>Platform Stats</h4>
-          {[
-            ['Departments', overview.totalCampuses  || 0, '#4f46e5'],
-            ['HODs',        overview.totalPrincipals || 0, '#7c3aed'],
-            ['BD Users',    overview.totalBds        || 0, '#ec4899'],
-            ['Teachers',    overview.totalTeachers   || 0, '#2563eb'],
-            ['Students',    overview.totalStudents   || 0, '#0891b2'],
-          ].map(([label, val, color]) => (
-            <div key={label} style={S.platformStatItem}>
-              <span style={S.platformStatLabel}>{label}</span>
-              <span style={{...S.platformStatValue, color}}>{val.toLocaleString()}</span>
-            </div>
-          ))}
-        </div>
+        {/* ← Close arrow centered on LEFT edge of the panel */}
+        <button
+          onClick={() => setRightPanelOpen(false)}
+          style={{
+            position: 'absolute',
+            left: '-18px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 30,
+            background: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px 0 0 10px',
+            width: '18px',
+            height: '60px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+            fontSize: '18px',
+            fontWeight: '800',
+            lineHeight: 1,
+          }}
+          className="sidebar-toggle-btn right-close-btn"
+          title="Close sidebar"
+        >
+          ›
+        </button>
 
-        <div style={{...S.platformStats, marginTop: '20px'}}>
-          <h4 style={S.platformStatsTitle}>Security & Health</h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
-                <span>Server Capacity</span>
-                <span style={{ color: '#4f46e5' }}>32%</span>
-              </div>
-              <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '32%', height: '100%', background: '#4f46e5', borderRadius: '4px' }}></div>
-              </div>
+        {/* Inner Scrollable Container */}
+        <div style={{
+          width: '100%',
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '40px 24px',
+          overflowY: 'auto',
+          boxSizing: 'border-box',
+        }} className="hidden-scrollbar">
+          <div style={S.profileCard}>
+            <div style={{...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)'}}>
+              {user.name.charAt(0)}
             </div>
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
-                <span>Database Load</span>
-                <span style={{ color: '#10b981' }}>18%</span>
+            <h3 style={S.profileName}>{user.name}</h3>
+            <span style={S.roleBadge}>Vice Chancellor</span>
+            <div style={S.profileStats}>
+              <div style={S.profileStat}>
+                <span style={S.profileStatLabel}>Last Login</span>
+                <span style={S.profileStatValue}>Today 09:24</span>
               </div>
-              <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                <div style={{ width: '18%', height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
+              <div style={S.profileStat}>
+                <span style={S.profileStatLabel}>Role</span>
+                <span style={S.profileStatValue}>Main Department</span>
               </div>
             </div>
           </div>
-        </div>
 
-        <div style={{...S.systemStatus, marginTop: '20px'}}>
-          <div style={S.systemStatusDot}></div>
-          <span>All systems operational</span>
+          <div style={S.platformStats}>
+            <h4 style={S.platformStatsTitle}>Platform Stats</h4>
+            {[
+              ['Departments', overview.totalCampuses  || 0, '#4f46e5'],
+              ['HODs',        overview.totalPrincipals || 0, '#7c3aed'],
+              ['BD Users',    overview.totalBds        || 0, '#ec4899'],
+              ['Teachers',    overview.totalTeachers   || 0, '#2563eb'],
+              ['Students',    overview.totalStudents   || 0, '#0891b2'],
+            ].map(([label, val, color]) => (
+              <div key={label} style={S.platformStatItem}>
+                <span style={S.platformStatLabel}>{label}</span>
+                <span style={{...S.platformStatValue, color}}>{val.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{...S.platformStats, marginTop: '20px'}}>
+            <h4 style={S.platformStatsTitle}>Security & Health</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '12px' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                  <span>Server Capacity</span>
+                  <span style={{ color: '#4f46e5' }}>32%</span>
+                </div>
+                <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: '32%', height: '100%', background: '#4f46e5', borderRadius: '4px' }}></div>
+                </div>
+              </div>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                  <span>Database Load</span>
+                  <span style={{ color: '#10b981' }}>18%</span>
+                </div>
+                <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: '18%', height: '100%', background: '#10b981', borderRadius: '4px' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{...S.systemStatus, marginTop: '20px'}}>
+            <div style={S.systemStatusDot}></div>
+            <span>All systems operational</span>
+          </div>
         </div>
       </aside>
     </div>
