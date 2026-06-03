@@ -184,9 +184,9 @@ router.get('/students', async (req, res) => {
   try {
     const { campus_id, employee_id: teacherId } = req.user;
     const [students] = await pool.query(`
-      SELECT DISTINCT u.id as user_id, s.id as student_id, u.name, u.email, s.roll_number, s.semester, u.created_at,
+      SELECT u.id as user_id, s.id as student_id, u.name, u.email, s.roll_number, s.semester, u.created_at,
              s.father_name, s.father_cnic, s.last_education, s.father_number, s.bform_number,
-             sc.class_id
+             MAX(sc.class_id) as class_id
       FROM users u
       LEFT JOIN students s ON u.id = s.user_id
       LEFT JOIN enrollments e ON s.id = e.student_id
@@ -198,7 +198,8 @@ router.get('/students', async (req, res) => {
         OR c.teacher_id = ? 
         OR cl.teacher_id = ?
       )
-      GROUP BY s.id
+      GROUP BY u.id, s.id, u.name, u.email, s.roll_number, s.semester, u.created_at,
+               s.father_name, s.father_cnic, s.last_education, s.father_number, s.bform_number
       ORDER BY u.name
     `, [campus_id, teacherId, teacherId]);
     res.status(200).json({ success: true, students });
