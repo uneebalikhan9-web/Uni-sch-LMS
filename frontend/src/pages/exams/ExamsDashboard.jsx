@@ -126,7 +126,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 1001,
-            background: 'var(--ex-primary, #4f46e5)',
+            background: 'var(--ex-primary, var(--primary-color, #4f46e5))',
             color: '#fff',
             border: 'none',
             borderRadius: '0 10px 10px 0',
@@ -136,7 +136,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -176,7 +176,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 30,
-              background: 'var(--ex-primary, #4f46e5)',
+              background: 'var(--ex-primary, var(--primary-color, #4f46e5))',
               color: '#fff',
               border: 'none',
               borderRadius: '0 10px 10px 0',
@@ -186,7 +186,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -198,7 +198,11 @@ const ExamsDashboard = ({ user, onLogout }) => {
         )}
 
         <div style={{ padding: '2.5rem 1.5rem' }}>
-          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>Lancers<span style={{ color: '#a5b4fc' }}>Tech</span></div>
+          {user?.logo_url ? (
+            <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'white' }}>Lancers<span style={{ color: '#a5b4fc' }}>Tech</span></div>
+          )}
           <div style={{ color: '#a5b4fc', fontSize: 11, fontWeight: 600, marginTop: 4 }}>EXAMINATION OFFICE</div>
         </div>
         
@@ -206,19 +210,19 @@ const ExamsDashboard = ({ user, onLogout }) => {
           <div onClick={() => { navigate('/chat'); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: '#cbd5e1', background: 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <ChatCircle size={20} weight="bold" /> <span>Chat</span>
           </div>
-          <div onClick={() => { setActiveTab('overview'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'overview' ? 'white' : '#cbd5e1', background: activeTab === 'overview' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+          <div onClick={() => { setActiveTab('overview'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'overview' ? 'white' : '#cbd5e1', background: activeTab === 'overview' ? 'rgba(var(--primary-rgb, 79, 70, 229), 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <ChartLineUp size={20} weight="bold" /> <span>Overview</span>
           </div>
-          <div onClick={() => { setActiveTab('results'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'results' ? 'white' : '#cbd5e1', background: activeTab === 'results' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+          <div onClick={() => { setActiveTab('results'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'results' ? 'white' : '#cbd5e1', background: activeTab === 'results' ? 'rgba(var(--primary-rgb, 79, 70, 229), 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <SealCheck size={20} weight="bold" /> <span>Results</span>
           </div>
-          <div onClick={() => { setActiveTab('scheduling'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'scheduling' ? 'white' : '#cbd5e1', background: activeTab === 'scheduling' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+          <div onClick={() => { setActiveTab('scheduling'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'scheduling' ? 'white' : '#cbd5e1', background: activeTab === 'scheduling' ? 'rgba(var(--primary-rgb, 79, 70, 229), 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <Calendar size={20} weight="bold" /> <span>Exams Timeline</span>
           </div>
-          <div onClick={() => { setActiveTab('seating'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'seating' ? 'white' : '#cbd5e1', background: activeTab === 'seating' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+          <div onClick={() => { setActiveTab('seating'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'seating' ? 'white' : '#cbd5e1', background: activeTab === 'seating' ? 'rgba(var(--primary-rgb, 79, 70, 229), 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <IdentificationCard size={20} weight="bold" /> <span>Seating Plans</span>
           </div>
-          <div onClick={() => { setActiveTab('discipline'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'discipline' ? 'white' : '#cbd5e1', background: activeTab === 'discipline' ? 'rgba(79, 70, 229, 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+          <div onClick={() => { setActiveTab('discipline'); if (isMobile) setSidebarOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 16, color: activeTab === 'discipline' ? 'white' : '#cbd5e1', background: activeTab === 'discipline' ? 'rgba(var(--primary-rgb, 79, 70, 229), 0.4)' : 'transparent', cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
             <IdentificationBadge size={20} weight="bold" /> <span>Malpractice Logs</span>
           </div>
         </nav>
@@ -251,7 +255,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'var(--ex-primary, #4f46e5)',
+                  background: 'var(--ex-primary, var(--primary-color, #4f46e5))',
                   border: 'none',
                   color: 'white',
                   padding: '8px',
@@ -268,7 +272,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             <Bell size={22} color="#64748b" weight="bold" />
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: 'white', padding: '8px 18px', borderRadius: 40, border: '1px solid #e2e8f0' }}>
-              <UserCircle size={28} color="#4f46e5" weight="bold" />
+              <UserCircle size={28} color="var(--primary-color, #4f46e5)" weight="bold" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>{user?.name || 'Controller of Exams'}</span>
                 <span style={{ fontSize: '0.7rem', color: '#64748b' }}>Academic Quality Head</span>
@@ -309,7 +313,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
                                 <td>
                                     <button 
                                         onClick={() => { setSelectedExam(ex); setShowGrading(true); }}
-                                        style={{ background: 'transparent', border: 'none', color: '#4f46e5', fontWeight: 700, cursor: 'pointer' }}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--primary-color, #4f46e5)', fontWeight: 700, cursor: 'pointer' }}
                                     >
                                         Manage Results
                                     </button>
@@ -340,7 +344,7 @@ const ExamsDashboard = ({ user, onLogout }) => {
 
 const MetricCard = ({ icon, value, label }) => (
   <div className="ex-card">
-    <div style={{ background: '#f5f3ff', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: '#4f46e5' }}>{icon}</div>
+    <div style={{ background: '#f5f3ff', width: 48, height: 48, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16, color: 'var(--primary-color, #4f46e5)' }}>{icon}</div>
     <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#0f172a' }}>{value}</div>
     <div style={{ color: '#64748b', fontSize: '0.85rem', fontWeight: 600 }}>{label}</div>
   </div>

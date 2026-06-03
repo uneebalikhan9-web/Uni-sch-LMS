@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-// Eye aur EyeSlash icons add kiye hain
 import { User, Envelope, Lock, ShieldCheck, GraduationCap, ArrowRight, CheckCircle, Eye, EyeSlash, Buildings, ListNumbers } from "@phosphor-icons/react";
 import "./SignUp.css";
 import API_BASE_URL from '../config/api'
 import { useToast } from '../components/Toast'
+import { useTenantBranding } from '../hooks/useTenantBranding'
 
 function SignUp() {
   const navigate = useNavigate();
@@ -13,15 +13,19 @@ function SignUp() {
     email: "",
     password: "",
     confirmPassword: "",
+    campus_id: "",
+    semester: ""
   });
   
-  // Visibility toggles ki states
+  // State for password visibility toggles
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { showToast } = useToast()
+  
+  const branding = useTenantBranding()
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [campuses, setCampuses] = useState([]);
 
@@ -112,10 +116,14 @@ function SignUp() {
       <div className="signup-glass-card animate-fadeIn">
         <div className="branding-section">
           <div className="brand-header">
-            <div className="logo-wrapper">
-              <GraduationCap size={32} weight="duotone" />
-            </div>
-            <span className="brand-name">Lancers Tech</span>
+            {branding.logo_url ? (
+              <img src={branding.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <div className="logo-wrapper" style={{ background: branding.primary_color ? `${branding.primary_color}15` : undefined, color: branding.primary_color || 'var(--primary-color)' }}>
+                <GraduationCap size={32} weight="duotone" />
+              </div>
+            )}
+            {!branding.logo_url && <span className="brand-name">Lancers Tech</span>}
           </div>
           
           <div className="branding-body">
@@ -188,7 +196,6 @@ function SignUp() {
               </div>
             </div>
 
-            {/* Password Field with Eye Icon */}
             <div className="floating-group">
               <div className="input-container">
                 <Lock size={20} className="field-icon" />
@@ -220,7 +227,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Confirm Password Field with Eye Icon */}
             <div className="floating-group">
               <div className="input-container">
                 <ShieldCheck size={20} className="field-icon" />
@@ -244,7 +250,7 @@ function SignUp() {
               </div>
             </div>
 
-            <button type="submit" className="prime-btn" disabled={loading}>
+            <button type="submit" className="prime-btn" disabled={loading} style={{ background: branding.primary_color ? `linear-gradient(135deg, ${branding.primary_color}dd 0%, ${branding.primary_color} 100%)` : undefined, boxShadow: branding.primary_color ? `0 4px 14px ${branding.primary_color}66` : undefined }}>
               {loading ? <span className="loader"></span> : <>Create Account <ArrowRight weight="bold" /></>}
             </button>
           </form>

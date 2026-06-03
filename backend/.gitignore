@@ -1,0 +1,32 @@
+# === Environment & Secrets (NEVER commit these) ===
+.env
+.env.local
+.env.development
+.env.production
+*.env
+
+# === Node.js ===
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# === Logs (auto-generated, not source code) ===
+*.log
+logs/
+auth_error.log
+debug_teacher_courses.log
+server_access.log
+
+# === Uploads (user-generated content) ===
+uploads/
+
+# === OS & Editor files ===
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo
+
+# === Build artifacts ===
+dist/
+build/

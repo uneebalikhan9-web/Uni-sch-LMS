@@ -18,16 +18,24 @@ async function generateRollNumber(campusId, semester) {
 
   try {
     const [campusRows] = await pool.query(
-      'SELECT dept_code FROM campuses WHERE id = ?',
+      'SELECT name, dept_code FROM campuses WHERE id = ?',
       [campusId]
     );
 
-    if (campusRows.length === 0 || !campusRows[0].dept_code) {
-      console.warn(`⚠️ [RollGen] Failed: No dept_code found for campus_id ${campusId}`);
+    if (campusRows.length === 0) {
+      console.warn(`⚠️ [RollGen] Failed: No campus found for campus_id ${campusId}`);
       return null;
     }
 
-    const deptCode = campusRows[0].dept_code;
+    let deptCode = campusRows[0].dept_code;
+    if (!deptCode && campusRows[0].name) {
+      // Fallback to first 3 letters of campus name, e.g. "Computer Science" -> "COM"
+      deptCode = campusRows[0].name.substring(0, 3).toUpperCase();
+    }
+    if (!deptCode) {
+      deptCode = 'STU';
+    }
+
     const year = new Date().getFullYear().toString().slice(-2);
     const semLabel = `S${semester}`;
     const prefix = `${deptCode}-${semLabel}-${year}-`;

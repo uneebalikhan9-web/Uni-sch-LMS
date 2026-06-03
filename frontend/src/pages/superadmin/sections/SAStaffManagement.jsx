@@ -19,7 +19,7 @@ export default function SAStaffManagement({
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: '#f5f3ff', color: '#4f46e5', borderRadius: '12px' }}>
+            <div style={{ padding: '10px', background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', borderRadius: '12px' }}>
               <Icon size={24} weight="duotone" />
             </div>
             <h2 style={S.tableTitle}>{title}</h2>
@@ -39,7 +39,7 @@ export default function SAStaffManagement({
             <thead>
               <tr>
                 <th style={S.th}>NAME</th>
-                <th style={S.th}>CAMPUS / DEPARTMENT</th>
+                <th style={S.th}>CAMPUS</th>
                 <th style={S.th}>EMAIL</th>
                 <th style={S.th}>DATE JOINED</th>
                 <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -58,8 +58,8 @@ export default function SAStaffManagement({
                     <td style={S.tdName}>{item.name}</td>
                     <td style={S.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Buildings size={16} color="#4f46e5" />
-                        <span style={{...S.planBadge, background: '#f5f3ff', color: '#4f46e5'}}>
+                        <Buildings size={16} color="var(--primary-color, #4f46e5)" />
+                        <span style={{...S.planBadge, background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)'}}>
                           {item.campus_name || "Unassigned"}
                         </span>
                       </div>
@@ -79,7 +79,7 @@ export default function SAStaffManagement({
                     <td style={{...S.td, textAlign: 'right'}}>
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                         <button 
-                          style={{...S.deleteBtn, color: '#4f46e5', borderColor: '#e0e7ff'}} 
+                          style={{...S.deleteBtn, color: 'var(--primary-color, #4f46e5)', borderColor: '#e0e7ff'}} 
                           onClick={() => handleOpenEdit(item)} 
                           title="Edit Member"
                           className="edit-btn"
@@ -109,8 +109,11 @@ export default function SAStaffManagement({
         <div style={S.overlay} onClick={() => { setShowAddModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={S.modalHeader}>
               <h3 style={S.modalTitle}>{editingItem ? `Edit ${title.slice(0, -1)}` : `Create New ${title.slice(0, -1)}`}</h3>
-              <div style={{ padding: '8px', background: '#f5f3ff', color: '#4f46e5', borderRadius: '10px' }}>
+                <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+              </div>
+              <div style={{ padding: '8px', background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', borderRadius: '10px' }}>
                 <ShieldCheck size={24} weight="duotone" />
               </div>
             </div>
@@ -153,7 +156,7 @@ export default function SAStaffManagement({
               </div>
               
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assign to Campus / Department</label>
+                <label style={S.inputLabel}>Assign to Campus</label>
                 <select 
                   required
                   value={editingItem ? editingItem.campus_id : newItem.campus_id} 

@@ -17,16 +17,18 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
           </div>
           <p style={S.tableSubtitle}>Manage grades {selectedCourse ? `for ${selectedCourse.title}` : ''}</p>
         </div>
-        {selectedCourse && (
-          <button onClick={() => {
+        <button onClick={() => {
+          if (selectedCourse) {
             const initialBulk = filteredStudents.map(s => {
               const existing = grades.find(g => g.student_id === s.student_id);
               return { student_id:s.student_id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
             });
             setBulkGrades(initialBulk);
-            setShowBulkGradeModal(true);
-          }} style={S.addBtn} className="add-btn"><Table size={18} weight="bold" /> Bulk Grade</button>
-        )}
+          } else {
+            setBulkGrades([]);
+          }
+          setShowBulkGradeModal(true);
+        }} style={S.addBtn} className="add-btn"><Table size={18} weight="bold" /> Bulk Grade</button>
       </div>
 
       <div style={S.gradesFilter}>
@@ -54,7 +56,7 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
                     else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.student_id, exam_date:new Date().toISOString().split('T')[0] }); }
                     setShowGradeModal(true);
                   }}>
-                    <td style={{ ...S.tdName, color:'#4f46e5' }}>{s.name}</td>
+                    <td style={{ ...S.tdName, color:'var(--primary-color, #4f46e5)' }}>{s.name}</td>
                     <td style={S.td}>{g ? <span style={S.examType}>{g.exam_type}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
                     <td style={S.td}>{g ? `${g.marks_obtained}/${g.max_marks}` : <span style={{ color:'#94a3b8', fontSize:'0.8rem' }}>Not Graded</span>}</td>
                     <td style={S.td}>{g ? <span style={S.gradeBadge}>{g.grade_letter}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>

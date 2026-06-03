@@ -26,7 +26,7 @@ export default function BDOverview({ stats, globalStats, pipeline, chartRef, LEA
           label="Total Leads"
           value={stats.totalLeads || 0}
           icon={<Buildings weight="duotone" />}
-          color="#4f46e5"
+          color="var(--primary-color, #4f46e5)"
           trend="+12% this month"
         />
         <MetricBox
@@ -57,7 +57,7 @@ export default function BDOverview({ stats, globalStats, pipeline, chartRef, LEA
         <div style={S.chartCard}>
           <div style={S.chartHeader}>
             <h3 style={S.chartTitle}>Lead Pipeline</h3>
-            <Pulse size={20} color="#4f46e5" weight="duotone" />
+            <Pulse size={20} color="var(--primary-color, #4f46e5)" weight="duotone" />
           </div>
           <div style={{ height: '260px' }}>
             <canvas ref={chartRef}></canvas>
@@ -66,7 +66,7 @@ export default function BDOverview({ stats, globalStats, pipeline, chartRef, LEA
         <div style={S.chartCard}>
           <div style={S.chartHeader}>
             <h3 style={S.chartTitle}>Pipeline Stages</h3>
-            <TrendUp size={20} color="#4f46e5" weight="duotone" />
+            <TrendUp size={20} color="var(--primary-color, #4f46e5)" weight="duotone" />
           </div>
           <div style={S.pipelineStages}>
             {LEAD_STATUSES.map(status => {

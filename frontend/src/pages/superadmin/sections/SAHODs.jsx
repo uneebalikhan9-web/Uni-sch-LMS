@@ -27,7 +27,7 @@ export default function SAHODs({
               <tr>
                 <th style={S.th}>NAME</th>
                 <th style={S.th}>EMAIL</th>
-                <th style={S.th}>DEPARTMENT</th>
+                <th style={S.th}>CAMPUS</th>
                 <th style={S.th}>JOINED</th>
                 <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
               </tr>
@@ -42,7 +42,7 @@ export default function SAHODs({
                   <td style={{...S.td, textAlign: 'right'}}>
                     <div style={S.actionButtons}>
                       <button 
-                        style={{...S.editBtn, background: '#f1f5f9', color: '#4f46e5'}} 
+                        style={{...S.editBtn, background: '#f1f5f9', color: 'var(--primary-color, #4f46e5)'}} 
                         className="view-btn"
                         onClick={() => onViewDetails(p.id)}
                         title="View Details"
@@ -77,7 +77,10 @@ export default function SAHODs({
       {showAddModal && (
         <div style={S.overlay} onClick={() => setShowAddModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <div style={S.modalHeader}>
             <h3 style={S.modalTitle}>{editingItem ? 'Edit Dean / Academic Head' : 'Add New Dean / Academic Head'}</h3>
+              <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+            </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Full Name</label>
@@ -95,10 +98,10 @@ export default function SAHODs({
                   value={editingItem ? (editingItem.password || '') : newHOD.password} onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewHOD({...newHOD, password: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assign to Department</label>
+                <label style={S.inputLabel}>Assign to Campus</label>
                 <select required value={editingItem ? editingItem.campus_id : newHOD.campus_id} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewHOD({...newHOD, campus_id: e.target.value})} style={S.input}>
-                  <option value="">Select Department...</option>
+                  <option value="">Select a Campus...</option>
                   {departments.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
@@ -122,7 +125,7 @@ export default function SAHODs({
               </div>
             ) : selectedHODDetails ? (
               <div>
-                <div style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', padding: '30px', color: 'white', position: 'relative' }}>
+                <div style={{ background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #7c3aed)', padding: '30px', color: 'white', position: 'relative' }}>
                   <div style={{ position: 'absolute', top: '20px', right: '20px', cursor: 'pointer', opacity: 0.8 }} onClick={() => setShowHODModal(false)}>
                     <Plus size={24} weight="bold" style={{ transform: 'rotate(45deg)' }} />
                   </div>
@@ -175,7 +178,7 @@ export default function SAHODs({
                   <h4 style={{ color: '#0f172a', marginBottom: '16px', fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live Operational Stats</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
                     {[
-                      { label: 'Students', val: selectedHODDetails.stats.students, color: '#4f46e5', icon: <Users size={20} /> },
+                      { label: 'Students', val: selectedHODDetails.stats.students, color: 'var(--primary-color, #4f46e5)', icon: <Users size={20} /> },
                       { label: 'Teachers', val: selectedHODDetails.stats.teachers, color: '#7c3aed', icon: <UserCircle size={20} /> },
                       { label: 'Classes', val: selectedHODDetails.stats.classes, color: '#0891b2', icon: <Buildings size={20} /> },
                       { label: 'Courses', val: selectedHODDetails.stats.courses, color: '#2563eb', icon: <ChartLine size={20} /> },

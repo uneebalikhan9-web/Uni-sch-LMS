@@ -36,7 +36,7 @@ export default function TDAssignments({
           <div style={S.tableHeader}>
             <div>
               <h2 style={S.tableTitle}>
-                <FileText size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+                <FileText size={28} weight="duotone" color="var(--primary-color, #4f46e5)" style={{verticalAlign:'middle', marginRight:'12px'}} />
                 Assignments
               </h2>
               <p style={S.tableSubtitle}>Manage and track your course assignments</p>
@@ -67,7 +67,7 @@ export default function TDAssignments({
                   padding: '10px 20px',
                   borderRadius: '12px',
                   border: 'none',
-                  background: assignmentFilter === tab ? '#4f46e5' : 'transparent',
+                  background: assignmentFilter === tab ? 'var(--primary-color, #4f46e5)' : 'transparent',
                   color: assignmentFilter === tab ? '#fff' : '#64748b',
                   fontWeight: '700',
                   fontSize: '0.85rem',
@@ -295,7 +295,7 @@ export default function TDAssignments({
                             a.click();
                           } catch (err) { showToast('Download failed', 'error'); }
                         }}
-                        style={{ ...S.iconBtn, color: '#4f46e5' }}
+                        style={{ ...S.iconBtn, color: 'var(--primary-color, #4f46e5)' }}
                       >
                         <Download size={18} />
                       </button>
@@ -385,7 +385,7 @@ export default function TDAssignments({
       <div style={S.createFormContainer}>
         {/* Course Selection */}
         <div style={S.formSection}>
-          <h3 style={S.sectionTitle}><Flask size={20} weight="fill" color="#4f46e5" /> Course Selection</h3>
+          <h3 style={S.sectionTitle}><Flask size={20} weight="fill" color="var(--primary-color, #4f46e5)" /> Course Selection</h3>
           <div style={S.inputGroup}>
             <label style={S.inputLabel}>Select Course</label>
             <select 
@@ -404,7 +404,7 @@ export default function TDAssignments({
 
         {/* Basic Information */}
         <div style={S.formSection}>
-          <h3 style={S.sectionTitle}><FileText size={20} weight="fill" color="#4f46e5" /> Basic Information</h3>
+          <h3 style={S.sectionTitle}><FileText size={20} weight="fill" color="var(--primary-color, #4f46e5)" /> Basic Information</h3>
           <div style={S.formGrid}>
             <div style={{ ...S.inputGroup, ...S.fullWidth }}>
               <label style={S.inputLabel}>Assignment Name *</label>
@@ -481,7 +481,7 @@ export default function TDAssignments({
 
         {/* Description */}
         <div style={S.formSection}>
-          <h3 style={S.sectionTitle}><List size={20} weight="fill" color="#4f46e5" /> Description</h3>
+          <h3 style={S.sectionTitle}><List size={20} weight="fill" color="var(--primary-color, #4f46e5)" /> Description</h3>
           <div style={S.inputGroup}>
             <label style={S.inputLabel}>Text Description *</label>
             <textarea 

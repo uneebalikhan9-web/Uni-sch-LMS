@@ -81,7 +81,7 @@ router.post('/teachers', async (req, res) => {
 
     // Create teacher
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
+      'INSERT INTO users (name, email, password, role, client_id) VALUES (?, ?, ?, ?, ?)',
       [name, email, hashedPassword, 'teacher']
     );
 
@@ -266,7 +266,7 @@ router.post('/students', async (req, res) => {
 
     // 1. Create user
     const [uResult] = await connection.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, 'student', true, campus_id || req.user.campus_id]
     );
 

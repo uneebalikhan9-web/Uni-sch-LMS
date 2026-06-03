@@ -10,18 +10,7 @@ const ITInfrastructure = () => {
     load: 1.24
   });
 
-  // Simulate real-time metrics
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMetrics(prev => ({
-        ...prev,
-        cpu: Math.floor(Math.random() * (60 - 30) + 30),
-        ram: Math.floor(Math.random() * (70 - 55) + 55),
-        load: (Math.random() * (1.8 - 0.8) + 0.8).toFixed(2)
-      }));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  // Static metrics display - no auto-simulation needed
 
   return (
     <div className="it-infrastructure-section">
@@ -31,7 +20,7 @@ const ITInfrastructure = () => {
             <h2 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Real-time Server Health</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-            <MetricBar icon={<Cpu size={20} />} label="CPU Usage" value={metrics.cpu} color="#4f46e5" />
+            <MetricBar icon={<Cpu size={20} />} label="CPU Usage" value={metrics.cpu} color="var(--primary-color, #4f46e5)" />
             <MetricBar icon={<Pulse size={20} />} label="Memory (RAM)" value={metrics.ram} color="#10b981" />
             <MetricBar icon={<HardDrive size={20} />} label="Disk Storage" value={metrics.disk} color="#f59e0b" />
           </div>

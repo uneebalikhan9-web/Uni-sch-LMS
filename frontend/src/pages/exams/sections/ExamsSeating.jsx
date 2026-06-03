@@ -13,7 +13,7 @@ const ExamsSeating = () => {
     <div className="exams-seating-section">
       <div className="ex-metrics" style={{ marginBottom: 24 }}>
         <div className="ex-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ background: '#f5f3ff', padding: 12, borderRadius: 12, color: '#4f46e5' }}><Buildings size={24} weight="duotone" /></div>
+            <div style={{ background: '#f5f3ff', padding: 12, borderRadius: 12, color: 'var(--primary-color, #4f46e5)' }}><Buildings size={24} weight="duotone" /></div>
             <div>
                 <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b' }}>Total Rooms</p>
                 <p style={{ fontSize: '1.2rem', fontWeight: 800 }}>14 Active</p>
@@ -42,12 +42,12 @@ const ExamsSeating = () => {
                 <span style={{ fontWeight: 700 }}>{room.used} / {room.capacity}</span>
               </div>
               <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ width: `${(room.used / room.capacity) * 100}%`, height: '100%', background: room.used > room.capacity * 0.9 ? '#ef4444' : '#4f46e5', borderRadius: 4 }}></div>
+                <div style={{ width: `${(room.used / room.capacity) * 100}%`, height: '100%', background: room.used > room.capacity * 0.9 ? '#ef4444' : 'var(--primary-color, #4f46e5)', borderRadius: 4 }}></div>
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button style={{ border: 'none', background: 'transparent', color: '#4f46e5', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Edit Seating Plan</button>
+                <button style={{ border: 'none', background: 'transparent', color: 'var(--primary-color, #4f46e5)', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem' }}>Edit Seating Plan</button>
             </div>
           </div>
         ))}

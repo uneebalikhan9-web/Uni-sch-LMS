@@ -18,7 +18,7 @@ export default function SAOverview({ overview, departmentStats }) {
             { 
               label: 'Students', 
               data: departmentStats.map(c => c.students), 
-              backgroundColor: 'rgba(79, 70, 229, 0.8)',
+              backgroundColor: 'rgba(var(--primary-rgb, 79, 70, 229), 0.8)',
               borderRadius: 8,
               barPercentage: 0.6,
             },
@@ -55,7 +55,7 @@ export default function SAOverview({ overview, departmentStats }) {
       {/* Stats Grid */}
       <div style={S.statsGrid} className="stats-grid">
         {[
-          ['Total Faculties', overview.totalCampuses || 0, '#4f46e5', <Buildings size={24} weight="duotone" />],
+          ['Total Faculties', overview.totalCampuses || 0, 'var(--primary-color, #4f46e5)', <Buildings size={24} weight="duotone" />],
           ['Institutional Reach', overview.totalPrincipals || 0, '#7c3aed', <UserCircle size={24} weight="duotone" />],
           ['Admissions & Growth', overview.totalStudents || 0, '#ec4899', <IdentificationCard size={24} weight="duotone" />],
           ['Faculty Strength', overview.totalTeachers || 0, '#2563eb', <UserCircle size={24} weight="duotone" />],
@@ -76,7 +76,7 @@ export default function SAOverview({ overview, departmentStats }) {
         <div style={S.chartHeader}>
           <h3 style={S.chartTitle}>Student Enrollment & Faculty Distribution</h3>
           <div style={S.chartLegend}>
-            <span style={S.legendItem}><span style={{...S.legendDot, background: '#4f46e5'}}></span> Students</span>
+            <span style={S.legendItem}><span style={{...S.legendDot, background: 'var(--primary-color, #4f46e5)'}}></span> Students</span>
             <span style={S.legendItem}><span style={{...S.legendDot, background: '#7c3aed'}}></span> Teachers</span>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default function SAOverview({ overview, departmentStats }) {
           <table style={S.table}>
             <thead>
               <tr>
-                <th style={S.th}>DEPARTMENT</th>
+                <th style={S.th}>CAMPUS</th>
                 <th style={S.th}>STUDENTS</th>
                 <th style={S.th}>TEACHERS</th>
                 <th style={S.th}>STATUS</th>

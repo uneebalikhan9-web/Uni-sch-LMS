@@ -22,7 +22,7 @@ const RDDataTable = ({ title, activeTab, data = [] }) => {
     switch(activeTab) {
       case 'faculty':  return ['Name', 'Designation', 'Department', 'Load', 'Status'];
       case 'students': return ['Academic Year', 'Intake', 'Retention', 'Avg GPA', 'Growth'];
-      case 'research': return ['Project Title', 'Lead PI', 'Funding', 'Duration', 'Impact'];
+      case 'research': return ['Active Course / Research', 'Instructor', 'Enrolled', 'Academic Year', 'Impact'];
       case 'compliance': return ['Accreditation', 'Body', 'Valid Until', 'Last Audit', 'Risk'];
       default: return ['Item', 'Detail', 'Metric', 'Date', 'Status'];
     }

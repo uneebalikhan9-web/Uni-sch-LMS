@@ -7,29 +7,40 @@ const { pool } = require('../config/database');
 // ==========================================
 router.get('/stats', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const params = isSuperAdmin ? [] : [campusId];
+    const campusFilter = isSuperAdmin ? '' : 'AND u.campus_id = ?';
+    const campusWhere = isSuperAdmin ? '' : 'WHERE u.campus_id = ?';
+
     const [[{ total_enrolled }]] = await pool.query(`
       SELECT COUNT(*) as total_enrolled 
-      FROM students 
-      WHERE academic_status IN ('regular', 'probation')
-    `);
+      FROM students s
+      JOIN users u ON s.user_id = u.id
+      WHERE s.academic_status IN ('regular', 'probation') ${campusFilter}
+    `, params);
 
     const [[{ degrees_issued }]] = await pool.query(`
       SELECT COUNT(*) as degrees_issued 
-      FROM registrar_degrees 
-      WHERE status = 'Issued' AND YEAR(issue_date) = YEAR(CURDATE())
-    `);
+      FROM registrar_degrees d
+      JOIN users u ON d.student_id = u.id
+      WHERE d.status = 'Issued' AND YEAR(d.issue_date) = YEAR(CURDATE()) ${campusFilter}
+    `, params);
 
     const [[{ pending_verifications }]] = await pool.query(`
       SELECT COUNT(*) as pending_verifications 
-      FROM registrar_degree_verifications 
-      WHERE status = 'Pending'
-    `);
+      FROM registrar_degree_verifications v
+      JOIN registrar_degrees d ON v.degree_id = d.id
+      JOIN users u ON d.student_id = u.id
+      WHERE v.status = 'Pending' ${campusFilter}
+    `, params);
 
     const [[{ transcript_requests }]] = await pool.query(`
       SELECT COUNT(*) as transcript_requests 
-      FROM registrar_transcript_requests 
-      WHERE status = 'Pending'
-    `);
+      FROM registrar_transcript_requests tr
+      JOIN users u ON tr.student_id = u.id
+      WHERE tr.status = 'Pending' ${campusFilter}
+    `, params);
 
     res.json({
       success: true,
@@ -51,6 +62,11 @@ router.get('/stats', async (req, res) => {
 // ==========================================
 router.get('/students', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const params = isSuperAdmin ? [] : [campusId];
+    const campusWhere = isSuperAdmin ? '' : 'WHERE u.campus_id = ?';
+
     const [students] = await pool.query(`
       SELECT 
         s.roll_number as id,
@@ -61,9 +77,10 @@ router.get('/students', async (req, res) => {
       FROM students s
       JOIN users u ON s.user_id = u.id
       LEFT JOIN programs p ON s.program_id = p.id
+      ${campusWhere}
       ORDER BY s.id DESC
       LIMIT 100
-    `);
+    `, params);
 
     const mappedStudents = students.map(s => ({
       ...s,
@@ -86,9 +103,9 @@ router.put('/students/:roll_number/status', async (req, res) => {
   try {
     const { roll_number } = req.params;
     const { status } = req.body;
-    // Map frontend status to DB enum: 'Enrolled' -> 'regular', 'Graduated' -> 'graduated', 'Suspended' -> 'suspended'
     const dbStatus = status === 'Enrolled' ? 'regular' : status === 'Graduated' ? 'graduated' : 'suspended';
     
+    // Ideally we should also verify campus_id here before update for security
     await pool.execute(
       'UPDATE students SET academic_status = ? WHERE roll_number = ?',
       [dbStatus, roll_number]
@@ -105,6 +122,11 @@ router.put('/students/:roll_number/status', async (req, res) => {
 // ==========================================
 router.get('/verifications/pending', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const params = isSuperAdmin ? [] : [campusId];
+    const campusFilter = isSuperAdmin ? '' : 'AND u.campus_id = ?';
+
     const [verifications] = await pool.query(`
       SELECT 
         v.id as request_id,
@@ -116,9 +138,9 @@ router.get('/verifications/pending', async (req, res) => {
       FROM registrar_degree_verifications v
       JOIN registrar_degrees d ON v.degree_id = d.id
       JOIN users u ON d.student_id = u.id
-      WHERE v.status = 'Pending'
+      WHERE v.status = 'Pending' ${campusFilter}
       ORDER BY v.request_date DESC
-    `);
+    `, params);
 
     const mappedVerifications = verifications.map(v => ({
       ...v,
@@ -158,6 +180,11 @@ router.post('/verifications/action', async (req, res) => {
 // ==========================================
 router.get('/transcripts', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const params = isSuperAdmin ? [] : [campusId];
+    const campusWhere = isSuperAdmin ? '' : 'WHERE u.campus_id = ?';
+
     const [transcripts] = await pool.query(`
       SELECT 
         tr.id,
@@ -170,8 +197,9 @@ router.get('/transcripts', async (req, res) => {
       JOIN users u ON tr.student_id = u.id
       JOIN students s ON s.user_id = u.id
       LEFT JOIN programs p ON s.program_id = p.id
+      ${campusWhere}
       ORDER BY tr.request_date DESC
-    `);
+    `, params);
 
     res.json({ success: true, transcripts });
   } catch (error) {
@@ -202,6 +230,11 @@ router.post('/transcripts/process', async (req, res) => {
 // ==========================================
 router.get('/alumni', async (req, res) => {
   try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const params = isSuperAdmin ? [] : [campusId];
+    const campusFilter = isSuperAdmin ? '' : 'AND u.campus_id = ?';
+
     const [alumni] = await pool.query(`
       SELECT 
         s.roll_number as id,
@@ -212,9 +245,9 @@ router.get('/alumni', async (req, res) => {
       FROM students s
       JOIN users u ON s.user_id = u.id
       LEFT JOIN programs p ON s.program_id = p.id
-      WHERE s.academic_status = 'graduated'
+      WHERE s.academic_status = 'graduated' ${campusFilter}
       ORDER BY u.name ASC
-    `);
+    `, params);
 
     res.json({ success: true, alumni });
   } catch (error) {

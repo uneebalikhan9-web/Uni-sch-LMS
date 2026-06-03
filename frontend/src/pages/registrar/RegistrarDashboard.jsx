@@ -51,6 +51,11 @@ const RegistrarDashboard = ({ user, onLogout }) => {
   const [alumni, setAlumni] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Modal States
+  const [editModal, setEditModal] = useState({ isOpen: false, studentId: null, currentStatus: '' });
+  const [viewModal, setViewModal] = useState({ isOpen: false, studentData: null });
+  const [processTranscriptModal, setProcessTranscriptModal] = useState({ isOpen: false, transcriptId: null });
+
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
     try {
@@ -115,31 +120,44 @@ const RegistrarDashboard = ({ user, onLogout }) => {
   };
 
   const handleProcessTranscript = async (id) => {
-    if (!window.confirm(`Are you sure you want to mark Transcript Request TSR-${id + 500} as processed?`)) return;
+    // Open modal instead of confirm
+    setProcessTranscriptModal({ isOpen: true, transcriptId: id });
+  };
+
+  const confirmProcessTranscript = async () => {
     try {
       const token = sessionStorage.getItem('token');
       await axios.post(`${API_BASE_URL}/api/registrar/transcripts/process`, 
-        { id },
+        { id: processTranscriptModal.transcriptId },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      setProcessTranscriptModal({ isOpen: false, transcriptId: null });
       fetchDashboardData();
     } catch (error) { alert('Failed to process transcript'); }
   };
 
-  const handleEditRecord = async (id) => {
-    const newStatus = window.prompt(`Update status for Student ${id} (Enter: Enrolled, Suspended, or Graduated):`, 'Enrolled');
-    if (!newStatus || !['Enrolled', 'Suspended', 'Graduated'].includes(newStatus)) {
-      if (newStatus !== null) alert('Invalid status entered. Must be Enrolled, Suspended, or Graduated.');
-      return;
-    }
+  const handleEditRecord = (id) => {
+    const student = recentRecords.find(r => r.id === id) || alumni.find(r => r.id === id);
+    setEditModal({ isOpen: true, studentId: id, currentStatus: student ? student.status : 'Enrolled' });
+  };
+
+  const confirmEditStatus = async (newStatus) => {
     try {
       const token = sessionStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/api/registrar/students/${id}/status`, 
+      await axios.put(`${API_BASE_URL}/api/registrar/students/${editModal.studentId}/status`, 
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      setEditModal({ isOpen: false, studentId: null, currentStatus: '' });
       fetchDashboardData();
     } catch (error) { alert('Failed to update student record'); }
+  };
+
+  const handleViewStudentRecord = (id) => {
+    const student = recentRecords.find(r => r.id === id) || alumni.find(r => r.id === id);
+    if (student) {
+      setViewModal({ isOpen: true, studentData: student });
+    }
   };
 
   const filterData = (data, fields) => {
@@ -170,7 +188,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 2000,
-            background: 'var(--reg-primary, #4f46e5)',
+            background: 'var(--reg-primary, var(--primary-color, #4f46e5))',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -180,7 +198,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -217,7 +235,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 30,
-              background: 'var(--reg-primary, #4f46e5)',
+              background: 'var(--reg-primary, var(--primary-color, #4f46e5))',
               color: '#fff',
               border: 'none',
               borderRadius: '0 10px 10px 0',
@@ -227,7 +245,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -241,10 +259,16 @@ const RegistrarDashboard = ({ user, onLogout }) => {
 
         <div className="sidebar-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="logo" style={{ gap: '12px' }}>
-            <div className="logo-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--reg-primary) 0%, #818cf8 100%)', boxShadow: '0 4px 10px rgba(79, 70, 229, 0.3)' }}>
-              <GraduationCap size={22} weight="fill" color="white" />
-            </div>
-            <span>Lancers<span style={{ color: '#818cf8' }}>Tech</span></span>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div className="logo-icon" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--reg-primary) 0%, #818cf8 100%)', boxShadow: '0 4px 10px rgba(var(--primary-rgb, 79, 70, 229), 0.3)' }}>
+                  <GraduationCap size={22} weight="fill" color="white" />
+                </div>
+                <span>Lancers<span style={{ color: '#818cf8' }}>Tech</span></span>
+              </>
+            )}
           </div>
 
           <button className="sidebar-close-btn" onClick={() => setSidebarOpen(false)} style={{ display: 'none', background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', outline: 'none' }}>
@@ -313,7 +337,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
                 recentRecords={recentRecords} 
                 getStatusClass={getStatusClass} 
                 handleEditRecord={handleEditRecord} 
-                handleViewTranscript={handleProcessTranscript} 
+                handleViewTranscript={handleViewStudentRecord} 
               />
             )}
             {activeNav === 'students' && (
@@ -322,7 +346,7 @@ const RegistrarDashboard = ({ user, onLogout }) => {
                 filterData={filterData} 
                 getStatusClass={getStatusClass} 
                 handleEditRecord={handleEditRecord} 
-                handleViewTranscript={handleProcessTranscript} 
+                handleViewTranscript={handleViewStudentRecord} 
               />
             )}
             {activeNav === 'verification' && (
@@ -346,6 +370,106 @@ const RegistrarDashboard = ({ user, onLogout }) => {
                 filterData={filterData} 
               />
             )}
+          </div>
+        )}
+
+        {/* MODALS */}
+        {/* Edit Status Modal */}
+        {editModal.isOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: 'white', borderRadius: '24px', padding: '32px', width: '90%', maxWidth: '400px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', animation: 'slideUp 0.3s ease-out' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Update Academic Status</h3>
+                <button onClick={() => setEditModal({ isOpen: false, studentId: null, currentStatus: '' })} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                  <X size={24} weight="bold" />
+                </button>
+              </div>
+              <p style={{ fontSize: '14px', color: '#475569', marginBottom: '20px' }}>
+                Select a new status for student <strong>{editModal.studentId}</strong>.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
+                {['Enrolled', 'Graduated', 'Suspended'].map(status => (
+                  <button 
+                    key={status}
+                    onClick={() => setEditModal(prev => ({ ...prev, currentStatus: status }))}
+                    style={{
+                      padding: '12px 16px', borderRadius: '12px', fontSize: '14px', fontWeight: '700', textAlign: 'left', cursor: 'pointer', transition: 'all 0.2s',
+                      background: editModal.currentStatus === status ? '#eef2ff' : '#f8fafc',
+                      color: editModal.currentStatus === status ? '#4f46e5' : '#475569',
+                      border: editModal.currentStatus === status ? '2px solid #4f46e5' : '2px solid transparent',
+                    }}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                <button onClick={() => setEditModal({ isOpen: false, studentId: null, currentStatus: '' })} style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '700', color: '#64748b', background: '#f1f5f9', border: 'none', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={() => confirmEditStatus(editModal.currentStatus)} style={{ padding: '10px 20px', borderRadius: '12px', fontWeight: '700', color: 'white', background: '#4f46e5', border: 'none', cursor: 'pointer' }}>Save Status</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* View Transcript/Student Details Modal */}
+        {viewModal.isOpen && viewModal.studentData && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: 'white', borderRadius: '24px', padding: '32px', width: '90%', maxWidth: '500px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', animation: 'slideUp 0.3s ease-out' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Academic Record</h3>
+                <button onClick={() => setViewModal({ isOpen: false, studentData: null })} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                  <X size={24} weight="bold" />
+                </button>
+              </div>
+              
+              <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '24px', marginBottom: '24px', border: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Roll Number</span>
+                  <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 800 }}>{viewModal.studentData.id}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Full Name</span>
+                  <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 800 }}>{viewModal.studentData.name}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Program</span>
+                  <span style={{ fontSize: '14px', color: '#0f172a', fontWeight: 800 }}>{viewModal.studentData.program || 'Unassigned'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>CGPA</span>
+                  <span style={{ fontSize: '14px', color: '#4f46e5', fontWeight: 900 }}>{viewModal.studentData.cgpa || 'N/A'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>Status</span>
+                  <span className={`status-badge ${getStatusClass(viewModal.studentData.status)}`} style={{ padding: '4px 10px', borderRadius: '16px', fontSize: '11px', fontWeight: '800' }}>
+                    {viewModal.studentData.status}
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button onClick={() => setViewModal({ isOpen: false, studentData: null })} style={{ padding: '12px 30px', borderRadius: '12px', fontWeight: '700', color: 'white', background: '#0f172a', border: 'none', cursor: 'pointer', width: '100%' }}>Close Record</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm Transcript Process Modal */}
+        {processTranscriptModal.isOpen && (
+          <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+            <div style={{ background: 'white', borderRadius: '24px', padding: '32px', width: '90%', maxWidth: '400px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', animation: 'slideUp 0.3s ease-out', textAlign: 'center' }}>
+              <div style={{ background: '#e0e7ff', color: '#4f46e5', width: '64px', height: '64px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+                <FileText size={32} weight="duotone" />
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 12px 0' }}>Process Transcript</h3>
+              <p style={{ fontSize: '14px', color: '#475569', marginBottom: '30px' }}>
+                Are you sure you want to mark Transcript Request <strong>TSR-{processTranscriptModal.transcriptId + 500}</strong> as fully processed?
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button onClick={() => setProcessTranscriptModal({ isOpen: false, transcriptId: null })} style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '700', color: '#64748b', background: '#f1f5f9', border: 'none', cursor: 'pointer', flex: 1 }}>Cancel</button>
+                <button onClick={confirmProcessTranscript} style={{ padding: '12px 24px', borderRadius: '12px', fontWeight: '700', color: 'white', background: '#4f46e5', border: 'none', cursor: 'pointer', flex: 1 }}>Confirm Process</button>
+              </div>
+            </div>
           </div>
         )}
       </main>

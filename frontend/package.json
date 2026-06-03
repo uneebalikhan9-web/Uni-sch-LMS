@@ -11,20 +11,20 @@
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
     "@phosphor-icons/react": "^2.1.10",
-    "axios": "^1.13.5",
+    "axios": "^1.16.1",
     "chart.js": "^4.5.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
+    "recharts": "^3.8.1",
     "socket.io-client": "^4.8.3",
     "tldraw": "^4.4.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
-    "baseline-browser-mapping": "^2.10.29",
-    "caniuse-lite": "^1.0.30001792",
+    "baseline-browser-mapping": "^2.10.33",
     "vite": "^5.4.2"
   }
 }

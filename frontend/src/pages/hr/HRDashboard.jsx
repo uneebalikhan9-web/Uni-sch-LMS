@@ -5,7 +5,8 @@ import {
   UserPlus, Megaphone, Check, X, Pencil, Trash,
   List, Bell, ChartLineUp, EnvelopeSimple, Plus,
   ArrowRight, UserCircle, SignOut, ShieldCheck,
-  IdentificationCard, Timer, Money, ChatCircle
+  IdentificationCard, Timer, Money, ChatCircle,
+  Eye, ClockCounterClockwise
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -32,10 +33,12 @@ const HRDashboard = ({ user, onLogout }) => {
   const [attendanceTrend, setAttendanceTrend] = useState([]);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [jobPostings, setJobPostings] = useState([]);
+  const [payrollData, setPayrollData] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'employee', 'job'
+  const [modalType, setModalType] = useState(''); // 'employee', 'job', 'leaveDetails'
   const [editingItem, setEditingItem] = useState(null);
+  const [viewLeaveHistory, setViewLeaveHistory] = useState(false);
 
   const token = sessionStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -54,9 +57,12 @@ const HRDashboard = ({ user, onLogout }) => {
   useEffect(() => {
     if (chartRef.current && activeTab === 'dashboard' && attendanceTrend.length > 0) {
       if (chartInstance.current) chartInstance.current.destroy();
+      const rootStyle = getComputedStyle(document.documentElement);
+      const primaryRgb = rootStyle.getPropertyValue('--primary-rgb').trim() || '79, 70, 229';
+
       const ctx = chartRef.current.getContext('2d');
       const grad = ctx.createLinearGradient(0, 0, 0, 300);
-      grad.addColorStop(0, 'rgba(79, 70, 229, 0.85)');
+      grad.addColorStop(0, `rgba(${primaryRgb}, 0.85)`);
       grad.addColorStop(1, 'rgba(129, 140, 248, 0.15)');
 
       chartInstance.current = new Chart(ctx, {
@@ -117,6 +123,14 @@ const HRDashboard = ({ user, onLogout }) => {
       setAttendanceTrend(trendRes.data);
       setLeaveRequests(leaveRes.data);
       setJobPostings(jobRes.data);
+
+      // Fetch real payroll data from Finance
+      try {
+        const payrollRes = await axios.get(`${API_BASE_URL}/api/finance/payroll`, config);
+        setPayrollData(payrollRes.data.payroll || []);
+      } catch (e) {
+        setPayrollData([]);
+      }
     } catch (error) {
       showToast('Error connecting to institutional database', 'error');
     } finally {
@@ -212,7 +226,7 @@ const HRDashboard = ({ user, onLogout }) => {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 2000,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -222,7 +236,7 @@ const HRDashboard = ({ user, onLogout }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -260,7 +274,7 @@ const HRDashboard = ({ user, onLogout }) => {
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 30,
-              background: '#4f46e5',
+              background: 'var(--primary-color, #4f46e5)',
               color: '#fff',
               border: 'none',
               borderRadius: '0 10px 10px 0',
@@ -270,7 +284,7 @@ const HRDashboard = ({ user, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -293,7 +307,11 @@ const HRDashboard = ({ user, onLogout }) => {
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
           <div className="hr-logo-section">
-            <div className="hr-logo-text">Lancers<span className="hr-logo-accent">Tech</span></div>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <div className="hr-logo-text">Lancers<span className="hr-logo-accent">Tech</span></div>
+            )}
             <div style={{ color: 'var(--hr-text-muted)', fontSize: 11, fontWeight: 700, marginTop: 4, letterSpacing: 1 }}>HR COMMAND CENTER</div>
           </div>
           
@@ -360,7 +378,7 @@ const HRDashboard = ({ user, onLogout }) => {
               {/* Attendance & Trend Analytics Section */}
               <div className="hr-card animate-fadeIn" style={{ padding: '1.8rem', marginBottom: '2rem' }}>
                 <h3 style={{ fontWeight: 800, marginBottom: '1.5rem', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ChartLineUp size={22} color="#4f46e5" /> Daily Attendance Analytics & Trend
+                  <ChartLineUp size={22} color="var(--primary-color, #4f46e5)" /> Daily Attendance Analytics & Trend
                 </h3>
                 <div style={{ height: '280px', position: 'relative' }}>
                   <canvas ref={chartRef} key={`${leftSidebarOpen}-${rightPanelOpen}`} />
@@ -371,7 +389,7 @@ const HRDashboard = ({ user, onLogout }) => {
                 <div className="hr-card" style={{ padding: isMobile ? '1rem' : '1.8rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                     <h3 style={{ fontWeight: 800, fontSize: isMobile ? '1rem' : '1.2rem' }}>Personnel Overview</h3>
-                    <button onClick={() => setActiveTab('employees')} style={{ border: 'none', background: '#eef2ff', color: '#4f46e5', padding: '6px 12px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>View All</button>
+                    <button onClick={() => setActiveTab('employees')} style={{ border: 'none', background: '#eef2ff', color: 'var(--primary-color, #4f46e5)', padding: '6px 12px', borderRadius: 8, fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}>View All</button>
                   </div>
                   <div className="hr-table-container">
                     <table className="hr-table">
@@ -397,7 +415,7 @@ const HRDashboard = ({ user, onLogout }) => {
                       {announcements.length > 0 ? announcements.map((ann, i) => (
                         <div key={i} style={{ padding: '1rem', background: '#f8fafc', borderRadius: 16, border: '1px solid #f1f5f9' }}>
                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase' }}>{ann.type}</span>
+                              <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase' }}>{ann.type}</span>
                               <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{ann.date}</span>
                            </div>
                            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 4 }}>{ann.title}</h4>
@@ -417,7 +435,7 @@ const HRDashboard = ({ user, onLogout }) => {
                 <button 
                   onClick={() => { setEditingItem(null); setModalType('employee'); setShowModal(true); }} 
                   style={{ 
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
                     color: '#fff',
                     padding: '10px 24px',
                     borderRadius: '14px',
@@ -428,11 +446,11 @@ const HRDashboard = ({ user, onLogout }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    boxShadow: '0 8px 20px -6px rgba(79, 70, 229, 0.4)',
+                    boxShadow: '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
                     transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(79, 70, 229, 0.5)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(79, 70, 229, 0.4)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)'; }}
                 >
                   <Plus size={18} weight="bold" /> Add Employee
                 </button>
@@ -457,7 +475,7 @@ const HRDashboard = ({ user, onLogout }) => {
                         <td><span className={`hr-badge ${emp.status === 'active' ? 'hr-badge-active' : 'hr-badge-leave'}`}>{emp.status}</span></td>
                         <td>
                           <div style={{ display: 'flex', gap: 10 }}>
-                            <Pencil size={18} color="#4f46e5" style={{ cursor: 'pointer' }} onClick={() => { setEditingItem(emp); setModalType('employee'); setShowModal(true); }} />
+                            <Pencil size={18} color="var(--primary-color, #4f46e5)" style={{ cursor: 'pointer' }} onClick={() => { setEditingItem(emp); setModalType('employee'); setShowModal(true); }} />
                             <Trash size={18} color="#ef4444" style={{ cursor: 'pointer' }} onClick={() => handleDelete(emp.id, 'employee')} />
                           </div>
                         </td>
@@ -471,28 +489,70 @@ const HRDashboard = ({ user, onLogout }) => {
 
           {activeTab === 'leave' && (
             <div className="hr-card">
-              <h2 style={{ fontWeight: 800, marginBottom: '2rem' }}>Attendance & Leave Requests</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <h2 style={{ fontWeight: 800 }}>Attendance & Leave Requests</h2>
+                <button 
+                  onClick={() => setViewLeaveHistory(!viewLeaveHistory)} 
+                  style={{ 
+                    background: viewLeaveHistory ? '#f1f5f9' : 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
+                    color: viewLeaveHistory ? '#475569' : '#fff',
+                    padding: '10px 24px',
+                    borderRadius: '14px',
+                    fontSize: '0.85rem',
+                    fontWeight: '800',
+                    border: 'none',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: viewLeaveHistory ? 'none' : '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {viewLeaveHistory ? (
+                    <><Timer size={18} weight="bold" /> View Pending</>
+                  ) : (
+                    <><ClockCounterClockwise size={18} weight="bold" /> View History</>
+                  )}
+                </button>
+              </div>
+
               <div className="hr-table-container">
                 <table className="hr-table">
                   <thead>
                     <tr><th>Employee</th><th>Leave Period</th><th>Type</th><th>Status</th><th>Actions</th></tr>
                   </thead>
                   <tbody>
-                    {leaveRequests.map((req) => (
+                    {leaveRequests
+                      .filter(req => viewLeaveHistory ? req.status !== 'Pending' : req.status === 'Pending')
+                      .map((req) => (
                       <tr key={req.id}>
                         <td style={{ fontWeight: 700 }}>{req.name}</td>
                         <td>{req.days}</td>
                         <td>{req.type}</td>
-                        <td><span className="hr-badge hr-badge-leave">{req.status}</span></td>
+                        <td>
+                          <span className={`hr-badge ${req.status === 'Approved' ? 'hr-badge-active' : 'hr-badge-leave'}`}>
+                            {req.status}
+                          </span>
+                        </td>
                         <td>
                           <div style={{ display: 'flex', gap: 10 }}>
-                            <Check size={18} color="#10b981" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Approved')} />
-                            <X size={18} color="#ef4444" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Rejected')} />
+                            <Eye size={18} color="var(--primary-color, #4f46e5)" weight="bold" style={{ cursor: 'pointer' }} onClick={() => { setEditingItem(req); setModalType('leaveDetails'); setShowModal(true); }} />
+                            {!viewLeaveHistory && (
+                              <>
+                                <Check size={18} color="#10b981" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Approved')} />
+                                <X size={18} color="#ef4444" weight="bold" style={{ cursor: 'pointer' }} onClick={() => handleLeaveAction(req.id, 'Rejected')} />
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
                     ))}
-                    {leaveRequests.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>No pending leave requests</td></tr>}
+                    {leaveRequests.filter(req => viewLeaveHistory ? req.status !== 'Pending' : req.status === 'Pending').length === 0 && (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                        {viewLeaveHistory ? 'No leave history available.' : 'No pending leave requests.'}
+                      </td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -501,22 +561,40 @@ const HRDashboard = ({ user, onLogout }) => {
 
           {activeTab === 'payroll' && (
             <div className="hr-card">
-              <h2 style={{ fontWeight: 800, marginBottom: '2rem' }}>Payroll Disbursement</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div>
+                  <h2 style={{ fontWeight: 800, margin: 0 }}>Payroll Disbursement</h2>
+                  <p style={{ color: '#64748b', fontSize: '0.85rem', margin: '4px 0 0', fontWeight: 500 }}>Managed by Finance Department — read-only view</p>
+                </div>
+              </div>
               <div className="hr-table-container">
                 <table className="hr-table">
                   <thead>
-                    <tr><th>Employee</th><th>Department</th><th>Salary</th><th>Month</th><th>Status</th></tr>
+                    <tr><th>Employee</th><th>Designation</th><th>Basic Salary</th><th>Net Payable</th><th>Month/Year</th><th>Status</th></tr>
                   </thead>
                   <tbody>
-                    {employees.map((emp, i) => (
+                    {payrollData.length > 0 ? payrollData.map((p, i) => (
                       <tr key={i}>
-                        <td style={{ fontWeight: 700 }}>{emp.name}</td>
-                        <td>{emp.department || 'N/A'}</td>
-                        <td style={{ fontWeight: 800 }}>Rs. {(45000 + (i * 2000)).toLocaleString()}</td>
-                        <td>May 2024</td>
-                        <td><span className="hr-badge hr-badge-active">Paid</span></td>
+                        <td style={{ fontWeight: 700 }}>{p.employee_name || 'N/A'}</td>
+                        <td>{p.designation || 'Staff'}</td>
+                        <td style={{ fontWeight: 800 }}>Rs. {(p.basic_salary || 0).toLocaleString()}</td>
+                        <td style={{ fontWeight: 800, color: '#10b981' }}>Rs. {(p.net_payable || 0).toLocaleString()}</td>
+                        <td>{p.month || '-'} {p.year || ''}</td>
+                        <td>
+                          <span className={`hr-badge ${p.status === 'disbursed' ? 'hr-badge-active' : 'hr-badge-leave'}`}>
+                            {p.status === 'disbursed' ? 'Paid' : 'Pending'}
+                          </span>
+                        </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                          <div style={{ fontSize: '2rem', marginBottom: '12px' }}>💼</div>
+                          <div style={{ fontWeight: 700, marginBottom: '4px' }}>No Payroll Records Yet</div>
+                          <div style={{ fontSize: '0.8rem' }}>Finance Manager adds salary records from the Finance Portal.</div>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -530,7 +608,7 @@ const HRDashboard = ({ user, onLogout }) => {
                 <button 
                   onClick={() => { setEditingItem(null); setModalType('job'); setShowModal(true); }} 
                   style={{ 
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
                     color: '#fff',
                     padding: '10px 24px',
                     borderRadius: '14px',
@@ -541,11 +619,11 @@ const HRDashboard = ({ user, onLogout }) => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
-                    boxShadow: '0 8px 20px -6px rgba(79, 70, 229, 0.4)',
+                    boxShadow: '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
                     transition: 'all 0.2s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(79, 70, 229, 0.5)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(79, 70, 229, 0.4)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 24px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)'; }}
                 >
                   <Megaphone size={18} weight="bold" /> New Vacancy
                 </button>
@@ -564,7 +642,7 @@ const HRDashboard = ({ user, onLogout }) => {
                         <td><span className="hr-badge hr-badge-active">{job.status}</span></td>
                         <td>
                           <div style={{ display: 'flex', gap: 10 }}>
-                            <ArrowRight size={18} color="#4f46e5" style={{ cursor: 'pointer' }} />
+                            <ArrowRight size={18} color="var(--primary-color, #4f46e5)" style={{ cursor: 'pointer' }} />
                             <Trash size={18} color="#ef4444" style={{ cursor: 'pointer' }} onClick={() => handleDelete(job.id, 'job')} />
                           </div>
                         </td>
@@ -589,7 +667,7 @@ const HRDashboard = ({ user, onLogout }) => {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 2000,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '12px 0 0 12px',
@@ -599,7 +677,7 @@ const HRDashboard = ({ user, onLogout }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -639,7 +717,7 @@ const HRDashboard = ({ user, onLogout }) => {
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 30,
-              background: '#4f46e5',
+              background: 'var(--primary-color, #4f46e5)',
               color: '#fff',
               border: 'none',
               borderRadius: '10px 0 0 10px',
@@ -649,7 +727,7 @@ const HRDashboard = ({ user, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '-4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -684,7 +762,7 @@ const HRDashboard = ({ user, onLogout }) => {
             <div style={{
               width: '80px',
               height: '80px',
-              background: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)',
+              background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #818cf8 100%)',
               color: '#fff',
               borderRadius: '28px',
               margin: '0 auto 20px',
@@ -693,14 +771,14 @@ const HRDashboard = ({ user, onLogout }) => {
               justifyContent: 'center',
               fontSize: '32px',
               fontWeight: '800',
-              boxShadow: '0 15px 25px -10px rgba(79, 70, 229, 0.4)',
+              boxShadow: '0 15px 25px -10px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
             }}>{user?.name ? user.name.charAt(0).toUpperCase() : 'H'}</div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#0f172a', marginBottom: '4px' }}>{user?.name || 'HR Manager'}</h3>
             <span style={{
               display: 'inline-block',
               padding: '6px 16px',
               background: '#eef2ff',
-              color: '#4f46e5',
+              color: 'var(--primary-color, #4f46e5)',
               borderRadius: '30px',
               fontSize: '0.75rem',
               fontWeight: '800',
@@ -716,7 +794,7 @@ const HRDashboard = ({ user, onLogout }) => {
               <div style={{ borderLeft: '1px solid #e2e8f0' }}></div>
               <div>
                 <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: '700', textTransform: 'uppercase' }}>Staff Strength</span>
-                <span style={{ fontSize: '1.3rem', fontWeight: '800', color: '#4f46e5' }}>{stats.totalStaff || 0}</span>
+                <span style={{ fontSize: '1.3rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)' }}>{stats.totalStaff || 0}</span>
               </div>
             </div>
           </div>
@@ -730,12 +808,12 @@ const HRDashboard = ({ user, onLogout }) => {
             marginBottom: '24px',
           }}>
             <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <ShieldCheck size={20} color="#4f46e5" /> Quick Insights
+              <ShieldCheck size={20} color="var(--primary-color, #4f46e5)" /> Quick Insights
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
                 <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>Hiring Velocity</span>
-                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: '#4f46e5' }}>High</span>
+                <span style={{ fontSize: '0.85rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)' }}>High</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px' }}>
                 <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600' }}>Leave Rate</span>
@@ -756,12 +834,12 @@ const HRDashboard = ({ user, onLogout }) => {
             padding: '24px',
           }}>
             <h4 style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Timer size={20} color="#4f46e5" /> HR Actions Log
+              <Timer size={20} color="var(--primary-color, #4f46e5)" /> HR Actions Log
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {employees.slice(0, 3).map((emp, idx) => (
                 <div key={idx} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', borderBottom: idx < 2 ? '1px solid #f1f5f9' : 'none', paddingBottom: '10px' }}>
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4f46e5', marginTop: '6px' }}></div>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary-color, #4f46e5)', marginTop: '6px' }}></div>
                   <div>
                     <p style={{ fontSize: '0.8rem', fontWeight: '700', color: '#0f172a' }}>{emp.name} is Active</p>
                     <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Designation: {emp.designation || 'Staff'}</span>

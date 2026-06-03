@@ -37,7 +37,7 @@ const AdmissionsVerification = ({ documents, onAction }) => {
                 <tr key={doc.id || idx}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#4f46e5', fontSize: '0.9rem' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', fontSize: '0.9rem' }}>
                         {doc.name?.charAt(0)}
                       </div>
                       <div style={{ fontWeight: 700, color: '#0f172a' }}>{doc.name}</div>

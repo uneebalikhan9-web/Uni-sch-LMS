@@ -12,7 +12,7 @@ export const S = {
     position: 'absolute',
     width: '600px',
     height: '600px',
-    background: 'radial-gradient(circle, rgba(79, 70, 229, 0.08) 0%, rgba(255, 255, 255, 0) 70%)',
+    background: 'radial-gradient(circle, rgba(var(--primary-rgb, 79, 70, 229), 0.08) 0%, rgba(255, 255, 255, 0) 70%)',
     top: '-200px',
     right: '-100px',
     zIndex: 0,
@@ -118,7 +118,7 @@ export const S = {
   },
 
   navBtnActive: {
-    background: 'rgba(79, 70, 229, 0.15)',
+    background: 'rgba(var(--primary-rgb, 79, 70, 229), 0.15)',
     color: '#fff',
   },
 
@@ -127,12 +127,12 @@ export const S = {
     left: '0',
     width: '4px',
     height: '20px',
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     borderRadius: '0 4px 4px 0',
   },
 
   navBadge: {
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     color: '#fff',
     padding: '2px 8px',
     borderRadius: '10px',
@@ -203,14 +203,14 @@ export const S = {
     alignItems: 'center',
     gap: '8px',
     padding: '12px 24px',
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     color: '#fff',
     border: 'none',
     borderRadius: '16px',
     fontWeight: '700',
     cursor: 'pointer',
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    boxShadow: '0 10px 20px -8px rgba(79, 70, 229, 0.5)',
+    boxShadow: '0 10px 20px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.5)',
   },
 
   dateBadge: {
@@ -410,10 +410,10 @@ export const S = {
     width: '10px',
     height: '10px',
     borderRadius: '50%',
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     marginTop: '6px',
     flexShrink: 0,
-    boxShadow: '0 0 10px rgba(79, 70, 229, 0.4)',
+    boxShadow: '0 0 10px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
   },
 
   activityContent: {
@@ -515,7 +515,7 @@ export const S = {
 
   dealValue: {
     fontWeight: '800',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     fontSize: '1rem',
   },
 
@@ -616,7 +616,7 @@ export const S = {
   copyLinkBtn: {
     background: 'transparent',
     border: 'none',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     fontSize: '0.75rem',
     cursor: 'pointer',
     padding: '4px 0',
@@ -633,7 +633,7 @@ export const S = {
 
   applicantCount: {
     background: '#ede9fe',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     padding: '4px 12px',
     borderRadius: '30px',
     fontSize: '0.8rem',
@@ -653,7 +653,7 @@ export const S = {
   teacherCount: {
     fontWeight: '800',
     fontSize: '1.1rem',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
   },
 
   // Right Panel
@@ -683,7 +683,7 @@ export const S = {
   avatar: {
     width: '80px',
     height: '80px',
-    background: 'linear-gradient(135deg, #4f46e5 0%, #818cf8 100%)',
+    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #818cf8 100%)',
     color: '#fff',
     borderRadius: '28px',
     margin: '0 auto 20px',
@@ -692,7 +692,7 @@ export const S = {
     justifyContent: 'center',
     fontSize: '32px',
     fontWeight: '800',
-    boxShadow: '0 15px 25px -10px rgba(79, 70, 229, 0.4)',
+    boxShadow: '0 15px 25px -10px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
   },
 
   profileName: {
@@ -704,7 +704,7 @@ export const S = {
 
   roleBadge: {
     background: '#e0e7ff',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     padding: '6px 16px',
     borderRadius: '30px',
     fontSize: '0.75rem',
@@ -774,7 +774,7 @@ export const S = {
 
   quickStatValue: {
     fontWeight: '800',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
   },
 
   shareCard: {
@@ -817,7 +817,7 @@ export const S = {
 
   shareBtn: {
     width: '100%',
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     color: '#fff',
     border: 'none',
     padding: '14px',
@@ -826,7 +826,7 @@ export const S = {
     fontWeight: '800',
     fontSize: '0.95rem',
     transition: 'all 0.3s ease',
-    boxShadow: '0 10px 15px -3px rgba(79, 70, 229, 0.3)',
+    boxShadow: '0 10px 15px -3px rgba(var(--primary-rgb, 79, 70, 229), 0.3)',
   },
 
   // Modal Styles
@@ -943,14 +943,14 @@ export const S = {
   saveBtn: {
     flex: 2,
     padding: '16px',
-    background: '#4f46e5',
+    background: 'var(--primary-color, #4f46e5)',
     color: '#fff',
     border: 'none',
     borderRadius: '18px',
     fontWeight: '800',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    boxShadow: '0 10px 20px -8px rgba(79, 70, 229, 0.5)',
+    boxShadow: '0 10px 20px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.5)',
   },
 
   // Loading
@@ -968,7 +968,7 @@ export const S = {
     width: '60px',
     height: '60px',
     border: '5px solid #e2e8f0',
-    borderTop: '5px solid #4f46e5',
+    borderTop: '5px solid var(--primary-color, #4f46e5)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
   },
@@ -976,7 +976,7 @@ export const S = {
   loadingText: {
     fontSize: '1.1rem',
     fontWeight: '700',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     letterSpacing: '0.5px',
   },
 };

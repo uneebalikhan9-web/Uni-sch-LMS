@@ -13,12 +13,14 @@ router.use(isSuperAdmin);
 
 router.get('/overview', async (req, res) => {
   try {
-    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses');
-    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student'");
-    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'");
-    const [[{ totalPrincipals }]] = await pool.query("SELECT COUNT(*) as totalPrincipals FROM users WHERE role = 'principal'");
-    const [[{ totalBds }]] = await pool.query("SELECT COUNT(*) as totalBds FROM users WHERE role IN ('bd', 'bd_agent')");
-    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(*) as totalCourses FROM courses');
+    const clientId = req.user.client_id;
+    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses WHERE client_id = ?', [clientId]);
+    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student' AND client_id = ?", [clientId]);
+    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher' AND client_id = ?", [clientId]);
+    const [[{ totalPrincipals }]] = await pool.query("SELECT COUNT(*) as totalPrincipals FROM users WHERE role = 'principal' AND client_id = ?", [clientId]);
+    const [[{ totalBds }]] = await pool.query("SELECT COUNT(*) as totalBds FROM users WHERE role IN ('bd', 'bd_agent') AND client_id = ?", [clientId]);
+    // Note: To count courses exactly, we join campuses
+    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(cr.id) as totalCourses FROM courses cr JOIN campuses c ON cr.campus_id = c.id WHERE c.client_id = ?', [clientId]);
 
     // Per-campus breakdown
     const [campusStats] = await pool.query(`
@@ -31,9 +33,10 @@ router.get('/overview', async (req, res) => {
         COUNT(DISTINCT CASE WHEN u.role = 'principal' THEN u.id END) as principals
       FROM campuses c
       LEFT JOIN users u ON u.campus_id = c.id
+      WHERE c.client_id = ?
       GROUP BY c.id
       ORDER BY c.created_at DESC
-    `);
+    `, [clientId]);
 
     res.json({
       success: true,
@@ -51,6 +54,7 @@ router.get('/overview', async (req, res) => {
 // Get all campuses
 router.get('/campuses', async (req, res) => {
   try {
+    const clientId = req.user.client_id;
     const [campuses] = await pool.query(`
       SELECT 
         c.*,
@@ -59,9 +63,10 @@ router.get('/campuses', async (req, res) => {
         COUNT(DISTINCT CASE WHEN u.role = 'principal' THEN u.id END) as principal_count
       FROM campuses c
       LEFT JOIN users u ON u.campus_id = c.id
+      WHERE c.client_id = ?
       GROUP BY c.id
       ORDER BY c.created_at DESC
-    `);
+    `, [clientId]);
     res.json({ success: true, campuses });
   } catch (error) {
     console.error('Get departments error:', error);
@@ -77,9 +82,10 @@ router.post('/campuses', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Department name is required' });
     }
 
+    const clientId = req.user.client_id;
     const [result] = await pool.query(
-      'INSERT INTO campuses (name, location, subscription_plan, dept_code) VALUES (?, ?, ?, ?)',
-      [name, location || '', subscription_plan || 'basic', dept_code || null]
+      'INSERT INTO campuses (name, location, subscription_plan, dept_code, client_id) VALUES (?, ?, ?, ?, ?)',
+      [name, location || '', subscription_plan || 'basic', dept_code || null, clientId]
     );
 
     res.status(201).json({
@@ -99,14 +105,15 @@ router.put('/campuses/:id', async (req, res) => {
     const { id } = req.params;
     const { name, location, subscription_plan, is_active, dept_code } = req.body;
 
-    const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ?', [id]);
+    const clientId = req.user.client_id;
+    const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ? AND client_id = ?', [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Department not found' });
     }
 
     await pool.query(
-      'UPDATE campuses SET name = ?, location = ?, is_active = ?, dept_code = ? WHERE id = ?',
-      [name, location, is_active !== undefined ? is_active : true, dept_code || null, id]
+      'UPDATE campuses SET name = ?, location = ?, is_active = ?, dept_code = ? WHERE id = ? AND client_id = ?',
+      [name, location, is_active !== undefined ? is_active : true, dept_code || null, id, clientId]
     );
 
     res.json({ success: true, message: 'Department updated successfully' });
@@ -121,7 +128,8 @@ router.delete('/campuses/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ?', [id]);
+    const clientId = req.user.client_id;
+    const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ? AND client_id = ?', [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Department not found' });
     }
@@ -142,13 +150,14 @@ router.delete('/campuses/:id', async (req, res) => {
 // Get all HODs
 router.get('/principals', async (req, res) => {
   try {
+    const clientId = req.user.client_id;
     const [principals] = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, u.campus_id, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
-      WHERE u.role = 'principal'
+      WHERE u.role = 'principal' AND u.client_id = ?
       ORDER BY u.created_at DESC
-    `);
+    `, [clientId]);
     res.json({ success: true, principals });
   } catch (error) {
     console.error('Get HODs error:', error);
@@ -177,8 +186,8 @@ router.post('/principals', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'principal', campus_id, true]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'principal', campus_id, true, req.user.client_id]
     );
 
     res.status(201).json({
@@ -198,7 +207,8 @@ router.put('/principals/:id', async (req, res) => {
     const { id } = req.params;
     const { name, email, password, campus_id } = req.body;
 
-    const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'principal'", [id]);
+    const clientId = req.user.client_id;
+    const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'principal' AND client_id = ?", [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'HOD not found' });
     }
@@ -227,7 +237,8 @@ router.put('/principals/:id', async (req, res) => {
 router.delete('/principals/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [principals] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'principal'", [id]);
+    const clientId = req.user.client_id;
+    const [principals] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'principal' AND client_id = ?", [id, clientId]);
     if (principals.length === 0) {
       return res.status(404).json({ success: false, message: 'HOD not found' });
     }
@@ -245,6 +256,7 @@ router.get('/principals/:id/details', async (req, res) => {
     const { id } = req.params;
 
     // Get HOD info and department
+    const clientId = req.user.client_id;
     const [hodData] = await pool.query(`
       SELECT 
         u.id, u.name, u.email, u.created_at, u.campus_id, 
@@ -252,8 +264,8 @@ router.get('/principals/:id/details', async (req, res) => {
         c.is_active as campus_status
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
-      WHERE u.id = ? AND u.role = 'principal'
-    `, [id]);
+      WHERE u.id = ? AND u.role = 'principal' AND u.client_id = ?
+    `, [id, clientId]);
 
     if (hodData.length === 0) {
       return res.status(404).json({ success: false, message: 'HOD not found' });
@@ -287,13 +299,14 @@ router.get('/principals/:id/details', async (req, res) => {
 // Get all BD Users
 router.get('/bds', async (req, res) => {
   try {
+    const clientId = req.user.client_id;
     const [bds] = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, u.is_approved, u.campus_id, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
-      WHERE u.role IN ('bd', 'bd_agent')
+      WHERE u.role IN ('bd', 'bd_agent') AND u.client_id = ?
       ORDER BY u.created_at DESC
-    `);
+    `, [clientId]);
     res.json({ success: true, bds });
   } catch (error) {
     console.error('Get BDs error:', error);
@@ -317,8 +330,8 @@ router.post('/bds', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'bd_agent', true, campus_id || null]
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'bd_agent', true, campus_id || null, req.user.client_id]
     );
 
     res.status(201).json({
@@ -338,7 +351,8 @@ router.put('/bds/:id', async (req, res) => {
     const { id } = req.params;
     const { name, email, password, campus_id } = req.body;
 
-    const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role IN ('bd', 'bd_agent')", [id]);
+    const clientId = req.user.client_id;
+    const [existing] = await pool.query("SELECT id FROM users WHERE id = ? AND role IN ('bd', 'bd_agent') AND client_id = ?", [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'BD user not found' });
     }
@@ -367,7 +381,8 @@ router.put('/bds/:id', async (req, res) => {
 router.delete('/bds/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [bds] = await pool.query("SELECT id FROM users WHERE id = ? AND role IN ('bd', 'bd_agent')", [id]);
+    const clientId = req.user.client_id;
+    const [bds] = await pool.query("SELECT id FROM users WHERE id = ? AND role IN ('bd', 'bd_agent') AND client_id = ?", [id, clientId]);
     if (bds.length === 0) {
       return res.status(404).json({ success: false, message: 'BD user not found' });
     }
@@ -385,12 +400,13 @@ router.get('/bds/:id/details', async (req, res) => {
     const { id } = req.params;
 
     // Get BD info
+    const clientId = req.user.client_id;
     const [bdData] = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, u.role, u.is_approved, u.campus_id, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
-      WHERE u.id = ? AND u.role IN ('bd', 'bd_agent')
-    `, [id]);
+      WHERE u.id = ? AND u.role IN ('bd', 'bd_agent') AND u.client_id = ?
+    `, [id, clientId]);
 
     if (bdData.length === 0) {
       return res.status(404).json({ success: false, message: 'BD user not found' });
@@ -445,13 +461,14 @@ router.get('/bds/:id/details', async (req, res) => {
 router.get('/staff/:role', async (req, res) => {
   try {
     const { role } = req.params;
+    const clientId = req.user.client_id;
     const [staff] = await pool.query(`
       SELECT u.id, u.name, u.email, u.created_at, u.campus_id, c.name as campus_name
       FROM users u
       LEFT JOIN campuses c ON u.campus_id = c.id
-      WHERE u.role = ?
+      WHERE u.role = ? AND u.client_id = ?
       ORDER BY u.created_at DESC
-    `, [role]);
+    `, [role, clientId]);
     res.json({ success: true, staff });
   } catch (error) {
     console.error(`Get ${req.params.role} error:`, error);
@@ -460,12 +477,26 @@ router.get('/staff/:role', async (req, res) => {
 });
 
 // Create any staff member
+// FIX (CRIT-06): Added role whitelist to prevent privilege escalation.
 router.post('/staff', async (req, res) => {
   try {
     const { name, email, password, role, campus_id } = req.body;
 
     if (!name || !email || !password || !role || !campus_id) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
+    }
+
+    // Whitelist: super_admin cannot create master_admin or another super_admin via this endpoint
+    const ALLOWED_STAFF_ROLES = [
+      'teacher', 'principal', 'hr_manager', 'finance_manager',
+      'registrar', 'admission_officer', 'librarian', 'it_admin',
+      'exam_controller', 'lab_assistant', 'rector', 'bd_agent'
+    ];
+    if (!ALLOWED_STAFF_ROLES.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid role. Allowed roles: ${ALLOWED_STAFF_ROLES.join(', ')}`
+      });
     }
 
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
@@ -475,8 +506,8 @@ router.post('/staff', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, role, campus_id, true]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, role, campus_id, true, req.user.client_id]
     );
 
     res.status(201).json({
@@ -496,7 +527,8 @@ router.put('/staff/:id', async (req, res) => {
     const { id } = req.params;
     const { name, email, password, campus_id } = req.body;
 
-    const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    const clientId = req.user.client_id;
+    const [existing] = await pool.query('SELECT id FROM users WHERE id = ? AND client_id = ?', [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Staff member not found' });
     }
@@ -525,7 +557,16 @@ router.put('/staff/:id', async (req, res) => {
 router.delete('/staff/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query("DELETE FROM users WHERE id = ?", [id]);
+    const clientId = req.user.client_id;
+    // Verify the user exists and belongs to this client before deleting
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE id = ? AND client_id = ? AND role NOT IN ('master_admin', 'super_admin')",
+      [id, clientId]
+    );
+    if (existing.length === 0) {
+      return res.status(404).json({ success: false, message: 'Staff member not found' });
+    }
+    await pool.query('DELETE FROM users WHERE id = ? AND client_id = ?', [id, clientId]);
     res.json({ success: true, message: 'Staff member deleted successfully' });
   } catch (error) {
     console.error('Delete staff error:', error);

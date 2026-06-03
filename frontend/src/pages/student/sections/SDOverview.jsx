@@ -54,13 +54,13 @@ export default function SDOverview({
             { 
               label: 'Attendance %', 
               data: weeklyData, 
-              borderColor: '#4f46e5', 
-              backgroundColor: 'rgba(79, 70, 229, 0.1)', 
+              borderColor: 'var(--primary-color, #4f46e5)', 
+              backgroundColor: 'rgba(var(--primary-rgb, 79, 70, 229), 0.1)', 
               fill: true, 
               tension: 0.4,
               pointRadius: 5,
               pointHoverRadius: 8,
-              pointBackgroundColor: '#4f46e5',
+              pointBackgroundColor: 'var(--primary-color, #4f46e5)',
               pointBorderColor: '#fff',
               pointBorderWidth: 2,
               borderWidth: 3
@@ -98,7 +98,7 @@ export default function SDOverview({
           label="Enrolled Subjects" 
           value={courses.length} 
           icon={<BookOpen weight="duotone" />} 
-          color="#4f46e5"
+          color="var(--primary-color, #4f46e5)"
           trend={`${myClassSubjects.length} class subjects`}
         />
         <MetricBox 
@@ -132,7 +132,7 @@ export default function SDOverview({
             <p style={S.chartSubtitle}>Your attendance percentage over the last 7 days</p>
           </div>
           <div style={S.chartControls}>
-            <Pulse size={20} color="#4f46e5" weight="duotone" />
+            <Pulse size={20} color="var(--primary-color, #4f46e5)" weight="duotone" />
             <span style={S.chartLive}>LIVE</span>
           </div>
         </div>
@@ -155,7 +155,7 @@ export default function SDOverview({
           <div style={S.classSubjectsGrid}>
             {myClassSubjects.slice(0, 3).map(sub => (
               <div key={sub.id} style={S.subjectPill}>
-                <BookOpen size={14} color="#4f46e5" />
+                <BookOpen size={14} color="var(--primary-color, #4f46e5)" />
                 <span>{sub.title}</span>
               </div>
             ))}

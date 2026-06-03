@@ -136,7 +136,7 @@ function ApplyPage() {
           </div>
           {selectedJob.description && <p style={S.jobDesc}>{selectedJob.description}</p>}
           <div style={S.slotsBar}>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>Positions available: <strong style={{ color: '#4f46e5' }}>{selectedJob.slots_available - selectedJob.slots_filled}</strong> of {selectedJob.slots_available}</span>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>Positions available: <strong style={{ color: 'var(--primary-color, #4f46e5)' }}>{selectedJob.slots_available - selectedJob.slots_filled}</strong> of {selectedJob.slots_available}</span>
           </div>
         </div>
 
@@ -203,7 +203,7 @@ function ApplyPage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
                     {job.subject && <span style={S.tag}>{job.subject}</span>}
-                    {job.department_name && <span style={{ ...S.tag, background: '#e0e7ff', color: '#4f46e5' }}>🏫 {job.department_name}</span>}
+                    {job.department_name && <span style={{ ...S.tag, background: '#e0e7ff', color: 'var(--primary-color, #4f46e5)' }}>🏫 {job.department_name}</span>}
                     {job.campus_location && <span style={{ ...S.tag, background: '#f0fdf4', color: '#166534' }}>📍 {job.campus_location}</span>}
                   </div>
                   <h3 style={{ margin: '0 0 8px', fontSize: '20px', fontWeight: '800', color: '#0f172a' }}>{job.title}</h3>
@@ -211,7 +211,7 @@ function ApplyPage() {
                     {job.experience_required && <span style={{ fontSize: '13px', color: '#64748b' }}>⏱ {job.experience_required}</span>}
                     {job.salary_range && <span style={{ fontSize: '13px', color: '#64748b' }}>💰 {job.salary_range}</span>}
                     {job.deadline && <span style={{ fontSize: '13px', color: '#f59e0b', fontWeight: '600' }}>⏰ Deadline: {new Date(job.deadline).toLocaleDateString()}</span>}
-                    <span style={{ fontSize: '13px', color: '#4f46e5', fontWeight: '700' }}>✅ {job.slots_available - job.slots_filled} slot(s) open</span>
+                    <span style={{ fontSize: '13px', color: 'var(--primary-color, #4f46e5)', fontWeight: '700' }}>✅ {job.slots_available - job.slots_filled} slot(s) open</span>
                   </div>
                   {job.description && <p style={{ margin: '10px 0 0', fontSize: '14px', color: '#64748b', lineHeight: '1.6' }}>{job.description.substring(0, 150)}{job.description.length > 150 ? '...' : ''}</p>}
                 </div>
@@ -251,7 +251,7 @@ const S = {
     width: '40px', 
     height: '40px', 
     border: '4px solid #f1f5f9', 
-    borderTop: '4px solid #4f46e5', 
+    borderTop: '4px solid var(--primary-color, #4f46e5)', 
     borderRadius: '50%', 
     animation: 'spin 1s linear infinite' 
   },
@@ -262,7 +262,7 @@ const S = {
   heroBadge: { 
     display: 'inline-block', 
     background: '#e0e7ff', 
-    color: '#4f46e5', 
+    color: 'var(--primary-color, #4f46e5)', 
     padding: '8px 20px', 
     borderRadius: '20px', 
     fontSize: '14px', 
@@ -296,7 +296,7 @@ const S = {
     cursor: 'pointer',
     ':hover': {
       transform: 'translateY(-2px)',
-      boxShadow: '0 10px 25px -5px rgba(79,70,229,0.15)',
+      boxShadow: '0 10px 25px -5px rgba(var(--primary-rgb, 79, 70, 229),0.15)',
       borderColor: '#c7d2fe'
     }
   },
@@ -309,7 +309,7 @@ const S = {
     fontWeight: '700' 
   },
   applyBtn: { 
-    background: '#4f46e5', 
+    background: 'var(--primary-color, #4f46e5)', 
     color: '#fff', 
     border: 'none', 
     padding: '14px 24px', 
@@ -319,12 +319,12 @@ const S = {
     fontSize: '14px', 
     whiteSpace: 'nowrap', 
     flexShrink: 0,
-    boxShadow: '0 10px 20px -8px rgba(79,70,229,0.5)',
+    boxShadow: '0 10px 20px -8px rgba(var(--primary-rgb, 79, 70, 229),0.5)',
     transition: 'all 0.2s ease',
     ':hover': {
       background: '#4338ca',
       transform: 'translateY(-2px)',
-      boxShadow: '0 15px 25px -8px rgba(79,70,229,0.6)'
+      boxShadow: '0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6)'
     }
   },
   emptyState: { 
@@ -340,7 +340,7 @@ const S = {
   jobBadge: { 
     display: 'inline-block', 
     background: '#e0e7ff', 
-    color: '#4f46e5', 
+    color: 'var(--primary-color, #4f46e5)', 
     padding: '6px 14px', 
     borderRadius: '20px', 
     fontSize: '12px', 
@@ -406,12 +406,12 @@ const S = {
     fontFamily: 'inherit',
     transition: 'all 0.2s ease',
     ':focus': {
-      borderColor: '#4f46e5',
-      boxShadow: '0 0 0 4px rgba(79,70,229,0.1)'
+      borderColor: 'var(--primary-color, #4f46e5)',
+      boxShadow: '0 0 0 4px rgba(var(--primary-rgb, 79, 70, 229),0.1)'
     }
   },
   submitBtn: { 
-    background: '#4f46e5', 
+    background: 'var(--primary-color, #4f46e5)', 
     color: '#fff', 
     border: 'none', 
     padding: '16px', 
@@ -420,12 +420,12 @@ const S = {
     fontWeight: '800', 
     fontSize: '16px', 
     marginTop: '8px',
-    boxShadow: '0 10px 20px -8px rgba(79,70,229,0.5)',
+    boxShadow: '0 10px 20px -8px rgba(var(--primary-rgb, 79, 70, 229),0.5)',
     transition: 'all 0.2s ease',
     ':hover': {
       background: '#4338ca',
       transform: 'translateY(-2px)',
-      boxShadow: '0 15px 25px -8px rgba(79,70,229,0.6)'
+      boxShadow: '0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6)'
     }
   },
   errorBox: { 
@@ -444,7 +444,7 @@ const S = {
   linkBtn: { 
     background: 'none', 
     border: 'none', 
-    color: '#4f46e5', 
+    color: 'var(--primary-color, #4f46e5)', 
     cursor: 'pointer', 
     fontWeight: '700', 
     fontSize: '14px', 
@@ -453,7 +453,7 @@ const S = {
   },
   backBtn: { 
     background: '#e0e7ff', 
-    color: '#4f46e5', 
+    color: 'var(--primary-color, #4f46e5)', 
     border: 'none', 
     padding: '14px 24px', 
     borderRadius: '14px', 
@@ -477,14 +477,14 @@ style.textContent = `
   
   .apply-job-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(79,70,229,0.15);
+    box-shadow: 0 10px 25px -5px rgba(var(--primary-rgb, 79, 70, 229),0.15);
     border-color: #c7d2fe;
   }
   
   .apply-btn:hover {
     background: #4338ca;
     transform: translateY(-2px);
-    box-shadow: 0 15px 25px -8px rgba(79,70,229,0.6);
+    box-shadow: 0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6);
   }
   
   .back-btn:hover {
@@ -493,8 +493,8 @@ style.textContent = `
   }
   
   input:focus, textarea:focus {
-    border-color: #4f46e5 !important;
-    box-shadow: 0 0 0 4px rgba(79,70,229,0.1) !important;
+    border-color: var(--primary-color, #4f46e5) !important;
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 79, 70, 229),0.1) !important;
   }
 `;
 document.head.appendChild(style);

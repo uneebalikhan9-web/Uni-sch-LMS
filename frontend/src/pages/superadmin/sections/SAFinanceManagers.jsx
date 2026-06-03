@@ -12,7 +12,7 @@ export default function SAFinanceManagers({
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ padding: '10px', background: '#f5f3ff', color: '#4f46e5', borderRadius: '12px' }}>
+            <div style={{ padding: '10px', background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', borderRadius: '12px' }}>
               <Users size={24} weight="duotone" />
             </div>
             <h2 style={S.tableTitle}>Finance Managers</h2>
@@ -28,7 +28,7 @@ export default function SAFinanceManagers({
             <thead>
               <tr>
                 <th style={S.th}>MANAGER NAME</th>
-                <th style={S.th}>CAMPUS / DEPARTMENT</th>
+                <th style={S.th}>CAMPUS</th>
                 <th style={S.th}>EMAIL</th>
                 <th style={S.th}>DATE ADDED</th>
                 <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -47,8 +47,8 @@ export default function SAFinanceManagers({
                     <td style={S.tdName}>{fm.name}</td>
                     <td style={S.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Buildings size={16} color="#4f46e5" />
-                        <span style={{...S.planBadge, background: '#f5f3ff', color: '#4f46e5'}}>
+                        <Buildings size={16} color="var(--primary-color, #4f46e5)" />
+                        <span style={{...S.planBadge, background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)'}}>
                           {fm.campus_name || "Unassigned"}
                         </span>
                       </div>
@@ -87,8 +87,11 @@ export default function SAFinanceManagers({
         <div style={S.overlay} onClick={() => setShowAddModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={S.modalHeader}>
               <h3 style={S.modalTitle}>Create Finance Manager</h3>
-              <div style={{ padding: '8px', background: '#f5f3ff', color: '#4f46e5', borderRadius: '10px' }}>
+                <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+              </div>
+              <div style={{ padding: '8px', background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', borderRadius: '10px' }}>
                 <ShieldCheck size={24} weight="duotone" />
               </div>
             </div>
@@ -131,7 +134,7 @@ export default function SAFinanceManagers({
               </div>
               
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assign to Campus / Department</label>
+                <label style={S.inputLabel}>Assign to Campus</label>
                 <select 
                   required
                   value={newManager.campus_id} 

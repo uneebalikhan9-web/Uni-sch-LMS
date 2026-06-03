@@ -233,7 +233,7 @@ function Chat() {
   }, [chatUsers, search])
 
   const getAvatarColor = (name) => {
-    const colors = ['#7c3aed', '#8b5cf6', '#a78bfa', '#4c1d95', '#1e1b4b', '#c084fc', '#4f46e5', '#6366f1']
+    const colors = ['#7c3aed', '#8b5cf6', '#a78bfa', '#4c1d95', '#1e1b4b', '#c084fc', 'var(--primary-color, #4f46e5)', '#6366f1']
     let hash = 0
     for (let i = 0; i < name.length; i++) {
        hash = name.charCodeAt(i) + ((hash << 5) - hash)

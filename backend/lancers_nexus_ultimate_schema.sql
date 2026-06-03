@@ -638,4 +638,33 @@ INSERT INTO `institutional_kpis` (`metric_name`, `metric_value`, `category`, `re
 ('Library Book Circulation', 120, 'academic', CURDATE()),
 ('Graduation Rate', 88, 'retention', CURDATE());
 
+-- ========================================================
+-- 11. MASTER ADMIN & BILLING
+-- ========================================================
+
+CREATE TABLE `client_invoices` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `client_id` INT NOT NULL,
+  `amount` DECIMAL(10,2) NOT NULL,
+  `status` ENUM('Paid', 'Pending', 'Overdue') DEFAULT 'Pending',
+  `billing_month` VARCHAR(20) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (`client_id`) REFERENCES `lancers_clients`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `platform_settings` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `setting_key` VARCHAR(100) UNIQUE NOT NULL,
+  `setting_value` TEXT NOT NULL,
+  `description` VARCHAR(255),
+  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO `platform_settings` (`setting_key`, `setting_value`, `description`) VALUES 
+('maintenance_mode', 'false', 'Enable global maintenance mode for all tenants'),
+('allow_new_registrations', 'true', 'Allow onboarding of new universities'),
+('free_trial_days', '14', 'Default free trial days for new clients'),
+('system_email', 'no-reply@lancerstech.com', 'Global sender email address');
+
 COMMIT;

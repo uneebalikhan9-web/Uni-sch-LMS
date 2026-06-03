@@ -18,11 +18,6 @@ import VerifyOTP from './pages/VerifyOTP'
 import { ToastProvider } from './components/Toast'
 
 function App() {
-  // Restore session from localStorage if "Remember me" was used
-  if (localStorage.getItem('token') && !sessionStorage.getItem('token')) {
-    sessionStorage.setItem('user', localStorage.getItem('user'))
-    sessionStorage.setItem('token', localStorage.getItem('token'))
-  }
 
   return (
     <ToastProvider>

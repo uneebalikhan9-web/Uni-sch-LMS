@@ -35,7 +35,9 @@ export default function TDModals({
   showProfileModal,
   setShowProfileModal,
   selectedStudentProfile,
-  teacherClasses
+  teacherClasses,
+  courses,
+  handleBulkGradeCourseSelect
 }) {
   return (
     <>
@@ -242,7 +244,7 @@ export default function TDModals({
         <div style={S.modalOverlay} onClick={() => setShowBulkGradeModal(false)}>
           <div style={{...S.modal, width: '900px', maxWidth: '95vw'}} onClick={e => e.stopPropagation()}>
             <h3 style={S.modalTitle}>Bulk Batch Grading</h3>
-            <p style={S.modalSubtitle}>Excel-style grading for <strong>{selectedCourse?.title}</strong></p>
+            <p style={S.modalSubtitle}>Excel-style grading for your courses</p>
             <form onSubmit={async (e) => {
               e.preventDefault();
               try {
@@ -265,8 +267,15 @@ export default function TDModals({
                 } else { showToast(resData.message || 'Error saving bulk grades', 'error'); }
               } catch (err) { showToast('Error saving bulk grades', 'error'); }
             }}>
-              <div style={{display:'flex', gap:'20px', marginBottom:'24px', padding:'20px', background:'#f8fafc', borderRadius:'16px', border:'1px solid #e2e8f0'}}>
-                <div style={{flex:1}}>
+              <div style={{display:'flex', gap:'20px', marginBottom:'24px', padding:'20px', background:'#f8fafc', borderRadius:'16px', border:'1px solid #e2e8f0', flexWrap:'wrap'}}>
+                <div style={{flex:'1 1 200px'}}>
+                  <label style={S.inputLabel}>Course / Class</label>
+                  <select required value={selectedCourse?.id || ''} onChange={(e) => handleBulkGradeCourseSelect(e.target.value)} style={S.input}>
+                    <option value="" disabled>Select Course</option>
+                    {courses && courses.map(c => <option key={c.id} value={c.id}>{c.title} (Class {c.class_name})</option>)}
+                  </select>
+                </div>
+                <div style={{flex:'1 1 150px'}}>
                   <label style={S.inputLabel}>Exam Type</label>
                   <select required value={bulkGradeHeader.exam_type} onChange={e => setBulkGradeHeader({...bulkGradeHeader, exam_type: e.target.value})} style={S.input}>
                     <option value="midterm">Midterm Exam</option>
@@ -276,11 +285,11 @@ export default function TDModals({
                     <option value="presentation">Presentation</option>
                   </select>
                 </div>
-                <div style={{flex:1}}>
+                <div style={{flex:'1 1 100px'}}>
                   <label style={S.inputLabel}>Max Marks</label>
                   <input type="number" required value={bulkGradeHeader.max_marks} onChange={e => setBulkGradeHeader({...bulkGradeHeader, max_marks: e.target.value})} style={S.input} />
                 </div>
-                <div style={{flex:1}}>
+                <div style={{flex:'1 1 150px'}}>
                   <label style={S.inputLabel}>Exam Date</label>
                   <input type="date" required value={bulkGradeHeader.exam_date} onChange={e => setBulkGradeHeader({...bulkGradeHeader, exam_date: e.target.value})} style={S.input} />
                 </div>
@@ -385,19 +394,18 @@ export default function TDModals({
                     <input type="text" placeholder="03xx-xxxxxxx" value={newStudent.father_number} onChange={e => setNewStudent({...newStudent, father_number:e.target.value})} style={S.input} required />
                   </div>
                   <div style={{...S.inputGroup, gridColumn:'span 2'}}>
-                    <label style={S.inputLabel}>Assign to Class (Required)</label>
+                    <label style={S.inputLabel}>Assign to Class (Optional)</label>
                     <select 
-                      required 
                       value={newStudent.class_id || (selectedCourse ? selectedCourse.class_id : '')} 
-                      onChange={e => setNewStudent({...newStudent, class_id: e.target.value})} 
+                      onChange={e => setNewStudent({...newStudent, class_id:e.target.value})}
                       style={S.input}
                     >
-                      <option value="">Select Target Class</option>
+                      <option value="">Select Target Class (Optional)</option>
                       {teacherClasses.map(cl => (
                         <option key={cl.id} value={cl.id}>{cl.name} - {cl.section} ({cl.department_name})</option>
                       ))}
                     </select>
-                    <p style={{margin:'4px 0 0', fontSize:'0.7rem', color:'#64748b'}}>Students must be assigned to a class to appear in courses.</p>
+                    <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Students can be assigned to a class later if left blank.</p>
                   </div>
                   <div style={{...S.inputGroup, gridColumn:'span 2'}}>
                     <label style={S.inputLabel}>Last Education (Optional)</label>

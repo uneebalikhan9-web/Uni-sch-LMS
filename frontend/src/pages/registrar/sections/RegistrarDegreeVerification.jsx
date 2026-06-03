@@ -22,7 +22,7 @@ const RegistrarDegreeVerification = ({ verifications = [], handleVerify, handleR
       
       {/* Informative Banner explaining the process */}
       <div style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)', border: '1px solid #e0e7ff', borderRadius: '20px', padding: '24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-        <div style={{ background: '#4f46e5', color: 'white', padding: '10px', borderRadius: '12px', display: 'flex' }}>
+        <div style={{ background: 'var(--primary-color, #4f46e5)', color: 'white', padding: '10px', borderRadius: '12px', display: 'flex' }}>
           <Info size={22} weight="duotone" />
         </div>
         <div>
@@ -93,7 +93,7 @@ const RegistrarDegreeVerification = ({ verifications = [], handleVerify, handleR
                   </td>
                   <td style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'monospace', fontWeight: '700', color: '#0f172a', fontSize: '13px' }}>
-                      <Certificate size={15} color="#4f46e5" />
+                      <Certificate size={15} color="var(--primary-color, #4f46e5)" />
                       <span>{req.degreeSerial}</span>
                     </div>
                   </td>

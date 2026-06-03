@@ -22,7 +22,7 @@ export default function SDRegistration({
   return (
     <div className="animate-fadeIn">
       <h2 style={S.sectionTitle}>
-        <IdentificationCard size={28} weight="duotone" color="#4f46e5" style={{verticalAlign:'middle', marginRight:'12px'}} />
+        <IdentificationCard size={28} weight="duotone" color="var(--primary-color, #4f46e5)" style={{verticalAlign:'middle', marginRight:'12px'}} />
         Registration Center
       </h2>
       
@@ -33,7 +33,7 @@ export default function SDRegistration({
           style={{
             ...S.tabBtn,
             color: registrationTab === 'class' ? '#0f172a' : '#94a3b8',
-            borderBottom: registrationTab === 'class' ? '3px solid #4f46e5' : '3px solid transparent',
+            borderBottom: registrationTab === 'class' ? '3px solid var(--primary-color, #4f46e5)' : '3px solid transparent',
           }}
         >
           Class Registration
@@ -43,7 +43,7 @@ export default function SDRegistration({
           style={{
             ...S.tabBtn,
             color: registrationTab === 'courses' ? '#0f172a' : '#94a3b8',
-            borderBottom: registrationTab === 'courses' ? '3px solid #4f46e5' : '3px solid transparent',
+            borderBottom: registrationTab === 'courses' ? '3px solid var(--primary-color, #4f46e5)' : '3px solid transparent',
           }}
         >
           Browse All Courses
@@ -62,7 +62,7 @@ export default function SDRegistration({
             {availableClasses.map(cls => (
               <div key={cls.id} style={{
                 ...S.classCard,
-                border: expandedClassId === cls.id ? '2px solid #4f46e5' : '1px solid #e2e8f0',
+                border: expandedClassId === cls.id ? '2px solid var(--primary-color, #4f46e5)' : '1px solid #e2e8f0',
                 transition: 'all 0.3s ease'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -70,7 +70,7 @@ export default function SDRegistration({
                     <h3 style={S.className}>{cls.name}</h3>
                     <p style={S.classInfo}>Section: {cls.section}</p>
                   </div>
-                  {cls.is_registered > 0 && (
+                  {cls.registration_status === 'approved' && (
                     <span style={{ 
                       background: '#dcfce7', 
                       color: '#166534', 
@@ -80,13 +80,23 @@ export default function SDRegistration({
                       fontWeight: 700 
                     }}>✓ REGISTERED</span>
                   )}
+                  {cls.registration_status === 'pending' && (
+                    <span style={{ 
+                      background: '#fef3c7', 
+                      color: '#92400e', 
+                      fontSize: '10px', 
+                      padding: '4px 8px', 
+                      borderRadius: '12px', 
+                      fontWeight: 700 
+                    }}>⏳ PENDING</span>
+                  )}
                 </div>
                 <p style={S.classTeacher}>
                   <User size={14} /> {cls.teacher_name || 'TBD'}
                 </p>
                 
                 <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                  {!cls.is_registered ? (
+                  {!cls.registration_status ? (
                     <button 
                       onClick={() => handleRegisterClass(cls.id)} 
                       disabled={registering} 
@@ -112,7 +122,7 @@ export default function SDRegistration({
                       style={{
                         ...S.registerBtn,
                         flex: 1,
-                        background: expandedClassId === cls.id ? '#4f46e5' : '#f1f5f9',
+                        background: expandedClassId === cls.id ? 'var(--primary-color, #4f46e5)' : '#f1f5f9',
                         color: expandedClassId === cls.id ? '#fff' : '#475569',
                         border: expandedClassId === cls.id ? 'none' : '1px solid #e2e8f0'
                       }}
@@ -157,13 +167,13 @@ export default function SDRegistration({
                               <span style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 700 }}>✓ Enrolled</span>
                             ) : sub.enrollment_status === 'pending' ? (
                               <span style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, fontStyle: 'italic' }}>⏳ Pending</span>
-                            ) : (
+                            ) : cls.registration_status === 'approved' ? (
                               <button 
                                 onClick={(e) => { e.stopPropagation(); handleEnrollCourse(sub.id); }}
                                 style={{
                                   background: '#fff',
-                                  border: '1.5px solid #4f46e5',
-                                  color: '#4f46e5',
+                                  border: '1.5px solid var(--primary-color, #4f46e5)',
+                                  color: 'var(--primary-color, #4f46e5)',
                                   fontSize: '0.75rem',
                                   padding: '4px 10px',
                                   borderRadius: '6px',
@@ -173,6 +183,10 @@ export default function SDRegistration({
                               >
                                 Apply
                               </button>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontStyle: 'italic' }}>
+                                Class not approved
+                              </span>
                             )}
                           </div>
                         ))}
@@ -191,7 +205,7 @@ export default function SDRegistration({
             {courses.length > 0 && (
               <div style={{ marginBottom: '40px' }}>
                 <h3 style={{ ...S.sectionTitle, fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ClipboardText size={20} weight="duotone" color="#4f46e5" />
+                  <ClipboardText size={20} weight="duotone" color="var(--primary-color, #4f46e5)" />
                   My Course Applications
                 </h3>
                 <div style={S.coursesGrid}>
@@ -235,7 +249,7 @@ export default function SDRegistration({
             )}
 
             <h3 style={{ ...S.sectionTitle, fontSize: '1rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <PlusCircle size={20} weight="duotone" color="#4f46e5" />
+              <PlusCircle size={20} weight="duotone" color="var(--primary-color, #4f46e5)" />
               Available Courses
             </h3>
             {availableCourses.length === 0 ? (

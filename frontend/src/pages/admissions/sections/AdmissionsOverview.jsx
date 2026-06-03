@@ -3,7 +3,7 @@ import { Users, FileText, Calendar, GraduationCap, TrendUp, ChartLineUp } from '
 
 const AdmissionsOverview = ({ stats, activities }) => {
   const metrics = [
-    { title: 'Total Leads', value: stats.totalLeads, change: '+12%', icon: Users, color: '#4f46e5' },
+    { title: 'Total Leads', value: stats.totalLeads, change: '+12%', icon: Users, color: 'var(--primary-color, #4f46e5)' },
     { title: 'New Apps', value: stats.newApps, change: '+8%', icon: FileText, color: '#10b981' },
     { title: 'Interviewed', value: stats.interviewed, change: '+24%', icon: Calendar, color: '#f59e0b' },
     { title: 'Admitted', value: stats.admitted, change: '+5%', icon: GraduationCap, color: '#6366f1' },
@@ -52,7 +52,7 @@ const AdmissionsOverview = ({ stats, activities }) => {
               <h2 className="adm-card-title">Enrollment Velocity</h2>
               <p style={{ fontSize: '0.85rem', color: '#64748b', margin: 0 }}>Funnel conversion throughput</p>
             </div>
-            <div style={{ background: '#f5f3ff', padding: '6px 14px', borderRadius: '10px', color: '#4f46e5', fontWeight: 700, fontSize: '0.75rem' }}>
+            <div style={{ background: '#f5f3ff', padding: '6px 14px', borderRadius: '10px', color: 'var(--primary-color, #4f46e5)', fontWeight: 700, fontSize: '0.75rem' }}>
               LIVE MONITOR
             </div>
           </div>
@@ -83,7 +83,7 @@ const AdmissionsOverview = ({ stats, activities }) => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {currentActivities.map((activity, idx) => (
               <div key={idx} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-                <div style={{ marginTop: 6, width: 8, height: 8, borderRadius: '50%', background: '#4f46e5', boxShadow: '0 0 0 4px rgba(79,70,229,0.1)' }} />
+                <div style={{ marginTop: 6, width: 8, height: 8, borderRadius: '50%', background: 'var(--primary-color, #4f46e5)', boxShadow: '0 0 0 4px rgba(var(--primary-rgb, 79, 70, 229),0.1)' }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ color: '#1e293b', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.4 }}>{activity.text}</div>
                   <div style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, marginTop: 4 }}>{activity.time}</div>

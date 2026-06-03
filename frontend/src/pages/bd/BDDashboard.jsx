@@ -4,7 +4,7 @@ import {
   House, Buildings, Briefcase, Users, UserPlus, SignOut, Plus, 
   Clock, CalendarBlank, DotsThreeOutline, Bell, Pulse,
   ChalkboardTeacher, BookOpen, ChartLine, Briefcase as BriefcaseIcon
-} from "@phosphor-icons/react";
+, Globe } from "@phosphor-icons/react";
 
 import API_BASE_URL from "../../config/api";
 import { useToast } from "../../components/Toast";
@@ -33,8 +33,8 @@ _s.textContent = `
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(1.1);} }
   @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
   @keyframes slideUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
-  .metric-card:hover{transform:translateY(-5px);box-shadow:0 20px 30px -10px rgba(79,70,229,0.15);border-color:#c7d2fe;}
-  .add-btn:hover{transform:translateY(-3px);box-shadow:0 15px 25px -8px rgba(79,70,229,0.6);}
+  .metric-card:hover{transform:translateY(-5px);box-shadow:0 20px 30px -10px rgba(var(--primary-rgb, 79, 70, 229),0.15);border-color:#c7d2fe;}
+  .add-btn:hover{transform:translateY(-3px);box-shadow:0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6);}
   .logout-btn:hover{background:rgba(239,68,68,0.2)!important;}
   .animate-fadeIn{animation:fadeIn 0.3s ease forwards;}
   .animate-slideUp{animation:slideUp 0.3s ease forwards;}
@@ -230,7 +230,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -240,7 +240,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -270,7 +270,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 30,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 10px 10px 0',
@@ -280,7 +280,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -301,11 +301,15 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
           overflowY: 'auto',
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
-          <div style={S.logoWrapper}>
-            <div style={{ ...S.logoIcon, background: 'linear-gradient(135deg, #4f46e5, #818cf8)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-              <BriefcaseIcon size={24} weight="fill" />
-            </div>
-            <span style={S.logoText}>LANCERS <span style={{ color: '#818cf8' }}>TECH</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
           <div style={S.bdBadge}>
             <Briefcase size={16} weight="duotone" />
@@ -416,7 +420,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '12px 0 0 12px',
@@ -426,7 +430,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -456,7 +460,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 30,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '10px 0 0 10px',
@@ -466,7 +470,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -488,7 +492,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
           <div style={S.profileCard}>
-            <div style={{ ...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #818cf8)' }}>{user.name.charAt(0)}</div>
+            <div style={{ ...S.avatar, background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)' }}>{user.name.charAt(0)}</div>
             <h3 style={S.profileName}>{user.name}</h3>
             <span style={S.roleBadge}>BD Manager</span>
             <div style={S.profileStats}>

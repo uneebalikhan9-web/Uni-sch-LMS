@@ -66,7 +66,7 @@ router.get('/available', isStudent, async (req, res) => {
 
     const [classes] = await pool.query(
       `SELECT c.*, u.name as teacher_name,
-       (SELECT COUNT(*) FROM student_classes WHERE class_id = c.id AND student_id = ?) as is_registered
+       (SELECT status FROM student_classes WHERE class_id = c.id AND student_id = ? LIMIT 1) as registration_status
        FROM classes c
        LEFT JOIN employees e ON c.teacher_id = e.id
        LEFT JOIN users u ON e.user_id = u.id
@@ -356,7 +356,8 @@ router.get('/:id/courses', async (req, res) => {
     const studentId = req.user.student_id;
     
     let query = `
-      SELECT c.*, e.status as enrollment_status, u.name as teacher_name
+      SELECT c.*, e.status as enrollment_status, u.name as teacher_name,
+      (SELECT COUNT(DISTINCT student_id) FROM enrollments WHERE course_id = c.id AND status = 'approved') as enrolled_students
       FROM courses c
       LEFT JOIN enrollments e ON c.id = e.course_id AND e.student_id = ?
       LEFT JOIN employees emp ON c.teacher_id = emp.id

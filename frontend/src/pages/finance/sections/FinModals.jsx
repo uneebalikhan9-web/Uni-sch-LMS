@@ -10,7 +10,9 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
     } else {
       // Reset form for new entry
       if (type === 'challan') setFormData({ student_id: '', tuition_fee: 0, lab_fee: 0, library_fee: 0, other_fee: 0, due_date: '', semester: '', academic_year: '2024-25' });
-      if (type === 'payroll') setFormData({ employee_id: '', month: 'December', year: 2024, basic_salary: 0, bonus: 0, deductions: 0 });
+      const now = new Date();
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      if (type === 'payroll') setFormData({ employee_id: '', month: months[now.getMonth()], year: now.getFullYear(), basic_salary: '', bonus: 0, deductions: 0 });
       if (type === 'expense') setFormData({ title: '', category: 'other', amount: 0, expense_date: '', description: '' });
     }
   }, [editingItem, type, show]);
@@ -26,12 +28,22 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      // Auto-calculate net payable for payroll
+      if (['basic_salary','bonus','deductions'].includes(name)) {
+        const basic = parseFloat(name==='basic_salary' ? value : updated.basic_salary) || 0;
+        const bonus = parseFloat(name==='bonus' ? value : updated.bonus) || 0;
+        const ded   = parseFloat(name==='deductions' ? value : updated.deductions) || 0;
+        updated.net_payable = basic + bonus - ded;
+      }
+      return updated;
+    });
   };
 
   const labelStyle = { display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' };
   const inputStyle = { width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#0f172a', outline: 'none', transition: 'all 0.2s' };
-  const handleFocus = (e) => { e.target.style.borderColor='#4f46e5'; e.target.style.boxShadow='0 0 0 4px #e0e7ff'; e.target.style.background='white'; };
+  const handleFocus = (e) => { e.target.style.borderColor='var(--primary-color, #4f46e5)'; e.target.style.boxShadow='0 0 0 4px #e0e7ff'; e.target.style.background='white'; };
   const handleBlur = (e) => { e.target.style.borderColor='#e2e8f0'; e.target.style.boxShadow='none'; e.target.style.background='#f8fafc'; };
 
   const renderForm = () => {
@@ -68,29 +80,38 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
         return (
           <div style={{ display: 'grid', gap: '1.5rem', gridTemplateColumns: '1fr 1fr' }}>
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={labelStyle}>Select Employee</label>
+              <label style={labelStyle}>Select Employee *</label>
               <select name="employee_id" style={inputStyle} value={formData.employee_id ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur}>
                 <option value="">Select an employee...</option>
-                {employees.map(e => <option key={e.id} value={e.id}>{e.name} ({e.designation})</option>)}
+                {employees.map(e => <option key={e.id} value={e.id}>{e.name} — {e.designation || 'Staff'}</option>)}
               </select>
+              {employees.length === 0 && <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '6px' }}>⚠️ No employees found. Please add employees first from HR Portal.</p>}
             </div>
             <div>
-              <label style={labelStyle}>Month</label>
+              <label style={labelStyle}>Month *</label>
               <select name="month" style={inputStyle} value={formData.month ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur}>
-                {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map(m => <option key={m} value={m}>{m}</option>)}
+                {['January','February','March','April','May','June','July','August','September','October','November','December'].map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Basic Salary</label>
-              <input type="number" name="basic_salary" style={inputStyle} value={formData.basic_salary ?? ''} onChange={handleChange} required onFocus={handleFocus} onBlur={handleBlur} />
+              <label style={labelStyle}>Year *</label>
+              <input type="number" name="year" style={inputStyle} value={formData.year ?? ''} onChange={handleChange} required min="2020" max="2030" onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
-              <label style={labelStyle}>Bonus</label>
-              <input type="number" name="bonus" style={inputStyle} value={formData.bonus ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
+              <label style={labelStyle}>Basic Salary (Rs.) *</label>
+              <input type="number" name="basic_salary" style={inputStyle} value={formData.basic_salary ?? ''} onChange={handleChange} required placeholder="e.g. 50000" onFocus={handleFocus} onBlur={handleBlur} />
             </div>
             <div>
-              <label style={labelStyle}>Deductions</label>
-              <input type="number" name="deductions" style={inputStyle} value={formData.deductions ?? ''} onChange={handleChange} onFocus={handleFocus} onBlur={handleBlur} />
+              <label style={labelStyle}>Bonus / Allowances (Rs.)</label>
+              <input type="number" name="bonus" style={inputStyle} value={formData.bonus ?? ''} onChange={handleChange} placeholder="0" onFocus={handleFocus} onBlur={handleBlur} />
+            </div>
+            <div>
+              <label style={labelStyle}>Deductions / Tax (Rs.)</label>
+              <input type="number" name="deductions" style={inputStyle} value={formData.deductions ?? ''} onChange={handleChange} placeholder="0" onFocus={handleFocus} onBlur={handleBlur} />
+            </div>
+            <div style={{ gridColumn: '1 / -1', background: 'linear-gradient(135deg, #f0fdf4, #dcfce7)', borderRadius: '14px', padding: '16px 20px', border: '1px solid #86efac' }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#15803d', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Net Payable (Auto-calculated)</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#15803d' }}>Rs. {((parseFloat(formData.basic_salary)||0) + (parseFloat(formData.bonus)||0) - (parseFloat(formData.deductions)||0)).toLocaleString()}</div>
             </div>
           </div>
         );
@@ -136,7 +157,7 @@ const FinModals = ({ show, onClose, type, editingItem, students, employees, onAc
           {renderForm()}
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '2.5rem' }}>
             <button type="button" onClick={onClose} style={{ padding: '12px 24px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-            <button type="submit" style={{ padding: '12px 24px', background: '#4f46e5', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' }}>Save Record</button>
+            <button type="submit" style={{ padding: '12px 24px', background: 'var(--primary-color, #4f46e5)', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(var(--primary-rgb, 79, 70, 229), 0.25)' }}>Save Record</button>
           </div>
         </form>
       </div>

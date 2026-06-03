@@ -4,21 +4,16 @@ import {
   Users, ChalkboardTeacher, GraduationCap, 
   ChartLineUp, ArrowUp, ArrowDown, DotsThree
 } from '@phosphor-icons/react';
-import { useToast } from '../../../components/Toast';
 
 const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) => {
-  const { showToast } = useToast();
 
   const kpis = [
     { label: 'Total Enrollment', val: stats.totalEnrollment || '0', trend: stats.growthTrend || '+0%', up: true, icon: Users, color: '#3b82f6' },
-    { label: 'Faculty Members', val: stats.facultyStrength || '0', trend: '+3%', up: true, icon: ChalkboardTeacher, color: '#8b5cf6' },
-    { label: 'Active Programs', val: stats.activeResearch || '0', trend: '+8%', up: true, icon: GraduationCap, color: '#10b981' },
-    { label: 'Uni. Ranking', val: '#42 National', trend: '-2', up: true, icon: ChartLineUp, color: '#f59e0b' },
+    { label: 'Faculty Members', val: stats.facultyStrength || '0', trend: stats.facGrowth || '+0%', up: true, icon: ChalkboardTeacher, color: '#8b5cf6' },
+    { label: 'Active Courses', val: stats.activeCourses ?? '0', trend: stats.totalDepts ? `${stats.totalDepts} Depts` : 'N/A', up: true, icon: GraduationCap, color: '#10b981' },
+    { label: 'Inst. Score', val: stats.institutionalScore !== undefined ? `${stats.institutionalScore}/100` : 'N/A', trend: stats.institutionalScore >= 70 ? 'Healthy' : stats.institutionalScore >= 40 ? 'Average' : 'Needs Work', up: stats.institutionalScore >= 70, icon: ChartLineUp, color: '#f59e0b' },
   ];
 
-  const handleAction = (action) => {
-    showToast(`Action Triggered: ${action}. Processing request...`, 'success');
-  };
 
   return (
     <div style={{display:'flex', flexDirection:'column', gap:'32px'}} key={leftSidebarOpen ? 'open' : 'closed'}>
@@ -66,23 +61,7 @@ const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) =>
                  ))}
                </tbody>
              </table>
-          </div>
-        </div>
-
-        {/* Action Center */}
-        <div style={S.card}>
-          <h3 style={S.cardTitle}>Executive Actions</h3>
-          <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-            {['Approve New Program', 'Faculty Appraisal Cycle', 'Accreditation Review', 'Budget Sign-off'].map((action, i) => (
-              <button 
-                key={i} 
-                onClick={() => handleAction(action)}
-                style={{padding:'16px', background:'#f1f5f9', border:'none', borderRadius:'16px', color:'#1e3a8a', fontWeight:'700', fontSize:'0.9rem', cursor:'pointer', textAlign:'left', display:'flex', justifyContent:'space-between'}}
-              >
-                {action} <span>→</span>
-              </button>
-            ))}
-          </div>
+           </div>
         </div>
       </div>
     </div>

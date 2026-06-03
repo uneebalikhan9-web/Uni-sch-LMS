@@ -8,7 +8,7 @@ export const S = {
     position: 'relative',
     overflow: 'hidden'
   },
-  bgOrb1: { position: 'absolute', top: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(79,70,229,0.08) 0%, transparent 70%)', zIndex: 0 },
+  bgOrb1: { position: 'absolute', top: '-10%', left: '-5%', width: '40%', height: '40%', background: 'radial-gradient(circle, rgba(var(--primary-rgb, 79, 70, 229),0.08) 0%, transparent 70%)', zIndex: 0 },
   bgOrb2: { position: 'absolute', bottom: '-10%', right: '-5%', width: '50%', height: '50%', background: 'radial-gradient(circle, rgba(129,140,248,0.05) 0%, transparent 70%)', zIndex: 0 },
   bgOrb3: { position: 'absolute', top: '20%', right: '15%', width: '30%', height: '30%', background: 'radial-gradient(circle, rgba(99,102,241,0.03) 0%, transparent 70%)', zIndex: 0 },
 
@@ -27,7 +27,7 @@ export const S = {
     borderRight: '1px solid rgba(255,255,255,0.05)'
   },
   logoWrapper: { padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '8px' },
-  logoIcon: { background: 'linear-gradient(135deg, #4f46e5, #818cf8)', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 8px 16px -4px rgba(79,70,229,0.4)' },
+  logoIcon: { background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)', width: '42px', height: '42px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem', boxShadow: '0 8px 16px -4px rgba(var(--primary-rgb, 79, 70, 229),0.4)' },
   logoText: { fontSize: '1.6rem', fontWeight: 900, color: 'white', letterSpacing: '-0.5px', fontFamily: "'Plus Jakarta Sans', sans-serif" },
   logoAccent: { color: '#818cf8' },
   sidebarSubtitle: { color: '#94a3b8', fontSize: '10px', fontWeight: 800, letterSpacing: '2px', textTransform: 'uppercase', opacity: 0.8 },
@@ -50,7 +50,7 @@ export const S = {
     position: 'relative'
   },
   navBtnActive: {
-    background: 'rgba(79, 70, 229, 0.1)',
+    background: 'rgba(var(--primary-rgb, 79, 70, 229), 0.1)',
     color: 'white',
     boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.05)'
   },
@@ -125,7 +125,7 @@ export const S = {
   statusRejected: { background: '#fee2e2', color: '#b91c1c' },
 
   btnPrimary: {
-    background: 'linear-gradient(135deg, #4f46e5, #818cf8)',
+    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)',
     color: 'white',
     padding: '12px 24px',
     borderRadius: '14px',
@@ -133,14 +133,14 @@ export const S = {
     border: 'none',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
-    boxShadow: '0 10px 20px -5px rgba(79,70,229,0.3)',
+    boxShadow: '0 10px 20px -5px rgba(var(--primary-rgb, 79, 70, 229),0.3)',
     display: 'flex',
     alignItems: 'center',
     gap: '8px'
   },
   btnSecondary: {
     background: 'white',
-    color: '#4f46e5',
+    color: 'var(--primary-color, #4f46e5)',
     padding: '12px 24px',
     borderRadius: '14px',
     fontWeight: 700,
@@ -157,7 +157,7 @@ export const S = {
   lastTd: { borderRadius: '0 16px 16px 0', borderRight: '1px solid #f1f5f9', borderTop: '1px solid #f1f5f9', borderBottom: '1px solid #f1f5f9' },
 
   loadingContainer: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f8fafc', gap: '20px' },
-  spinner: { width: '50px', height: '50px', border: '4px solid #f1f5f9', borderTopColor: '#4f46e5', borderRadius: '50%', animation: 'spin 1s linear infinite' },
+  spinner: { width: '50px', height: '50px', border: '4px solid #f1f5f9', borderTopColor: 'var(--primary-color, #4f46e5)', borderRadius: '50%', animation: 'spin 1s linear infinite' },
   sidebarBottom: { padding: '20px 16px', borderTop: '1px solid rgba(255,255,255,0.05)' },
   logoutBtn: {
     display: 'flex',

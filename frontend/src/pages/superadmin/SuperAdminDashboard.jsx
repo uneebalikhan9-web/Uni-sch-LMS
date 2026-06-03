@@ -27,12 +27,12 @@ styleTag.textContent = `
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
   @keyframes spin { to { transform:rotate(360deg); } }
-  .metric-card:hover { transform:translateY(-5px); box-shadow:0 20px 30px -10px rgba(79,70,229,0.15); border-color:#cbd5e1; }
-  .nav-btn:hover:not(.active) { background:rgba(79,70,229,0.1)!important; color:#fff!important; }
+  .metric-card:hover { transform:translateY(-5px); box-shadow:0 20px 30px -10px rgba(var(--primary-rgb, 79, 70, 229),0.15); border-color:#cbd5e1; }
+  .nav-btn:hover:not(.active) { background:rgba(var(--primary-rgb, 79, 70, 229),0.1)!important; color:#fff!important; }
   .logout-btn:hover { background:rgba(239,68,68,0.2)!important; border-color:rgba(239,68,68,0.3)!important; }
-  .add-btn:hover { transform:translateY(-3px); box-shadow:0 15px 25px -8px rgba(79,70,229,0.6); }
+  .add-btn:hover { transform:translateY(-3px); box-shadow:0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6); }
   .edit-btn:hover { background:#e0e7ff; } .delete-btn:hover { background:#fee2e2; }
-  input:focus, select:focus { border-color:#4f46e5!important; box-shadow:0 0 0 4px rgba(79,70,229,0.1)!important; outline:none!important; }
+  input:focus, select:focus { border-color:var(--primary-color, #4f46e5)!important; box-shadow:0 0 0 4px rgba(var(--primary-rgb, 79, 70, 229),0.1)!important; outline:none!important; }
   tr:hover { background:#f8fafc; }
   .hidden-scrollbar::-webkit-scrollbar { display:none; }
   .hidden-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
@@ -323,6 +323,12 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   );
 
   // ─── Sidebar Nav Items ────────────────────────────────────────
+  const isModuleAllowed = (moduleId) => {
+    if (['overview', 'campuses', 'reports'].includes(moduleId)) return true;
+    if (!user.allowed_modules) return true; // Backward compatibility
+    return user.allowed_modules.includes(moduleId);
+  };
+
   const navItems = [
     ['overview',    'VC Overview',       <ChartBar   size={20} />],
     ['rector',      'Rectorate / Pro-VC', <Buildings size={20} />],
@@ -337,7 +343,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     ['library',     'Digital Library',   <List size={20} />],
     ['it',          'IT & Systems',      <ShieldCheck size={20} />],
     ['reports',     'Institutional KPI', <ChartLine  size={20} />],
-  ];
+  ].filter(item => isModuleAllowed(item[0]));
 
   // ─── Render ───────────────────────────────────────────────────
   return (
@@ -367,7 +373,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -377,7 +383,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -407,7 +413,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 30,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 10px 10px 0',
@@ -417,7 +423,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -438,10 +444,17 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           overflowY: 'auto',
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
-          <div style={S.logoWrapper}>
-            <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
-            <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
+
 
           <div style={S.globalBadge}>
             <ShieldCheck size={14} weight="fill" />
@@ -640,7 +653,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '12px 0 0 12px',
@@ -650,7 +663,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -680,7 +693,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 30,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '10px 0 0 10px',
@@ -690,7 +703,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -712,7 +725,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
           <div style={S.profileCard}>
-            <div style={{...S.avatar, background: 'linear-gradient(135deg, #4f46e5, #7c3aed)'}}>
+            <div style={{...S.avatar, background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #7c3aed)'}}>
               {user.name.charAt(0)}
             </div>
             <h3 style={S.profileName}>{user.name}</h3>
@@ -732,7 +745,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           <div style={S.platformStats}>
             <h4 style={S.platformStatsTitle}>Platform Stats</h4>
             {[
-              ['Departments', overview.totalCampuses  || 0, '#4f46e5'],
+              ['Departments', overview.totalCampuses  || 0, 'var(--primary-color, #4f46e5)'],
               ['HODs',        overview.totalPrincipals || 0, '#7c3aed'],
               ['BD Users',    overview.totalBds        || 0, '#ec4899'],
               ['Teachers',    overview.totalTeachers   || 0, '#2563eb'],
@@ -751,10 +764,10 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
                   <span>Server Capacity</span>
-                  <span style={{ color: '#4f46e5' }}>32%</span>
+                  <span style={{ color: 'var(--primary-color, #4f46e5)' }}>32%</span>
                 </div>
                 <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: '32%', height: '100%', background: '#4f46e5', borderRadius: '4px' }}></div>
+                  <div style={{ width: '32%', height: '100%', background: 'var(--primary-color, #4f46e5)', borderRadius: '4px' }}></div>
                 </div>
               </div>
               <div>

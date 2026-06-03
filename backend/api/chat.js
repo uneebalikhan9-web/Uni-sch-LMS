@@ -11,13 +11,16 @@ router.use(isChatUser);
 
 // Helper function to get the visibility subquery/condition for a given user
 const getChatVisibilityFilter = (user) => {
-  const { id: myId, role, campus_id: campusId } = user;
+  const { id: myId, role, campus_id: campusId, client_id: clientId } = user;
   
+  const baseCond = `u.client_id = ? AND u.id != ? AND u.role != 'super_admin'`;
+  const baseParams = [clientId, myId];
+
   if (role === 'student') {
     // Students see HOD/Admin of their campus + Teachers of their enrolled courses/classes. NO other students.
     return {
       condition: `
-        u.id != ? AND u.role != 'super_admin' AND (
+        ${baseCond} AND (
           (u.role IN ('admin', 'principal') AND u.campus_id = ?)
           OR
           (u.role = 'teacher' AND u.id IN (
@@ -31,31 +34,31 @@ const getChatVisibilityFilter = (user) => {
           ))
         )
       `,
-      params: [myId, campusId, myId, myId]
+      params: [...baseParams, campusId, myId, myId]
     };
   } else if (role === 'teacher') {
     // Teachers see HOD/Admin of their campus + Students in their campus.
     return {
       condition: `
-        u.id != ? AND u.role != 'super_admin' AND (
+        ${baseCond} AND (
           (u.role IN ('admin', 'principal') AND u.campus_id = ?)
           OR
           (u.role = 'student' AND u.campus_id = ?)
         )
       `,
-      params: [myId, campusId, campusId]
+      params: [...baseParams, campusId, campusId]
     };
   } else if (['rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager'].includes(role)) {
-    // Masters see EVERYONE across ALL campuses (except super_admin)
+    // Masters see EVERYONE across ALL campuses in their university (except super_admin)
     return {
-      condition: `u.id != ? AND u.role != 'super_admin'`,
-      params: [myId]
+      condition: baseCond,
+      params: baseParams
     };
   } else {
     // Admins/Principals/BD see everyone in their campus (except super_admin)
     return {
-      condition: `u.id != ? AND u.role != 'super_admin' AND u.campus_id = ?`,
-      params: [myId, campusId]
+      condition: `${baseCond} AND u.campus_id = ?`,
+      params: [...baseParams, campusId]
     };
   }
 };

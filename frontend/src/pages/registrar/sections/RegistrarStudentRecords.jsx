@@ -34,7 +34,7 @@ const RegistrarStudentRecords = ({ records, getStatusClass, handleEditRecord, ha
         
         {/* Total Directory Size */}
         <div style={{ background: 'white', borderRadius: '16px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '14px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.01)' }}>
-          <div style={{ background: '#f5f3ff', color: '#4f46e5', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', width: '40px', height: '40px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <UserList size={22} weight="duotone" />
           </div>
           <div>
@@ -87,7 +87,7 @@ const RegistrarStudentRecords = ({ records, getStatusClass, handleEditRecord, ha
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Master Student Directory</h3>
             <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0' }}>Search and manage academic lifecycle profiles.</p>
           </div>
-          <span className="badge-count" style={{ background: '#f5f3ff', color: '#4f46e5', fontWeight: '800', fontSize: '12px', padding: '6px 14px', borderRadius: '20px' }}>
+          <span className="badge-count" style={{ background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', fontWeight: '800', fontSize: '12px', padding: '6px 14px', borderRadius: '20px' }}>
             {filtered.length} Matches Found
           </span>
         </div>
@@ -138,7 +138,7 @@ const RegistrarStudentRecords = ({ records, getStatusClass, handleEditRecord, ha
               {filtered.map((record) => (
                 <tr key={record.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
                   <td style={{ padding: '16px' }}>
-                    <span className="id-cell" style={{ background: '#f5f3ff', color: '#4f46e5', fontWeight: '700', padding: '6px 12px', borderRadius: '8px', fontSize: '12px' }}>
+                    <span className="id-cell" style={{ background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', fontWeight: '700', padding: '6px 12px', borderRadius: '8px', fontSize: '12px' }}>
                       {record.id}
                     </span>
                   </td>
@@ -157,7 +157,7 @@ const RegistrarStudentRecords = ({ records, getStatusClass, handleEditRecord, ha
                     <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                       <button 
                         onClick={() => handleEditRecord(record.id)} 
-                        style={{ border: '1px solid #e2e8f0', background: 'white', padding: '8px', borderRadius: '10px', cursor: 'pointer', color: '#4f46e5', display: 'inline-flex', transition: 'all 0.2s' }}
+                        style={{ border: '1px solid #e2e8f0', background: 'white', padding: '8px', borderRadius: '10px', cursor: 'pointer', color: 'var(--primary-color, #4f46e5)', display: 'inline-flex', transition: 'all 0.2s' }}
                         title="Edit Academic Status"
                       >
                         <PencilSimple size={16} weight="bold" />

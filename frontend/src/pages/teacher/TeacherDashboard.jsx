@@ -5,7 +5,7 @@ import {
   PlusCircle, SignOut, CalendarBlank, User, UserPlus, 
   ChartLineUp, FileText, DotsThreeOutline, Bell, 
   ChartBar, Pulse, ChatCircle, Buildings, UserCircle, X, Cardholder
-} from "@phosphor-icons/react";
+, Globe } from "@phosphor-icons/react";
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -107,8 +107,6 @@ function TeacherDashboard({ user, onLogout }) {
 
   useEffect(() => {
     fetchDashboardData();
-    const interval = setInterval(fetchDashboardData, 30000); // Refresh every 30s
-    return () => clearInterval(interval);
   }, [])
 
   const fetchDashboardData = async () => {
@@ -331,6 +329,32 @@ function TeacherDashboard({ user, onLogout }) {
       const response = await fetch(`${API_BASE_URL}/api/grades/course/${courseId}`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setGrades(data.grades || [])
     } catch (error) { console.error(error) }
+  }
+
+  const handleBulkGradeCourseSelect = async (courseId) => {
+    const course = courses.find(c => c.id === parseInt(courseId));
+    setSelectedCourse(course);
+    
+    if (!course) {
+      setBulkGrades([]);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/grades/course/${course.id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+      const data = await response.json(); 
+      const fetchedGrades = data.success ? (data.grades || []) : [];
+      setGrades(fetchedGrades);
+
+      const filteredStudents = students.filter(s => s.class_id === course.class_id);
+      const initialBulk = filteredStudents.map(s => {
+        const existing = fetchedGrades.find(g => g.student_id === s.student_id);
+        return { student_id:s.student_id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
+      });
+      setBulkGrades(initialBulk);
+    } catch (error) { 
+      console.error(error); 
+    }
   }
 
   const fetchTimetable = async () => {
@@ -623,7 +647,7 @@ function TeacherDashboard({ user, onLogout }) {
           />
         )
       case 'pending':
-        return <TDPending pendingEnrollments={pendingRequests} loadingPending={loadingPending} fetchPendingEnrollments={fetchPendingRequests} />
+        return <TDPending pendingEnrollments={pendingRequests} loadingPending={loadingPending} fetchPendingEnrollments={fetchPendingRequests} onOpenStudentProfile={(s) => { setSelectedStudentProfile(s); setShowProfileModal(true); }} />
       case 'reports':
         return <TDReports myReports={reports} reportsLoading={reportsLoading} onViewDetails={fetchReportDetails} />
       case 'profile':
@@ -647,7 +671,7 @@ function TeacherDashboard({ user, onLogout }) {
               <button 
                 onClick={() => setShowAddLeaveModal(true)} 
                 style={{
-                  background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                  background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
                   color: '#fff',
                   padding: '12px 24px',
                   borderRadius: '14px',
@@ -658,7 +682,7 @@ function TeacherDashboard({ user, onLogout }) {
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  boxShadow: '0 8px 20px -6px rgba(79, 70, 229, 0.4)',
+                  boxShadow: '0 8px 20px -6px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
                   transition: 'all 0.2s ease',
                 }}
               >
@@ -670,10 +694,10 @@ function TeacherDashboard({ user, onLogout }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
                   <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Leave Period</th>
-                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</th>
-                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reason</th>
-                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
+                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Leave Period</th>
+                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Type</th>
+                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reason</th>
+                    <th style={{ padding: '16px', fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -762,7 +786,7 @@ function TeacherDashboard({ user, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -772,7 +796,7 @@ function TeacherDashboard({ user, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -803,7 +827,7 @@ function TeacherDashboard({ user, onLogout }) {
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 30,
-              background: '#4f46e5',
+              background: 'var(--primary-color, #4f46e5)',
               color: '#fff',
               border: 'none',
               borderRadius: '0 10px 10px 0',
@@ -813,7 +837,7 @@ function TeacherDashboard({ user, onLogout }) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -836,10 +860,17 @@ function TeacherDashboard({ user, onLogout }) {
           }}
           className="hidden-scrollbar"
         >
-          <div style={S.logoWrapper}>
-            <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-            <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
+
 
           <div style={S.userBadge}>
             <UserCircle size={20} weight="duotone" />
@@ -936,8 +967,8 @@ function TeacherDashboard({ user, onLogout }) {
                   width: '44px',
                   height: '44px',
                   borderRadius: '12px',
-                  background: 'rgba(79, 70, 229, 0.1)',
-                  color: '#4f46e5',
+                  background: 'rgba(var(--primary-rgb, 79, 70, 229), 0.1)',
+                  color: 'var(--primary-color, #4f46e5)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -971,7 +1002,7 @@ function TeacherDashboard({ user, onLogout }) {
             <form onSubmit={handleApplyLeave}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Leave Type</label>
+                  <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Leave Type</label>
                   <select 
                     value={newLeave.leave_type}
                     onChange={e => setNewLeave({...newLeave, leave_type: e.target.value})}
@@ -998,7 +1029,7 @@ function TeacherDashboard({ user, onLogout }) {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Start Date</label>
+                    <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Start Date</label>
                     <input 
                       type="date"
                       value={newLeave.start_date}
@@ -1018,7 +1049,7 @@ function TeacherDashboard({ user, onLogout }) {
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>End Date</label>
+                    <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>End Date</label>
                     <input 
                       type="date"
                       value={newLeave.end_date}
@@ -1040,7 +1071,7 @@ function TeacherDashboard({ user, onLogout }) {
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Reason</label>
+                  <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Reason</label>
                   <textarea 
                     value={newLeave.reason}
                     onChange={e => setNewLeave({...newLeave, reason: e.target.value})}
@@ -1087,13 +1118,13 @@ function TeacherDashboard({ user, onLogout }) {
                     flex: 2,
                     padding: '14px 24px',
                     border: 'none',
-                    background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
+                    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
                     color: '#ffffff',
                     borderRadius: '16px',
                     fontWeight: '800',
                     fontSize: '0.9rem',
                     cursor: 'pointer',
-                    boxShadow: '0 8px 24px -8px rgba(79, 70, 229, 0.4)',
+                    boxShadow: '0 8px 24px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
                   }}
                 >
                   Submit Request
@@ -1123,6 +1154,8 @@ function TeacherDashboard({ user, onLogout }) {
         selectedStudentProfile={selectedStudentProfile}
         teacherClasses={teacherClasses}
         fetchStudents={fetchStudents}
+        courses={courses}
+        handleBulkGradeCourseSelect={handleBulkGradeCourseSelect}
       />
     </div>
   )

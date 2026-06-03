@@ -6,7 +6,7 @@ import {
   SignOut, CalendarBlank, User, Buildings, 
   DotsThreeOutline, FileText, Pulse, ChatCircle, Sparkle,
   Receipt
-} from "@phosphor-icons/react";
+, Globe } from "@phosphor-icons/react";
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -120,7 +120,7 @@ function StudentDashboard({ user, onLogout }) {
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; background: #f8fafc; }
             .voucher-container { max-width: 800px; margin: 0 auto; background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; }
-            .logo { font-size: 24px; font-weight: 800; color: #4f46e5; }
+            .logo { font-size: 24px; font-weight: 800; color: var(--primary-color, #4f46e5); }
             .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; background: #dcfce7; color: #15803d; }
             .badge.pending { background: #fef9c3; color: #a16207; }
             .badge.overdue { background: #fee2e2; color: #b91c1c; }
@@ -132,7 +132,7 @@ function StudentDashboard({ user, onLogout }) {
             .fees-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
             .fees-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
             .fees-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-            .total-row { background: #eef2ff; font-weight: 800; color: #4f46e5; }
+            .total-row { background: #eef2ff; font-weight: 800; color: var(--primary-color, #4f46e5); }
             .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
             .signature { text-align: center; width: 150px; }
             .signature-line { border-bottom: 1px solid #94a3b8; margin-bottom: 8px; height: 30px; }
@@ -302,7 +302,7 @@ function StudentDashboard({ user, onLogout }) {
       const response = await fetch(`${API_BASE_URL}/api/classes/available`, { headers: { 'Authorization': `Bearer ${token}` } })
       const data = await response.json(); if (data.success) setAvailableClasses(data.classes || [])
       if (data.success && data.classes) {
-        const registeredClass = data.classes.find(c => c.is_registered > 0);
+        const registeredClass = data.classes.find(c => c.registration_status === 'approved');
         if (registeredClass) {
           setMyClassInfo(registeredClass);
           fetchClassSubjects(registeredClass.id);
@@ -485,7 +485,7 @@ function StudentDashboard({ user, onLogout }) {
           />
         )
       case 'course-detail':
-        return <SDCourseDetail selectedCourse={selectedCourse} setActivePage={setActivePage} />
+        return <SDCourseDetail selectedCourse={selectedCourse} setActivePage={setActivePage} assignments={assignments} grades={grades} attendanceLogs={attendanceLogs} />
       case 'attendance':
         return <SDAttendance attendanceStats={attendanceStats} attendanceLogs={attendanceLogs} />
       case 'grades':
@@ -560,7 +560,7 @@ function StudentDashboard({ user, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 12px 12px 0',
@@ -570,7 +570,7 @@ function StudentDashboard({ user, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -600,7 +600,7 @@ function StudentDashboard({ user, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 30,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '0 10px 10px 0',
@@ -610,7 +610,7 @@ function StudentDashboard({ user, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -631,10 +631,17 @@ function StudentDashboard({ user, onLogout }) {
           overflowY: 'auto',
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
-          <div style={S.logoWrapper}>
-            <div style={S.logoIcon}><GraduationCap size={24} weight="fill" /></div>
-            <span style={S.logoText}>LANCERS<span style={S.logoAccent}>TECH</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
+
 
           <div style={S.studentBadge}>
             <User size={14} weight="fill" />
@@ -686,10 +693,10 @@ function StudentDashboard({ user, onLogout }) {
           <header style={{...S.header, marginBottom:'40px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
             <div>
               <h1 style={{...S.title, fontSize:'2.5rem', fontWeight:'800', letterSpacing:'-1px', background:'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent'}}>{user.department_name || 'Lancers Academic Portal'}</h1>
-              <p style={{...S.subtitle, fontSize:'1.1rem', color:'#64748b', marginTop:'8px'}}>Welcome back, <span style={{color:'#4f46e5', fontWeight:'700'}}>{user.name}</span> <Sparkle size={20} weight="fill" color="#f59e0b" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginLeft: '2px' }} /></p>
+              <p style={{...S.subtitle, fontSize:'1.1rem', color:'#64748b', marginTop:'8px'}}>Welcome back, <span style={{color:'var(--primary-color, #4f46e5)', fontWeight:'700'}}>{user.name}</span> <Sparkle size={20} weight="fill" color="#f59e0b" style={{ display: 'inline-block', verticalAlign: 'text-bottom', marginLeft: '2px' }} /></p>
             </div>
             <div style={{...S.dateBadge, padding:'12px 20px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'16px', color:'#1e293b', display:'flex', alignItems:'center', gap:'10px', fontWeight:'600', boxShadow:'0 4px 12px rgba(0,0,0,0.03)'}}>
-              <CalendarBlank size={20} weight="duotone" color="#4f46e5" /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+              <CalendarBlank size={20} weight="duotone" color="var(--primary-color, #4f46e5)" /> {new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
             </div>
           </header>
         )}
@@ -708,7 +715,7 @@ function StudentDashboard({ user, onLogout }) {
             top: '50%',
             transform: 'translateY(-50%)',
             zIndex: 20,
-            background: '#4f46e5',
+            background: 'var(--primary-color, #4f46e5)',
             color: '#fff',
             border: 'none',
             borderRadius: '12px 0 0 12px',
@@ -718,7 +725,7 @@ function StudentDashboard({ user, onLogout }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '-4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '-4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,

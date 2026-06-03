@@ -68,7 +68,10 @@ export default function SADepartments({
       {showAddModal && (
         <div style={S.overlay} onClick={() => { setShowAddModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <div style={S.modalHeader}>
             <h3 style={S.modalTitle}>{editingItem ? 'Edit Department' : 'Add New Department'}</h3>
+              <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+            </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Department Name</label>

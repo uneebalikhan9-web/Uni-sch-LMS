@@ -25,7 +25,7 @@ const ExamsTimeline = ({ exams, onScheduleNew }) => {
         <div className="ex-card" style={{ padding: '2rem' }}>
           {sortedExams.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', color: '#64748b' }}>
-              <Calendar size={48} weight="duotone" style={{ color: '#4f46e5', opacity: 0.5, marginBottom: 16 }} />
+              <Calendar size={48} weight="duotone" style={{ color: 'var(--primary-color, #4f46e5)', opacity: 0.5, marginBottom: 16 }} />
               <h3>No Scheduled Exams</h3>
               <p style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: 4 }}>Schedule a new examination session to populate this timeline track.</p>
             </div>
@@ -38,7 +38,7 @@ const ExamsTimeline = ({ exams, onScheduleNew }) => {
                 top: 8,
                 bottom: 8,
                 width: 2,
-                background: 'linear-gradient(to bottom, #4f46e5 0%, #cbd5e1 100%)',
+                background: 'linear-gradient(to bottom, var(--primary-color, #4f46e5) 0%, #cbd5e1 100%)',
               }} />
 
               {sortedExams.map((ex, idx) => {
@@ -53,9 +53,9 @@ const ExamsTimeline = ({ exams, onScheduleNew }) => {
                       width: 14,
                       height: 14,
                       borderRadius: '50%',
-                      background: isPast ? '#10b981' : '#4f46e5',
+                      background: isPast ? '#10b981' : 'var(--primary-color, #4f46e5)',
                       border: '4px solid white',
-                      boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.15)',
+                      boxShadow: '0 0 0 3px rgba(var(--primary-rgb, 79, 70, 229), 0.15)',
                     }} />
 
                     {/* Timeline Event Card */}
@@ -73,7 +73,7 @@ const ExamsTimeline = ({ exams, onScheduleNew }) => {
                           <span style={{
                             fontSize: '0.75rem',
                             fontWeight: 800,
-                            color: '#4f46e5',
+                            color: 'var(--primary-color, #4f46e5)',
                             textTransform: 'uppercase',
                             letterSpacing: '0.05em'
                           }}>

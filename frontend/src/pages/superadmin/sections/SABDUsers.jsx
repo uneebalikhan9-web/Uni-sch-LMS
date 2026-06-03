@@ -26,7 +26,7 @@ export default function SABDUsers({
             <thead>
               <tr>
                 <th style={S.th}>NAME</th>
-                <th style={S.th}>DEPARTMENT</th>
+                <th style={S.th}>CAMPUS</th>
                 <th style={S.th}>EMAIL</th>
                 <th style={S.th}>JOINED</th>
                 <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
@@ -46,7 +46,7 @@ export default function SABDUsers({
                   <td style={{...S.td, textAlign: 'right'}}>
                     <div style={S.actionButtons}>
                       <button 
-                        style={{...S.editBtn, background: '#f1f5f9', color: '#4f46e5'}} 
+                        style={{...S.editBtn, background: '#f1f5f9', color: 'var(--primary-color, #4f46e5)'}} 
                         className="view-btn"
                         onClick={() => onViewDetails(bd.id)}
                         title="View Details"
@@ -80,7 +80,10 @@ export default function SABDUsers({
       {showAddModal && (
         <div style={S.overlay} onClick={() => { setShowAddModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
+            <div style={S.modalHeader}>
             <h3 style={S.modalTitle}>{editingItem ? 'Edit BD User' : 'Add New BD User'}</h3>
+              <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+            </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Full Name</label>
@@ -104,12 +107,12 @@ export default function SABDUsers({
                   style={S.input} />
               </div>
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assign to Department (Optional for Global)</label>
+                <label style={S.inputLabel}>Assign to Campus (Optional for Global)</label>
                 <select 
                   value={editingItem ? (editingItem.campus_id || "") : newBD.campus_id} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewBD({...newBD, campus_id: e.target.value})} 
                   style={S.input}>
-                  <option value="">Global / No Specific Department</option>
+                  <option value="">Global / No Specific Campus</option>
                   {departments.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
@@ -187,7 +190,7 @@ export default function SABDUsers({
                     {[
                       { label: 'Total Leads', val: selectedBDDetails.stats.totalLeads, color: '#0891b2', icon: <House size={20} /> },
                       { label: 'Closed Deals', val: selectedBDDetails.stats.closedLeads, color: '#10b981', icon: <ShieldCheck size={20} /> },
-                      { label: 'Shortlisted', val: selectedBDDetails.stats.shortlistedApplicants, color: '#4f46e5', icon: <UserCircle size={20} /> },
+                      { label: 'Shortlisted', val: selectedBDDetails.stats.shortlistedApplicants, color: 'var(--primary-color, #4f46e5)', icon: <UserCircle size={20} /> },
                     ].map(stat => (
                       <div key={stat.label} style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
                         <div style={{ color: stat.color, marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>

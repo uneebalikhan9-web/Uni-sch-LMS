@@ -342,22 +342,24 @@ body {
   transform: translateY(-50%) scale(1.1) !important;
 }
 
-.mobile-menu-btn {
-  display: flex;
-  background: white;
-  border: 1px solid var(--lib-border);
-  padding: 8px;
-  border-radius: 12px;
-  cursor: pointer;
-  margin-right: 16px;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+    background: white;
+    border: 1px solid var(--lib-border);
+    padding: 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-right: 16px;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
 
-.mobile-menu-btn:hover {
-  background: #f1f5f9;
-  transform: scale(1.05);
+  .mobile-menu-btn:hover {
+    background: #f1f5f9;
+    transform: scale(1.05);
+  }
 }
 
 /* RESPONSIVE MEDIA QUERIES */

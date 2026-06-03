@@ -1,9 +1,9 @@
 import { S } from "./TDStyles";
 import API_BASE_URL from "../../../config/api";
 import { useToast } from "../../../components/Toast";
-import { ClipboardText } from "@phosphor-icons/react";
+import { ClipboardText, Eye } from "@phosphor-icons/react";
 
-export default function TDPending({ pendingEnrollments, loadingPending, fetchPendingEnrollments }) {
+export default function TDPending({ pendingEnrollments, loadingPending, fetchPendingEnrollments, onOpenStudentProfile }) {
   const token = sessionStorage.getItem('token');
   const { showToast } = useToast();
 
@@ -27,7 +27,7 @@ export default function TDPending({ pendingEnrollments, loadingPending, fetchPen
       <div style={S.tableHeader}>
         <div>
           <h2 style={{ ...S.tableTitle, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ClipboardText size={24} weight="duotone" style={{ color: '#4f46e5' }} />
+            <ClipboardText size={24} weight="duotone" style={{ color: 'var(--primary-color, #4f46e5)' }} />
             Pending Enrollment Requests
           </h2>
           <p style={S.tableSubtitle}>Students requesting to enroll in your courses</p>
@@ -52,7 +52,7 @@ export default function TDPending({ pendingEnrollments, loadingPending, fetchPen
               <tr key={`${enrollment.type}-${enrollment.request_id}`} style={S.tableRow}>
                 <td style={S.td}>
                   <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-                    <div style={{ width:'32px', height:'32px', borderRadius:'10px', background:'#4f46e5', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px' }}>{enrollment.student_name.charAt(0)}</div>
+                    <div style={{ width:'32px', height:'32px', borderRadius:'10px', background:'var(--primary-color, #4f46e5)', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700', fontSize:'14px' }}>{enrollment.student_name.charAt(0)}</div>
                     <div>
                       <div style={{ fontWeight:'700', color:'#0f172a' }}>{enrollment.student_name}</div>
                       <div style={{ fontSize:'10px', color:'#94a3b8', background:'#f1f5f9', padding:'2px 6px', borderRadius:'4px', display:'inline-block' }}>
@@ -71,6 +71,22 @@ export default function TDPending({ pendingEnrollments, loadingPending, fetchPen
                 <td style={S.td}>{new Date(enrollment.enrolled_at).toLocaleDateString()}</td>
                 <td style={S.td}>
                   <div style={S.actionGroup}>
+                    <button 
+                      onClick={() => onOpenStudentProfile({
+                        name: enrollment.student_name,
+                        email: enrollment.student_email,
+                        roll_number: enrollment.roll_number,
+                        semester: enrollment.semester,
+                        bform_number: enrollment.bform_number,
+                        last_education: enrollment.last_education,
+                        father_name: enrollment.father_name,
+                        father_cnic: enrollment.father_cnic,
+                        father_number: enrollment.father_number
+                      })} 
+                      style={{ padding:'6px 12px', background:'#f1f5f9', color:'#475569', borderRadius:'8px', fontSize:'0.75rem', fontWeight:'700', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px' }}
+                    >
+                      <Eye size={14} weight="bold" /> View Details
+                    </button>
                     <button onClick={() => handleAction(enrollment, 'approve')} style={S.approveBtn} className="approve-btn">✓ Approve</button>
                     <button onClick={() => handleAction(enrollment, 'reject')}  style={S.rejectBtn}  className="reject-btn">✕ Reject</button>
                   </div>

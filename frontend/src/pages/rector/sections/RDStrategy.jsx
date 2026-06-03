@@ -84,22 +84,22 @@ const RDStrategy = ({ activeTab }) => {
   if (loading) return <div style={{padding:'40px', textAlign:'center', color:'#1e3a8a'}}>{isFinance ? 'Calculating Fiscal Metrics...' : 'Analyzing Institutional Growth...'}</div>;
 
   const growthChartData = {
-    labels: data?.growthData?.map(d => d.year) || ['2021', '2022', '2023', '2024'],
+    labels: data?.growthData?.map(d => d.year) || [],
     datasets: [{
       label: 'Enrollment Growth',
-      data: data?.growthData?.map(d => d.count) || [45, 52, 68, 84],
-      borderColor: '#4f46e5',
-      backgroundColor: 'rgba(79, 70, 229, 0.1)',
+      data: data?.growthData?.map(d => d.count) || [],
+      borderColor: 'var(--primary-color, #4f46e5)',
+      backgroundColor: 'rgba(var(--primary-rgb, 79, 70, 229), 0.1)',
       fill: true,
       tension: 0.4
     }]
   };
 
   const enrollmentChartData = {
-    labels: data?.enrollmentBreakdown?.map(d => d.name.length > 15 ? d.name.substring(0, 12) + '...' : d.name) || ['CS', 'SE', 'EE', 'BBA'],
+    labels: data?.enrollmentBreakdown?.map(d => d.name.length > 15 ? d.name.substring(0, 12) + '...' : d.name) || [],
     datasets: [{
       label: 'Students',
-      data: data?.enrollmentBreakdown?.map(d => d.count) || [120, 90, 70, 110],
+      data: data?.enrollmentBreakdown?.map(d => d.count) || [],
       backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'],
       borderRadius: 8
     }]
@@ -108,17 +108,17 @@ const RDStrategy = ({ activeTab }) => {
   const financeChartData = {
     labels: ['Revenue', 'Expenses', 'Payroll'],
     datasets: [{
-      data: [financeData?.totalRevenue || 120000, financeData?.totalExpenses || 85000, financeData?.payrollDisbursed || 45000],
+      data: [financeData?.totalRevenue || 0, financeData?.totalExpenses || 0, financeData?.payrollDisbursed || 0],
       backgroundColor: ['#10b981', '#ef4444', '#3b82f6'],
       hoverOffset: 4
     }]
   };
 
   const spendingChartData = {
-    labels: financeData?.spendingByDept?.map(d => d.name) || ['Admin', 'Faculty', 'Infra'],
+    labels: financeData?.spendingByDept?.map(d => d.name) || [],
     datasets: [{
-      label: 'USD',
-      data: financeData?.spendingByDept?.map(d => d.amount) || [20000, 45000, 15000],
+      label: 'Amount (PKR)',
+      data: financeData?.spendingByDept?.map(d => d.amount) || [],
       backgroundColor: '#8b5cf6',
       borderRadius: 8
     }]
@@ -167,19 +167,19 @@ const RDStrategy = ({ activeTab }) => {
             <div style={{marginTop:'20px'}}>
               <div style={{display:'flex', justifyContent:'space-between', marginBottom:'8px'}}>
                 <span style={{fontSize:'0.85rem', color:'#64748b'}}>{isFinance ? 'Operating Margin' : 'Efficiency Index'}</span>
-                <span style={{fontSize:'0.85rem', fontWeight:'800', color:'#10b981'}}>{isFinance ? '32.4%' : (data?.efficiency || 0) + '%'}</span>
+                <span style={{fontSize:'0.85rem', fontWeight:'800', color:'#10b981'}}>{isFinance ? `${financeData?.operatingMargin ?? 0}%` : (data?.efficiency || 0) + '%'}</span>
               </div>
               <div style={{height:'6px', background:'#f1f5f9', borderRadius:'3px', overflow:'hidden'}}>
-                <div style={{width: isFinance ? '32.4%' : `${data?.efficiency || 0}%`, height:'100%', background:'#10b981'}} />
+                <div style={{width: isFinance ? `${Math.min(Math.abs(financeData?.operatingMargin ?? 0), 100)}%` : `${data?.efficiency || 0}%`, height:'100%', background:'#10b981'}} />
               </div>
             </div>
             <div style={{marginTop:'20px'}}>
               <div style={{display:'flex', justifyContent:'space-between', marginBottom:'8px'}}>
                 <span style={{fontSize:'0.85rem', color:'#64748b'}}>{isFinance ? 'Budget Adherence' : 'Quality Score'}</span>
-                <span style={{fontSize:'0.85rem', fontWeight:'800', color:'#3b82f6'}}>{isFinance ? '91.8%' : (data?.quality || 0) + '%'}</span>
+                <span style={{fontSize:'0.85rem', fontWeight:'800', color:'#3b82f6'}}>{isFinance ? `${financeData?.budgetAdherence ?? 0}%` : (data?.quality || 0) + '%'}</span>
               </div>
               <div style={{height:'6px', background:'#f1f5f9', borderRadius:'3px', overflow:'hidden'}}>
-                <div style={{width: isFinance ? '91.8%' : `${data?.quality || 0}%`, height:'100%', background:'#3b82f6'}} />
+                <div style={{width: isFinance ? `${financeData?.budgetAdherence ?? 0}%` : `${data?.quality || 0}%`, height:'100%', background:'#3b82f6'}} />
               </div>
             </div>
           </div>

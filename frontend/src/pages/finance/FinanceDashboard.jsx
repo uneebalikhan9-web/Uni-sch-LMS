@@ -36,6 +36,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({});
+  const [trend, setTrend] = useState({ revenue: [], expenses: [] });
   const [challans, setChallans] = useState([]);
   const [payroll, setPayroll] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -66,9 +67,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
       if (!mobile) setMobileMenuOpen(false);
     };
     window.addEventListener('resize', handleResize);
-    const interval = setInterval(fetchAllData, 30000); // Auto-refresh every 30 seconds
     return () => {
-      clearInterval(interval);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
@@ -85,7 +84,10 @@ const FinanceDashboard = ({ user, onLogout }) => {
         fetch(`${API_BASE_URL}/api/finance/employees-list`, { headers }).then(r => r.json()),
       ]);
 
-      if (sRes.success) setStats(sRes.stats);
+      if (sRes.success) {
+        setStats(sRes.stats);
+        if (sRes.trend) setTrend(sRes.trend);
+      }
       if (cRes.success) setChallans(cRes.challans);
       if (pRes.success) setPayroll(pRes.payroll);
       if (eRes.success) setExpenses(eRes.expenses);
@@ -125,12 +127,12 @@ const FinanceDashboard = ({ user, onLogout }) => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} />;
+      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} />;
       case 'fees': return <FinFees challans={challans} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
       case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
       case 'expenses': return <FinExpenses expenses={expenses} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('expense'); setShowModal(true); }} />;
       case 'reports': return <FinReports stats={stats} challans={challans} payroll={payroll} expenses={expenses} />;
-      default: return <FinOverview stats={stats} />;
+      default: return <FinOverview stats={stats} trend={trend} />;
     }
   };
 
@@ -167,7 +169,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '4px 0 16px rgba(79,70,229,0.35)',
+            boxShadow: '4px 0 16px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
             fontSize: '18px',
             fontWeight: '800',
             lineHeight: 1,
@@ -206,7 +208,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '4px 0 14px rgba(79,70,229,0.35)',
+              boxShadow: '4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
               fontSize: '18px',
               fontWeight: '800',
               lineHeight: 1,
@@ -219,9 +221,16 @@ const FinanceDashboard = ({ user, onLogout }) => {
         )}
 
         <div className="fin-logo-wrapper">
-          <div className="fin-logo-icon"><Buildings size={24} weight="fill" /></div>
-          <span className="fin-logo-text">LANCERS <span className="fin-logo-accent">TECH</span></span>
+          {user?.logo_url ? (
+            <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <>
+              <div className="fin-logo-icon"><Buildings size={24} weight="fill" /></div>
+              <span className="fin-logo-text">LANCERS <span className="fin-logo-accent">TECH</span></span>
+            </>
+          )}
         </div>
+
 
         <div className="fin-role-badge">
           <Buildings size={18} weight="duotone" />

@@ -24,9 +24,12 @@ router.get('/pending-enrollments', async (req, res) => {
     const [courseRequests] = await pool.query(`
       SELECT 'course' as type, e.id as request_id, e.course_id, e.student_id, e.enrolled_at,
              u.name as student_name, u.email as student_email,
-             c.title as label, cl.name as class_name, cl.section as class_section
+             c.title as label, cl.name as class_name, cl.section as class_section,
+             s.roll_number, s.semester, s.bform_number, s.last_education, s.father_name, s.father_cnic, s.father_number,
+             u.name, u.email
       FROM enrollments e
-      JOIN users u ON e.student_id = u.id
+      JOIN students s ON e.student_id = s.id
+      JOIN users u ON s.user_id = u.id
       JOIN courses c ON e.course_id = c.id
       LEFT JOIN classes cl ON c.class_id = cl.id
       WHERE c.teacher_id = ? AND e.status = 'pending'
@@ -36,9 +39,12 @@ router.get('/pending-enrollments', async (req, res) => {
     const [classRequests] = await pool.query(`
       SELECT 'class' as type, sc.id as request_id, sc.class_id, sc.student_id, sc.assigned_at as enrolled_at,
              u.name as student_name, u.email as student_email,
-             cl.name as label, cl.name as class_name, cl.section as class_section
+             cl.name as label, cl.name as class_name, cl.section as class_section,
+             s.roll_number, s.semester, s.bform_number, s.last_education, s.father_name, s.father_cnic, s.father_number,
+             u.name, u.email
       FROM student_classes sc
-      JOIN users u ON sc.student_id = u.id
+      JOIN students s ON sc.student_id = s.id
+      JOIN users u ON s.user_id = u.id
       JOIN classes cl ON sc.class_id = cl.id
       WHERE cl.teacher_id = ? AND sc.status = 'pending'
     `, [teacherId]);
@@ -98,6 +104,29 @@ router.post('/enrollments/:enrollmentId/approve', async (req, res) => {
   }
 });
 
+// Reject course enrollment
+router.post('/enrollments/:enrollmentId/reject', async (req, res) => {
+  try {
+    const { enrollmentId } = req.params;
+    const teacherId = req.user.employee_id;
+
+    const [enrollment] = await pool.query(`
+      SELECT e.id FROM enrollments e
+      JOIN courses c ON e.course_id = c.id
+      WHERE e.id = ? AND c.teacher_id = ? AND e.status = 'pending'
+    `, [enrollmentId, teacherId]);
+
+    if (enrollment.length === 0) {
+      return res.status(404).json({ success: false, message: 'Enrollment request not found or not authorized' });
+    }
+
+    await pool.query('DELETE FROM enrollments WHERE id = ?', [enrollmentId]);
+    res.status(200).json({ success: true, message: 'Student enrollment rejected' });
+  } catch (error) {
+    console.error('[TeacherAPI] Reject enrollment error:', error);
+    res.status(500).json({ success: false, message: 'Error rejecting enrollment' });
+  }
+});
 // Approve class registration
 router.post('/class-requests/:requestId/approve', async (req, res) => {
   try {
@@ -105,14 +134,26 @@ router.post('/class-requests/:requestId/approve', async (req, res) => {
     const teacherId = req.user.employee_id;
 
     const [request] = await pool.query(`
-      SELECT sc.id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      SELECT sc.id, sc.student_id, sc.class_id FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
       WHERE sc.id = ? AND cl.teacher_id = ? AND sc.status = 'pending'
     `, [requestId, teacherId]);
 
     if (request.length === 0) return res.status(404).json({ success: false, message: 'Request not found' });
 
     await pool.query('UPDATE student_classes SET status = "approved" WHERE id = ?', [requestId]);
-    res.status(200).json({ success: true, message: 'Class registration approved!' });
+    
+    // Auto enroll in active courses for this class
+    const [courses] = await pool.query('SELECT id FROM courses WHERE class_id = ? AND status = "active"', [request[0].class_id]);
+    for (const course of courses) {
+      const [existing] = await pool.query('SELECT id FROM enrollments WHERE student_id = ? AND course_id = ?', [request[0].student_id, course.id]);
+      if (existing.length > 0) {
+        await pool.query('UPDATE enrollments SET status = "approved" WHERE id = ?', [existing[0].id]);
+      } else {
+        await pool.query('INSERT INTO enrollments (student_id, course_id, status) VALUES (?, ?, "approved")', [request[0].student_id, course.id]);
+      }
+    }
+
+    res.status(200).json({ success: true, message: 'Class registration approved and auto-enrolled in courses!' });
   } catch (err) { res.status(500).json({ success: false, message: 'Error' }); }
 });
 
@@ -191,8 +232,8 @@ router.post('/students', async (req, res) => {
 
     // 1. Create user
     const [uResult] = await connection.query(
-      'INSERT INTO users (name, email, password, role, is_approved, campus_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', true, campus_id]
+      'INSERT INTO users (name, email, password, role, is_approved, campus_id, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', true, campus_id, req.user.client_id || null]
     );
 
     // 2. Create student profile

@@ -10,9 +10,9 @@ const { generateRollNumber } = require('../utils/rollNumber');
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
 
-// Helper to check if role is authorized to manage students
+// FIX (LOW-09): Corrected role names — 'super_admin' (with underscore), removed non-existent roles 'hod' and 'dean'.
 const canManageStudents = (req, res, next) => {
-  const allowedRoles = ['principal', 'teacher', 'superadmin', 'hod', 'dean', 'rector'];
+  const allowedRoles = ['principal', 'teacher', 'super_admin', 'admin', 'rector'];
   if (allowedRoles.includes(req.user.role)) {
     next();
   } else {
@@ -99,9 +99,9 @@ router.post('/', async (req, res) => {
 
     const [result] = await pool.query(
       `INSERT INTO users (
-        name, email, password, role, campus_id, is_approved
-      ) VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, email, hashedPassword, 'student', campus_id, true]
+        name, email, password, role, campus_id, is_approved, client_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [name, email, hashedPassword, 'student', campus_id, true, req.user.client_id || null]
     );
 
     const userId = result.insertId;
@@ -152,6 +152,7 @@ router.post('/', async (req, res) => {
 });
 
 // Bulk student upload (CSV)
+// FIX (HIGH-09): Wrapped in a database transaction to prevent partial imports.
 router.post('/bulk', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -166,55 +167,61 @@ router.post('/bulk', upload.single('file'), async (req, res) => {
     .pipe(csv({
       mapHeaders: ({ header }) => header ? header.trim().toLowerCase().replace(/^\uFEFF/, '') : ''
     }))
-    .on('data', (row) => {
-      // row keys should match CSV headers: name, email, password, semester, father_name, father_cnic, last_education, father_number, bform_number
-      students.push(row);
-    })
+    .on('data', (row) => { students.push(row); })
     .on('end', async () => {
-      // Delete temporary file
-      fs.unlinkSync(req.file.path);
+      // Delete temporary uploaded file immediately
+      try { fs.unlinkSync(req.file.path); } catch (e) {}
 
-      for (const student of students) {
-        try {
-          const { name, email, password, semester, father_name, father_cnic, last_education, father_number, bform_number } = student;
-          
-          if (!name || !email) continue;
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
 
-          // Check if exists
-          const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
-          if (existing.length > 0) {
-            errors.push(`${email} already exists`);
-            continue;
+        for (const student of students) {
+          try {
+            const { name, email, password, semester, father_name, father_cnic, last_education, father_number, bform_number } = student;
+
+            if (!name || !email) continue;
+
+            const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [email]);
+            if (existing.length > 0) {
+              errors.push(`${email} already exists`);
+              continue;
+            }
+
+            const semNum = parseInt(semester) || 1;
+            const rollNumber = await generateRollNumber(campus_id, semNum);
+            const hashedPassword = await bcrypt.hash(password || 'Password@123', 10);
+
+            const [result] = await connection.query(
+              'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+              [name, email, hashedPassword, 'student', campus_id, true, req.user.client_id || null]
+            );
+
+            await connection.query(
+              `INSERT INTO students (
+                user_id, roll_number, semester, admission_year,
+                father_name, father_cnic, last_education, father_number, bform_number
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                result.insertId, rollNumber, semNum, new Date().getFullYear(),
+                father_name || null, father_cnic || null, last_education || null,
+                father_number || null, bform_number || null
+              ]
+            );
+            count++;
+          } catch (err) {
+            console.error('Bulk row error:', err);
+            errors.push(`Error adding ${student.email || 'unknown'}: ${err.message}`);
           }
-
-          const semNum = semester || 1;
-          const rollNumber = await generateRollNumber(campus_id, semNum);
-          const hashedPassword = await bcrypt.hash(password || 'Password123', 10);
-
-          const [result] = await pool.query(
-            `INSERT INTO users (
-              name, email, password, role, campus_id, is_approved
-            ) VALUES (?, ?, ?, ?, ?, ?)`,
-            [name, email, hashedPassword, 'student', campus_id, true]
-          );
-
-          const userId = result.insertId;
-          
-          await pool.query(
-            `INSERT INTO students (
-              user_id, roll_number, semester, admission_year,
-              father_name, father_cnic, last_education, father_number, bform_number
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-              userId, rollNumber, semNum, new Date().getFullYear(),
-              father_name || null, father_cnic || null, last_education || null, father_number || null, bform_number || null
-            ]
-          );
-          count++;
-        } catch (err) {
-          console.error('Bulk row error:', err);
-          errors.push(`Error adding ${student.email || 'unknown'}`);
         }
+
+        await connection.commit();
+      } catch (err) {
+        await connection.rollback();
+        console.error('Bulk import transaction error:', err);
+        return res.status(500).json({ success: false, message: 'Bulk import failed. No records were saved.' });
+      } finally {
+        connection.release();
       }
 
       res.json({
@@ -334,31 +341,46 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete student
+// FIX (CRIT-07): Now correctly fetches student.id (students table PK) before
+// deleting related records. Previously used user.id which caused wrong deletions.
 router.delete('/:id', async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const campusId = req.user.campus_id;
-    const { id } = req.params;
+    const { id } = req.params; // This is the users.id
 
-    const [students] = await connection.query(
+    // Verify user exists in this campus
+    const [userRecord] = await connection.query(
       'SELECT id FROM users WHERE id = ? AND role = ? AND campus_id = ?',
       [id, 'student', campusId]
     );
-    if (students.length === 0) {
+    if (userRecord.length === 0) {
       connection.release();
       return res.status(404).json({ success: false, message: 'Student not found in your campus' });
     }
 
+    // Get the actual students.id (different from users.id)
+    const [[studentRecord]] = await connection.query(
+      'SELECT id FROM students WHERE user_id = ?',
+      [id]
+    );
+    if (!studentRecord) {
+      connection.release();
+      return res.status(404).json({ success: false, message: 'Student profile not found' });
+    }
+    const studentId = studentRecord.id;
+
     await connection.beginTransaction();
 
-    // Clean up all related records
-    await connection.query('DELETE FROM marks WHERE submission_id IN (SELECT id FROM submissions WHERE student_id = ?)', [id]).catch(() => {});
-    await connection.query('DELETE FROM submissions WHERE student_id = ?', [id]).catch(() => {});
-    await connection.query('DELETE FROM enrollments WHERE student_id = ?', [id]).catch(() => {});
-    await connection.query('DELETE FROM attendance WHERE student_id = ?', [id]).catch(() => {});
-    await connection.query('DELETE FROM student_progress WHERE student_id = ?', [id]).catch(() => {});
-    await connection.query('DELETE FROM challans WHERE student_id = ?', [id]).catch(() => {});
-    await connection.query('DELETE FROM student_classes WHERE student_id = ?', [id]).catch(() => {});
+    // Delete related records using correct studentId (students.id)
+    await connection.query('DELETE FROM marks WHERE submission_id IN (SELECT id FROM submissions WHERE student_id = ?)', [studentId]);
+    await connection.query('DELETE FROM submissions WHERE student_id = ?', [studentId]);
+    await connection.query('DELETE FROM enrollments WHERE student_id = ?', [studentId]);
+    await connection.query('DELETE FROM attendance WHERE student_id = ?', [studentId]);
+    await connection.query('DELETE FROM student_progress WHERE student_id = ?', [studentId]).catch(() => {});
+    await connection.query('DELETE FROM challans WHERE student_id = ?', [studentId]).catch(() => {});
+    await connection.query('DELETE FROM student_classes WHERE student_id = ?', [studentId]);
+    await connection.query('DELETE FROM students WHERE id = ?', [studentId]);
     await connection.query('DELETE FROM users WHERE id = ?', [id]);
 
     await connection.commit();

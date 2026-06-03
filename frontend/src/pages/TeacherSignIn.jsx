@@ -158,7 +158,7 @@ function TeacherSignIn() {
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
                 <span className="label-text">Remember me</span>
               </label>
-              {/* <Link to="/forgot-password" style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'none' }}>
+              {/* <Link to="/forgot-password" style={{ color: 'var(--primary-color, #4f46e5)', fontWeight: 700, textDecoration: 'none' }}>
                 Forgot Password?
               </Link> */}
             </div>

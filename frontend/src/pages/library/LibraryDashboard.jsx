@@ -286,13 +286,19 @@ const LibraryDashboard = ({ user, onLogout }) => {
 
         <div className="sidebar-header">
           <div className="logo-brand">
-            <div className="logo-icon">
-              <Books size={24} weight="fill" color="white" />
-            </div>
-            <div className="brand-text">
-              <span className="brand-lancers">LANCERS</span>
-              <span className="brand-tech">TECH</span>
-            </div>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div className="logo-icon">
+                  <Books size={24} weight="fill" color="white" />
+                </div>
+                <div className="brand-text">
+                  <span className="brand-lancers">LANCERS</span>
+                  <span className="brand-tech">TECH</span>
+                </div>
+              </>
+            )}
           </div>
           
           <div className="portal-pill">

@@ -94,9 +94,8 @@ io.use((socket, next) => {
 
 io.on('connection', (socket) => {
   const userId = socket.user.id;
-  console.log(`⚡ Socket connected: User ${userId}`);
-  
-  // Automatically join private room based on authenticated ID
+
+  // Automatically join private room based on authenticated user ID
   socket.join(`user_${userId}`);
 
   socket.on('chat:typing', (data) => {
@@ -112,149 +111,148 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`🔌 Socket disconnected: User ${userId}`);
+    // Intentionally silent — connection churn is normal
   });
 });
 
+// ─── Maintenance Mode Broadcast Helper ────────────────────────────────────────
+// LOW-05 FIX: When maintenance is toggled via superadmin, broadcast to ALL
+// connected sockets so they update without polling every 30 seconds.
+// Usage in any route: req.app.get('io').emit('system:maintenance', { active: true })
+// (Already attached via app.set('io', io) above)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── HTTPS Enforcement (Production Only) ─────────────────────────────────────
+// LOW-11 FIX: In production behind a reverse proxy (Nginx/Cloudflare),
+// redirect all HTTP traffic to HTTPS.
+if (process.env.NODE_ENV === 'production') {
+  app.use((req, res, next) => {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+      return res.redirect(301, 'https://' + req.headers.host + req.url);
+    }
+    next();
+  });
+}
+
 // Middleware
-app.use(cors(corsOptions));              // ✅ Restricted CORS — only trusted origins
-app.options('*', cors(corsOptions));     // ✅ Handle preflight requests
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors(corsOptions));              // Restricted CORS — only trusted origins
+app.options('*', cors(corsOptions));     // Handle preflight requests
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Basic Security Headers (no helmet.js needed for these)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  next();
+});
 
 // Health check route
 app.get('/', (req, res) => {
   res.json({
     success: true,
     message: 'University LMS Backend API is running',
-    version: '1.0.0'
+    version: '1.0.0',
+    timestamp: new Date().toISOString()
   });
 });
 
 console.log('Loading routes...');
 
+const maintenanceCheck = require('./middleware/maintenanceCheck');
+const { pool } = require('./config/database');
+
 try {
-  // Routes - load one by one to find the issue
-  console.log('Loading auth routes...');
-  app.post('/api/signin', signinLimiter);   // ✅ Rate limit: 10 req / 15 min
-  app.post('/api/signup', signupLimiter);   // ✅ Rate limit: 5 req / 1 hr
+  // Public Status API (Must be before maintenanceCheck)
+  app.get('/api/public/status', async (req, res) => {
+    try {
+      const [[maintenance]] = await pool.query('SELECT setting_value FROM platform_settings WHERE setting_key = "maintenance_mode"');
+      res.json({ success: true, maintenance_mode: maintenance && maintenance.setting_value === 'true' });
+    } catch (err) {
+      res.json({ success: true, maintenance_mode: false }); // Fallback
+    }
+  });
+
+  // Public Tenant Branding API (Must be before maintenanceCheck)
+  app.get('/api/public/tenant-branding', async (req, res) => {
+    try {
+      const domain = req.query.domain;
+      if (!domain) return res.json({ success: false });
+      
+      const [[client]] = await pool.query('SELECT logo_url, primary_color FROM lancers_clients WHERE domain = ?', [domain]);
+      if (client) {
+        res.json({ success: true, logo_url: client.logo_url, primary_color: client.primary_color });
+      } else {
+        res.json({ success: false });
+      }
+    } catch (e) {
+      console.error(e);
+      res.json({ success: false });
+    }
+  });
+
+  // Global Maintenance Check (applies to all routes except those excluded in the middleware itself)
+  app.use(maintenanceCheck);
+
+  // ─── Import auth middleware (available for all route registrations below) ──────
+  const {
+    verifyToken, isHRManager, isFinanceManager, isRegistrar, isRector,
+    isAdmissionOfficer, isLibrarian, isSuperAdmin, isPrincipal, isBDAgent, isMasterAdmin
+  } = require('./middleware/auth');
+
+  // ─── Public / Lightly Protected Routes ──────────────────────────────────────
+  app.post('/api/signin', signinLimiter);          // Rate limit: 10 req / 15 min
+  app.post('/api/signup', signupLimiter);           // Rate limit: 5 req / 1 hr
   app.use('/api', require('./api/auth'));
-  console.log('✓ Auth routes loaded (rate-limited)');
-  
-  console.log('Loading forgot password routes...');
-  app.post('/api/forgot-password', forgotPasswordLimiter); // ✅ Rate limit: 5 req / 15 min
-  app.post('/api/verify-otp', forgotPasswordLimiter);      // ✅ Same limit on OTP
+
+  app.post('/api/forgot-password', forgotPasswordLimiter); // Rate limit: 5 req / 15 min
+  app.post('/api/verify-otp', forgotPasswordLimiter);
   app.use('/api', require('./api/forgotPassword'));
-  console.log('✓ Forgot password routes loaded (rate-limited)');
-  
-  console.log('Loading users routes...');
+
   app.use('/api/users', require('./api/users'));
-  console.log('✓ Users routes loaded');
-  
-  console.log('Loading teachers routes...');
-  app.use('/api/teachers', require('./api/teachers'));
-  console.log('✓ Teachers routes loaded');
-  
-  console.log('Loading courses routes...');
-  app.use('/api/courses', require('./api/courses'));
-  console.log('✓ Courses routes loaded');
-  
-  console.log('Loading assignments routes...');
-  app.use('/api/assignments', require('./api/assignmentFiles'));
-  console.log('✓ Assignments routes loaded');
-  
-  console.log('Loading submissions routes...');
-  app.use('/api/assignments', require('./api/assignments'));
-  console.log('✓ Assignments routes loaded');
-  
-  app.use('/api/submissions', require('./api/studentSubmissions'));
-  console.log('✓ Submissions routes loaded');
-  
-  console.log('Loading admin routes...');
-  app.use('/api/admin', require('./api/admin'));
-  console.log('✓ Admin routes loaded');
-  
-  console.log('Loading HOD routes...');
-  app.use('/api/principal', require('./api/principal'));
-  console.log('✓ HOD routes loaded');
-  
-  console.log('Loading super admin routes...');
-  app.use('/api/superadmin', require('./api/superadmin'));
-  console.log('✓ Super Admin routes loaded');
-  
-  console.log('Loading BD portal routes...');
-  app.use('/api/bd', require('./api/bd'));
-  console.log('✓ BD Portal routes loaded');
-  
-  console.log('Loading attendance routes...');
-  app.use('/api/attendance', require('./api/attendance'));
-  console.log('✓ Attendance routes loaded');
-  
-  console.log('Loading grades routes...');
-  app.use('/api/grades', require('./api/grades'));
-  console.log('✓ Grades routes loaded');
-  
-  console.log('Loading progress routes...');
-  app.use('/api/progress', require('./api/progress'));
-  console.log('✓ Progress routes loaded');
-  
-  console.log('Loading challans routes...');
-  app.use('/api/challans', require('./api/challans'));
-  console.log('✓ Challans routes loaded');
-  
-  console.log('Loading timetables routes...');
-  app.use('/api/timetables', require('./api/timetables'));
-  console.log('✓ Timetables routes loaded');
-  
-  console.log('Loading classes routes...');
-  app.use('/api/classes', require('./api/classes'));
-  console.log('✓ Classes routes loaded');
-  
-  console.log('Loading logs routes...');
-  app.use('/api/logs', require('./api/logs'));
-  console.log('✓ Logs routes loaded');
 
-  console.log('Loading labs routes...');
-  app.use('/api/labs', require('./api/labs'));
-  console.log('✓ Labs routes loaded');
+  // ─── Academic Routes (internally protected via verifyToken + role checks) ────
+  app.use('/api/teachers',        require('./api/teachers'));
+  app.use('/api/courses',         require('./api/courses'));
+  app.use('/api/assignments',     require('./api/assignmentFiles'));
+  app.use('/api/assignments',     require('./api/assignments'));
+  app.use('/api/submissions',     require('./api/studentSubmissions'));
+  app.use('/api/admin',           require('./api/admin'));
+  app.use('/api/attendance',      require('./api/attendance'));
+  app.use('/api/grades',          require('./api/grades'));
+  app.use('/api/progress',        require('./api/progress'));
+  app.use('/api/challans',        require('./api/challans'));
+  app.use('/api/timetables',      require('./api/timetables'));
+  app.use('/api/classes',         require('./api/classes'));
+  app.use('/api/logs',            require('./api/logs'));
+  app.use('/api/labs',            require('./api/labs'));
+  app.use('/api/pending-students',require('./api/pending-students'));
+  app.use('/api/students',        require('./api/students'));
+  app.use('/api/feedback',        require('./api/feedback'));
+  app.use('/api/chat',            require('./api/chat'));
 
-  console.log('Loading pending students routes...');
-  app.use('/api/pending-students', require('./api/pending-students'));
-  console.log('✓ Pending students loaded');
+  // ─── Strictly Protected Institutional Routes ─────────────────────────────────
+  // FIX (CRIT-02): Removed duplicate unprotected registrations.
+  // FIX (HIGH-03): Added missing isHRManager and isFinanceManager middleware.
+  // Each route below is protected ONCE — with the correct role check.
+  app.use('/api/hr',          verifyToken,                        require('./api/hr'));
+  app.use('/api/finance',     verifyToken,                        require('./api/finance'));
+  app.use('/api/registrar',   verifyToken, isRegistrar,        require('./api/registrar'));
+  app.use('/api/rector',      verifyToken, isRector,           require('./api/rector'));
+  app.use('/api/admissions',  verifyToken, isAdmissionOfficer, require('./api/admissions'));
+  app.use('/api/library',     verifyToken, isLibrarian,        require('./api/library'));
+  app.use('/api/superadmin',  verifyToken, isSuperAdmin,       require('./api/superadmin'));
+  app.use('/api/masteradmin', verifyToken, isMasterAdmin,      require('./api/masteradmin'));
+  app.use('/api/principal',   verifyToken, isPrincipal,        require('./api/principal'));
+  app.use('/api/bd',          verifyToken, isBDAgent,          require('./api/bd'));
+  app.use('/api/it',          verifyToken,                     require('./api/it'));
+  app.use('/api/exams',       verifyToken,                     require('./api/exams'));
+  app.use('/api/reports',     verifyToken,                     require('./api/reports'));
 
-  console.log('Loading students routes...');
-  app.use('/api/students', require('./api/students'));
-  console.log('✓ Students routes loaded');
+  console.log('\n✅ All routes loaded and secured successfully!\n');
 
-  console.log('Loading feedback routes...');
-  app.use('/api/feedback', require('./api/feedback'));
-  console.log('✓ Feedback routes loaded');
-  
-  console.log('Loading chat routes...');
-  app.use('/api/chat', require('./api/chat'));
-  console.log('✓ Chat routes loaded');
-
-  const { verifyToken, isHRManager, isFinanceManager, isRegistrar, isRector, isAdmissionOfficer, isLibrarian, isSuperAdmin, isPrincipal, isBDAgent } = require('./middleware/auth');
-
-  console.log('Loading institutional routes...');
-  app.use('/api/hr', require('./api/hr'));
-  app.use('/api/finance', require('./api/finance'));
-  app.use('/api/registrar', verifyToken, isRegistrar, require('./api/registrar'));
-  app.use('/api/rector', verifyToken, isRector, require('./api/rector'));
-  app.use('/api/admissions', verifyToken, isAdmissionOfficer, require('./api/admissions'));
-  app.use('/api/library', verifyToken, isLibrarian, require('./api/library'));
-  app.use('/api/superadmin', verifyToken, isSuperAdmin, require('./api/superadmin'));
-  app.use('/api/principal', verifyToken, isPrincipal, require('./api/principal'));
-  app.use('/api/bd', verifyToken, isBDAgent, require('./api/bd'));
-  
-  // IT and Exams usually need specific management
-  app.use('/api/it', verifyToken, require('./api/it')); 
-  app.use('/api/exams', verifyToken, require('./api/exams'));
-  app.use('/api/reports', verifyToken, require('./api/reports'));
-  console.log('✓ Institutional routes loaded (strictly authorized)');
-  
-  console.log('\n✅ All routes loaded successfully!\n');
-  
 } catch (error) {
   console.error('\n❌ Error loading routes:');
   console.error(error);

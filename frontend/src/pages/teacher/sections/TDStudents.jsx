@@ -7,7 +7,7 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
       <div style={S.tableHeader}>
         <div>
           <h2 style={{ ...S.tableTitle, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Users size={24} weight="duotone" style={{ color: '#4f46e5' }} />
+            <Users size={24} weight="duotone" style={{ color: 'var(--primary-color, #4f46e5)' }} />
             Student Directory
           </h2>
           <p style={S.tableSubtitle}>Manage and view students in your department</p>
@@ -40,7 +40,7 @@ export default function TDStudents({ campusStudents, loadingStudents, setShowAdd
                     >
                       <div style={{ width:'32px', height:'32px', borderRadius:'10px', background:'#f1f5f9', color:'#64748b', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700' }}>{student.name.charAt(0)}</div>
                       <div>
-                        <span style={{ fontWeight:'700', color:'#4f46e5', display:'block' }}>{student.name}</span>
+                        <span style={{ fontWeight:'700', color:'var(--primary-color, #4f46e5)', display:'block' }}>{student.name}</span>
                         <span style={{ fontSize:'10px', color:'#64748b' }}>View Profile</span>
                       </div>
                     </div>

@@ -93,7 +93,7 @@ const ExamsResults = ({ exams }) => {
         <>
           <div className="ex-metrics" style={{ marginBottom: 24 }}>
             <div className="ex-card" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ background: '#f5f3ff', padding: 12, borderRadius: 12, color: '#4f46e5' }}><Users size={24} weight="bold" /></div>
+              <div style={{ background: '#f5f3ff', padding: 12, borderRadius: 12, color: 'var(--primary-color, #4f46e5)' }}><Users size={24} weight="bold" /></div>
               <div>
                 <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', margin: 0 }}>Enrolled Graded</p>
                 <p style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>{totalStudents} Candidates</p>

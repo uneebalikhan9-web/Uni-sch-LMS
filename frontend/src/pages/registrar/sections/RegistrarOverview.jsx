@@ -19,7 +19,7 @@ const RegistrarOverview = ({ stats, recentRecords, getStatusClass, handleEditRec
         
         {/* Total Enrolled Students */}
         <div className="metric-card" style={{ border: '1px solid #e2e8f0', position: 'relative', overflow: 'hidden', transition: 'all 0.3s ease' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: '#4f46e5' }}></div>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary-color, #4f46e5)' }}></div>
           <div className="metric-info">
             <h4 style={{ color: '#64748b', fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Enrolled</h4>
             <div className="metric-number" style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', marginTop: '6px' }}>{stats.totalEnrolled}</div>
@@ -27,7 +27,7 @@ const RegistrarOverview = ({ stats, recentRecords, getStatusClass, handleEditRec
               <CheckCircle size={12} weight="bold" /> Active Status
             </span>
           </div>
-          <div className="metric-icon" style={{ background: '#f5f3ff', color: '#4f46e5', borderRadius: '16px', width: '56px', height: '56px' }}>
+          <div className="metric-icon" style={{ background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', borderRadius: '16px', width: '56px', height: '56px' }}>
             <Student size={28} weight="duotone" />
           </div>
         </div>
@@ -114,7 +114,7 @@ const RegistrarOverview = ({ stats, recentRecords, getStatusClass, handleEditRec
                 {recentRecords.slice(0, 6).map((record) => (
                   <tr key={record.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
                     <td style={{ padding: '16px' }}>
-                      <span className="id-cell" style={{ background: '#f5f3ff', color: '#4f46e5', fontWeight: '700', padding: '6px 12px', borderRadius: '8px', fontSize: '12px' }}>
+                      <span className="id-cell" style={{ background: '#f5f3ff', color: 'var(--primary-color, #4f46e5)', fontWeight: '700', padding: '6px 12px', borderRadius: '8px', fontSize: '12px' }}>
                         {record.id}
                       </span>
                     </td>
@@ -136,7 +136,7 @@ const RegistrarOverview = ({ stats, recentRecords, getStatusClass, handleEditRec
                       <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                         <button 
                           onClick={() => handleEditRecord(record.id)} 
-                          style={{ border: '1px solid #e2e8f0', background: 'white', padding: '8px', borderRadius: '10px', cursor: 'pointer', color: '#4f46e5', display: 'inline-flex', transition: 'all 0.2s' }}
+                          style={{ border: '1px solid #e2e8f0', background: 'white', padding: '8px', borderRadius: '10px', cursor: 'pointer', color: 'var(--primary-color, #4f46e5)', display: 'inline-flex', transition: 'all 0.2s' }}
                           title="Edit Student Status"
                         >
                           <PencilSimple size={16} weight="bold" />
@@ -188,10 +188,10 @@ const RegistrarOverview = ({ stats, recentRecords, getStatusClass, handleEditRec
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', fontWeight: '700', marginBottom: '6px' }}>
                   <span>DEGREE PROCESSING SLA</span>
-                  <span style={{ color: '#4f46e5' }}>100%</span>
+                  <span style={{ color: 'var(--primary-color, #4f46e5)' }}>100%</span>
                 </div>
                 <div style={{ background: '#f1f5f9', height: '6px', borderRadius: '10px', overflow: 'hidden' }}>
-                  <div style={{ background: '#4f46e5', height: '100%', width: '100%', borderRadius: '10px' }}></div>
+                  <div style={{ background: 'var(--primary-color, #4f46e5)', height: '100%', width: '100%', borderRadius: '10px' }}></div>
                 </div>
               </div>
             </div>

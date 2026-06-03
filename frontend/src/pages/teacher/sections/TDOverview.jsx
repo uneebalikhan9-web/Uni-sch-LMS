@@ -34,12 +34,17 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
   useEffect(() => {
     if (!chartRef.current) return;
     if (chartInst.current) chartInst.current.destroy();
+
+    const rootStyle = getComputedStyle(document.documentElement);
+    const primaryColor = rootStyle.getPropertyValue('--primary-color').trim() || '#4f46e5';
+    const primaryRgb = rootStyle.getPropertyValue('--primary-rgb').trim() || '79, 70, 229';
+
     const data = [s.total_courses, s.total_students, s.total_classes, s.total_assignments, s.total_graded, s.total_pending, s.recent_students.length];
     chartInst.current = new Chart(chartRef.current.getContext('2d'), {
       type: 'line',
       data: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{ label:'Activity', data: data.slice(0,7), borderColor:'#4f46e5', backgroundColor:'rgba(79,70,229,0.1)', fill:true, tension:0.4, pointRadius:5, pointHoverRadius:8, pointBackgroundColor:'#4f46e5', pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:3 }],
+        datasets: [{ label:'Activity', data: data.slice(0,7), borderColor: primaryColor, backgroundColor: `rgba(${primaryRgb}, 0.1)`, fill:true, tension:0.4, pointRadius:5, pointHoverRadius:8, pointBackgroundColor: primaryColor, pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:3 }],
       },
       options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#1e293b'} }, scales:{ y:{grid:{color:'#f1f5f9'}, border:{display:false}, beginAtZero:true, ticks:{stepSize:5}}, x:{grid:{display:false}} }, animation:{duration:1000,easing:'easeInOutQuart'} },
     });
@@ -65,7 +70,7 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
             <h3 style={S.chartTitle}>Weekly Activity</h3>
             <p style={S.chartSubtitle}>Teaching engagement over the last 7 days</p>
           </div>
-          <div style={S.chartControls}><Pulse size={20} color="#4f46e5" weight="duotone" /><span style={S.chartLive}>LIVE</span></div>
+          <div style={S.chartControls}><Pulse size={20} color="var(--primary-color, #4f46e5)" weight="duotone" /><span style={S.chartLive}>LIVE</span></div>
         </div>
         <div style={{ height:'300px' }}><canvas ref={chartRef}></canvas></div>
       </div>
@@ -113,10 +118,10 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
           {myLeaves && myLeaves.length > 0 ? (
             <div>
               <div style={{
-                background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
+                background: 'linear-gradient(135deg, rgba(var(--primary-rgb, 79, 70, 229), 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)',
                 borderRadius: '16px',
                 padding: '16px',
-                border: '1px solid rgba(79, 70, 229, 0.1)',
+                border: '1px solid rgba(var(--primary-rgb, 79, 70, 229), 0.1)',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
@@ -144,7 +149,7 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#4f46e5',
+                    color: 'var(--primary-color, #4f46e5)',
                     fontSize: '0.8rem',
                     fontWeight: 800,
                     cursor: 'pointer'
@@ -163,8 +168,8 @@ export default function TDOverview({ stats = {}, timetable = [], pendingCount = 
               <button 
                 onClick={() => setActivePage('my-leaves')}
                 style={{
-                  background: 'linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)',
-                  color: '#4f46e5',
+                  background: 'linear-gradient(135deg, rgba(var(--primary-rgb, 79, 70, 229), 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)',
+                  color: 'var(--primary-color, #4f46e5)',
                   border: 'none',
                   padding: '10px 20px',
                   borderRadius: '12px',

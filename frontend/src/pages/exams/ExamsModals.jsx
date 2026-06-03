@@ -34,7 +34,7 @@ export const ScheduleExamModal = ({ onClose, onSave }) => {
         <div className="ex-modal-overlay">
             <div className="ex-modal">
                 <div className="ex-modal-header">
-                    <h2><Plus size={24} weight="bold" color="#4f46e5" /> Schedule New Exam</h2>
+                    <h2><Plus size={24} weight="bold" color="var(--primary-color, #4f46e5)" /> Schedule New Exam</h2>
                     <button className="ex-modal-close" onClick={onClose}><X size={20} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="ex-modal-body">

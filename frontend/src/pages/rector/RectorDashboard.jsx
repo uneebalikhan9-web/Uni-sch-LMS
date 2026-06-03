@@ -5,7 +5,7 @@ import {
   ChartLineUp, Certificate, CurrencyDollar, 
   GraduationCap, SignOut, Bell, MagnifyingGlass,
   CheckCircle, WarningCircle, Clock, ChatCircle
-} from '@phosphor-icons/react';
+, Globe } from '@phosphor-icons/react';
 import { S } from './sections/RDStyles';
 import API_BASE_URL from '../../config/api';
 
@@ -159,10 +159,17 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
           overflowY: 'auto',
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
-          <div style={S.logoWrapper}>
-            <div style={S.logoIcon}><Buildings size={24} weight="fill"/></div>
-            <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
+
 
           <div style={S.rectorBadge}>
             <div style={S.liveIndicator} />

@@ -62,7 +62,7 @@ export default function SDAssignments({
                   }}
                   style={{
                     ...S.submitBtn,
-                    background: a.submitted_at ? '#cbd5e1' : '#4f46e5',
+                    background: a.submitted_at ? '#cbd5e1' : 'var(--primary-color, #4f46e5)',
                     color: a.submitted_at ? '#475569' : '#fff'
                   }}
                 >

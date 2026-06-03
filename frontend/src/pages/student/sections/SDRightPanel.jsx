@@ -83,7 +83,7 @@ export default function SDRightPanel({ user, courses, attendanceStats, grades = 
           top: '50%',
           transform: 'translateY(-50%)',
           zIndex: 30,
-          background: '#4f46e5',
+          background: 'var(--primary-color, #4f46e5)',
           color: '#fff',
           border: 'none',
           borderRadius: '10px 0 0 10px',
@@ -93,7 +93,7 @@ export default function SDRightPanel({ user, courses, attendanceStats, grades = 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '-4px 0 14px rgba(79,70,229,0.35)',
+          boxShadow: '-4px 0 14px rgba(var(--primary-rgb, 79, 70, 229),0.35)',
           fontSize: '18px',
           fontWeight: '800',
           lineHeight: 1,
@@ -163,7 +163,7 @@ export default function SDRightPanel({ user, courses, attendanceStats, grades = 
           {activeUpcoming.length > 0 ? (
             activeUpcoming.map(item => (
               <div key={item.id} style={S.upcomingItem} className="upcoming-item">
-                <Clock size={16} color="#4f46e5" weight="duotone" style={{ flexShrink: 0 }} />
+                <Clock size={16} color="var(--primary-color, #4f46e5)" weight="duotone" style={{ flexShrink: 0 }} />
                 <span style={{ fontSize: '13px', color: '#1e293b', lineHeight: '1.4' }}>{item.text}</span>
               </div>
             ))

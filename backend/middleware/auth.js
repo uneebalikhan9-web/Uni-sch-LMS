@@ -17,6 +17,18 @@ const verifyToken = async (req, res, next) => {
 
     // Inject specialized IDs based on role
     const { pool } = require('../config/database');
+    
+    // Check if client is suspended (for SaaS Multi-Tenancy)
+    if (decoded.client_id && decoded.role !== 'master_admin') {
+      const [clients] = await pool.query('SELECT subscription_status FROM lancers_clients WHERE id = ?', [decoded.client_id]);
+      if (clients.length > 0 && clients[0].subscription_status === 'Suspended') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your University portal has been suspended by LancersTech. Please contact support.'
+        });
+      }
+    }
+
     if (decoded.role === 'student') {
       const [student] = await pool.query('SELECT id FROM students WHERE user_id = ?', [decoded.id]);
       if (student.length > 0) req.user.student_id = student[0].id;
@@ -43,7 +55,7 @@ const verifyToken = async (req, res, next) => {
 
 // Middleware to check if user is a teacher
 const isTeacher = (req, res, next) => {
-  const allowed = ['teacher', 'principal', 'admin', 'super_admin'];
+  const allowed = ['teacher', 'principal', 'admin', 'super_admin', 'superadmin'];
   if (!allowed.includes(req.user.role)) {
     return res.status(403).json({
       success: false,
@@ -77,7 +89,7 @@ const isPrincipal = (req, res, next) => {
 
 // Middleware to check if user is a Super Admin (platform-level)
 const isSuperAdmin = (req, res, next) => {
-  if (req.user.role !== 'super_admin') {
+  if (req.user.role !== 'super_admin' && req.user.role !== 'superadmin') {
     return res.status(403).json({
       success: false,
       message: 'Access denied. Super Admins only.'
@@ -172,12 +184,24 @@ const isRector = (req, res, next) => {
   next();
 };
 
+// Middleware to check if user is a Master Admin (Lancers Tech System Owner)
+const isMasterAdmin = (req, res, next) => {
+  if (req.user.role !== 'master_admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Master Admin (Lancers Tech) only.'
+    });
+  }
+  next();
+};
+
 module.exports = {
   verifyToken,
   isTeacher,
   isAdmin,
   isPrincipal,
   isSuperAdmin,
+  isMasterAdmin,
   isStudent,
   isBDAgent,
   isChatUser,

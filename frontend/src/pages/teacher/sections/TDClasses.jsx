@@ -7,7 +7,7 @@ export default function TDClasses({ teacherClasses, courses, selectedClassId, se
       <div style={S.tableCard} className="table-container animate-fadeIn">
         <div style={S.tableHeader}>
           <div>
-            <h2 style={S.tableTitle}><Buildings size={28} weight="duotone" color="#4f46e5" style={{ verticalAlign:'middle', marginRight:'12px' }} />My Classes</h2>
+            <h2 style={S.tableTitle}><Buildings size={28} weight="duotone" color="var(--primary-color, #4f46e5)" style={{ verticalAlign:'middle', marginRight:'12px' }} />My Classes</h2>
             <p style={S.tableSubtitle}>Classes assigned to you by the HOD</p>
           </div>
         </div>
@@ -75,7 +75,6 @@ export default function TDClasses({ teacherClasses, courses, selectedClassId, se
                             <CheckCircle size={14} weight="fill" /> Complete
                           </button>
                         )}
-                        <button style={S.deleteIconBtn}><Trash size={16} /></button>
                       </div>
                     </td>
                   </tr>

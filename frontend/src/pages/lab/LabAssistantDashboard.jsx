@@ -50,11 +50,17 @@ const LabAssistantDashboard = ({ user, onLogout }) => {
       {/* Sidebar */}
       <aside className="lab-sidebar">
         <div className="lab-logo-area">
-          <div className="lab-logo">LT</div>
-          <div className="lab-logo-text">
-            <span className="brand">Lancers Tech</span>
-            <span className="portal">LAB COMMAND</span>
-          </div>
+          {user?.logo_url ? (
+            <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <>
+              <div className="lab-logo">LT</div>
+              <div className="lab-logo-text">
+                <span className="brand">Lancers Tech</span>
+                <span className="portal">LAB COMMAND</span>
+              </div>
+            </>
+          )}
         </div>
 
         <nav className="lab-nav">
@@ -101,7 +107,7 @@ const LabAssistantDashboard = ({ user, onLogout }) => {
 
         <div className="lab-content">
           <div className="lab-stats-grid">
-            <StatCard icon={<Users size={28} weight="duotone" />} value={usage.length} label="Daily Sessions" color="#4f46e5" />
+            <StatCard icon={<Users size={28} weight="duotone" />} value={usage.length} label="Daily Sessions" color="var(--primary-color, #4f46e5)" />
             <StatCard icon={<Clock size={28} weight="duotone" />} value="84%" label="Avg. Utilization" color="#10b981" />
             <StatCard icon={<HardDrive size={28} weight="duotone" />} value={labs.length} label="Active Nodes" color="#f59e0b" />
             <StatCard icon={<CheckCircle size={28} weight="duotone" />} value="100%" label="Compliance" color="#6366f1" />

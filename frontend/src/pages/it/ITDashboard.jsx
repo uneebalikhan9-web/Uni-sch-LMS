@@ -140,13 +140,19 @@ const ITDashboard = ({ user, onLogout }) => {
       <aside className={`it-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="it-sidebar-header">
           <div className="it-logo-area">
-            <div className="it-logo-icon">
-              <Cpu size={24} weight="bold" color="white" />
-            </div>
-            <div>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>IT Nexus</h2>
-              <p style={{ fontSize: '0.7rem', opacity: 0.6, fontWeight: 700 }}>SYSTEM ADMINISTRATION</p>
-            </div>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div className="it-logo-icon">
+                  <Cpu size={24} weight="bold" color="white" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>IT Nexus</h2>
+                  <p style={{ fontSize: '0.7rem', opacity: 0.6, fontWeight: 700 }}>SYSTEM ADMINISTRATION</p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

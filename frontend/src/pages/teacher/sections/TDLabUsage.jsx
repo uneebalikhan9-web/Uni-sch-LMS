@@ -6,7 +6,7 @@ export default function TDLabUsage({ labUsage, loadingLabs }) {
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
         <div>
-          <h2 style={S.tableTitle}><Flask size={28} weight="duotone" color="#4f46e5" style={{ verticalAlign:'middle', marginRight:'12px' }} />Cloud Lab Analytics</h2>
+          <h2 style={S.tableTitle}><Flask size={28} weight="duotone" color="var(--primary-color, #4f46e5)" style={{ verticalAlign:'middle', marginRight:'12px' }} />Cloud Lab Analytics</h2>
           <p style={S.tableSubtitle}>Track student engagement in cloud labs</p>
         </div>
       </div>

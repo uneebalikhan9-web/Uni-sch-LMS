@@ -45,7 +45,7 @@ const FinFees = ({ challans, onAction, onEdit }) => {
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; background: #f8fafc; }
             .voucher-container { max-width: 800px; margin: 0 auto; background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; }
-            .logo { font-size: 24px; font-weight: 800; color: #4f46e5; }
+            .logo { font-size: 24px; font-weight: 800; color: var(--primary-color, #4f46e5); }
             .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; background: #dcfce7; color: #15803d; }
             .badge.pending { background: #fef9c3; color: #a16207; }
             .badge.overdue { background: #fee2e2; color: #b91c1c; }
@@ -57,7 +57,7 @@ const FinFees = ({ challans, onAction, onEdit }) => {
             .fees-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
             .fees-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
             .fees-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-            .total-row { background: #eef2ff; font-weight: 800; color: #4f46e5; }
+            .total-row { background: #eef2ff; font-weight: 800; color: var(--primary-color, #4f46e5); }
             .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
             .signature { text-align: center; width: 150px; }
             .signature-line { border-bottom: 1px solid #94a3b8; margin-bottom: 8px; height: 30px; }

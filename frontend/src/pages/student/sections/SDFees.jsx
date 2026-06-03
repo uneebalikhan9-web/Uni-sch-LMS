@@ -92,7 +92,7 @@ export default function SDFees({ challans, onPrint }) {
       {/* Main Challan Table Grid */}
       <div style={{ background: 'white', borderRadius: '24px', padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 25px rgba(0, 0, 0, 0.02)' }}>
         <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0f172a', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Receipt size={22} weight="duotone" color="#4f46e5" />
+          <Receipt size={22} weight="duotone" color="var(--primary-color, #4f46e5)" />
           Fee Challan Ledger
         </h3>
 
@@ -114,7 +114,7 @@ export default function SDFees({ challans, onPrint }) {
                 const badge = getStatusStyle(c.status);
                 return (
                   <tr key={c.id} className="fin-table-row" style={{ borderBottom: '1px solid #f8fafc', transition: 'background 0.2s' }}>
-                    <td style={{ padding: '20px', fontWeight: '700', color: '#4f46e5' }}>{c.challan_no}</td>
+                    <td style={{ padding: '20px', fontWeight: '700', color: 'var(--primary-color, #4f46e5)' }}>{c.challan_no}</td>
                     <td style={{ padding: '20px', color: '#334155', fontWeight: '600' }}>
                       {c.semester} <span style={{ color: '#94a3b8', fontSize: '12px', fontWeight: '500' }}>({c.academic_year})</span>
                     </td>
@@ -155,7 +155,7 @@ export default function SDFees({ challans, onPrint }) {
                         onClick={() => onPrint(c)}
                         style={{
                           background: '#f8fafc',
-                          color: '#4f46e5',
+                          color: 'var(--primary-color, #4f46e5)',
                           border: '1px solid #e0e7ff',
                           borderRadius: '8px',
                           padding: '8px 14px',

@@ -47,11 +47,11 @@ router.use(isHRManager);
 // Middleware is now applied globally to the router
 router.get('/stats', async (req, res) => {
     try {
-        const [totalRes] = await db.query('SELECT COUNT(*) as count FROM users');
+        const [totalRes] = await db.query('SELECT COUNT(*) as count FROM users WHERE client_id = ?', [req.user.client_id]);
         const total = totalRes[0].count;
         let leaveCount = 0;
         try {
-            const [lc] = await db.query('SELECT COUNT(*) as count FROM hr_leave_requests WHERE status = "Pending"');
+            const [lc] = await db.query('SELECT COUNT(l.id) as count FROM hr_leave_requests l JOIN users u ON l.user_id = u.id WHERE l.status = "Pending" AND u.client_id = ?', [req.user.client_id]);
             leaveCount = lc[0].count;
         } catch (e) {
             console.warn(">>> [DEBUG] hr_leave_requests table might be missing:", e.message);
@@ -59,7 +59,7 @@ router.get('/stats', async (req, res) => {
 
         let jobCount = 0;
         try {
-            const [jc] = await db.query('SELECT COUNT(*) as count FROM hr_job_postings WHERE status = "Active"');
+            const [jc] = await db.query('SELECT COUNT(*) as count FROM hr_job_postings WHERE status = "Active" AND client_id = ?', [req.user.client_id]);
             jobCount = jc[0].count;
         } catch (e) {
             console.warn(">>> [DEBUG] hr_job_postings table might be missing:", e.message);
@@ -112,10 +112,10 @@ router.get('/employees', verifyToken, async (req, res) => {
             FROM users u
             LEFT JOIN employees e ON u.id = e.user_id
             LEFT JOIN departments d ON e.department_id = d.id
-            WHERE u.role NOT IN ('student', 'super_admin')
+            WHERE u.role NOT IN ('student', 'super_admin') AND u.client_id = ?
             ORDER BY u.created_at DESC
         `;
-        const [employees] = await db.query(query);
+        const [employees] = await db.query(query, [req.user.client_id]);
         console.log(`>>> [DEBUG] Fetched ${employees.length} employees successfully`);
         res.json(employees);
     } catch (error) {
@@ -132,8 +132,8 @@ router.get('/employees', verifyToken, async (req, res) => {
 router.post('/employees', verifyToken, async (req, res) => {
     const { name, email, password, role, dept_id, designation } = req.body;
     try {
-        const [result] = await db.query('INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, ?, "active")', 
-            [name, email, password || '$2b$10$mn5nhILwVQ6jY2.KkmAIRe5NJbvrB5XT8x.87GUGsyndBbticTJde', role]);
+        const [result] = await db.query('INSERT INTO users (name, email, password, role, status, client_id) VALUES (?, ?, ?, ?, "active", ?)', 
+            [name, email, password || '$2b$10$mn5nhILwVQ6jY2.KkmAIRe5NJbvrB5XT8x.87GUGsyndBbticTJde', role, req.user.client_id]);
         
         const userId = result.insertId;
         
@@ -189,9 +189,10 @@ router.get('/leave-requests', verifyToken, async (req, res) => {
                 u.name 
             FROM hr_leave_requests lr
             JOIN users u ON lr.user_id = u.id
+            WHERE u.client_id = ?
             ORDER BY lr.created_at DESC
         `;
-        const [requests] = await db.query(query);
+        const [requests] = await db.query(query, [req.user.client_id]);
         res.json(requests);
     } catch (e) { res.json([]); }
 });
@@ -212,7 +213,7 @@ router.post('/leave-requests/:id/status', verifyToken, async (req, res) => {
 // Get Job Postings
 router.get('/jobs', verifyToken, async (req, res) => {
     try {
-        const [jobs] = await db.query('SELECT * FROM hr_job_postings ORDER BY created_at DESC');
+        const [jobs] = await db.query('SELECT * FROM hr_job_postings WHERE client_id = ? ORDER BY created_at DESC', [req.user.client_id]);
         res.json(jobs);
     } catch (e) { res.json([]); }
 });
@@ -221,8 +222,8 @@ router.get('/jobs', verifyToken, async (req, res) => {
 router.post('/jobs', verifyToken, async (req, res) => {
     const { title, description, department, status } = req.body;
     try {
-        await db.query('INSERT INTO hr_job_postings (title, description, department, status) VALUES (?, ?, ?, ?)', 
-            [title, description, department, status || 'Active']);
+        await db.query('INSERT INTO hr_job_postings (title, description, department, status, client_id) VALUES (?, ?, ?, ?, ?)', 
+            [title, description, department, status || 'Active', req.user.client_id]);
         res.json({ success: true, message: 'Job vacancy posted' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Error posting job' });

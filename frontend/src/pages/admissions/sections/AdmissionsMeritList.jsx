@@ -58,7 +58,7 @@ const AdmissionsMeritList = ({ meritList }) => {
                     <div style={{ color: '#475569', fontWeight: 600 }}>{student.program}</div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 900, color: '#4f46e5', fontSize: '1.1rem' }}>{student.score}%</div>
+                    <div style={{ fontWeight: 900, color: 'var(--primary-color, #4f46e5)', fontSize: '1.1rem' }}>{student.score}%</div>
                   </td>
                   <td>
                     <span className="adm-status-badge adm-status-verified">

@@ -5,7 +5,7 @@ import {
   House, ChalkboardTeacher, UserCircle, Buildings, BookOpen,
   UserPlus, SignOut, Plus, DotsThreeOutline, Clock, SquaresFour,
   ChartLine, FileText, ChatCircle, GraduationCap, ShieldCheck, Cardholder
-} from "@phosphor-icons/react";
+, Globe } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config/api";
 import { useToast } from "../../components/Toast";
@@ -65,9 +65,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
-  const [refreshInterval, setRefreshInterval] = useState(30000);
   const [systemStatus, setSystemStatus] = useState("Operational");
-  const [lastUpdated, setLastUpdated]   = useState(new Date());
 
   const [showAddModal,      setShowAddModal]      = useState(false);
   const [showDataSheetModal, setShowDataSheetModal] = useState(false);
@@ -281,12 +279,9 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     }
   };
 
-  // ── Fetch ──
   useEffect(() => {
     fetchData();
-    const iv = setInterval(() => { fetchData(); setLastUpdated(new Date()); }, refreshInterval);
-    return () => clearInterval(iv);
-  }, [refreshInterval]);
+  }, []);
 
   useEffect(() => { 
     if (activeTab === 'course_reports') fetchCampusReports(); 
@@ -645,10 +640,17 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           overflowY: 'auto',
           boxSizing: 'border-box',
         }} className="hidden-scrollbar">
-          <div style={S.logoWrapper}>
-            <div style={S.logoIcon}><GraduationCap size={24} weight="fill"/></div>
-            <span style={S.logoText}>LANCERS <span style={S.logoAccent}>TECH</span></span>
+                    <div style={S.logoWrapper}>
+            {user?.logo_url ? (
+              <img src={user.logo_url} alt="Tenant Logo" style={{ maxHeight: '80px', maxWidth: '200px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
+            ) : (
+              <>
+                <div style={S.logoIcon}><Globe size={24} weight="fill" /></div>
+                <span style={S.logoText}>Lancers<span style={S.logoAccent}>Tech</span></span>
+              </>
+            )}
           </div>
+
           <div style={S.principalBadge}>
             <ShieldCheck size={20} weight="duotone"/>
             <span>{user.department_name ? `Dean of ${user.department_name}` : 'Academic Dean'}</span>
@@ -689,8 +691,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           </div>
           <div style={S.headerActions}>
             <div style={S.dateBadge}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
-            <div style={S.refreshBadge} onClick={()=>fetchData()}>
-              <Clock size={14}/> <span>Last: {lastUpdated.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+            <div style={S.refreshBadge} onClick={() => fetchData()}>
+              <Clock size={14}/> <span>Refresh</span>
             </div>
           </div>
         </header>
@@ -952,11 +954,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             </div>
             <div style={S.healthItem}>
               <span style={S.healthLabel}>Refresh Rate</span>
-              <select value={refreshInterval} onChange={e=>setRefreshInterval(Number(e.target.value))} style={S.healthSelect}>
-                <option value={10000}>10 seconds</option>
-                <option value={30000}>30 seconds</option>
-                <option value={60000}>1 minute</option>
-              </select>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#64748b" }}>Manual</span>
             </div>
           </div>
         </div>

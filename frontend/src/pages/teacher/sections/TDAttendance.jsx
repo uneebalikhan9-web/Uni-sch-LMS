@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
 import { CheckCircle, XCircle, Clock, CalendarBlank, Users, CaretRight, FileText, DownloadSimple } from "@phosphor-icons/react";
 import API_BASE_URL from '../../../config/api';
 import { S } from './TDStyles';
@@ -101,35 +100,39 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
   const exportToExcel = () => {
     if (!history || !history.dates || !history.records) return;
 
-    // 1. Prepare Headers: Student Info + All Dates
-    const headers = ['Student Name', 'Email', ...history.dates];
-
-    // 2. Group records by student
+    // Build student attendance map
     const studentMap = {};
     history.records.forEach(r => {
       if (!studentMap[r.student_id]) {
         studentMap[r.student_id] = {
-          'Student Name': r.student_name,
-          'Email': r.student_email
+          name: r.student_name,
+          email: r.student_email
         };
-        // Initialize all dates as N/A or empty
         history.dates.forEach(d => studentMap[r.student_id][d] = '-');
       }
-      studentMap[r.student_id][r.date] = r.status.toUpperCase().charAt(0); // P, A, or L
+      // P = Present, A = Absent, L = Late
+      studentMap[r.student_id][r.date] = r.status.toUpperCase().charAt(0);
     });
 
-    // 3. Convert map to array for XLSX
-    const data = Object.values(studentMap);
+    // Build CSV rows (no external library needed — Blob API)
+    const headers = ['Student Name', 'Email', ...history.dates];
+    const rows = Object.values(studentMap).map(s =>
+      [s.name, s.email, ...history.dates.map(d => s[d] || '-')]
+        .map(cell => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(',')
+    );
 
-    // 4. Create Workbook
-    const ws = XLSX.utils.json_to_sheet(data, { header: headers });
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Attendance Sheet");
-
-    // 5. Download
-    const fileName = `Attendance_${selectedClassId}_${selectedCourseId}_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(wb, fileName);
-    showToast('Excel sheet downloaded!', 'success');
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Attendance_${selectedClassId}_${selectedCourseId}_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showToast('Attendance CSV downloaded! (Opens in Excel)', 'success');
   };
 
   const handleStatusChange = (studentId, status) => {

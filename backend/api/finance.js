@@ -7,21 +7,22 @@ const router = express.Router();
 router.use(verifyToken);
 
 // ==================== STUDENT CHALLANS ====================
+// Student: View own fee challans
 router.get('/my-challans', async (req, res) => {
   try {
+    if (req.user.role !== 'student') {
+      return res.status(403).json({ success: false, message: 'Access restricted to students only' });
+    }
+
     const userId = req.user.id;
     const [[student]] = await pool.query('SELECT id FROM students WHERE user_id = ?', [userId]);
     if (!student) {
       return res.status(404).json({ success: false, message: 'Student record not found' });
     }
-    
-    try {
-      await pool.query(`ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0`);
-    } catch (e) {}
-    try {
-      await pool.query(`ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL`);
-    } catch (e) {}
 
+    // NOTE: reminder_count and last_reminder_at columns must exist in finance_challans.
+    // Run this once via migration: ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0;
+    //                              ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL;
     const [challans] = await pool.query(
       `SELECT fc.*, u.name as student_name, s.roll_number
        FROM finance_challans fc
@@ -38,13 +39,19 @@ router.get('/my-challans', async (req, res) => {
   }
 });
 
-// ==================== EMPLOYEE PAYROLL ====================
+// Employee: View own payroll records
 router.get('/my-payroll', async (req, res) => {
   try {
+    const allowedRoles = ['teacher', 'principal', 'hr_manager', 'finance_manager', 'registrar',
+                          'admission_officer', 'librarian', 'rector', 'it_admin', 'lab_assistant'];
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: 'Access restricted to employees only' });
+    }
+
     const userId = req.user.id;
     const [[employee]] = await pool.query('SELECT id, employee_code, designation FROM employees WHERE user_id = ?', [userId]);
     if (!employee) {
-      return res.status(404).json({ success: false, message: 'Employee record not found' });
+      return res.json({ success: true, payroll: [] }); // No employee record yet — return empty
     }
 
     const [payroll] = await pool.query(
@@ -125,11 +132,32 @@ router.get('/overview', async (req, res) => {
       ? (((totalRevenue - totalExpenses) / totalRevenue) * 100).toFixed(1)
       : 0;
 
+    // Fetch Last 6 Months Trend Data
+    const [revTrend] = await pool.query(
+      `SELECT DATE_FORMAT(paid_date, '%Y-%m') as month, COALESCE(SUM(total_amount),0) as revenue 
+       FROM finance_challans 
+       WHERE status = 'paid' AND paid_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
+       GROUP BY month ORDER BY month ASC`,
+      isSuperAdmin ? [] : [campusId]
+    );
+
+    const [expTrend] = await pool.query(
+      `SELECT DATE_FORMAT(COALESCE(expense_date, created_at), '%Y-%m') as month, COALESCE(SUM(amount),0) as expenses 
+       FROM finance_expenses 
+       WHERE COALESCE(expense_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
+       GROUP BY month ORDER BY month ASC`,
+      isSuperAdmin ? [] : [campusId]
+    );
+
     res.json({
       success: true,
       stats: {
         totalRevenue, pendingFees, overdueCount,
         payrollDisbursed, totalExpenses, operatingMargin
+      },
+      trend: {
+        revenue: revTrend,
+        expenses: expTrend
       }
     });
   } catch (error) {
@@ -236,17 +264,13 @@ router.delete('/challans/:id', async (req, res) => {
 router.post('/challans/:id/remind', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    try {
-      await pool.query(`ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0`);
-    } catch (e) {}
-    try {
-      await pool.query(`ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL`);
-    } catch (e) {}
 
+    // FIX (HIGH-01): Removed ALTER TABLE calls — these columns must exist in the schema.
+    // Run migration once: ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0;
+    //                     ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL;
     await pool.query(
       `UPDATE finance_challans 
-       SET reminder_count = reminder_count + 1, last_reminder_at = NOW() 
+       SET reminder_count = COALESCE(reminder_count, 0) + 1, last_reminder_at = NOW() 
        WHERE id = ?`,
       [id]
     );
@@ -261,7 +285,8 @@ router.post('/challans/:id/remind', async (req, res) => {
     );
     if (!challan) return res.status(404).json({ success: false, message: 'Challan not found' });
     
-    console.log(`[Fee Reminder] Dispatched email reminder to ${challan.student_email} for Challan #${challan.challan_no}`);
+    // TODO: Integrate email sending here when nodemailer is configured.
+    console.info(`[Fee Reminder] Dispatched reminder to ${challan.student_email} for Challan #${challan.challan_no}`);
     res.json({ 
       success: true, 
       message: `Reminder successfully dispatched to ${challan.student_name} (${challan.student_email})!` 

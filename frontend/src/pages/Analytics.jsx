@@ -79,12 +79,25 @@ function Analytics() {
           }
         }
         
+        let attendancePercent = 0
+        try {
+          const attRes = await fetch(`${API_BASE_URL}/api/attendance/my-attendance`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+          const attData = await attRes.json()
+          if (attData.success && attData.stats) {
+            attendancePercent = attData.stats.percentage
+          }
+        } catch (err) {
+          console.error('Error fetching attendance:', err)
+        }
+
         setStats({
           totalCourses,
           completedAssignments: totalCompleted,
           pendingAssignments: totalPending,
           averageMarks: gradedCount > 0 ? (totalMarks / gradedCount).toFixed(1) : 0,
-          attendance: 85 // Mock data for now
+          attendance: attendancePercent // Real data from backend
         })
         
         setRecentGrades(grades.slice(-5).reverse())

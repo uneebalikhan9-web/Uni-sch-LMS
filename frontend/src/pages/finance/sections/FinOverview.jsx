@@ -23,11 +23,31 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true
   </div>
 );
 
-const FinOverview = ({ stats, challans, expenses }) => {
-  const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  // Dummy trend data for visualization
-  const revenueData = [125, 142, 138, 165, 178, stats.totalRevenue ? stats.totalRevenue / 1000 : 0];
-  const expenseData = [98, 105, 112, 118, 125, stats.totalExpenses ? stats.totalExpenses / 1000 : 0];
+const FinOverview = ({ stats, challans, expenses, trend }) => {
+  // Generate last 6 months list dynamically
+  const months = [];
+  const d = new Date();
+  d.setMonth(d.getMonth() - 5);
+  for (let i = 0; i < 6; i++) {
+    months.push(d.toLocaleString('default', { month: 'short' }));
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  // Map backend trend to months array
+  const revMap = trend?.revenue?.reduce((acc, r) => ({...acc, [r.month]: r.revenue}), {}) || {};
+  const expMap = trend?.expenses?.reduce((acc, e) => ({...acc, [e.month]: e.expenses}), {}) || {};
+
+  const revenueData = [];
+  const expenseData = [];
+
+  const tempDate = new Date();
+  tempDate.setMonth(tempDate.getMonth() - 5);
+  for (let i = 0; i < 6; i++) {
+    const mStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`;
+    revenueData.push((revMap[mStr] || 0) / 1000); // Scale to 'k'
+    expenseData.push((expMap[mStr] || 0) / 1000);
+    tempDate.setMonth(tempDate.getMonth() + 1);
+  }
 
   return (
     <div className="fin-animate">
@@ -67,7 +87,7 @@ const FinOverview = ({ stats, challans, expenses }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses Trend (k)</h3>
           <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', fontWeight: 600 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: '#4f46e5' }}></span> Revenue</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: 'var(--primary-color, #4f46e5)' }}></span> Revenue</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: '#e2e8f0' }}></span> Expenses</span>
           </div>
         </div>
@@ -80,7 +100,7 @@ const FinOverview = ({ stats, challans, expenses }) => {
             <div key={month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '10%', zIndex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 220, width: '100%', justifyContent: 'center' }}>
                 <div 
-                  style={{ width: 24, height: `${revenueData[idx] * 1.2}%`, maxHeight: '100%', background: 'linear-gradient(180deg, #4f46e5 0%, #6366f1 100%)', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out', position: 'relative', cursor: 'pointer' }}
+                  style={{ width: 24, height: `${revenueData[idx] * 1.2}%`, maxHeight: '100%', background: 'linear-gradient(180deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out', position: 'relative', cursor: 'pointer' }}
                   title={`Revenue: Rs. ${revenueData[idx].toFixed(0)}k`}
                 />
                 <div 

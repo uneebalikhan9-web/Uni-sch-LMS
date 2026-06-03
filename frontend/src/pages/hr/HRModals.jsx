@@ -24,6 +24,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
   };
 
   const isEmployee = type === 'employee';
+  const isLeaveDetails = type === 'leaveDetails';
 
   return (
     <div className="hr-modal-overlay">
@@ -51,15 +52,17 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
               width: '44px',
               height: '44px',
               borderRadius: '12px',
-              background: 'rgba(79, 70, 229, 0.1)',
-              color: '#4f46e5',
+              background: 'rgba(var(--primary-rgb, 79, 70, 229), 0.1)',
+              color: 'var(--primary-color, #4f46e5)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 8px 16px -4px rgba(79, 70, 229, 0.1)'
+              boxShadow: '0 8px 16px -4px rgba(var(--primary-rgb, 79, 70, 229), 0.1)'
             }}>
               {isEmployee ? (
                 <UserPlus size={22} weight="bold" />
+              ) : isLeaveDetails ? (
+                <Briefcase size={22} weight="bold" />
               ) : (
                 <Briefcase size={22} weight="bold" />
               )}
@@ -72,10 +75,10 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
                 margin: 0,
                 letterSpacing: '-0.5px'
               }}>
-                {isEmployee ? (editingItem ? 'Edit Employee' : 'Add New Employee') : 'Post New Vacancy'}
+                {isEmployee ? (editingItem ? 'Edit Employee' : 'Add New Employee') : isLeaveDetails ? 'Leave Request Details' : 'Post New Vacancy'}
               </h2>
               <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: '#64748b', fontWeight: '500' }}>
-                {isEmployee ? 'Set up employee record and portal access.' : 'Publish a new career opportunity.'}
+                {isEmployee ? 'Set up employee record and portal access.' : isLeaveDetails ? 'Review the details submitted by the employee.' : 'Publish a new career opportunity.'}
               </p>
             </div>
           </div>
@@ -106,7 +109,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
           {isEmployee ? (
             <div className="hr-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="hr-form-field">
-                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Full Name</label>
+                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Full Name</label>
                 <input 
                   className="hr-form-input" 
                   value={formData.name || ''} 
@@ -129,7 +132,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
               </div>
               {!editingItem && (
                 <div className="hr-form-field">
-                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Email Address</label>
+                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Email Address</label>
                   <input 
                     className="hr-form-input" 
                     type="email"
@@ -155,7 +158,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="hr-form-field">
-                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Department</label>
+                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Department</label>
                   <select 
                     className="hr-form-select"
                     value={formData.dept_id || ''} 
@@ -184,7 +187,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
                 </div>
                 
                 <div className="hr-form-field">
-                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Designation</label>
+                  <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Designation</label>
                   <input 
                     className="hr-form-input" 
                     value={formData.designation || ''} 
@@ -208,7 +211,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
               </div>
 
               <div className="hr-form-field">
-                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Role (System)</label>
+                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Role (System)</label>
                 <select 
                   className="hr-form-select"
                   value={formData.role || 'teacher'} 
@@ -234,10 +237,33 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
                 </select>
               </div>
             </div>
+          ) : isLeaveDetails ? (
+            <div className="hr-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Employee</strong>
+                <div style={{ fontSize: '1rem', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>{formData.name}</div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Leave Period</strong>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#0f172a', marginTop: '4px' }}>{formData.days}</div>
+                </div>
+                <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                  <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Type</strong>
+                  <div style={{ fontSize: '0.9rem', fontWeight: '600', color: '#0f172a', marginTop: '4px' }}>{formData.type}</div>
+                </div>
+              </div>
+              <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                <strong style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase' }}>Reason / Description</strong>
+                <div style={{ fontSize: '0.9rem', color: '#334155', marginTop: '8px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                  {formData.reason || 'No description provided.'}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="hr-form-grid" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="hr-form-field">
-                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Job Title</label>
+                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Job Title</label>
                 <input 
                   className="hr-form-input" 
                   value={formData.title || ''} 
@@ -259,7 +285,7 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
                 />
               </div>
               <div className="hr-form-field">
-                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: '#4f46e5', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Department</label>
+                <label className="hr-metric-label" style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Department</label>
                 <input 
                   className="hr-form-input" 
                   value={formData.department || ''} 
@@ -305,27 +331,29 @@ const HRModals = ({ show, onClose, type, editingItem, onAction }) => {
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
-              style={{
-                flex: 2,
-                padding: '14px 24px',
-                border: 'none',
-                background: 'linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)',
-                color: '#ffffff',
-                borderRadius: '16px',
-                fontWeight: '800',
-                fontSize: '0.9rem',
-                cursor: 'pointer',
-                boxShadow: '0 8px 24px -8px rgba(79, 70, 229, 0.4)',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px -8px rgba(79, 70, 229, 0.5)'; }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(79, 70, 229, 0.4)'; }}
-            >
-              {editingItem ? 'Save Changes' : (isEmployee ? 'Add Employee' : 'Post Vacancy')}
-            </button>
-          </div>
+              {!isLeaveDetails && (
+                <button 
+                  type="submit" 
+                  style={{
+                    flex: 2,
+                    padding: '14px 24px',
+                    border: 'none',
+                    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    borderRadius: '16px',
+                    fontWeight: '800',
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 8px 24px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.4)',
+                    transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 12px 28px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.5)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 8px 24px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.4)'; }}
+                >
+                  {editingItem ? 'Save Changes' : (isEmployee ? 'Add Employee' : 'Post Vacancy')}
+                </button>
+              )}
+            </div>
         </form>
       </div>
     </div>

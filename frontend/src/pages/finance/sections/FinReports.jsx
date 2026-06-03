@@ -23,7 +23,7 @@ const FinReports = ({ stats = {}, challans = [] }) => {
             .receipt-container { max-width: 700px; margin: 0 auto; border: 2px solid #e2e8f0; border-radius: 20px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
             .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 24px; margin-bottom: 24px; }
             .logo-area { display: flex; align-items: center; gap: 12px; }
-            .logo-icon { width: 44px; height: 44px; background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
+            .logo-icon { width: 44px; height: 44px; background: linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%); color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 18px; }
             .logo-text { font-size: 20px; font-weight: 800; color: #0f172a; }
             .receipt-no { background: #f5f3ff; color: #6366f1; padding: 6px 12px; border-radius: 30px; font-size: 12px; font-weight: 700; }
             .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 28px; }
@@ -48,7 +48,7 @@ const FinReports = ({ stats = {}, challans = [] }) => {
             </div>
             
             <div style="margin-bottom: 24px;">
-              <h2 style="font-size: 24px; font-weight: 800; color: #4f46e5; margin: 0;">FEE PAYMENT RECEIPT</h2>
+              <h2 style="font-size: 24px; font-weight: 800; color: var(--primary-color, #4f46e5); margin: 0;">FEE PAYMENT RECEIPT</h2>
               <p style="font-size: 13px; color: #64748b; margin: 4px 0 0;">Official computer-generated receipt voucher.</p>
             </div>
 
@@ -102,7 +102,7 @@ const FinReports = ({ stats = {}, challans = [] }) => {
           <title>Lancers Tech - Financial Statement Report</title>
           <style>
             body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; }
-            h1 { font-size: 26px; font-weight: 800; color: #4f46e5; border-bottom: 3px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px; }
+            h1 { font-size: 26px; font-weight: 800; color: var(--primary-color, #4f46e5); border-bottom: 3px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 20px; }
             .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
             .metric-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #f8fafc; }
             .label { font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: 700; }

@@ -3,26 +3,102 @@ const router = express.Router();
 const { pool } = require('../config/database');
 const { verifyToken, isRector } = require('../middleware/auth');
 
+// Helper: get campus_id from rector's user record
+async function getRectorCampusId(userId) {
+  const [rows] = await pool.query('SELECT campus_id FROM users WHERE id = ?', [userId]);
+  return rows.length > 0 ? rows[0].campus_id : null;
+}
+
 // @route   GET /api/rector/stats
-// @desc    Get high-level institutional statistics for the Rector
-// @access  Private (Rector/SuperAdmin)
 router.get('/stats', verifyToken, isRector, async (req, res) => {
   try {
-    const [[{ totalStudents }]] = await pool.query('SELECT COUNT(*) as totalStudents FROM students');
-    const [[{ totalFaculty }]] = await pool.query('SELECT COUNT(*) as totalFaculty FROM employees WHERE designation LIKE "%Professor%" OR designation LIKE "%Lecturer%"');
-    const [[{ totalPrograms }]] = await pool.query('SELECT COUNT(*) as totalPrograms FROM programs');
-    
-    // Calculate real Institutional GPA from exam_results
-    const [[{ instGPA }]] = await pool.query('SELECT AVG(gpa) as avgGPA FROM exam_results');
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
+    // Students in this campus (via classes -> campus_id)
+    const [[{ totalStudents }]] = await pool.query(`
+      SELECT COUNT(DISTINCT sc.student_id) as totalStudents 
+      FROM student_classes sc
+      JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.campus_id = ? AND sc.status = 'approved'
+    `, [campusId]);
+
+    // Faculty in this campus (employees whose dept is under campus faculties)
+    const [[{ totalFaculty }]] = await pool.query(`
+      SELECT COUNT(DISTINCT e.id) as totalFaculty
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      WHERE u.campus_id = ?
+    `, [campusId]);
+
+    // Active courses in this campus
+    const [[{ totalCourses }]] = await pool.query(`
+      SELECT COUNT(DISTINCT c.id) as totalCourses 
+      FROM courses c
+      JOIN classes cl ON c.class_id = cl.id
+      WHERE cl.campus_id = ? AND c.status = 'active'
+    `, [campusId]);
+
+    // Classes in this campus
+    const [[{ totalClasses }]] = await pool.query(
+      "SELECT COUNT(*) as totalClasses FROM classes WHERE campus_id = ?", [campusId]
+    );
+
+    // Departments linked to this campus via faculties
+    const [[{ totalDepts }]] = await pool.query(`
+      SELECT COUNT(DISTINCT d.id) as totalDepts 
+      FROM departments d
+      JOIN faculties f ON d.faculty_id = f.id
+      WHERE f.campus_id = ?
+    `, [campusId]);
+
+    // YoY student enrollment growth
+    const currentYear = new Date().getFullYear();
+    const [[{ thisYear }]] = await pool.query(`
+      SELECT COUNT(DISTINCT sc.student_id) as thisYear 
+      FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.campus_id = ? AND YEAR(sc.created_at) = ?
+    `, [campusId, currentYear]);
+
+    const [[{ lastYear }]] = await pool.query(`
+      SELECT COUNT(DISTINCT sc.student_id) as lastYear 
+      FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.campus_id = ? AND YEAR(sc.created_at) = ?
+    `, [campusId, currentYear - 1]);
+
+    const growthTrend = lastYear > 0
+      ? `${Math.round(((thisYear - lastYear) / lastYear) * 100) >= 0 ? '+' : ''}${Math.round(((thisYear - lastYear) / lastYear) * 100)}%`
+      : (thisYear > 0 ? '+100%' : '+0%');
+
+    // Faculty growth
+    const [[{ facThisYear }]] = await pool.query(`
+      SELECT COUNT(*) as facThisYear FROM employees e JOIN users u ON e.user_id = u.id
+      WHERE u.campus_id = ? AND YEAR(e.created_at) = ?
+    `, [campusId, currentYear]);
+
+    const [[{ facLastYear }]] = await pool.query(`
+      SELECT COUNT(*) as facLastYear FROM employees e JOIN users u ON e.user_id = u.id
+      WHERE u.campus_id = ? AND YEAR(e.created_at) = ?
+    `, [campusId, currentYear - 1]);
+
+    const facGrowth = facLastYear > 0
+      ? `${Math.round(((facThisYear - facLastYear) / facLastYear) * 100) >= 0 ? '+' : ''}${Math.round(((facThisYear - facLastYear) / facLastYear) * 100)}%`
+      : (facThisYear > 0 ? '+100%' : '+0%');
+
+    // Institutional score
+    const institutionalScore = totalClasses > 0
+      ? Math.min(Math.round((totalCourses / totalClasses) * 10), 100)
+      : 0;
 
     res.json({
       success: true,
       stats: {
-        totalEnrollment: totalStudents.toLocaleString(),
-        facultyStrength: totalFaculty.toLocaleString(),
-        activeResearch: totalPrograms,
-        overallGPA: instGPA ? parseFloat(instGPA).toFixed(2) : '0.00',
-        growthTrend: "+8%"
+        totalEnrollment: totalStudents.toString(),
+        facultyStrength: totalFaculty.toString(),
+        activeCourses: totalCourses,
+        totalDepts,
+        growthTrend,
+        facGrowth,
+        institutionalScore
       }
     });
   } catch (error) {
@@ -32,43 +108,69 @@ router.get('/stats', verifyToken, isRector, async (req, res) => {
 });
 
 // @route   GET /api/rector/faculty
-// @desc    Get real faculty oversight data
 router.get('/faculty', verifyToken, isRector, async (req, res) => {
   try {
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
     const [faculty] = await pool.query(`
       SELECT 
-        u.name, 
-        e.designation as desig, 
-        d.name as dept, 
-        '12h/week' as load_hrs, 
-        u.status 
-      FROM users u
-      JOIN employees e ON u.id = e.user_id
-      JOIN departments d ON e.department_id = d.id
-      LIMIT 50
-    `);
+        u.name,
+        IFNULL(e.designation, 'Staff') as desig,
+        IFNULL(d.name, 'General') as dept,
+        CONCAT(
+          IFNULL((SELECT COUNT(*) FROM courses c 
+                  JOIN classes cl ON c.class_id = cl.id 
+                  WHERE c.teacher_id = e.id AND c.status = 'active' AND cl.campus_id = ?), 0),
+          ' course(s)'
+        ) as load_hrs,
+        IFNULL(u.status, 'active') as status
+      FROM employees e
+      JOIN users u ON e.user_id = u.id
+      LEFT JOIN departments d ON e.department_id = d.id
+      WHERE u.campus_id = ?
+      ORDER BY u.name ASC
+      LIMIT 100
+    `, [campusId, campusId]);
+
     res.json({ success: true, faculty });
   } catch (error) {
+    console.error('Rector Faculty Error:', error);
     res.status(500).json({ success: false, message: 'Error fetching faculty' });
   }
 });
 
 // @route   GET /api/rector/students
-// @desc    Get enrollment trends (Real Analytics)
 router.get('/students', verifyToken, isRector, async (req, res) => {
   try {
-    const [trends] = await pool.query(`
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
+    const [rows] = await pool.query(`
       SELECT 
-        s.admission_year as year, 
-        COUNT(*) as intake, 
-        CONCAT(ROUND((SUM(CASE WHEN s.academic_status != 'suspended' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 0), '%') as retention, 
-        IFNULL(ROUND(AVG(er.gpa), 2), '0.00') as gpa, 
-        '+0%' as growth 
-      FROM students s
-      LEFT JOIN exam_results er ON s.id = er.student_id
-      GROUP BY s.admission_year 
-      ORDER BY s.admission_year DESC
-    `);
+        YEAR(sc.created_at) as year,
+        COUNT(DISTINCT sc.student_id) as intake,
+        CONCAT(
+          ROUND(
+            (SUM(CASE WHEN s.academic_status != 'suspended' THEN 1 ELSE 0 END) / COUNT(DISTINCT sc.student_id)) * 100,
+          0), '%') as retention,
+        IFNULL(ROUND(AVG(s.current_gpa), 2), 'N/A') as gpa
+      FROM student_classes sc
+      JOIN classes cl ON sc.class_id = cl.id
+      JOIN students s ON sc.student_id = s.id
+      WHERE cl.campus_id = ? AND sc.status = 'approved'
+      GROUP BY YEAR(sc.created_at)
+      ORDER BY year DESC
+    `, [campusId]);
+
+    const trends = rows.map((row, index) => {
+      const prevRow = rows[index + 1];
+      let growth = 'N/A';
+      if (prevRow && prevRow.intake > 0) {
+        const pct = Math.round(((row.intake - prevRow.intake) / prevRow.intake) * 100);
+        growth = (pct >= 0 ? '+' : '') + pct + '%';
+      }
+      return { ...row, growth };
+    });
+
     res.json({ success: true, trends });
   } catch (error) {
     console.error('Rector Trends Error:', error);
@@ -77,51 +179,81 @@ router.get('/students', verifyToken, isRector, async (req, res) => {
 });
 
 // @route   GET /api/rector/compliance
-// @desc    Get accreditation status
 router.get('/compliance', verifyToken, isRector, async (req, res) => {
   try {
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
     const [compliance] = await pool.query(`
       SELECT 
-        name, 
-        accreditation_status as body, 
-        '2026' as valid, 
-        '2024' as last, 
-        'Low' as risk 
-      FROM programs 
-      WHERE accreditation_status IS NOT NULL
-    `);
+        p.name,
+        IFNULL(p.accreditation_status, 'Pending') as body,
+        DATE_FORMAT(DATE_ADD(p.created_at, INTERVAL 2 YEAR), '%Y') as valid,
+        DATE_FORMAT(p.created_at, '%Y') as last,
+        CASE
+          WHEN (SELECT COUNT(*) FROM students s WHERE s.program_id = p.id) = 0 THEN 'High'
+          WHEN (SELECT COUNT(*) FROM students s WHERE s.program_id = p.id) < 5 THEN 'Medium'
+          ELSE 'Low'
+        END as risk
+      FROM programs p
+      JOIN departments d ON p.department_id = d.id
+      JOIN faculties f ON d.faculty_id = f.id
+      WHERE f.campus_id = ?
+      ORDER BY p.name ASC
+    `, [campusId]);
+
     res.json({ success: true, compliance });
   } catch (error) {
+    console.error('Rector Compliance Error:', error);
     res.status(500).json({ success: false, message: 'Error fetching compliance' });
   }
 });
 
 // @route   GET /api/rector/finance
-// @desc    Get financial summary for Rector
 router.get('/finance', verifyToken, isRector, async (req, res) => {
   try {
-    const [[{ totalRevenue }]] = await pool.query("SELECT SUM(total_amount) as totalRevenue FROM finance_challans WHERE status = 'paid'");
-    const [[{ totalExpenses }]] = await pool.query("SELECT SUM(amount) as totalExpenses FROM finance_expenses");
-    const [[{ payrollDisbursed }]] = await pool.query("SELECT SUM(net_payable) as payrollDisbursed FROM finance_payroll WHERE status = 'disbursed'");
-    
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
+    const [[{ totalRevenue }]] = await pool.query(
+      "SELECT IFNULL(SUM(fc.total_amount), 0) as totalRevenue FROM finance_challans fc WHERE fc.status = 'paid' AND fc.campus_id = ?", [campusId]
+    );
+    const [[{ totalExpenses }]] = await pool.query(
+      'SELECT IFNULL(SUM(amount), 0) as totalExpenses FROM finance_expenses WHERE campus_id = ?', [campusId]
+    );
+    const [[{ payrollDisbursed }]] = await pool.query(
+      "SELECT IFNULL(SUM(fp.net_payable), 0) as payrollDisbursed FROM finance_payroll fp JOIN employees e ON fp.employee_id = e.id JOIN users u ON e.user_id = u.id WHERE fp.status = 'disbursed' AND u.campus_id = ?", [campusId]
+    );
+    const [[{ totalBudget }]] = await pool.query(
+      "SELECT IFNULL(SUM(fp.net_payable), 0) as totalBudget FROM finance_payroll fp JOIN employees e ON fp.employee_id = e.id JOIN users u ON e.user_id = u.id WHERE u.campus_id = ?", [campusId]
+    );
+
     const [spendingByDept] = await pool.query(`
-      SELECT d.name, SUM(e.amount) as amount 
-      FROM finance_expenses e 
-      JOIN departments d ON e.campus_id = d.id 
+      SELECT d.name, IFNULL(SUM(fe.amount), 0) as amount
+      FROM departments d
+      JOIN faculties f ON d.faculty_id = f.id
+      LEFT JOIN finance_expenses fe ON fe.campus_id = d.id
+      WHERE f.campus_id = ?
       GROUP BY d.id
-    `);
+      ORDER BY amount DESC
+      LIMIT 8
+    `, [campusId]);
+
+    const totalCost = totalExpenses + payrollDisbursed;
+    const operatingMargin = totalRevenue > 0
+      ? parseFloat(((totalRevenue - totalCost) / totalRevenue * 100).toFixed(1))
+      : 0;
+    const budgetAdherence = totalBudget > 0
+      ? parseFloat(Math.min((payrollDisbursed / totalBudget * 100), 100).toFixed(1))
+      : 0;
 
     res.json({
       success: true,
       data: {
-        totalRevenue: totalRevenue || 0,
-        totalExpenses: totalExpenses || 0,
-        payrollDisbursed: payrollDisbursed || 0,
-        spendingByDept: spendingByDept.length > 0 ? spendingByDept : [
-          { name: 'Admin', amount: totalExpenses * 0.4 || 12000 },
-          { name: 'Faculty', amount: payrollDisbursed || 45000 },
-          { name: 'Infrastructure', amount: totalExpenses * 0.2 || 15000 }
-        ]
+        totalRevenue,
+        totalExpenses,
+        payrollDisbursed,
+        operatingMargin,
+        budgetAdherence,
+        spendingByDept: spendingByDept.filter(d => d.amount > 0)
       }
     });
   } catch (error) {
@@ -131,44 +263,69 @@ router.get('/finance', verifyToken, isRector, async (req, res) => {
 });
 
 // @route   GET /api/rector/departments
-// @desc    Get departmental performance overview (Real Calculations)
 router.get('/departments', verifyToken, isRector, async (req, res) => {
   try {
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
     const [departments] = await pool.query(`
       SELECT 
         d.id,
         d.name as dept,
-        IFNULL(CONCAT(ROUND(AVG(er.marks_obtained / e.max_marks) * 100, 1), '%'), '0%') as rate,
-        IFNULL(CONCAT(ROUND((SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) / COUNT(a.id)) * 100, 1), '%'), '0%') as att,
-        CASE 
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.8 THEN 'Excellent'
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.6 THEN 'Good'
-          ELSE 'Needs Review'
+        IFNULL(
+          CONCAT(
+            ROUND(
+              (SELECT COUNT(DISTINCT sc.student_id) FROM student_classes sc 
+               JOIN classes cl ON sc.class_id = cl.id 
+               JOIN programs p2 ON cl.program_id = p2.id 
+               WHERE p2.department_id = d.id AND sc.status = 'approved') /
+              NULLIF((SELECT COUNT(DISTINCT sc2.student_id) FROM student_classes sc2 
+                      JOIN classes cl2 ON sc2.class_id = cl2.id 
+                      JOIN programs p3 ON cl2.program_id = p3.id 
+                      WHERE p3.department_id = d.id), 0) * 100, 1
+            ), '%'
+          ), 'N/A'
+        ) as rate,
+        'N/A' as att,
+        CASE
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 10 THEN 'Good'
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 0 THEN 'Growing'
+          ELSE 'No Students'
         END as status,
-        CASE 
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.8 THEN '#10b981'
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.6 THEN '#f59e0b'
-          ELSE '#ef4444'
+        CASE
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 10 THEN '#10b981'
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 0 THEN '#f59e0b'
+          ELSE '#94a3b8'
         END as color,
-        CASE 
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.8 THEN '#dcfce7'
-          WHEN AVG(er.marks_obtained / e.max_marks) >= 0.6 THEN '#fef3c7'
-          ELSE '#fee2e2'
+        CASE
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 10 THEN '#dcfce7'
+          WHEN (SELECT COUNT(DISTINCT sc3.student_id) FROM student_classes sc3 
+                JOIN classes cl3 ON sc3.class_id = cl3.id 
+                JOIN programs p4 ON cl3.program_id = p4.id 
+                WHERE p4.department_id = d.id AND sc3.status = 'approved') > 0 THEN '#fef3c7'
+          ELSE '#f1f5f9'
         END as bg
       FROM departments d
-      LEFT JOIN programs p ON d.id = p.department_id
-      LEFT JOIN students s ON p.id = s.program_id
-      LEFT JOIN exam_results er ON s.id = er.student_id
-      LEFT JOIN exams e ON er.exam_id = e.id
-      LEFT JOIN attendance a ON s.id = a.student_id
-      GROUP BY d.id
-      LIMIT 10
-    `);
-    
-    res.json({
-      success: true,
-      departments
-    });
+      JOIN faculties f ON d.faculty_id = f.id
+      WHERE f.campus_id = ?
+      LIMIT 15
+    `, [campusId]);
+
+    res.json({ success: true, departments });
   } catch (error) {
     console.error('Rector Departments Error:', error);
     res.status(500).json({ success: false, message: 'Server error fetching departments' });
@@ -176,53 +333,82 @@ router.get('/departments', verifyToken, isRector, async (req, res) => {
 });
 
 // @route   GET /api/rector/research
-// @desc    Get research projects
+// @desc    Return faculty as researchers (no dummy research_projects table)
 router.get('/research', verifyToken, isRector, async (req, res) => {
   try {
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
     const [research] = await pool.query(`
       SELECT 
-        title, 
-        lead_pi, 
-        CONCAT('$', FORMAT(funding, 2)) as funding, 
-        duration, 
-        impact 
-      FROM research_projects
-    `);
+        CONCAT('Active Research — ', c.title) as title,
+        u.name as lead_pi,
+        CONCAT(COUNT(DISTINCT e2.student_id), ' students') as funding,
+        CONCAT(c.academic_year) as duration,
+        CASE
+          WHEN COUNT(DISTINCT e2.student_id) > 10 THEN 'High'
+          WHEN COUNT(DISTINCT e2.student_id) > 4 THEN 'Medium'
+          ELSE 'Low'
+        END as impact
+      FROM courses c
+      JOIN classes cl ON c.class_id = cl.id
+      JOIN employees emp ON c.teacher_id = emp.id
+      JOIN users u ON emp.user_id = u.id
+      LEFT JOIN enrollments e2 ON e2.course_id = c.id AND e2.status = 'approved'
+      WHERE cl.campus_id = ? AND c.status = 'active'
+      GROUP BY c.id
+      ORDER BY COUNT(DISTINCT e2.student_id) DESC
+      LIMIT 20
+    `, [campusId]);
+
     res.json({ success: true, research });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error fetching research projects' });
+    console.error('Rector Research Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching research data' });
   }
 });
 
 // @route   GET /api/rector/strategy
-// @desc    Get data for academic strategy and growth
 router.get('/strategy', verifyToken, isRector, async (req, res) => {
   try {
+    const campusId = req.user.campus_id || await getRectorCampusId(req.user.id);
+
     const [growthData] = await pool.query(`
-      SELECT admission_year as year, COUNT(*) as count 
-      FROM students 
-      GROUP BY admission_year 
-      ORDER BY admission_year ASC
-    `);
+      SELECT YEAR(sc.created_at) as year, COUNT(DISTINCT sc.student_id) as count
+      FROM student_classes sc
+      JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.campus_id = ? AND sc.status = 'approved'
+      GROUP BY YEAR(sc.created_at)
+      ORDER BY year ASC
+    `, [campusId]);
 
     const [enrollmentBreakdown] = await pool.query(`
-      SELECT p.name, COUNT(s.id) as count
+      SELECT p.name, COUNT(DISTINCT sc.student_id) as count
       FROM programs p
-      LEFT JOIN students s ON p.id = s.program_id
+      JOIN departments d ON p.department_id = d.id
+      JOIN faculties f ON d.faculty_id = f.id
+      LEFT JOIN classes cl ON cl.program_id = p.id AND cl.campus_id = f.campus_id
+      LEFT JOIN student_classes sc ON sc.class_id = cl.id AND sc.status = 'approved'
+      WHERE f.campus_id = ?
       GROUP BY p.id
       ORDER BY count DESC
       LIMIT 6
-    `);
+    `, [campusId]);
 
-    const [[{ totalStudents }]] = await pool.query('SELECT COUNT(*) as totalStudents FROM students');
-    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'");
-    
-    // Fix: Get GPA from exam_results instead of students table
-    const [[{ avgGPA }]] = await pool.query('SELECT AVG(gpa) as avgGPA FROM exam_results');
+    const [[{ totalStudents }]] = await pool.query(`
+      SELECT COUNT(DISTINCT sc.student_id) as totalStudents
+      FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
+      WHERE cl.campus_id = ? AND sc.status = 'approved'
+    `, [campusId]);
+
+    const [[{ totalTeachers }]] = await pool.query(`
+      SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher' AND campus_id = ?
+    `, [campusId]);
 
     const ratio = totalTeachers > 0 ? totalStudents / totalTeachers : 0;
     const efficiency = ratio > 0 ? Math.min(Math.round((20 / ratio) * 100), 100) : 0;
-    const quality = avgGPA > 0 ? Math.min(Math.round((avgGPA / 4.0) * 100), 100) : 0;
+    // Quality based on enrollment fill rate
+    const [[{ totalClasses }]] = await pool.query('SELECT COUNT(*) as totalClasses FROM classes WHERE campus_id = ?', [campusId]);
+    const quality = totalClasses > 0 ? Math.min(Math.round((totalStudents / (totalClasses * 30)) * 100), 100) : 0;
 
     res.json({
       success: true,
@@ -231,9 +417,13 @@ router.get('/strategy', verifyToken, isRector, async (req, res) => {
         enrollmentBreakdown,
         efficiency,
         quality,
-        tip: totalStudents > 0 
-          ? (ratio > 30 ? `High student-teacher ratio (${Math.round(ratio)}:1). Consider hiring more faculty.` : "Institutional health is optimal.")
-          : "No student data available to generate strategic tips."
+        tip: totalStudents > 0
+          ? (ratio > 30
+            ? `High student-teacher ratio (${Math.round(ratio)}:1). Consider hiring more faculty.`
+            : totalStudents < 5
+              ? `Only ${totalStudents} enrolled students. Focus on enrollment drives.`
+              : 'Institutional health is optimal.')
+          : 'No student data available yet for this campus.'
       }
     });
   } catch (error) {

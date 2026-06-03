@@ -59,7 +59,7 @@ const ExamsMalpractice = () => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 12 }}>
-                      <button style={{ border: 'none', background: 'transparent', color: '#4f46e5', cursor: 'pointer' }}><Eye size={18} weight="bold" /></button>
+                      <button style={{ border: 'none', background: 'transparent', color: 'var(--primary-color, #4f46e5)', cursor: 'pointer' }}><Eye size={18} weight="bold" /></button>
                       <button style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}><Trash size={18} weight="bold" /></button>
                     </div>
                   </td>

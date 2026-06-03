@@ -106,7 +106,7 @@ export default function SAReports({
           >
             <div style={S.modalHeader}>
               <div style={{display:'flex', alignItems:'center', gap:'16px'}}>
-                <div style={{width:'56px', height:'56px', borderRadius:'18px', background:'linear-gradient(135deg, #f5f3ff, #ede9fe)', display:'flex', alignItems:'center', justifyContent:'center', color:'#4f46e5', boxShadow:'0 8px 15px -5px rgba(79, 70, 229, 0.2)'}}>
+                <div style={{width:'56px', height:'56px', borderRadius:'18px', background:'linear-gradient(135deg, #f5f3ff, #ede9fe)', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--primary-color, #4f46e5)', boxShadow:'0 8px 15px -5px rgba(var(--primary-rgb, 79, 70, 229), 0.2)'}}>
                   <ChartLine size={28} weight="duotone" />
                 </div>
                 <div>
@@ -156,7 +156,7 @@ export default function SAReports({
                   </div>
 
                   <div style={{marginBottom:'32px', padding:'28px', borderRadius:'28px', background:'linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%)', border:'1px solid #ddd6fe'}}>
-                    <h3 style={{margin:'0 0 20px', fontSize:'18px', color:'#4f46e5', display:'flex', alignItems:'center', gap:'12px', fontWeight:800}}>
+                    <h3 style={{margin:'0 0 20px', fontSize:'18px', color:'var(--primary-color, #4f46e5)', display:'flex', alignItems:'center', gap:'12px', fontWeight:800}}>
                       <UserCircle size={24} weight="duotone" /> Teacher Insights: {selectedReport.teacher_name}
                     </h3>
                     <div style={{display:'flex', gap:'40px', flexWrap: 'wrap', alignItems:'center'}}>
@@ -176,7 +176,7 @@ export default function SAReports({
                       <div style={{flex:1, textAlign:'right', minWidth:'220px'}}>
                         <span style={{fontSize:'12px', color:'#7c3aed', fontWeight:800, textTransform:'uppercase', letterSpacing:'0.05em'}}>STATUS</span>
                         <div style={{marginTop:'10px'}}>
-                          <span style={{padding:'8px 24px', borderRadius:'30px', background:'#4f46e5', color:'#fff', fontSize:'14px', fontWeight:800}}>ACCOMPLISHED</span>
+                          <span style={{padding:'8px 24px', borderRadius:'30px', background:'var(--primary-color, #4f46e5)', color:'#fff', fontSize:'14px', fontWeight:800}}>ACCOMPLISHED</span>
                         </div>
                       </div>
                     </div>
@@ -211,7 +211,7 @@ export default function SAReports({
                                     <span style={{color:'#0f172a', fontWeight:800, fontSize: '16px'}}>{s.marks_obtained}</span>
                                     <span style={{color:'#cbd5e1', fontSize: '18px'}}>/</span>
                                     <span style={{color: '#64748b', fontWeight: 600}}>{s.max_marks}</span>
-                                    <span style={{marginLeft:'auto', padding:'4px 10px', borderRadius:'10px', background:'#e0e7ff', color:'#4f46e5', fontWeight:800, fontSize:'12px'}}>{s.percentage}%</span>
+                                    <span style={{marginLeft:'auto', padding:'4px 10px', borderRadius:'10px', background:'#e0e7ff', color:'var(--primary-color, #4f46e5)', fontWeight:800, fontSize:'12px'}}>{s.percentage}%</span>
                                   </div>
                                 ) : (
                                   <span style={{color:'#94a3b8', fontStyle:'italic'}}>No Evaluation</span>

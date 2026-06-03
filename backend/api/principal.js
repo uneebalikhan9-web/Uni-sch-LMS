@@ -112,8 +112,8 @@ router.post('/teachers', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'teacher', campusId, true]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'teacher', campusId, true, req.user.client_id]
     );
 
     const userId = result.insertId;
@@ -277,8 +277,8 @@ router.post('/students', async (req, res) => {
     const rollNumber = await generateRollNumber(campusId, semNum);
 
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, role, campus_id, is_approved) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, email, hashedPassword, 'student', campusId, true]
+      'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, email, hashedPassword, 'student', campusId, true, req.user.client_id]
     );
 
     const userId = result.insertId;
@@ -329,15 +329,19 @@ router.put('/students/:id', async (req, res) => {
       await pool.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, id]);
     }
 
+    const [[existingStudentRow]] = await pool.query('SELECT roll_number FROM students WHERE user_id = ?', [id]);
+    const finalRollNumber = req.body.roll_number || (existingStudentRow ? existingStudentRow.roll_number : null);
+
     // Update student profile with academic details
     await pool.query(
       `UPDATE students SET 
         semester = ?, father_name = ?, father_cnic = ?, 
-        last_education = ?, father_number = ?, bform_number = ? 
+        last_education = ?, father_number = ?, bform_number = ?, roll_number = ? 
       WHERE user_id = ?`,
       [
         req.body.semester || 1, req.body.father_name || null, req.body.father_cnic || null, 
         req.body.last_education || null, req.body.father_number || null, req.body.bform_number || null, 
+        finalRollNumber,
         id
       ]
     );
