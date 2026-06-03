@@ -184,9 +184,11 @@ router.post('/:courseId/enroll', verifyToken, async (req, res) => {
     }
 
     // Enroll student as pending (teacher must approve)
+    const semester = req.user.semester || 0;
+    const academicYear = new Date().getFullYear().toString();
     const [result] = await pool.query(
-      'INSERT INTO enrollments (course_id, student_id, status) VALUES (?, ?, ?)',
-      [courseId, studentId, 'pending']
+      'INSERT INTO enrollments (course_id, student_id, semester, academic_year, status) VALUES (?, ?, ?, ?, ?)',
+      [courseId, studentId, semester, academicYear, 'pending']
     );
 
     res.status(201).json({
