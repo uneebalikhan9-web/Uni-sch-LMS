@@ -408,19 +408,19 @@ router.delete('/bulk-hires/:id', async (req, res) => {
 // Global platform stats breakdown
 router.get('/global/stats', async (req, res) => {
   try {
-    // If not global BD, only show their campus stats
+    // BD Agents should see stats for their entire client (university)
     let filter = '';
     const params = [];
-    if (req.user.role !== 'super_admin' && req.user.campus_id) {
-      filter = ' WHERE campus_id = ?';
-      params.push(req.user.campus_id);
+    if (req.user.role !== 'super_admin' && req.user.client_id) {
+      filter = ' WHERE client_id = ?';
+      params.push(req.user.client_id);
     }
 
-    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses' + (filter ? ' WHERE id = ?' : ''), params);
-    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student'" + (filter ? ' AND campus_id = ?' : ''), params);
-    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'" + (filter ? ' AND campus_id = ?' : ''), params);
-    const [[{ totalClasses }]] = await pool.query('SELECT COUNT(*) as totalClasses FROM classes' + (filter ? ' WHERE campus_id = ?' : ''), params);
-    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(*) as totalCourses FROM courses' + (filter ? ' WHERE campus_id = ?' : ''), params);
+    const [[{ totalCampuses }]] = await pool.query('SELECT COUNT(*) as totalCampuses FROM campuses' + (filter ? ' WHERE client_id = ?' : ''), params);
+    const [[{ totalStudents }]] = await pool.query("SELECT COUNT(*) as totalStudents FROM users WHERE role = 'student'" + (filter ? ' AND client_id = ?' : ''), params);
+    const [[{ totalTeachers }]] = await pool.query("SELECT COUNT(*) as totalTeachers FROM users WHERE role = 'teacher'" + (filter ? ' AND client_id = ?' : ''), params);
+    const [[{ totalClasses }]] = await pool.query('SELECT COUNT(*) as totalClasses FROM classes' + (filter ? ' WHERE campus_id IN (SELECT id FROM campuses WHERE client_id = ?)' : ''), params);
+    const [[{ totalCourses }]] = await pool.query('SELECT COUNT(*) as totalCourses FROM courses' + (filter ? ' WHERE campus_id IN (SELECT id FROM campuses WHERE client_id = ?)' : ''), params);
 
     res.json({
       success: true,
@@ -446,9 +446,9 @@ router.get('/global/campuses', async (req, res) => {
     `;
     const params = [];
 
-    if (req.user.role !== 'super_admin' && req.user.campus_id) {
-      query += ' WHERE c.id = ?';
-      params.push(req.user.campus_id);
+    if (req.user.role !== 'super_admin' && req.user.client_id) {
+      query += ' WHERE c.client_id = ?';
+      params.push(req.user.client_id);
     }
 
     query += ' ORDER BY c.name ASC';
@@ -471,9 +471,9 @@ router.get('/global/teachers', async (req, res) => {
     `;
     const params = [];
 
-    if (req.user.role !== 'super_admin' && req.user.campus_id) {
-      query += ' AND u.campus_id = ?';
-      params.push(req.user.campus_id);
+    if (req.user.role !== 'super_admin' && req.user.client_id) {
+      query += ' AND u.client_id = ?';
+      params.push(req.user.client_id);
     }
 
     query += ' ORDER BY u.name ASC';
@@ -496,9 +496,9 @@ router.get('/global/students', async (req, res) => {
     `;
     const params = [];
 
-    if (req.user.role !== 'super_admin' && req.user.campus_id) {
-      query += ' AND u.campus_id = ?';
-      params.push(req.user.campus_id);
+    if (req.user.role !== 'super_admin' && req.user.client_id) {
+      query += ' AND u.client_id = ?';
+      params.push(req.user.client_id);
     }
 
     query += ' ORDER BY u.name ASC';
@@ -521,9 +521,9 @@ router.get('/global/classes', async (req, res) => {
     `;
     const params = [];
 
-    if (req.user.role !== 'super_admin' && req.user.campus_id) {
-      query += ' WHERE cl.campus_id = ?';
-      params.push(req.user.campus_id);
+    if (req.user.role !== 'super_admin' && req.user.client_id) {
+      query += ' WHERE c.client_id = ?';
+      params.push(req.user.client_id);
     }
 
     query += ' ORDER BY cl.name, cl.section';
