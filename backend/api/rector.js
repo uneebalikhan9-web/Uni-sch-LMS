@@ -63,13 +63,13 @@ router.get('/stats', verifyToken, isRector, async (req, res) => {
     const [[{ thisYear }]] = await pool.query(`
       SELECT COUNT(DISTINCT sc.student_id) as thisYear 
       FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
-      WHERE cl.campus_id IN (?) AND YEAR(sc.created_at) = ?
+      WHERE cl.campus_id IN (?) AND YEAR(sc.assigned_at) = ?
     `, [campusIds, currentYear]);
 
     const [[{ lastYear }]] = await pool.query(`
       SELECT COUNT(DISTINCT sc.student_id) as lastYear 
       FROM student_classes sc JOIN classes cl ON sc.class_id = cl.id
-      WHERE cl.campus_id IN (?) AND YEAR(sc.created_at) = ?
+      WHERE cl.campus_id IN (?) AND YEAR(sc.assigned_at) = ?
     `, [campusIds, currentYear - 1]);
 
     const growthTrend = lastYear > 0
@@ -153,18 +153,18 @@ router.get('/students', verifyToken, isRector, async (req, res) => {
 
     const [rows] = await pool.query(`
       SELECT 
-        YEAR(sc.created_at) as year,
+        YEAR(sc.assigned_at) as year,
         COUNT(DISTINCT sc.student_id) as intake,
         CONCAT(
           ROUND(
             (SUM(CASE WHEN s.academic_status != 'suspended' THEN 1 ELSE 0 END) / COUNT(DISTINCT sc.student_id)) * 100,
           0), '%') as retention,
-        IFNULL(ROUND(AVG(s.current_gpa), 2), 'N/A') as gpa
+        'N/A' as gpa
       FROM student_classes sc
       JOIN classes cl ON sc.class_id = cl.id
       JOIN students s ON sc.student_id = s.id
       WHERE cl.campus_id IN (?) AND sc.status = 'approved'
-      GROUP BY YEAR(sc.created_at)
+      GROUP BY YEAR(sc.assigned_at)
       ORDER BY year DESC
     `, [campusIds]);
 
@@ -350,7 +350,7 @@ router.get('/research', verifyToken, isRector, async (req, res) => {
         CONCAT('Active Research — ', c.title) as title,
         u.name as lead_pi,
         CONCAT(COUNT(DISTINCT e2.student_id), ' students') as funding,
-        CONCAT(c.academic_year) as duration,
+        'Current' as duration,
         CASE
           WHEN COUNT(DISTINCT e2.student_id) > 10 THEN 'High'
           WHEN COUNT(DISTINCT e2.student_id) > 4 THEN 'Medium'
@@ -380,11 +380,11 @@ router.get('/strategy', verifyToken, isRector, async (req, res) => {
     const campusIds = await getRectorCampusIds(req.user);
 
     const [growthData] = await pool.query(`
-      SELECT YEAR(sc.created_at) as year, COUNT(DISTINCT sc.student_id) as count
+      SELECT YEAR(sc.assigned_at) as year, COUNT(DISTINCT sc.student_id) as count
       FROM student_classes sc
       JOIN classes cl ON sc.class_id = cl.id
       WHERE cl.campus_id IN (?) AND sc.status = 'approved'
-      GROUP BY YEAR(sc.created_at)
+      GROUP BY YEAR(sc.assigned_at)
       ORDER BY year ASC
     `, [campusIds]);
 
