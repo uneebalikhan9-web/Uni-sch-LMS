@@ -407,7 +407,13 @@ export default function TDModals({
                     </select>
                     <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>Students can be assigned to a class later if left blank.</p>
                   </div>
-                  <div style={{...S.inputGroup, gridColumn:'span 2'}}>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Semester</label>
+                    <select required value={newStudent.semester || 1} onChange={e => setNewStudent({...newStudent, semester: parseInt(e.target.value)})} style={S.input}>
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s}>Semester {s}</option>)}
+                    </select>
+                  </div>
+                  <div style={S.inputGroup}>
                     <label style={S.inputLabel}>Last Education (Optional)</label>
                     <input type="text" placeholder="e.g. Matric / O-Levels" value={newStudent.last_education} onChange={e => setNewStudent({...newStudent, last_education:e.target.value})} style={S.input} />
                   </div>

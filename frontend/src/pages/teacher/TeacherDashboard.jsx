@@ -74,7 +74,7 @@ function TeacherDashboard({ user, onLogout }) {
   const [newStudent, setNewStudent] = useState({ 
     name: '', email: '', father_name: '', father_cnic: '', 
     last_education: '', father_number: '', bform_number: '',
-    password: 'Password123'
+    semester: 1, password: 'Password123'
   })
   
   const [showGradeModal, setShowGradeModal] = useState(false)
@@ -473,7 +473,7 @@ function TeacherDashboard({ user, onLogout }) {
         setNewStudent({ 
           name: '', email: '', father_name: '', father_cnic: '', 
           last_education: '', father_number: '', bform_number: '',
-          password: 'Password123'
+          semester: 1, password: 'Password123'
         }); 
         fetchStudents(); 
       }
