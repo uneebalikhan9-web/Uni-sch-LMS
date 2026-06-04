@@ -230,10 +230,12 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
                         ...S.statusBadge,
                         backgroundColor: 
                           attendanceRecords[student.id] === 'present' ? '#ecfdf5' : 
-                          attendanceRecords[student.id] === 'absent' ? '#fef2f2' : '#fff7ed',
+                          attendanceRecords[student.id] === 'absent' ? '#fef2f2' : 
+                          attendanceRecords[student.id] === 'leave' ? '#eff6ff' : '#fff7ed',
                         color: 
                           attendanceRecords[student.id] === 'present' ? '#10b981' : 
-                          attendanceRecords[student.id] === 'absent' ? '#ef4444' : '#f97316',
+                          attendanceRecords[student.id] === 'absent' ? '#ef4444' : 
+                          attendanceRecords[student.id] === 'leave' ? '#3b82f6' : '#f97316',
                       }}>
                         {attendanceRecords[student.id]?.toUpperCase() || 'PRESENT'}
                       </span>
@@ -265,16 +267,16 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
                           <XCircle size={18} />
                         </button>
                         <button 
-                          onClick={() => handleStatusChange(student.id, 'late')}
+                          onClick={() => handleStatusChange(student.id, 'leave')}
                           style={{ 
                             padding: '6px', borderRadius: '6px', border: 'none',
-                            background: attendanceRecords[student.id] === 'late' ? '#f97316' : '#f1f5f9',
-                            color: attendanceRecords[student.id] === 'late' ? 'white' : '#64748b',
+                            background: attendanceRecords[student.id] === 'leave' ? '#3b82f6' : '#f1f5f9',
+                            color: attendanceRecords[student.id] === 'leave' ? 'white' : '#64748b',
                             cursor: 'pointer'
                           }}
-                          title="Late"
+                          title="Leave"
                         >
-                          <Clock size={18} />
+                          <CalendarBlank size={18} />
                         </button>
                       </div>
                     </td>
@@ -353,8 +355,8 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
                                 borderRadius: '4px',
                                 fontSize: '11px',
                                 fontWeight: 'bold',
-                                color: status === 'present' ? '#10b981' : status === 'absent' ? '#ef4444' : '#f97316',
-                                background: status === 'present' ? '#ecfdf5' : status === 'absent' ? '#fef2f2' : '#fff7ed',
+                                color: status === 'present' ? '#10b981' : status === 'absent' ? '#ef4444' : status === 'leave' ? '#3b82f6' : '#f97316',
+                                background: status === 'present' ? '#ecfdf5' : status === 'absent' ? '#fef2f2' : status === 'leave' ? '#eff6ff' : '#fff7ed',
                               }}>
                                 {status.toUpperCase().charAt(0)}
                               </span>
