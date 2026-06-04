@@ -55,7 +55,7 @@ router.get('/stats', verifyToken, isRector, async (req, res) => {
       SELECT COUNT(DISTINCT d.id) as totalDepts 
       FROM departments d
       JOIN faculties f ON d.faculty_id = f.id
-      WHERE f.campus_id IN (?)
+      WHERE d.campus_id IN (?)
     `, [campusIds]);
 
     // YoY student enrollment growth
@@ -204,7 +204,7 @@ router.get('/compliance', verifyToken, isRector, async (req, res) => {
       FROM programs p
       JOIN departments d ON p.department_id = d.id
       JOIN faculties f ON d.faculty_id = f.id
-      WHERE f.campus_id IN (?)
+      WHERE d.campus_id IN (?)
       ORDER BY p.name ASC
     `, [campusIds]);
 
@@ -238,7 +238,7 @@ router.get('/finance', verifyToken, isRector, async (req, res) => {
       FROM departments d
       JOIN faculties f ON d.faculty_id = f.id
       LEFT JOIN finance_expenses fe ON fe.campus_id = d.id
-      WHERE f.campus_id IN (?)
+      WHERE d.campus_id IN (?)
       GROUP BY d.id
       ORDER BY amount DESC
       LIMIT 8
@@ -328,7 +328,7 @@ router.get('/departments', verifyToken, isRector, async (req, res) => {
         END as bg
       FROM departments d
       JOIN faculties f ON d.faculty_id = f.id
-      WHERE f.campus_id IN (?)
+      WHERE d.campus_id IN (?)
       LIMIT 15
     `, [campusIds]);
 
@@ -393,9 +393,9 @@ router.get('/strategy', verifyToken, isRector, async (req, res) => {
       FROM programs p
       JOIN departments d ON p.department_id = d.id
       JOIN faculties f ON d.faculty_id = f.id
-      LEFT JOIN classes cl ON cl.program_id = p.id AND cl.campus_id = f.campus_id
+      LEFT JOIN classes cl ON cl.program_id = p.id AND cl.campus_id = d.campus_id
       LEFT JOIN student_classes sc ON sc.class_id = cl.id AND sc.status = 'approved'
-      WHERE f.campus_id IN (?)
+      WHERE d.campus_id IN (?)
       GROUP BY p.id
       ORDER BY count DESC
       LIMIT 6
