@@ -18,7 +18,7 @@ const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) =>
   return (
     <div style={{display:'flex', flexDirection:'column', gap:'32px'}} key={leftSidebarOpen ? 'open' : 'closed'}>
       {/* KPI Cards */}
-      <div className="rector-stats-grid">
+      <div style={S.statsGrid}>
         {kpis.map((kpi, i) => (
           <div key={i} style={S.metricCard}>
             <div style={S.metricIcon(kpi.color)}><kpi.icon size={28} weight="duotone" /></div>
@@ -34,7 +34,7 @@ const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) =>
         ))}
       </div>
 
-      <div className="rector-content-grid">
+      <div style={S.contentGrid}>
         {/* Main Strategic Card */}
         <div style={S.card}>
           <h3 style={S.cardTitle}>Departmental Academic Health</h3>

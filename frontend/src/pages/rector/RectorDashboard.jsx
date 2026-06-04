@@ -75,7 +75,7 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
   );
 
   return (
-    <div className="portal-container dashboard-wrapper">
+    <div style={S.container} className="dashboard-wrapper">
       <div style={S.bgOrb1} /><div style={S.bgOrb2} />
 
       {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
@@ -113,8 +113,11 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
       {/* Sidebar */}
       <aside style={{
         ...S.sidebar,
+        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+        overflow: 'visible',
         padding: 0,
-      }} className={`portal-sidebar ${leftSidebarOpen ? 'open' : ''}`}>
+      }} className={`sidebar ${leftSidebarOpen ? '' : 'collapsed'}`}>
         
         {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
         <button
@@ -201,7 +204,9 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
       {/* Main Content */}
       <main style={{
         ...S.main,
-      }} className="portal-main rector-main-content">
+        marginLeft: leftSidebarOpen ? '280px' : '24px',
+        transition: 'margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+      }} className="main-content">
         <header style={S.header}>
           <div>
             <h1 style={S.title}>Rectorate Dashboard</h1>

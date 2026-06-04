@@ -134,10 +134,3 @@ select option {
   padding: 10px;
   color: #0f172a;
 }
-
-/* ─── Rector Dashboard Responsiveness ─── */
-.rector-main-content { flex: 1; padding: 48px; transition: margin-left 0.35s ease; }
-.rector-stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 40px; }
-.rector-content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-@media (max-width: 1200px) { .rector-stats-grid { grid-template-columns: repeat(2, 1fr); } .rector-content-grid { grid-template-columns: 1fr; } }
-@media (max-width: 768px) { .rector-main-content { margin-left: 0 !important; padding: 24px !important; } .rector-stats-grid { grid-template-columns: 1fr; gap: 16px; } }
