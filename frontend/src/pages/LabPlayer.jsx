@@ -49,9 +49,12 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
                 return;
             }
             try {
+                const token = sessionStorage.getItem('token');
                 const response = await axios.post(`${API_BASE}/labs/log-start`, {
                     studentId: user.id,
                     labName: labName
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
                 
                 if (response.data.success) {
@@ -69,8 +72,11 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
 
         return () => {
             if (logId) {
+                const token = sessionStorage.getItem('token');
                 axios.post(`${API_BASE}/labs/log-end`, {
                     logId: logId
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
                 }).catch(err => console.error('Failed to log lab end on unmount:', err));
             }
         };
@@ -98,9 +104,12 @@ const LabPlayer = ({ labName: propLabName, labId: propLabId, url: propUrl, envir
     const executeFinish = async () => {
         if (logId) {
             try {
+                const token = sessionStorage.getItem('token');
                 await axios.post(`${API_BASE}/labs/log-end`, {
                     logId: logId,
                     submission: submissionText
+                }, {
+                    headers: { Authorization: `Bearer ${token}` }
                 });
             } catch (error) {
                 console.error('Error logging lab finish:', error);

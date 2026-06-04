@@ -12,7 +12,7 @@ const ENV_URLS = {
 };
 
 // Log lab start
-router.post('/log-start', async (req, res) => {
+router.post('/log-start', verifyToken, async (req, res) => {
     try {
         const { labName } = req.body;
         const studentId = req.user.student_id;
@@ -32,7 +32,7 @@ router.post('/log-start', async (req, res) => {
 });
 
 // Log lab end and save submission
-router.post('/log-end', async (req, res) => {
+router.post('/log-end', verifyToken, async (req, res) => {
     try {
         const { logId, submission } = req.body;
         const now = new Date();
