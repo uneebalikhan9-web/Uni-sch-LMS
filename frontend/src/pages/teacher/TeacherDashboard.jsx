@@ -1024,6 +1024,7 @@ function TeacherDashboard({ user, onLogout }) {
                     <option value="Sick">Sick Leave</option>
                     <option value="Maternity">Maternity Leave</option>
                     <option value="Short">Short Leave</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
 
@@ -1034,6 +1035,7 @@ function TeacherDashboard({ user, onLogout }) {
                       type="date"
                       value={newLeave.start_date}
                       onChange={e => setNewLeave({...newLeave, start_date: e.target.value})}
+                      min={new Date().toISOString().split('T')[0]}
                       style={{
                         padding: '14px 18px',
                         borderRadius: '14px',
@@ -1054,6 +1056,7 @@ function TeacherDashboard({ user, onLogout }) {
                       type="date"
                       value={newLeave.end_date}
                       onChange={e => setNewLeave({...newLeave, end_date: e.target.value})}
+                      min={newLeave.start_date || new Date().toISOString().split('T')[0]}
                       style={{
                         padding: '14px 18px',
                         borderRadius: '14px',
@@ -1070,28 +1073,30 @@ function TeacherDashboard({ user, onLogout }) {
                   </div>
                 </div>
 
-                <div>
-                  <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Reason</label>
-                  <textarea 
-                    value={newLeave.reason}
-                    onChange={e => setNewLeave({...newLeave, reason: e.target.value})}
-                    placeholder="Describe your reason for leave..."
-                    rows={4}
-                    style={{
-                      padding: '14px 18px',
-                      borderRadius: '14px',
-                      border: '2px solid #e2e8f0',
-                      background: '#f8fafc',
-                      width: '100%',
-                      fontSize: '0.92rem',
-                      fontWeight: '600',
-                      color: '#0f172a',
-                      boxSizing: 'border-box',
-                      resize: 'none',
-                    }}
-                    required
-                  />
-                </div>
+                {newLeave.leave_type === 'Other' && (
+                  <div>
+                    <label style={{ fontSize: '0.72rem', fontWeight: '800', color: 'var(--primary-color, #4f46e5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'block' }}>Reason</label>
+                    <textarea 
+                      value={newLeave.reason}
+                      onChange={e => setNewLeave({...newLeave, reason: e.target.value})}
+                      placeholder="Describe your reason for leave..."
+                      rows={4}
+                      style={{
+                        padding: '14px 18px',
+                        borderRadius: '14px',
+                        border: '2px solid #e2e8f0',
+                        background: '#f8fafc',
+                        width: '100%',
+                        fontSize: '0.92rem',
+                        fontWeight: '600',
+                        color: '#0f172a',
+                        boxSizing: 'border-box',
+                        resize: 'none',
+                      }}
+                      required
+                    />
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
