@@ -63,7 +63,7 @@ export default function MasterAdminDashboard({ user, onLogout }) {
       });
       const data = await res.json();
       if (data.success) {
-        setNewClient({...newClient, logo_url: data.url});
+        setNewClient({...newClient, logo_url: `${API_BASE_URL}${data.url}`});
         showToast("Logo uploaded successfully", "success");
       } else {
         showToast(data.message || "Error uploading logo", "error");

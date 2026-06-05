@@ -251,7 +251,7 @@ try {
   
   // Serve uploads directory statically for logos
   const path = require('path');
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+  app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
   app.use('/api/exams',       verifyToken,                     require('./api/exams'));
   app.use('/api/reports',     verifyToken,                     require('./api/reports'));
 

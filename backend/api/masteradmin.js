@@ -10,7 +10,7 @@ router.post('/upload-logo', uploadLogo.single('logo'), handleUploadError, (req, 
   if (!req.file) {
     return res.status(400).json({ success: false, message: 'No file uploaded' });
   }
-  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/logos/${req.file.filename}`;
+  const fileUrl = `/api/uploads/logos/${req.file.filename}`;
   res.json({ success: true, url: fileUrl });
 });
 
