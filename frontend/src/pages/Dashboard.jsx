@@ -148,19 +148,63 @@ function Dashboard() {
   }
 
   if (isMaintenanceMode) return (
-    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: '#fff', padding: '24px' }}>
-      <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '24px', borderRadius: '50%', marginBottom: '24px', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Wrench size={64} weight="duotone" color="#ef4444" />
+    <div style={{ width: '100vw', height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#1e232d', color: '#fff', padding: '24px', position: 'relative', overflow: 'hidden' }}>
+      
+      {/* Background Hexagon Shape */}
+      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '600px', height: '600px', background: 'rgba(255, 255, 255, 0.02)', clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)', zIndex: 0 }}></div>
+      
+      <div style={{ zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+        <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '16px', color: '#f8fafc', letterSpacing: '-0.5px' }}>
+          System Under Maintenance
+        </h1>
+        <p style={{ fontSize: '1.1rem', color: '#94a3b8', maxWidth: '540px', textAlign: 'center', marginBottom: '0px', lineHeight: '1.6' }}>
+          We are currently performing scheduled maintenance to upgrade our global infrastructure and deliver a better experience. Please check back later. We appreciate your patience!
+        </p>
+
+        {/* Unplugged Cables SVG Animation */}
+        <div style={{ width: '100%', maxWidth: '800px', margin: '60px 0', display: 'flex', justifyContent: 'center' }}>
+          <svg width="100%" viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">
+            {/* Left Cable */}
+            <g transform="translate(0, 0)">
+              {/* Wire details */}
+              <line x1="0" y1="60" x2="230" y2="60" stroke="#0284c7" strokeWidth="6" />
+              <line x1="0" y1="52" x2="230" y2="52" stroke="#0ea5e9" strokeWidth="2" opacity="0.6" />
+              <line x1="0" y1="68" x2="230" y2="68" stroke="#0ea5e9" strokeWidth="2" opacity="0.6" />
+              
+              {/* Plug Base */}
+              <path d="M 200 40 L 230 40 L 240 30 L 250 30 L 250 90 L 240 90 L 230 80 L 200 80 Z" fill="#1e232d" stroke="#0ea5e9" strokeWidth="4" strokeLinejoin="round" />
+              
+              {/* Plug Head */}
+              <rect x="250" y="38" width="20" height="44" fill="#1e232d" stroke="#0ea5e9" strokeWidth="4" />
+              
+              {/* Plug Pins */}
+              <line x1="270" y1="48" x2="295" y2="48" stroke="#0ea5e9" strokeWidth="6" strokeLinecap="round" />
+              <line x1="270" y1="72" x2="295" y2="72" stroke="#0ea5e9" strokeWidth="6" strokeLinecap="round" />
+            </g>
+            
+            {/* Spark (Yellow) */}
+            <path d="M 305 60 Q 315 45 325 60 T 345 60" fill="none" stroke="#eab308" strokeWidth="3" />
+            
+            {/* Right Cable (Socket) */}
+            <g transform="translate(0, 0)">
+              {/* Socket Body */}
+              <path d="M 390 35 L 360 35 L 350 45 L 350 75 L 360 85 L 390 85 Z" fill="#1e232d" stroke="#0ea5e9" strokeWidth="4" strokeLinejoin="round" />
+              
+              {/* Wire details */}
+              <line x1="390" y1="60" x2="600" y2="60" stroke="#0284c7" strokeWidth="6" />
+              <line x1="390" y1="52" x2="600" y2="52" stroke="#0ea5e9" strokeWidth="2" opacity="0.6" />
+              <line x1="390" y1="68" x2="600" y2="68" stroke="#0ea5e9" strokeWidth="2" opacity="0.6" />
+            </g>
+          </svg>
+        </div>
+
+        <button onClick={handleLogout} style={{ padding: '14px 32px', background: 'transparent', color: '#0ea5e9', border: '2px solid #0ea5e9', borderRadius: '8px', fontSize: '1.05rem', cursor: 'pointer', fontWeight: '600', transition: 'all 0.3s' }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'rgba(14, 165, 233, 0.1)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(14, 165, 233, 0.3)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
+        >
+          Return to Login
+        </button>
       </div>
-      <h1 style={{ fontSize: '2.5rem', fontWeight: '800', marginBottom: '16px', color: '#f8fafc', letterSpacing: '-0.5px' }}>
-        System <span style={{ color: '#ef4444' }}>Under Maintenance</span>
-      </h1>
-      <p style={{ fontSize: '1.1rem', color: '#94a3b8', maxWidth: '540px', textAlign: 'center', marginBottom: '40px', lineHeight: '1.6' }}>
-        We are currently performing scheduled maintenance to upgrade our global infrastructure and deliver a better experience. Please check back later. We appreciate your patience!
-      </p>
-      <button onClick={handleLogout} style={{ padding: '14px 32px', background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #4338ca 100%)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '1.05rem', cursor: 'pointer', fontWeight: '600', boxShadow: '0 4px 14px rgba(var(--primary-rgb, 79, 70, 229), 0.3)', transition: 'transform 0.2s, box-shadow 0.2s' }}>
-        Return to Login
-      </button>
     </div>
   )
 
