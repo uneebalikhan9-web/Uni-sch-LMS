@@ -2,6 +2,17 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const bcrypt = require('bcrypt');
+const { uploadLogo, handleUploadError } = require('../middleware/upload');
+
+// @route   POST /api/masteradmin/upload-logo
+// @desc    Upload a tenant logo
+router.post('/upload-logo', uploadLogo.single('logo'), handleUploadError, (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+  const fileUrl = `${req.protocol}://${req.get('host')}/uploads/logos/${req.file.filename}`;
+  res.json({ success: true, url: fileUrl });
+});
 
 // @route   GET /api/masteradmin/stats
 // @desc    Get global statistics for Lancers Tech Master Admin

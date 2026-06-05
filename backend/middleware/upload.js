@@ -6,8 +6,9 @@ const fs = require('fs');
 const uploadsDir    = path.join(__dirname, '../uploads');
 const assignmentsDir = path.join(uploadsDir, 'assignments');
 const submissionsDir = path.join(uploadsDir, 'submissions');
+const logosDir       = path.join(uploadsDir, 'logos');
 
-[uploadsDir, assignmentsDir, submissionsDir].forEach(dir => {
+[uploadsDir, assignmentsDir, submissionsDir, logosDir].forEach(dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -76,6 +77,11 @@ const submissionStorage = multer.diskStorage({
   filename:    (req, file, cb) => cb(null, makeSafeFilename('sub', file.originalname)),
 });
 
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, logosDir),
+  filename:    (req, file, cb) => cb(null, makeSafeFilename('logo', file.originalname)),
+});
+
 // ─── Multer Instances ─────────────────────────────────────────────────────────
 const uploadAssignment = multer({
   storage:    assignmentStorage,
@@ -86,6 +92,12 @@ const uploadAssignment = multer({
 const uploadSubmission = multer({
   storage:    submissionStorage,
   limits:     { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+  fileFilter: strictFileFilter,
+});
+
+const uploadLogo = multer({
+  storage:    logoStorage,
+  limits:     { fileSize: 5 * 1024 * 1024 }, // 5 MB max
   fileFilter: strictFileFilter,
 });
 
@@ -107,5 +119,6 @@ const handleUploadError = (err, req, res, next) => {
 module.exports = {
   uploadAssignment,
   uploadSubmission,
+  uploadLogo,
   handleUploadError,
 };

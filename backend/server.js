@@ -248,6 +248,10 @@ try {
   app.use('/api/principal',   verifyToken, isPrincipal,        require('./api/principal'));
   app.use('/api/bd',          verifyToken, isBDAgent,          require('./api/bd'));
   app.use('/api/it',          verifyToken,                     require('./api/it'));
+  
+  // Serve uploads directory statically for logos
+  const path = require('path');
+  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
   app.use('/api/exams',       verifyToken,                     require('./api/exams'));
   app.use('/api/reports',     verifyToken,                     require('./api/reports'));
 

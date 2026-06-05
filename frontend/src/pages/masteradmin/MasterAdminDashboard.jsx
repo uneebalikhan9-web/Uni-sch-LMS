@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "../../responsive.css";
-import { CheckCircle, MagnifyingGlass, WarningCircle, UserCirclePlus, CalendarBlank, ChartLineUp, Buildings, CurrencyDollar, ShieldCheck, SignOut, Globe, Plus, Receipt } from "@phosphor-icons/react";
+import { CheckCircle, MagnifyingGlass, WarningCircle, UserCirclePlus, CalendarBlank, ChartLineUp, Buildings, CurrencyDollar, ShieldCheck, SignOut, Globe, Plus, Receipt, UploadSimple } from "@phosphor-icons/react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import API_BASE_URL from "../../config/api";
@@ -41,10 +41,39 @@ export default function MasterAdminDashboard({ user, onLogout }) {
   const [newClient, setNewClient] = useState({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules });
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [newInvoice, setNewInvoice] = useState({ client_id: '', amount: '', billing_month: new Date().toISOString().substring(0, 7) });
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   
   const { showToast } = useToast();
   const token = sessionStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setIsUploadingLogo(true);
+    const formData = new FormData();
+    formData.append('logo', file);
+    
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/masteradmin/upload-logo`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNewClient({...newClient, logo_url: data.url});
+        showToast("Logo uploaded successfully", "success");
+      } else {
+        showToast(data.message || "Error uploading logo", "error");
+      }
+    } catch (err) {
+      showToast("Error uploading logo", "error");
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -766,8 +795,14 @@ export default function MasterAdminDashboard({ user, onLogout }) {
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
                 <div style={S.inputGroup}>
-                  <label style={S.inputLabel}>Tenant Logo URL (Optional)</label>
-                  <input type="url" style={S.input} placeholder="https://example.com/logo.png"
+                  <label style={{...S.inputLabel, display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                    <span>Tenant Logo</span>
+                    <label style={{ cursor: isUploadingLogo ? 'wait' : 'pointer', color: 'var(--primary-color, #4f46e5)', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'bold' }}>
+                      <UploadSimple size={16} weight="bold" /> {isUploadingLogo ? 'Uploading...' : 'Upload Image'}
+                      <input type="file" accept="image/png, image/jpeg, image/jpg" style={{ display: 'none' }} onChange={handleLogoUpload} disabled={isUploadingLogo} />
+                    </label>
+                  </label>
+                  <input type="url" style={S.input} placeholder="https://example.com/logo.png or upload"
                     value={newClient.logo_url} onChange={e => setNewClient({...newClient, logo_url: e.target.value})}
                   />
                 </div>
