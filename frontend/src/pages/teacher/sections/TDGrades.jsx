@@ -1,12 +1,22 @@
+import React, { useState } from 'react';
 import { GraduationCap, ArrowLeft, Table } from "@phosphor-icons/react";
 import { S } from "./TDStyles";
 
 export default function TDGrades({ courses, students, grades, selectedCourse, setSelectedCourse, setActivePage, showGradeModal, setShowGradeModal, newGrade, setNewGrade, editingItem, setEditingItem, bulkGrades, setBulkGrades, showBulkGradeModal, setShowBulkGradeModal, handleGradesCourseSelect, fetchCourseGrades, bulkGradeHeader, setBulkGradeHeader, onBulkGradeSubmit }) {
+  const [selectedExamType, setSelectedExamType] = useState('final');
+  
   const filteredStudents = selectedCourse 
     ? students.filter(s => s.class_id === selectedCourse.class_id)
     : [];
 
-  const avgGrade = grades.length > 0 ? Math.round(grades.reduce((acc, g) => acc + (g.percentage || 0), 0) / grades.length) : 0;
+  const filteredGradesForExam = grades.filter(g => g.exam_type === selectedExamType);
+  const avgGrade = filteredGradesForExam.length > 0 ? Math.round(filteredGradesForExam.reduce((acc, g) => acc + (g.percentage || 0), 0) / filteredGradesForExam.length) : 0;
+  
+  const formatExamType = (type) => {
+    const types = { 'midterm': 'Midterm Exam', 'final': 'Final Exam', 'quiz': 'Quiz', 'assignment': 'Assignment', 'presentation': 'Presentation' };
+    return types[type] || type;
+  };
+
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
@@ -20,10 +30,11 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
         <button onClick={() => {
           if (selectedCourse) {
             const initialBulk = filteredStudents.map(s => {
-              const existing = grades.find(g => g.student_id === s.student_id);
+              const existing = filteredGradesForExam.find(g => g.student_id === s.student_id);
               return { student_id:s.student_id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
             });
             setBulkGrades(initialBulk);
+            setBulkGradeHeader(prev => ({ ...prev, exam_type: selectedExamType }));
           } else {
             setBulkGrades([]);
           }
@@ -31,33 +42,43 @@ export default function TDGrades({ courses, students, grades, selectedCourse, se
         }} style={S.addBtn} className="add-btn"><Table size={18} weight="bold" /> Bulk Grade</button>
       </div>
 
-      <div style={S.gradesFilter}>
-        <select onChange={e => { const cid = e.target.value; handleGradesCourseSelect(cid); if (cid) fetchCourseGrades(cid); }} style={S.modernSelect} value={selectedCourse?.id || ''}>
+      <div style={{...S.gradesFilter, display: 'flex', gap: '12px'}}>
+        <select onChange={e => { const cid = e.target.value; handleGradesCourseSelect(cid); if (cid) fetchCourseGrades(cid); }} style={{...S.modernSelect, flex: 1}} value={selectedCourse?.id || ''}>
           <option value="">Select a course to view grades</option>
           {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
         </select>
+        
+        {selectedCourse && (
+          <select onChange={e => setSelectedExamType(e.target.value)} style={{...S.modernSelect, width: '200px'}} value={selectedExamType}>
+            <option value="midterm">Midterm Exam</option>
+            <option value="final">Final Exam</option>
+            <option value="quiz">Quiz</option>
+            <option value="assignment">Assignment</option>
+            <option value="presentation">Presentation</option>
+          </select>
+        )}
       </div>
 
       {selectedCourse && (
         <>
           <div style={S.gradesSummary}>
             <div style={S.summaryItem}><span>Total Students</span><strong>{filteredStudents.length}</strong></div>
-            <div style={S.summaryItem}><span>Graded</span><strong>{grades.length}</strong></div>
+            <div style={S.summaryItem}><span>Graded ({formatExamType(selectedExamType)})</span><strong>{filteredGradesForExam.length}</strong></div>
             <div style={S.summaryItem}><span>Average</span><strong>{avgGrade}%</strong></div>
           </div>
           <table style={S.table}>
             <thead><tr style={S.tableHeadRow}><th style={S.th}>STUDENT</th><th style={S.th}>EXAM</th><th style={S.th}>MARKS</th><th style={S.th}>GRADE</th><th style={S.th}>DATE</th></tr></thead>
             <tbody>
               {filteredStudents.map(s => {
-                const g = grades.find(grade => grade.student_id === s.student_id);
+                const g = filteredGradesForExam.find(grade => grade.student_id === s.student_id);
                 return (
                   <tr key={s.student_id} style={{ ...S.tableRow, cursor:'pointer' }} onClick={() => {
                     if (g) { setEditingItem(g); setNewGrade({ student_id:g.student_id, exam_type:g.exam_type, marks_obtained:g.marks_obtained, max_marks:g.max_marks, exam_date:new Date(g.exam_date).toISOString().split('T')[0], remarks:g.remarks||'' }); }
-                    else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.student_id, exam_date:new Date().toISOString().split('T')[0] }); }
+                    else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.student_id, exam_type:selectedExamType, exam_date:new Date().toISOString().split('T')[0] }); }
                     setShowGradeModal(true);
                   }}>
                     <td style={{ ...S.tdName, color:'var(--primary-color, #4f46e5)' }}>{s.name}</td>
-                    <td style={S.td}>{g ? <span style={S.examType}>{g.exam_type}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
+                    <td style={S.td}>{g ? <span style={S.examType}>{formatExamType(g.exam_type)}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
                     <td style={S.td}>{g ? `${g.marks_obtained}/${g.max_marks}` : <span style={{ color:'#94a3b8', fontSize:'0.8rem' }}>Not Graded</span>}</td>
                     <td style={S.td}>{g ? <span style={S.gradeBadge}>{g.grade_letter}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
                     <td style={S.td}>{g ? new Date(g.exam_date).toLocaleDateString() : <span style={{ color:'#94a3b8' }}>—</span>}</td>
