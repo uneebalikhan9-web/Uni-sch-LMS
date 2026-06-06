@@ -1170,7 +1170,6 @@ function TeacherDashboard({ user, onLogout }) {
         fetchStudents={fetchStudents}
         courses={courses}
         handleBulkGradeCourseSelect={handleBulkGradeCourseSelect}
-        handleBulkGradeCourseSelect={handleBulkGradeCourseSelect}
       />
 
       <BulkDataSheetModal 
