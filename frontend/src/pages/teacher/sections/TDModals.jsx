@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar, FileText, Users, ArrowClockwise, Printer, UploadSimple } from "@phosphor-icons/react";
+import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar, FileText, Users, ArrowClockwise, Printer, UploadSimple, Lightning } from "@phosphor-icons/react";
 import { S } from './TDStyles';
 import API_BASE_URL from '../../../config/api';
 
@@ -347,8 +347,8 @@ export default function TDModals({
             <div style={{padding:'30px', maxHeight:'70vh', overflowY:'auto'}}>
               {/* Bulk Upload Section */}
               <div style={{marginBottom:'24px', textAlign:'center'}}>
-                <button type="button" onClick={onOpenBulkModal} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
-                  ⚡ Open Bulk Entry Grid
+                <button type="button" onClick={onOpenBulkModal} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'10px', width:'100%', padding:'14px', background:'linear-gradient(135deg, #7c3aed, #6366f1)', border:'none', borderRadius:'12px', color:'#fff', fontWeight:'800', cursor:'pointer', fontSize:'1rem', boxShadow:'0 6px 15px rgba(124,58,237,0.3)', transition:'all 0.2s'}}>
+                  <Lightning size={22} weight="fill" color="#fbbf24" /> Open Bulk Entry Grid
                 </button>
               </div>
 

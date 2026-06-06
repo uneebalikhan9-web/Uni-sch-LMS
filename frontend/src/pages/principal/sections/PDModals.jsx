@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Buildings, BookOpen, ChalkboardTeacher, CalendarBlank,
-  Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X, GraduationCap
+  Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X, GraduationCap, Lightning
 } from "@phosphor-icons/react";
 import { S } from "./PDStyles";
 
@@ -223,8 +223,8 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
             <div style={{maxHeight:'50vh', overflowY:'auto', paddingRight:'10px', marginBottom:'20px'}}>
               {!editingItem && (
                 <div style={{marginBottom:'24px', textAlign:'center'}}>
-                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
-                    ⚡ Open Bulk Entry Grid
+                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'10px', width:'100%', padding:'14px', background:'linear-gradient(135deg, #7c3aed, #6366f1)', border:'none', borderRadius:'12px', color:'#fff', fontWeight:'800', cursor:'pointer', fontSize:'1rem', boxShadow:'0 6px 15px rgba(124,58,237,0.3)', transition:'all 0.2s'}}>
+                    <Lightning size={22} weight="fill" color="#fbbf24" /> Open Bulk Entry Grid
                   </button>
                 </div>
               )}
@@ -253,8 +253,8 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
             <>
               {!editingItem && activeTab === 'teachers' && (
                 <div style={{marginBottom:'24px', textAlign:'center'}}>
-                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
-                    ⚡ Open Bulk Entry Grid
+                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'10px', width:'100%', padding:'14px', background:'linear-gradient(135deg, #7c3aed, #6366f1)', border:'none', borderRadius:'12px', color:'#fff', fontWeight:'800', cursor:'pointer', fontSize:'1rem', boxShadow:'0 6px 15px rgba(124,58,237,0.3)', transition:'all 0.2s'}}>
+                    <Lightning size={22} weight="fill" color="#fbbf24" /> Open Bulk Entry Grid
                   </button>
                 </div>
               )}
