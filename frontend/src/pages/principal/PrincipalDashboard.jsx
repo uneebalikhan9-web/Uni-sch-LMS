@@ -19,7 +19,8 @@ import PDCourseReports from "./sections/PDCourseReports";
 import EPayroll        from "./sections/EPayroll";
 import FinExpenses     from "../finance/sections/FinExpenses";
 import "../finance/finance.css";
-import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal, StudentProfileModal, StudentDataSheetModal } from "./sections/PDModals";
+import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal, StudentProfileModal } from "./sections/PDModals";
+import { BulkDataSheetModal } from "../../components/BulkDataSheetModal";
 
 const API = `${API_BASE_URL}/api`;
 
@@ -68,7 +69,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   const [systemStatus, setSystemStatus] = useState("Operational");
 
   const [showAddModal,      setShowAddModal]      = useState(false);
-  const [showDataSheetModal, setShowDataSheetModal] = useState(false);
+  const [showBulkModal,     setShowBulkModal]     = useState(false);
+  const [bulkModalType,     setBulkModalType]     = useState('student');
   const [showTimetableModal,setShowTimetableModal]= useState(false);
   const [editingItem,       setEditingItem]        = useState(null);
   const [newPerson, setNewPerson] = useState({ 
@@ -436,7 +438,37 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           if (data.errors && data.errors.length > 0) {
             setTimeout(() => showToast(`Skipped duplicate rows: ${data.errors.join(', ')}`, 'warning'), 3000);
           }
-          setShowDataSheetModal(false);
+          setShowBulkModal(false);
+          fetchData();
+        }
+      } else {
+        showToast(data.message || 'Bulk upload failed', 'error');
+      }
+    } catch (error) { 
+      showToast('Connection error during bulk upload', 'error'); 
+    }
+  };
+
+  const handleBulkTeacherUpload = async (teachersList) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/principal/teachers/bulk-json`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ teachers: teachersList })
+      });
+      const data = await response.json();
+      if (data.success) {
+        if (data.count === 0 && data.errors && data.errors.length > 0) {
+          showToast(`Bulk Upload failed: ${data.errors[0]}`, 'error');
+        } else {
+          showToast(`Successfully added ${data.count} teachers!`, 'success');
+          if (data.errors && data.errors.length > 0) {
+            setTimeout(() => showToast(`Skipped duplicate rows: ${data.errors.join(', ')}`, 'warning'), 3000);
+          }
+          setShowBulkModal(false);
           fetchData();
         }
       } else {
@@ -727,6 +759,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             onUpdateCourseStatus={handleUpdateCourseStatus} onGenerateReport={handleGenerateReport}
             onOpenClassCourses={(item)=>{setSelectedClassForCourses(item);setShowClassCoursesModal(true);}}
             onOpenStudentProfile={(item)=>{setSelectedStudentForProfile(item);setShowStudentProfileModal(true);}}
+            onOpenBulkModal={(type) => { setBulkModalType(type); setShowBulkModal(true); }}
             setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses}/>
         )}
 
@@ -968,9 +1001,9 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         newCourse={newCourse} setNewCourse={setNewCourse}
         newLab={newLab} setNewLab={setNewLab}
         teachers={teachers} classes={classes} onSubmit={handleAddSubmit}
-        onOpenDataSheet={() => { setShowAddModal(false); setShowDataSheetModal(true); }} />
+        onOpenDataSheet={() => { setShowAddModal(false); setBulkModalType('student'); setShowBulkModal(true); }} />
 
-      <StudentDataSheetModal show={showDataSheetModal} onClose={() => setShowDataSheetModal(false)} onSaveAll={handleBulkJsonUpload} />
+      <BulkDataSheetModal show={showBulkModal} onClose={() => setShowBulkModal(false)} onSaveAll={bulkModalType === 'teacher' ? handleBulkTeacherUpload : handleBulkJsonUpload} type={bulkModalType} />
 
       <TimetableModal show={showTimetableModal} onClose={()=>{setShowTimetableModal(false);resetForms();}}
         editingItem={editingItem} newTimetableEntry={newTimetableEntry} setNewTimetableEntry={setNewTimetableEntry}

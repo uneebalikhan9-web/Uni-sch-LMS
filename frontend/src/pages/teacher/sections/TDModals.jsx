@@ -30,6 +30,7 @@ export default function TDModals({
   showAddStudentModal,
   setShowAddStudentModal,
   handleAddStudent,
+  onOpenBulkModal,
   newStudent,
   setNewStudent,
   showProfileModal,
@@ -348,17 +349,10 @@ export default function TDModals({
               <div style={{marginBottom:'30px', padding:'20px', background:'#f8fafc', border:'2px dashed #e2e8f0', borderRadius:'16px', textAlign:'center'}}>
                 <FileText size={32} color="#64748b" style={{marginBottom:'12px'}} />
                 <h4 style={{margin:'0 0 8px', color:'#0f172a'}}>Bulk Registration</h4>
-                <p style={{margin:'0 0 16px', fontSize:'0.85rem', color:'#64748b'}}>Upload Excel (.xlsx) or CSV file with student details</p>
-                <input 
-                  type="file" 
-                  id="bulk-upload" 
-                  hidden 
-                  accept=".csv, .xlsx, .xls"
-                  onChange={(e) => handleBulkStudentUpload(e.target.files[0])}
-                />
-                <label htmlFor="bulk-upload" style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'10px 24px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem'}}>
-                  <UploadSimple size={18} weight="bold" /> Choose File
-                </label>
+                <p style={{margin:'0 0 16px', fontSize:'0.85rem', color:'#64748b'}}>Use the new interactive grid to add multiple students at once</p>
+                <button type="button" onClick={onOpenBulkModal} style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'10px 24px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem'}}>
+                  ⚡ Open Bulk Entry Grid
+                </button>
               </div>
 
               <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px'}}>

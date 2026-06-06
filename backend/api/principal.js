@@ -136,6 +136,69 @@ router.post('/teachers', async (req, res) => {
   }
 });
 
+// Bulk add teachers via JSON
+router.post('/teachers/bulk-json', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const campusId = getCampusId(req);
+    const { teachers } = req.body;
+
+    if (!Array.isArray(teachers) || teachers.length === 0) {
+      connection.release();
+      return res.status(400).json({ success: false, message: 'No teachers provided' });
+    }
+
+    await connection.beginTransaction();
+
+    let count = 0;
+    const errors = [];
+
+    for (const t of teachers) {
+      if (!t.name || !t.email || !t.password) {
+        errors.push(`Skipped row (missing required fields): ${t.email || t.name || 'Unknown'}`);
+        continue;
+      }
+
+      const [existing] = await connection.query('SELECT id FROM users WHERE email = ?', [t.email]);
+      if (existing.length > 0) {
+        errors.push(`Skipped duplicate email: ${t.email}`);
+        continue;
+      }
+
+      const hashedPassword = await bcrypt.hash(t.password, 12);
+      const [result] = await connection.query(
+        'INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [t.name, t.email, hashedPassword, 'teacher', campusId, true, req.user.client_id]
+      );
+
+      const userId = result.insertId;
+
+      const tempEmpCode = `EMP-${Date.now().toString().slice(-5)}${count}`;
+      await connection.query(
+        'INSERT INTO employees (user_id, employee_code, designation, joining_date) VALUES (?, ?, ?, ?)',
+        [userId, tempEmpCode, t.designation || 'Lecturer', new Date()]
+      );
+
+      count++;
+    }
+
+    await connection.commit();
+    connection.release();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully processed bulk upload. Added ${count} teachers.`,
+      count,
+      errors
+    });
+  } catch (error) {
+    await connection.rollback();
+    connection.release();
+    console.error('Bulk teacher upload error:', error);
+    res.status(500).json({ success: false, message: 'Database error during bulk upload' });
+  }
+});
+
 // Update teacher
 router.put('/teachers/:id', async (req, res) => {
   try {

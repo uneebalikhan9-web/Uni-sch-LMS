@@ -10,6 +10,7 @@ import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import API_BASE_URL from '../../config/api';
+import { BulkDataSheetModal } from '../../components/BulkDataSheetModal';
 
 // Section Imports
 import { S } from './sections/TDStyles';
@@ -79,6 +80,7 @@ function TeacherDashboard({ user, onLogout }) {
   
   const [showGradeModal, setShowGradeModal] = useState(false)
   const [showBulkGradeModal, setShowBulkGradeModal] = useState(false)
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [showReportModal, setShowReportModal] = useState(false)
   const [selectedReport, setSelectedReport] = useState(null)
@@ -481,22 +483,29 @@ function TeacherDashboard({ user, onLogout }) {
     } catch (error) { showToast('Failed to add student', 'error') }
   }
 
-  const handleBulkStudentUpload = async (file) => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-
+  const handleBulkStudentJsonUpload = async (studentsList) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/students/bulk`, {
+      const response = await fetch(`${API_BASE_URL}/api/students/bulk-json`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ students: studentsList })
       });
       const data = await response.json();
       if (data.success) {
-        showToast(`Successfully uploaded ${data.count} students!`, 'success');
-        setShowAddStudentModal(false);
-        fetchStudents();
+        if (data.count === 0 && data.errors && data.errors.length > 0) {
+          showToast(`Bulk Upload failed: ${data.errors[0]}`, 'error');
+        } else {
+          showToast(`Successfully uploaded ${data.count} students!`, 'success');
+          if (data.errors && data.errors.length > 0) {
+            setTimeout(() => showToast(`Skipped duplicate rows: ${data.errors.join(', ')}`, 'warning'), 3000);
+          }
+          setShowBulkModal(false);
+          setShowAddStudentModal(false);
+          fetchStudents();
+        }
       } else {
         showToast(data.message || 'Bulk upload failed', 'error');
       }
@@ -1153,7 +1162,7 @@ function TeacherDashboard({ user, onLogout }) {
         bulkGrades={bulkGrades} setBulkGrades={setBulkGrades}
         showAddStudentModal={showAddStudentModal} setShowAddStudentModal={setShowAddStudentModal}
         handleAddStudent={handleAddStudent} 
-        handleBulkStudentUpload={handleBulkStudentUpload}
+        onOpenBulkModal={() => { setShowAddStudentModal(false); setShowBulkModal(true); }}
         newStudent={newStudent} setNewStudent={setNewStudent}
         showProfileModal={showProfileModal} setShowProfileModal={setShowProfileModal}
         selectedStudentProfile={selectedStudentProfile}
@@ -1161,6 +1170,14 @@ function TeacherDashboard({ user, onLogout }) {
         fetchStudents={fetchStudents}
         courses={courses}
         handleBulkGradeCourseSelect={handleBulkGradeCourseSelect}
+        handleBulkGradeCourseSelect={handleBulkGradeCourseSelect}
+      />
+
+      <BulkDataSheetModal 
+        show={showBulkModal} 
+        onClose={() => setShowBulkModal(false)} 
+        onSaveAll={handleBulkStudentJsonUpload} 
+        type="student" 
       />
     </div>
   )
