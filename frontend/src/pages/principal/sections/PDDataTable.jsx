@@ -46,11 +46,6 @@ export default function PDDataTable({
           <p style={S.tableSubtitle}>{tableData.length} {activeTab.replace('_', ' ')} total</p>
         </div>
         <div style={S.tableActions}>
-          {(activeTab === 'teachers' || activeTab === 'students') && (
-            <button onClick={() => onOpenBulkModal(activeTab === 'teachers' ? 'teacher' : 'student')} style={{...S.addBtn, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', marginRight: '8px'}} className="add-btn">
-              ⚡ Bulk Entry
-            </button>
-          )}
           {showAddButton && (
             <button onClick={() => setShowAddModal(true)} style={S.addBtn} className="add-btn">
               <Plus size={18} weight="bold" /> Add New

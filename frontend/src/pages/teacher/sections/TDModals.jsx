@@ -346,11 +346,8 @@ export default function TDModals({
 
             <div style={{padding:'30px', maxHeight:'70vh', overflowY:'auto'}}>
               {/* Bulk Upload Section */}
-              <div style={{marginBottom:'30px', padding:'20px', background:'#f8fafc', border:'2px dashed #e2e8f0', borderRadius:'16px', textAlign:'center'}}>
-                <FileText size={32} color="#64748b" style={{marginBottom:'12px'}} />
-                <h4 style={{margin:'0 0 8px', color:'#0f172a'}}>Bulk Registration</h4>
-                <p style={{margin:'0 0 16px', fontSize:'0.85rem', color:'#64748b'}}>Use the new interactive grid to add multiple students at once</p>
-                <button type="button" onClick={onOpenBulkModal} style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'10px 24px', background:'#fff', border:'1px solid #e2e8f0', borderRadius:'10px', color:'#0f172a', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem'}}>
+              <div style={{marginBottom:'24px', textAlign:'center'}}>
+                <button type="button" onClick={onOpenBulkModal} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
                   ⚡ Open Bulk Entry Grid
                 </button>
               </div>

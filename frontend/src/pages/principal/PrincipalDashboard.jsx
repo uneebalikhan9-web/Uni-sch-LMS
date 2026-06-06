@@ -1001,7 +1001,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         newCourse={newCourse} setNewCourse={setNewCourse}
         newLab={newLab} setNewLab={setNewLab}
         teachers={teachers} classes={classes} onSubmit={handleAddSubmit}
-        onOpenDataSheet={() => { setShowAddModal(false); setBulkModalType('student'); setShowBulkModal(true); }} />
+        onOpenDataSheet={(tabType) => { setShowAddModal(false); setBulkModalType(tabType === 'teachers' ? 'teacher' : 'student'); setShowBulkModal(true); }} />
 
       <BulkDataSheetModal show={showBulkModal} onClose={() => setShowBulkModal(false)} onSaveAll={bulkModalType === 'teacher' ? handleBulkTeacherUpload : handleBulkJsonUpload} type={bulkModalType} />
 

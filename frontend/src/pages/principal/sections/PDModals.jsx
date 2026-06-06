@@ -222,12 +222,10 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
           ) : activeTab === 'students' ? (
             <div style={{maxHeight:'50vh', overflowY:'auto', paddingRight:'10px', marginBottom:'20px'}}>
               {!editingItem && (
-                <div style={{marginBottom:'24px', padding:'20px', background:'#f8fafc', border:'2px dashed #e2e8f0', borderRadius:'16px', textAlign:'center'}}>
-                  <h4 style={{margin:'0 0 8px', color:'#0f172a'}}>Bulk Entry Options</h4>
-                  <button type="button" onClick={onOpenDataSheet} style={{display:'inline-block', padding:'10px 24px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.9rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
-                    📝 Open Excel-style Data Sheet
+                <div style={{marginBottom:'24px', textAlign:'center'}}>
+                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
+                    ⚡ Open Bulk Entry Grid
                   </button>
-                  <p style={{marginTop:'8px', fontSize:'11px', color:'#64748b'}}>Quickly add multiple students at once without needing any file uploads.</p>
                 </div>
               )}
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'20px'}}>
@@ -253,6 +251,13 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
             </div>
           ) : (
             <>
+              {!editingItem && activeTab === 'teachers' && (
+                <div style={{marginBottom:'24px', textAlign:'center'}}>
+                  <button type="button" onClick={() => onOpenDataSheet(activeTab)} style={{display:'inline-flex', alignItems:'center', justifyContent:'center', gap:'8px', width:'100%', padding:'12px', background:'#7c3aed', border:'none', borderRadius:'10px', color:'#fff', fontWeight:'700', cursor:'pointer', fontSize:'0.95rem', boxShadow:'0 4px 10px rgba(124,58,237,0.3)'}}>
+                    ⚡ Open Bulk Entry Grid
+                  </button>
+                </div>
+              )}
               <div style={S.inputGroup}><label style={S.inputLabel}>Full Name</label><input placeholder="e.g., John Doe" required value={editingItem ? editingItem.name : newPerson.name} onChange={e => editingItem ? setEditingItem({...editingItem, name:e.target.value}) : setNewPerson({...newPerson, name:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Email Address</label><input placeholder="email@example.com" required type="email" value={editingItem ? editingItem.email : newPerson.email} onChange={e => editingItem ? setEditingItem({...editingItem, email:e.target.value}) : setNewPerson({...newPerson, email:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Password</label><input placeholder="••••••••" required={!editingItem} type="password" autoComplete="new-password" value={newPerson.password} onChange={e => setNewPerson({...newPerson, password:e.target.value})} style={S.input} /></div>
