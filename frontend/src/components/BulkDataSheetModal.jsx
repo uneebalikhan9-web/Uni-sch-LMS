@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
-import { UploadSimple } from '@phosphor-icons/react';
+import { UploadSimple, DownloadSimple } from '@phosphor-icons/react';
 
 const S = {
   modalOverlay: { position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(15, 23, 42, 0.4)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 },
@@ -100,6 +100,17 @@ export function BulkDataSheetModal({ show, onClose, onSaveAll, type = 'student' 
     e.target.value = null; // reset input
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = isTeacher 
+      ? ['Full Name', 'Email Address', 'Password', 'Designation']
+      : ['Full Name', 'Email Address', 'Password', 'Semester', "Father's Name", "Father's CNIC", 'B-Form / CNIC'];
+    
+    const ws = XLSX.utils.json_to_sheet([headers], { skipHeader: true });
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, `${isTeacher ? 'Teacher' : 'Student'}_Template.xlsx`);
+  };
+
   return (
     <div style={S.modalOverlay} onClick={handleClose}>
       <div style={S.modal} onClick={e => e.stopPropagation()} className="animate-slideUp">
@@ -108,7 +119,14 @@ export function BulkDataSheetModal({ show, onClose, onSaveAll, type = 'student' 
             <h3 style={S.modalTitle}>📝 Bulk {isTeacher ? 'Teacher' : 'Student'} Entry Sheet</h3>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Enter details directly or import from an Excel/CSV file.</p>
           </div>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              onClick={handleDownloadTemplate} 
+              style={{ padding: '8px 16px', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              title="Download empty Excel template"
+            >
+              <DownloadSimple size={18} weight="bold" /> Template
+            </button>
             <input 
               type="file" 
               accept=".xlsx, .xls, .csv" 
