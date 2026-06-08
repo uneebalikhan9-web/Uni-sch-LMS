@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
+import { UploadSimple } from '@phosphor-icons/react';
 
 const S = {
   modalOverlay: { position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(15, 23, 42, 0.4)', backdropFilter:'blur(4px)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 },
@@ -21,6 +23,7 @@ export function BulkDataSheetModal({ show, onClose, onSaveAll, type = 'student' 
   };
 
   const [rows, setRows] = useState([getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow(), getEmptyRow()]);
+  const fileInputRef = useRef(null);
 
   if (!show) return null;
 
@@ -51,15 +54,76 @@ export function BulkDataSheetModal({ show, onClose, onSaveAll, type = 'student' 
 
   const isTeacher = type === 'teacher';
 
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+        
+        if (data && data.length > 0) {
+          const newRows = data.map(item => {
+            const baseRow = getEmptyRow();
+            if (isTeacher) {
+              baseRow.name = item['Full Name'] || item['Name'] || '';
+              baseRow.email = item['Email Address'] || item['Email'] || '';
+              baseRow.password = item['Password'] || 'Password123';
+              baseRow.designation = item['Designation'] || '';
+            } else {
+              baseRow.name = item['Full Name'] || item['Name'] || '';
+              baseRow.email = item['Email Address'] || item['Email'] || '';
+              baseRow.password = item['Password'] || 'Password123';
+              baseRow.semester = parseInt(item['Semester'] || item['Sem'] || 1);
+              baseRow.father_name = item["Father's Name"] || item['Father Name'] || item['Father'] || '';
+              baseRow.father_cnic = item["Father's CNIC"] || item['Father CNIC'] || '';
+              baseRow.bform_number = item['B-Form / CNIC'] || item['B-Form'] || item['CNIC'] || '';
+            }
+            return baseRow;
+          });
+          
+          while (newRows.length < 5) {
+            newRows.push(getEmptyRow());
+          }
+          setRows(newRows);
+        }
+      } catch (err) {
+        alert("Error parsing file. Please make sure it's a valid Excel or CSV file.");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = null; // reset input
+  };
+
   return (
     <div style={S.modalOverlay} onClick={handleClose}>
       <div style={S.modal} onClick={e => e.stopPropagation()} className="animate-slideUp">
         <div style={S.modalHeader}>
           <div>
             <h3 style={S.modalTitle}>📝 Bulk {isTeacher ? 'Teacher' : 'Student'} Entry Sheet</h3>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Enter details directly in the grid. Rows without Name and Email will be ignored.</p>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Enter details directly or import from an Excel/CSV file.</p>
           </div>
-          <button onClick={handleClose} style={S.modalClose}>×</button>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <input 
+              type="file" 
+              accept=".xlsx, .xls, .csv" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              onChange={handleFileUpload} 
+            />
+            <button 
+              onClick={() => fileInputRef.current?.click()} 
+              style={{ padding: '8px 16px', background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <UploadSimple size={18} weight="bold" /> Import Excel/CSV
+            </button>
+            <button onClick={handleClose} style={S.modalClose}>×</button>
+          </div>
         </div>
         
         <div style={{ overflowX: 'auto', maxHeight: '65vh', padding: '24px' }}>
