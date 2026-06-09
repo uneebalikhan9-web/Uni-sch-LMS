@@ -177,8 +177,10 @@ export const ReportIncidentModal = ({ onClose, onSave }) => {
         incident_date: new Date().toISOString().split('T')[0]
     });
 
+    const [allStudents, setAllStudents] = useState([]);
+
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             try {
                 const token = sessionStorage.getItem('token');
                 const [usersRes, examsRes] = await Promise.all([
@@ -187,7 +189,9 @@ export const ReportIncidentModal = ({ onClose, onSave }) => {
                 ]);
                 
                 if (usersRes.data.success) {
-                    setStudents(usersRes.data.users.filter(u => u.role === 'student'));
+                    const studentUsers = usersRes.data.users.filter(u => u.role === 'student');
+                    setAllStudents(studentUsers);
+                    setStudents(studentUsers); // Initially show all
                 }
                 if (examsRes.data.success) {
                     setExams(examsRes.data.exams);
@@ -196,8 +200,31 @@ export const ReportIncidentModal = ({ onClose, onSave }) => {
                 console.error('Error fetching data for incident modal:', err);
             }
         };
-        fetchData();
+        fetchInitialData();
     }, []);
+
+    useEffect(() => {
+        const fetchExamStudents = async () => {
+            if (!formData.exam_id) {
+                setStudents(allStudents);
+                return;
+            }
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await axios.get(`${API_BASE_URL}/api/exams/${formData.exam_id}/students`, { 
+                    headers: { Authorization: `Bearer ${token}` } 
+                });
+                if (res.data.success) {
+                    setStudents(res.data.students);
+                }
+            } catch (err) {
+                console.error('Error fetching students for exam:', err);
+            }
+        };
+        fetchExamStudents();
+        // Also reset selected student if they are no longer in the list
+        setFormData(prev => ({...prev, student_id: ''}));
+    }, [formData.exam_id]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -224,17 +251,6 @@ export const ReportIncidentModal = ({ onClose, onSave }) => {
                 </div>
                 <form onSubmit={handleSubmit} className="ex-modal-body">
                     <div className="ex-form-group">
-                        <label>Select Student</label>
-                        <select 
-                            required
-                            value={formData.student_id} 
-                            onChange={e => setFormData({...formData, student_id: e.target.value})}
-                        >
-                            <option value="">Select a Student...</option>
-                            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
-                        </select>
-                    </div>
-                    <div className="ex-form-group">
                         <label>Select Exam (Optional)</label>
                         <select 
                             value={formData.exam_id} 
@@ -242,6 +258,17 @@ export const ReportIncidentModal = ({ onClose, onSave }) => {
                         >
                             <option value="">General / None</option>
                             {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.course_name} - {ex.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="ex-form-group">
+                        <label>Select Student</label>
+                        <select 
+                            required
+                            value={formData.student_id} 
+                            onChange={e => setFormData({...formData, student_id: e.target.value})}
+                        >
+                            <option value="">Select a Student...</option>
+                            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.roll_number || s.email})</option>)}
                         </select>
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>

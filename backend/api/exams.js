@@ -66,6 +66,25 @@ router.post('/create', verifyToken, async (req, res) => {
     }
 });
 
+// Get enrolled students for a specific exam
+router.get('/:examId/students', verifyToken, async (req, res) => {
+    try {
+        const { examId } = req.params;
+        const [rows] = await pool.query(`
+            SELECT u.id, u.name, u.email, s.roll_number 
+            FROM exams e
+            JOIN enrollments en ON e.course_id = en.course_id
+            JOIN students s ON en.student_id = s.id
+            JOIN users u ON s.user_id = u.id
+            WHERE e.id = ? AND en.status = 'approved'
+            ORDER BY u.name ASC
+        `, [examId]);
+        res.json({ success: true, students: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 // ==========================================
 // 3. RESULTS MANAGEMENT
 // ==========================================
