@@ -219,7 +219,7 @@ const RectorDashboard = ({ user = { name: "Pro-VC / Rector" }, onLogout }) => {
           </div>
         </header>
 
-        {activeTab === 'overview' && <RDOverview stats={stats} departments={departments} leftSidebarOpen={leftSidebarOpen} />}
+        {activeTab === 'overview' && <RDOverview stats={stats} departments={departments} leftSidebarOpen={leftSidebarOpen} setActiveTab={setActiveTab} />}
         
         {(activeTab === 'academic' || activeTab === 'finance') && <RDStrategy activeTab={activeTab} />}
 

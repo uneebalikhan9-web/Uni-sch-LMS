@@ -5,13 +5,13 @@ import {
   ChartLineUp, ArrowUp, ArrowDown, DotsThree
 } from '@phosphor-icons/react';
 
-const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) => {
+const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true, setActiveTab }) => {
 
   const kpis = [
-    { label: 'Total Enrollment', val: stats.totalEnrollment || '0', trend: stats.growthTrend || '+0%', up: true, icon: Users, color: '#3b82f6' },
-    { label: 'Faculty Members', val: stats.facultyStrength || '0', trend: stats.facGrowth || '+0%', up: true, icon: ChalkboardTeacher, color: '#8b5cf6' },
-    { label: 'Active Courses', val: stats.activeCourses ?? '0', trend: stats.totalDepts ? `${stats.totalDepts} Depts` : 'N/A', up: true, icon: GraduationCap, color: '#10b981' },
-    { label: 'Inst. Score', val: stats.institutionalScore !== undefined ? `${stats.institutionalScore}/100` : 'N/A', trend: stats.institutionalScore >= 70 ? 'Healthy' : stats.institutionalScore >= 40 ? 'Average' : 'Needs Work', up: stats.institutionalScore >= 70, icon: ChartLineUp, color: '#f59e0b' },
+    { label: 'Total Enrollment', val: stats.totalEnrollment || '0', trend: stats.growthTrend || '+0%', up: true, icon: Users, color: '#3b82f6', tab: 'students' },
+    { label: 'Faculty Members', val: stats.facultyStrength || '0', trend: stats.facGrowth || '+0%', up: true, icon: ChalkboardTeacher, color: '#8b5cf6', tab: 'faculty' },
+    { label: 'Active Courses', val: stats.activeCourses ?? '0', trend: stats.totalDepts ? `${stats.totalDepts} Depts` : 'N/A', up: true, icon: GraduationCap, color: '#10b981', tab: 'academic' },
+    { label: 'Inst. Score', val: stats.institutionalScore !== undefined ? `${stats.institutionalScore}/100` : 'N/A', trend: stats.institutionalScore >= 70 ? 'Healthy' : stats.institutionalScore >= 40 ? 'Average' : 'Needs Work', up: stats.institutionalScore >= 70, icon: ChartLineUp, color: '#f59e0b', tab: 'compliance' },
   ];
 
 
@@ -20,7 +20,7 @@ const RDOverview = ({ stats = {}, departments = [], leftSidebarOpen = true }) =>
       {/* KPI Cards */}
       <div style={S.statsGrid}>
         {kpis.map((kpi, i) => (
-          <div key={i} style={S.metricCard}>
+          <div key={i} style={{ ...S.metricCard, cursor: 'pointer' }} onClick={() => setActiveTab && kpi.tab && setActiveTab(kpi.tab)}>
             <div style={S.metricIcon(kpi.color)}><kpi.icon size={28} weight="duotone" /></div>
             <div style={{flex:1}}>
               <p style={S.metricLabel}>{kpi.label}</p>
