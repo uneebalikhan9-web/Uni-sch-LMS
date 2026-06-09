@@ -8,6 +8,7 @@ const ExamsMalpractice = () => {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchIncidents = async () => {
     try {
@@ -43,6 +44,12 @@ const ExamsMalpractice = () => {
     }
   };
 
+  const filteredIncidents = incidents.filter(item => 
+    item.student_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.roll_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.incident_description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="exams-malpractice-section">
       <div className="ex-card">
@@ -54,6 +61,26 @@ const ExamsMalpractice = () => {
           <button className="ex-btn-primary" style={{ background: '#ef4444' }} onClick={() => setShowReportModal(true)}>
             <Plus size={18} weight="bold" /> Report Incident
           </button>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="Search by student name, roll number, or incident..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              border: '1.5px solid #e2e8f0',
+              fontSize: '0.88rem',
+              fontWeight: 500,
+              outline: 'none',
+              background: '#f8fafc',
+            }}
+          />
         </div>
 
         <div className="ex-table-container">
@@ -73,12 +100,12 @@ const ExamsMalpractice = () => {
                 <tr>
                   <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading records...</td>
                 </tr>
-              ) : incidents.length === 0 ? (
+              ) : filteredIncidents.length === 0 ? (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No malpractice incidents recorded.</td>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No malpractice incidents matching your search.</td>
                 </tr>
               ) : (
-                incidents.map(item => (
+                filteredIncidents.map(item => (
                   <tr key={item.id}>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
