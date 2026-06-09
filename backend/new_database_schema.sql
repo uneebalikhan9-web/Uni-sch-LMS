@@ -2793,3 +2793,31 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+
+-- Exam Rooms
+CREATE TABLE `exam_rooms` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `capacity` int(11) NOT NULL,
+  `used` int(11) DEFAULT 0,
+  `type` varchar(50) DEFAULT 'Examination Hall',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- Exam Malpractice Logs
+CREATE TABLE `exam_malpractice_logs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_id` int(11) NOT NULL,
+  `exam_id` int(11) DEFAULT NULL,
+  `incident_description` text NOT NULL,
+  `severity` enum('Low','Medium','High') DEFAULT 'Medium',
+  `status` enum('Pending','Warning Issued','Resolved') DEFAULT 'Pending',
+  `incident_date` date NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  FOREIGN KEY (`student_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`exam_id`) REFERENCES `exams`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

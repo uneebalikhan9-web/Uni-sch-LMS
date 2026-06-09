@@ -134,4 +134,59 @@ router.get('/student-schedule', verifyToken, async (req, res) => {
     }
 });
 
+// ==========================================
+// 4. ROOMS AND SEATING PLANS
+// ==========================================
+router.get('/rooms', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM exam_rooms ORDER BY name ASC');
+        res.json({ success: true, rooms: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// ==========================================
+// 5. MALPRACTICE LOGS
+// ==========================================
+router.get('/malpractice', verifyToken, async (req, res) => {
+    try {
+        const [rows] = await pool.query(`
+            SELECT m.*, u.name as student_name, s.roll_number, e.name as exam_name
+            FROM exam_malpractice_logs m
+            JOIN users u ON m.student_id = u.id
+            LEFT JOIN students s ON u.id = s.user_id
+            LEFT JOIN exams e ON m.exam_id = e.id
+            ORDER BY m.incident_date DESC
+        `);
+        res.json({ success: true, logs: rows });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.post('/malpractice', verifyToken, async (req, res) => {
+    const { student_id, exam_id, incident_description, severity, status, incident_date } = req.body;
+    try {
+        await pool.query(`
+            INSERT INTO exam_malpractice_logs 
+            (student_id, exam_id, incident_description, severity, status, incident_date)
+            VALUES (?, ?, ?, ?, ?, ?)
+        `, [student_id, exam_id || null, incident_description, severity, status || 'Pending', incident_date || new Date()]);
+        res.json({ success: true, message: 'Incident logged successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+router.delete('/malpractice/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query('DELETE FROM exam_malpractice_logs WHERE id = ?', [id]);
+        res.json({ success: true, message: 'Incident record deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
 module.exports = router;

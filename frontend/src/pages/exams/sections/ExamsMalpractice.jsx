@@ -1,11 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Gavel, Warning, Eye, Trash, UserCircle, Plus } from '@phosphor-icons/react';
+import axios from 'axios';
+import API_BASE_URL from '../../../config/api';
+import { ReportIncidentModal } from '../ExamsModals';
 
 const ExamsMalpractice = () => {
-  const incidents = [
-    { id: 1, student: 'Ali Ahmed', roll: 'CS-2023-042', incident: 'Possession of Mobile Phone', date: 'May 05, 2026', severity: 'High', action: 'Pending' },
-    { id: 2, student: 'Sana Khan', roll: 'EE-2022-115', incident: 'Copying from Neighbor', date: 'May 04, 2026', severity: 'Medium', action: 'Warning Issued' }
-  ];
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const fetchIncidents = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${API_BASE_URL}/api/exams/malpractice`, {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      if (res.data.success) {
+        setIncidents(res.data.logs);
+      }
+    } catch (err) {
+      console.error('Error fetching malpractice logs:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this incident record?')) return;
+    try {
+      const res = await axios.delete(`${API_BASE_URL}/api/exams/malpractice/${id}`, {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
+      });
+      if (res.data.success) {
+        fetchIncidents();
+      }
+    } catch (err) {
+      console.error('Error deleting incident:', err);
+    }
+  };
 
   return (
     <div className="exams-malpractice-section">
@@ -15,7 +51,7 @@ const ExamsMalpractice = () => {
             <h2 style={{ fontSize: '1.2rem', fontWeight: 800 }}>Disciplinary Records</h2>
             <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Monitoring examination integrity and malpractice incidents.</p>
           </div>
-          <button className="ex-btn-primary" style={{ background: '#ef4444' }}>
+          <button className="ex-btn-primary" style={{ background: '#ef4444' }} onClick={() => setShowReportModal(true)}>
             <Plus size={18} weight="bold" /> Report Incident
           </button>
         </div>
@@ -33,38 +69,48 @@ const ExamsMalpractice = () => {
               </tr>
             </thead>
             <tbody>
-              {incidents.map(item => (
-                <tr key={item.id}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                      <UserCircle size={32} color="#64748b" />
-                      <div>
-                        <p style={{ fontWeight: 700 }}>{item.student}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.roll}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{item.incident}</td>
-                  <td>
-                    <span style={{ 
-                        fontWeight: 800, 
-                        color: item.severity === 'High' ? '#ef4444' : '#f59e0b'
-                    }}>{item.severity}</span>
-                  </td>
-                  <td>{item.date}</td>
-                  <td>
-                    <span className={`ex-badge ${item.action === 'Pending' ? 'ex-badge-pending' : 'ex-badge-published'}`}>
-                      {item.action}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      <button style={{ border: 'none', background: 'transparent', color: 'var(--primary-color, #4f46e5)', cursor: 'pointer' }}><Eye size={18} weight="bold" /></button>
-                      <button style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}><Trash size={18} weight="bold" /></button>
-                    </div>
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading records...</td>
                 </tr>
-              ))}
+              ) : incidents.length === 0 ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>No malpractice incidents recorded.</td>
+                </tr>
+              ) : (
+                incidents.map(item => (
+                  <tr key={item.id}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <UserCircle size={32} color="#64748b" />
+                        <div>
+                          <p style={{ fontWeight: 700 }}>{item.student_name}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#64748b' }}>{item.roll_number || 'No Roll Number'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{item.incident_description}</td>
+                    <td>
+                      <span style={{ 
+                          fontWeight: 800, 
+                          color: item.severity === 'High' ? '#ef4444' : item.severity === 'Medium' ? '#f59e0b' : '#3b82f6'
+                      }}>{item.severity}</span>
+                    </td>
+                    <td>{new Date(item.incident_date).toLocaleDateString()}</td>
+                    <td>
+                      <span className={`ex-badge ${item.status === 'Pending' ? 'ex-badge-pending' : 'ex-badge-published'}`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 12 }}>
+                        <button style={{ border: 'none', background: 'transparent', color: 'var(--primary-color, #4f46e5)', cursor: 'pointer' }}><Eye size={18} weight="bold" /></button>
+                        <button onClick={() => handleDelete(item.id)} style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer' }}><Trash size={18} weight="bold" /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -77,6 +123,16 @@ const ExamsMalpractice = () => {
               <p style={{ color: '#b91c1c', fontSize: '0.9rem' }}>All examination halls are under active monitoring. AI proctoring logs are reviewed every 30 minutes.</p>
           </div>
       </div>
+      
+      {showReportModal && (
+        <ReportIncidentModal 
+          onClose={() => setShowReportModal(false)} 
+          onSave={() => {
+            setShowReportModal(false);
+            fetchIncidents();
+          }}
+        />
+      )}
     </div>
   );
 };

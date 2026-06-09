@@ -166,3 +166,123 @@ export const ProcessResultsModal = ({ exam, onClose, onSave }) => {
     );
 };
 
+export const ReportIncidentModal = ({ onClose, onSave }) => {
+    const [students, setStudents] = useState([]);
+    const [exams, setExams] = useState([]);
+    const [formData, setFormData] = useState({
+        student_id: '',
+        exam_id: '',
+        incident_description: '',
+        severity: 'Medium',
+        incident_date: new Date().toISOString().split('T')[0]
+    });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const token = sessionStorage.getItem('token');
+                const [usersRes, examsRes] = await Promise.all([
+                    axios.get(`${API_BASE_URL}/api/users`, { headers: { Authorization: `Bearer ${token}` } }),
+                    axios.get(`${API_BASE_URL}/api/exams/list`, { headers: { Authorization: `Bearer ${token}` } })
+                ]);
+                
+                if (usersRes.data.success) {
+                    setStudents(usersRes.data.users.filter(u => u.role === 'student'));
+                }
+                if (examsRes.data.success) {
+                    setExams(examsRes.data.exams);
+                }
+            } catch (err) {
+                console.error('Error fetching data for incident modal:', err);
+            }
+        };
+        fetchData();
+    }, []);
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const token = sessionStorage.getItem('token');
+            const res = await axios.post(`${API_BASE_URL}/api/exams/malpractice`, formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                onSave();
+            }
+        } catch (err) {
+            console.error('Error saving incident:', err);
+            alert('Failed to save incident record');
+        }
+    };
+
+    return (
+        <div className="ex-modal-overlay">
+            <div className="ex-modal">
+                <div className="ex-modal-header">
+                    <h2><Plus size={24} weight="bold" color="#ef4444" /> Report Malpractice Incident</h2>
+                    <button className="ex-modal-close" onClick={onClose}><X size={20} /></button>
+                </div>
+                <form onSubmit={handleSubmit} className="ex-modal-body">
+                    <div className="ex-form-group">
+                        <label>Select Student</label>
+                        <select 
+                            required
+                            value={formData.student_id} 
+                            onChange={e => setFormData({...formData, student_id: e.target.value})}
+                        >
+                            <option value="">Select a Student...</option>
+                            {students.map(s => <option key={s.id} value={s.id}>{s.name} ({s.email})</option>)}
+                        </select>
+                    </div>
+                    <div className="ex-form-group">
+                        <label>Select Exam (Optional)</label>
+                        <select 
+                            value={formData.exam_id} 
+                            onChange={e => setFormData({...formData, exam_id: e.target.value})}
+                        >
+                            <option value="">General / None</option>
+                            {exams.map(ex => <option key={ex.id} value={ex.id}>{ex.course_name} - {ex.name}</option>)}
+                        </select>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                        <div className="ex-form-group">
+                            <label>Incident Date</label>
+                            <input 
+                                required
+                                type="date" 
+                                value={formData.incident_date} 
+                                onChange={e => setFormData({...formData, incident_date: e.target.value})}
+                            />
+                        </div>
+                        <div className="ex-form-group">
+                            <label>Severity Level</label>
+                            <select 
+                                value={formData.severity} 
+                                onChange={e => setFormData({...formData, severity: e.target.value})}
+                            >
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="ex-form-group">
+                        <label>Incident Description</label>
+                        <textarea 
+                            required
+                            rows="4"
+                            placeholder="Describe what happened..."
+                            value={formData.incident_description} 
+                            onChange={e => setFormData({...formData, incident_description: e.target.value})}
+                            style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', boxSizing: 'border-box' }}
+                        />
+                    </div>
+                    <div className="ex-modal-footer">
+                        <button type="button" className="ex-btn-secondary" onClick={onClose}>Cancel</button>
+                        <button type="submit" className="ex-btn-primary" style={{ background: '#ef4444' }}>Submit Report</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+};
