@@ -188,11 +188,17 @@ const HRDashboard = ({ user, onLogout }) => {
     { id: 'recruitment', label: 'Recruitment', icon: <Megaphone size={20} /> }
   ];
 
-  const MetricCard = ({ icon, value, label }) => (
-    <div className="hr-card">
-      <div className="hr-metric-icon-box">{icon}</div>
-      <div className="hr-metric-value">{value}</div>
-      <div className="hr-metric-label">{label}</div>
+  const MetricCard = ({ icon, value, label, tab }) => (
+    <div 
+      className="hr-metric-card"
+      style={{ cursor: tab ? 'pointer' : 'default' }}
+      onClick={() => tab && setActiveTab(tab)}
+    >
+      <div className="hr-metric-icon">{icon}</div>
+      <div className="hr-metric-content">
+        <h3 className="hr-metric-value">{value}</h3>
+        <p className="hr-metric-label">{label}</p>
+      </div>
     </div>
   );
 
@@ -369,10 +375,10 @@ const HRDashboard = ({ user, onLogout }) => {
           {activeTab === 'dashboard' && (
             <>
               <div className="hr-metrics-grid">
-                <MetricCard icon={<Users size={28} weight="duotone" />} value={stats.totalStaff} label="Total Staff" />
-                <MetricCard icon={<CheckCircle size={28} weight="duotone" />} value={stats.activePresent} label="Active Present" />
-                <MetricCard icon={<Calendar size={28} weight="duotone" />} value={stats.leaveRequests} label="Leave Requests" />
-                <MetricCard icon={<Briefcase size={28} weight="duotone" />} value={stats.openVacancies} label="Open Vacancies" />
+                <MetricCard icon={<Users size={28} weight="duotone" />} value={stats.totalStaff} label="Total Staff" tab="employees" />
+                <MetricCard icon={<CheckCircle size={28} weight="duotone" />} value={stats.activePresent} label="Active Present" tab="leave" />
+                <MetricCard icon={<Calendar size={28} weight="duotone" />} value={stats.leaveRequests} label="Leave Requests" tab="leave" />
+                <MetricCard icon={<Briefcase size={28} weight="duotone" />} value={stats.openVacancies} label="Open Vacancies" tab="recruitment" />
               </div>
 
               {/* Attendance & Trend Analytics Section */}

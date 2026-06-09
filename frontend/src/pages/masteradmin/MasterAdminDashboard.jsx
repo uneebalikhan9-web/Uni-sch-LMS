@@ -360,28 +360,28 @@ export default function MasterAdminDashboard({ user, onLogout }) {
         {activeTab === "overview" && (
           <div style={S.overviewContainer}>
             <div style={S.statsGrid}>
-              <div style={S.metricCard} className="metric-card">
+              <div style={{...S.metricCard, cursor: 'pointer'}} onClick={() => setActiveTab('clients')} className="metric-card">
                 <div style={S.metricIconWrapper('var(--primary-color, #4f46e5)')}><Buildings size={28} weight="fill" /></div>
                 <div>
                   <h4 style={S.metricLabel}>TOTAL CLIENTS</h4>
                   <p style={S.metricValue}>{stats.totalClients}</p>
                 </div>
               </div>
-              <div style={S.metricCard} className="metric-card">
+              <div style={{...S.metricCard, cursor: 'pointer'}} onClick={() => setActiveTab('clients')} className="metric-card">
                 <div style={S.metricIconWrapper('#10b981')}><CheckCircle size={28} weight="fill" /></div>
                 <div>
                   <h4 style={S.metricLabel}>ACTIVE TENANTS</h4>
                   <p style={S.metricValue}>{stats.activeClients}</p>
                 </div>
               </div>
-              <div style={S.metricCard} className="metric-card">
+              <div style={{...S.metricCard, cursor: 'pointer'}} onClick={() => setActiveTab('billing')} className="metric-card">
                 <div style={S.metricIconWrapper('#ec4899')}><CurrencyDollar size={28} weight="fill" /></div>
                 <div>
                   <h4 style={S.metricLabel}>TOTAL MRR</h4>
                   <p style={{...S.metricValue, fontSize: 'clamp(1.2rem, 2vw, 2rem)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%'}} title={`$${parseFloat(stats.mrr || 0).toLocaleString()}`}>${parseFloat(stats.mrr || 0).toLocaleString()}</p>
                 </div>
               </div>
-              <div style={S.metricCard} className="metric-card">
+              <div style={{...S.metricCard, cursor: 'pointer'}} onClick={() => setActiveTab('clients')} className="metric-card">
                 <div style={S.metricIconWrapper('#0ea5e9')}><Globe size={28} weight="fill" /></div>
                 <div>
                   <h4 style={S.metricLabel}>GLOBAL USERS</h4>

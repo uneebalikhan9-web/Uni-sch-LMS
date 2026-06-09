@@ -127,12 +127,12 @@ const FinanceDashboard = ({ user, onLogout }) => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} />;
+      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} setActiveTab={setActiveTab} />;
       case 'fees': return <FinFees challans={challans} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
       case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
       case 'expenses': return <FinExpenses expenses={expenses} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('expense'); setShowModal(true); }} />;
       case 'reports': return <FinReports stats={stats} challans={challans} payroll={payroll} expenses={expenses} />;
-      default: return <FinOverview stats={stats} trend={trend} />;
+      default: return <FinOverview stats={stats} trend={trend} setActiveTab={setActiveTab} />;
     }
   };
 

@@ -5,8 +5,12 @@ import {
   Receipt, Wallet
 } from "@phosphor-icons/react";
 
-const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true }) => (
-  <div className="fin-metric-card">
+const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true, tab, setActiveTab }) => (
+  <div 
+    className="fin-metric-card" 
+    style={{ cursor: tab ? 'pointer' : 'default' }}
+    onClick={() => tab && setActiveTab && setActiveTab(tab)}
+  >
     <div className="fin-metric-header">
       <span className="fin-metric-label">{title}</span>
       <div className="fin-metric-icon-wrap">
@@ -23,7 +27,7 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true
   </div>
 );
 
-const FinOverview = ({ stats, challans, expenses, trend }) => {
+const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
   // Generate last 6 months list dynamically
   const months = [];
   const d = new Date();
@@ -58,6 +62,8 @@ const FinOverview = ({ stats, challans, expenses, trend }) => {
           change="+12.5%" 
           icon={<TrendUp size={24} weight="duotone" />}
           trend="up"
+          tab="fees"
+          setActiveTab={setActiveTab}
         />
         <MetricCard 
           title="Pending Fees" 
@@ -65,6 +71,8 @@ const FinOverview = ({ stats, challans, expenses, trend }) => {
           change={`${stats.overdueCount || 0} overdue`} 
           icon={<Clock size={24} weight="duotone" />}
           trend="down"
+          tab="fees"
+          setActiveTab={setActiveTab}
         />
         <MetricCard 
           title="Payroll Paid" 
@@ -72,6 +80,8 @@ const FinOverview = ({ stats, challans, expenses, trend }) => {
           change="+5.3%" 
           icon={<Users size={24} weight="duotone" />}
           trend="up"
+          tab="payroll"
+          setActiveTab={setActiveTab}
         />
         <MetricCard 
           title="Op. Margin" 
@@ -80,6 +90,8 @@ const FinOverview = ({ stats, challans, expenses, trend }) => {
           icon={<ChartPie size={24} weight="duotone" />}
           trend="up"
           isCurrency={false}
+          tab="reports"
+          setActiveTab={setActiveTab}
         />
       </div>
 

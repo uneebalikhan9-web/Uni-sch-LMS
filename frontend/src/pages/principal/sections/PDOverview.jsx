@@ -68,12 +68,12 @@ export default function PDOverview({
   }, [engagementData, rightPanelOpen, leftSidebarOpen]);
 
   const metrics = [
-    { label: 'Faculty Members', val: teachers.length,         color: '#7c3aed', trend: `+${Math.floor(teachers.length * 0.2) || 2}%` },
-    { label: 'Student Enrollment', val: students.length,         color: '#8b5cf6', trend: `+${Math.floor(students.length * 0.15) || 5}%` },
-    { label: 'Academic Groups', val: classes.length,          color: '#a78bfa', trend: `Avg ${classAverageSize} students` },
-    { label: 'Curriculum Programs', val: totalActiveCourses,      color: '#c084fc', trend: `${courses.length - totalActiveCourses} inactive` },
-    { label: 'Enrollment Queue', val: pendingCount,            color: '#f472b6', trend: 'Awaiting approval' },
-    { label: 'Faculty:Student', val: teacherStudentRatio,     color: '#60a5fa', trend: 'Ratio' },
+    { label: 'Faculty Members', val: teachers.length,         color: '#7c3aed', trend: `+${Math.floor(teachers.length * 0.2) || 2}%`, tab: 'teachers' },
+    { label: 'Student Enrollment', val: students.length,         color: '#8b5cf6', trend: `+${Math.floor(students.length * 0.15) || 5}%`, tab: 'students' },
+    { label: 'Academic Groups', val: classes.length,          color: '#a78bfa', trend: `Avg ${classAverageSize} students`, tab: 'classes' },
+    { label: 'Curriculum Programs', val: totalActiveCourses,      color: '#c084fc', trend: `${courses.length - totalActiveCourses} inactive`, tab: 'courses' },
+    { label: 'Enrollment Queue', val: pendingCount,            color: '#f472b6', trend: 'Awaiting approval', tab: 'pending' },
+    { label: 'Faculty:Student', val: teacherStudentRatio,     color: '#60a5fa', trend: 'Ratio', tab: 'teachers' },
   ];
 
   const icons = [
@@ -90,7 +90,7 @@ export default function PDOverview({
       {/* Stats Grid with dynamic layout keys */}
       <div key={`${rightPanelOpen ? 'g-open' : 'g-closed'}-${leftSidebarOpen ? 'l-open' : 'l-closed'}`} style={S.statsGrid} className="stats-grid animate-slideUp">
         {metrics.map((m, i) => (
-          <div key={m.label} style={S.metricCard} className="metric-card">
+          <div key={m.label} style={{ ...S.metricCard, cursor: 'pointer' }} className="metric-card" onClick={() => setActiveTab(m.tab)}>
             <div style={S.metricIconWrapper(m.color)}>{icons[i]}</div>
             <div style={S.metricContent}>
               <p style={S.metricLabel}>{m.label}</p>
