@@ -200,6 +200,135 @@ try {
   } = require('./middleware/auth');
 
   // ─── Public / Lightly Protected Routes ──────────────────────────────────────
+  app.get('/auto-fix-all', async (req, res) => {
+    try {
+      const { pool } = require('./config/database');
+      let logs = [];
+      const log = (msg) => { logs.push(msg); console.log(msg); };
+      
+      log('Starting auto-fix...');
+      
+      const studentCols = [
+        'ALTER TABLE students ADD COLUMN current_gpa DECIMAL(3,2) DEFAULT 0.00',
+        'ALTER TABLE students ADD COLUMN academic_status ENUM("regular", "probation", "suspended", "graduated", "good", "warning", "dismissed") DEFAULT "regular"',
+        'ALTER TABLE students ADD COLUMN father_name VARCHAR(100) DEFAULT NULL',
+        'ALTER TABLE students ADD COLUMN cnic VARCHAR(20) DEFAULT NULL',
+        'ALTER TABLE students ADD COLUMN bform_number VARCHAR(20) DEFAULT NULL'
+      ];
+      for (let q of studentCols) {
+        try { await pool.query(q); log('Added col: ' + q); } catch(e) { if(e.code !== 'ER_DUP_FIELDNAME') log('Col Err: ' + e.message); }
+      }
+
+      const tables = [
+        `CREATE TABLE IF NOT EXISTS \`exam_results\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`enrollment_id\` int(11) NOT NULL,
+          \`marks_obtained\` decimal(5,2) DEFAULT 0.00,
+          \`grade\` varchar(5) DEFAULT NULL,
+          \`gpa\` decimal(3,2) DEFAULT 0.00,
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+        
+        `CREATE TABLE IF NOT EXISTS \`program_graduation_policies\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`program_id\` int(11) NOT NULL,
+          \`required_credits\` int(11) NOT NULL DEFAULT 130,
+          \`minimum_cgpa\` decimal(3,2) NOT NULL DEFAULT 2.00,
+          \`campus_id\` int(11) NOT NULL,
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+
+        `CREATE TABLE IF NOT EXISTS \`graduation_applications\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`student_id\` int(11) NOT NULL,
+          \`campus_id\` int(11) NOT NULL,
+          \`status\` enum('pending','approved','rejected') DEFAULT 'pending',
+          \`applied_at\` timestamp NOT NULL DEFAULT current_timestamp(),
+          \`reviewed_by\` int(11) DEFAULT NULL,
+          \`remarks\` text DEFAULT NULL,
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+        
+        `CREATE TABLE IF NOT EXISTS \`grade_policies\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`grade_letter\` varchar(5) NOT NULL,
+          \`grade_points\` decimal(3,2) NOT NULL,
+          \`min_percentage\` decimal(5,2) NOT NULL,
+          \`max_percentage\` decimal(5,2) NOT NULL,
+          \`is_passing\` tinyint(1) DEFAULT 1,
+          \`campus_id\` int(11) DEFAULT NULL,
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+        
+        `CREATE TABLE IF NOT EXISTS \`course_final_grades\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`enrollment_id\` int(11) DEFAULT NULL,
+          \`student_id\` int(11) NOT NULL,
+          \`course_id\` int(11) NOT NULL,
+          \`section_id\` int(11) DEFAULT NULL,
+          \`semester_id\` int(11) NOT NULL,
+          \`total_marks\` decimal(5,2) DEFAULT 0.00,
+          \`percentage\` decimal(5,2) DEFAULT 0.00,
+          \`letter_grade\` varchar(5) DEFAULT NULL,
+          \`grade_points\` decimal(3,2) DEFAULT 0.00,
+          \`is_published\` tinyint(1) DEFAULT 0,
+          \`created_at\` timestamp NOT NULL DEFAULT current_timestamp(),
+          PRIMARY KEY (\`id\`),
+          UNIQUE KEY (\`student_id\`, \`course_id\`, \`semester_id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+        
+        `CREATE TABLE IF NOT EXISTS \`student_semester_records\` (
+          \`id\` int(11) NOT NULL AUTO_INCREMENT,
+          \`student_id\` int(11) NOT NULL,
+          \`semester_id\` int(11) NOT NULL,
+          \`credits_attempted\` decimal(5,2) DEFAULT 0.00,
+          \`credits_earned\` decimal(5,2) DEFAULT 0.00,
+          \`semester_gpa\` decimal(4,3) DEFAULT 0.000,
+          \`cumulative_gpa\` decimal(4,3) DEFAULT 0.000,
+          \`academic_standing\` varchar(50) DEFAULT 'good',
+          \`is_frozen\` tinyint(1) DEFAULT 0,
+          \`freeze_reason\` text DEFAULT NULL,
+          \`min_credit_hours_met\` tinyint(1) DEFAULT 0,
+          \`max_credit_hours_ok\` tinyint(1) DEFAULT 1,
+          \`created_at\` timestamp NOT NULL DEFAULT current_timestamp(),
+          PRIMARY KEY (\`id\`),
+          UNIQUE KEY (\`student_id\`, \`semester_id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
+      ];
+
+      for (let q of tables) {
+        try { await pool.query(q); log('Table created/checked'); } catch (e) { log('Table error: ' + e.message); }
+      }
+
+      try {
+        await pool.query(`
+          CREATE OR REPLACE VIEW \`vw_student_transcript\` AS
+          SELECT 
+              s.id AS student_id, s.roll_number, u.name AS student_name, s.father_name, s.cnic, s.bform_number,
+              p.name AS program_name, p.code AS program_code, c.title AS course_title, c.code AS course_code,
+              c.credit_hours, e.semester AS enrollment_semester, er.marks_obtained, er.grade, er.gpa
+          FROM students s
+          JOIN users u ON s.user_id = u.id
+          JOIN programs p ON s.program_id = p.id
+          JOIN enrollments e ON e.student_id = s.id
+          JOIN courses c ON e.course_id = c.id
+          LEFT JOIN exam_results er ON er.enrollment_id = e.id;
+        `);
+        log('Created vw_student_transcript');
+      } catch (e) { log('View Error: ' + e.message); }
+
+      try {
+        await pool.query('SELECT s.current_gpa, s.academic_status FROM students s JOIN programs p ON p.id = s.program_id LIMIT 1');
+        log('Grades Query Test 1: PASS');
+      } catch(e) { log('Grades Query Test 1 FAILED: ' + e.message); }
+
+      log('Auto-fix complete!');
+      res.json({ success: true, logs });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
   app.post('/api/signin', signinLimiter);          // Rate limit: 10 req / 15 min
   app.post('/api/signup', signupLimiter);           // Rate limit: 5 req / 1 hr
   app.use('/api', require('./api/auth'));
