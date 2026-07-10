@@ -200,6 +200,10 @@ router.get('/transcript/:student_id', verifyToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'Access denied to other transcripts.' });
     }
 
+    if (!student_id) {
+      return res.status(400).json({ success: false, message: 'Student ID not found for this account. Please ensure your student profile is completely set up.' });
+    }
+
     const [transcriptRows] = await pool.query(
       `SELECT * FROM vw_student_transcript WHERE student_id = ? ORDER BY enrollment_semester ASC`,
       [student_id]
