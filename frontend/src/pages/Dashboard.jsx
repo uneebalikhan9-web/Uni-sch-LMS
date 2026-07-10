@@ -146,6 +146,17 @@ function Dashboard() {
       // Optional: Add a slight opacity version for backgrounds if needed in future
       root.style.setProperty('--primary-light', `${user.primary_color}15`); 
     }
+
+    // Cleanup when dashboard unmounts (logout)
+    return () => {
+      const root = document.documentElement;
+      root.style.removeProperty('--primary-rgb');
+      root.style.removeProperty('--primary-black');
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--accent');
+      root.style.removeProperty('--primary-light');
+    };
   }, [user]);
 
   const handleLogout = () => {
