@@ -191,13 +191,14 @@ router.get('/transcript/:student_id', verifyToken, async (req, res) => {
         SELECT 
             s.id AS student_id, s.roll_number, u.name AS student_name, s.father_name, s.cnic, s.bform_number,
             p.name AS program_name, p.code AS program_code, c.title AS course_title, c.code AS course_code,
-            c.credit_hours, e.semester AS enrollment_semester, er.marks_obtained, er.grade, er.gpa
+            c.credit_hours, e.semester AS enrollment_semester, 
+            cfg.total_marks AS marks_obtained, cfg.letter_grade AS grade, cfg.grade_points AS gpa
         FROM students s
         JOIN users u ON s.user_id = u.id
         JOIN programs p ON s.program_id = p.id
         JOIN enrollments e ON e.student_id = s.id
         JOIN courses c ON e.course_id = c.id
-        LEFT JOIN exam_results er ON er.enrollment_id = e.id;
+        LEFT JOIN course_final_grades cfg ON cfg.student_id = e.student_id AND cfg.course_id = e.course_id AND cfg.semester_id = e.semester;
       `);
     } catch (autoFixErr) {
       console.error('Auto fix transcript view error:', autoFixErr);
@@ -240,7 +241,12 @@ router.get('/transcript/:student_id', verifyToken, async (req, res) => {
     res.json({ success: true, transcript: transcriptRows, total_credits_passed });
   } catch (error) {
     console.error('Error fetching transcript:', error);
-    res.status(500).json({ success: false, message: 'Server error fetching transcript' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error fetching transcript',
+      debug_error: error.message,
+      debug_sql: error.sql
+    });
   }
 });
 
