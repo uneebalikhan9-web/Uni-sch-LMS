@@ -184,6 +184,26 @@ router.put('/applications/:id', verifyToken, isRegistrar, async (req, res) => {
 // =====================================================
 router.get('/transcript/:student_id', verifyToken, async (req, res) => {
   try {
+    // --- AUTO-FIX SCHEMA INJECTION START ---
+    try {
+      await pool.query(`
+        CREATE OR REPLACE VIEW \`vw_student_transcript\` AS
+        SELECT 
+            s.id AS student_id, s.roll_number, u.name AS student_name, s.father_name, s.cnic, s.bform_number,
+            p.name AS program_name, p.code AS program_code, c.title AS course_title, c.code AS course_code,
+            c.credit_hours, e.semester AS enrollment_semester, er.marks_obtained, er.grade, er.gpa
+        FROM students s
+        JOIN users u ON s.user_id = u.id
+        JOIN programs p ON s.program_id = p.id
+        JOIN enrollments e ON e.student_id = s.id
+        JOIN courses c ON e.course_id = c.id
+        LEFT JOIN exam_results er ON er.enrollment_id = e.id;
+      `);
+    } catch (autoFixErr) {
+      console.error('Auto fix transcript view error:', autoFixErr);
+    }
+    // --- AUTO-FIX SCHEMA INJECTION END ---
+
     let { student_id } = req.params;
     
     // If frontend sends 'undefined' or 'my', use the logged-in student's ID
