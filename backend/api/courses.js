@@ -11,10 +11,13 @@ router.get('/', verifyToken, async (req, res) => {
     const { role, campus_id } = req.user;
      
     let query = `
-      SELECT c.*, u.name as teacher_name, cl.name as class_name 
+      SELECT c.*, 
+        COALESCE(
+          (SELECT u.name FROM users u JOIN employees emp ON emp.user_id = u.id WHERE emp.id = c.teacher_id),
+          (SELECT name FROM users WHERE id = c.teacher_id AND role = 'teacher')
+        ) as teacher_name, 
+        cl.name as class_name 
       FROM courses c
-      LEFT JOIN employees e ON c.teacher_id = e.id
-      LEFT JOIN users u ON e.user_id = u.id
       LEFT JOIN classes cl ON c.class_id = cl.id
     `;
     
@@ -216,11 +219,14 @@ router.get('/my-enrollments', verifyToken, async (req, res) => {
     const studentId = req.user.student_id;
 
     const [enrollments] = await pool.query(`
-      SELECT c.*, u.name as teacher_name, e.enrolled_at, e.status, cl.name as class_name
+      SELECT c.*, 
+        COALESCE(
+          (SELECT u.name FROM users u JOIN employees emp ON emp.user_id = u.id WHERE emp.id = c.teacher_id),
+          (SELECT name FROM users WHERE id = c.teacher_id AND role = 'teacher')
+        ) as teacher_name, 
+        e.enrolled_at, e.status, cl.name as class_name
       FROM enrollments e
       JOIN courses c ON e.course_id = c.id
-      LEFT JOIN employees emp ON c.teacher_id = emp.id
-      LEFT JOIN users u ON emp.user_id = u.id
       LEFT JOIN classes cl ON c.class_id = cl.id
       WHERE e.student_id = ?
       ORDER BY e.enrolled_at DESC
