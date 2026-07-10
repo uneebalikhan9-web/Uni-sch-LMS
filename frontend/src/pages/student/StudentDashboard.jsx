@@ -5,8 +5,7 @@ import {
   House, BookOpen, Clock, CheckCircle, GraduationCap,
   SignOut, CalendarBlank, User, Buildings, 
   DotsThreeOutline, FileText, Pulse, ChatCircle, Sparkle,
-  Receipt
-, Globe } from "@phosphor-icons/react";
+  Receipt, Globe, UserFocus } from "@phosphor-icons/react";
 import { useToast } from '../../components/Toast';
 import ConfirmModal from '../../components/ConfirmModal';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -25,6 +24,8 @@ import SDCourseDetail from './sections/SDCourseDetail';
 import SDRightPanel from './sections/SDRightPanel';
 import SDModals from './sections/SDModals';
 import SDFees from './sections/SDFees';
+import SDGraduation from './sections/SDGraduation';
+import SDFaceAttendance from './sections/SDFaceAttendance';
 
 const SidebarBtn = ({ active, icon, label, count, onClick }) => (
   <button 
@@ -207,9 +208,21 @@ function StudentDashboard({ user, onLogout }) {
                   <td style="text-align: right; font-weight: 600;">Rs. ${(c.other_fee || 0).toLocaleString()}</td>
                 </tr>
                 ` : ''}
+                ${c.discount_amount > 0 ? `
+                <tr style="color: #10b981; font-weight: 600;">
+                  <td>Scholarship Discount</td>
+                  <td style="text-align: right;">- Rs. ${(c.discount_amount || 0).toLocaleString()}</td>
+                </tr>
+                ` : ''}
+                ${c.accrued_late_fee > 0 ? `
+                <tr style="color: #ef4444; font-weight: 600;">
+                  <td>Accrued Late Surcharge</td>
+                  <td style="text-align: right;">+ Rs. ${(c.accrued_late_fee || 0).toLocaleString()}</td>
+                </tr>
+                ` : ''}
                 <tr class="total-row">
                   <td>Total Amount Payable</td>
-                  <td style="text-align: right; font-size: 16px;">Rs. ${(c.total_amount || 0).toLocaleString()}</td>
+                  <td style="text-align: right; font-size: 16px;">Rs. ${(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
@@ -217,7 +230,7 @@ function StudentDashboard({ user, onLogout }) {
             <div style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 30px;">
               <strong>Important Notes:</strong><br/>
               1. Please deposit the fee in any designated bank branch before the due date: <strong>${new Date(c.due_date).toLocaleDateString()}</strong>.<br/>
-              2. Late fee surcharge of Rs. 1,000 will be applicable after the due date.<br/>
+              2. Late fee surcharge of Rs. ${c.late_fee_per_day || 100}/day will be applicable after the due date.<br/>
               3. This is a computer-generated voucher and does not require manual signature unless stamped by the cashier.
             </div>
 
@@ -273,8 +286,8 @@ function StudentDashboard({ user, onLogout }) {
 
   const fetchGrades = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/grades/my-grades`, { headers: { 'Authorization': `Bearer ${token}` } })
-      const data = await response.json(); if (data.success) setGrades(data.grades || [])
+      const response = await fetch(`${API_BASE_URL}/api/grades/my-academic-record`, { headers: { 'Authorization': `Bearer ${token}` } })
+      const data = await response.json(); if (data.success) setGrades(data.semester_records || [])
     } catch (error) { console.error(error) }
   }
 
@@ -489,27 +502,11 @@ function StudentDashboard({ user, onLogout }) {
       case 'attendance':
         return <SDAttendance attendanceStats={attendanceStats} attendanceLogs={attendanceLogs} />
       case 'grades':
-        return <SDGrades grades={grades} calculateGPA={calculateGPA} />
+        return <SDGrades />;
+      case 'graduation':
+        return <SDGraduation user={user} />;
       case 'registration':
-        return (
-          <SDRegistration 
-            registrationTab={registrationTab}
-            setRegistrationTab={setRegistrationTab}
-            availableClasses={availableClasses}
-            expandedClassId={expandedClassId}
-            setExpandedClassId={setExpandedClassId}
-            fetchClassSubjects={fetchClassSubjects}
-            handleRegisterClass={handleRegisterClass}
-            registering={registering}
-            myClassSubjects={myClassSubjects}
-            handleEnrollCourse={handleEnrollCourse}
-            courses={courses}
-            availableCourses={availableCourses}
-            enrolling={enrolling}
-            setSelectedCourse={setSelectedCourse}
-            setActivePage={setActivePage}
-          />
-        )
+        return <SDRegistration />;
       case 'timetable':
         return <SDTimetable groupTimetableByDay={groupTimetableByDay} exams={exams} />
       case 'assignments':
@@ -525,6 +522,8 @@ function StudentDashboard({ user, onLogout }) {
         return <SDLabs selectedLab={selectedLab} setSelectedLab={setSelectedLab} availableLabs={availableLabs} user={user} />
       case 'fees':
         return <SDFees challans={myChallans} onPrint={handlePrintChallan} />
+      case 'face-attendance':
+        return <SDFaceAttendance user={user} />
       default: return <div>Select a module</div>
     }
   }
@@ -666,6 +665,10 @@ function StudentDashboard({ user, onLogout }) {
             <p style={{...S.navLabel, marginTop:'20px'}}>PERFORMANCE</p>
             <SidebarBtn active={activePage === 'attendance'} onClick={() => { setActivePage('attendance'); setMobileMenuOpen(false); }} icon={<CheckCircle size={20} />} label="Attendance" count={attendanceStats.percentage ? attendanceStats.percentage + '%' : null} />
             <SidebarBtn active={activePage === 'grades'} onClick={() => { setActivePage('grades'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Results" count={grades.length} />
+            <SidebarBtn active={activePage === 'graduation'} onClick={() => { setActivePage('graduation'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Transcript & Grad" count={null} />
+
+            <p style={{...S.navLabel, marginTop:'20px'}}>SMART FEATURES</p>
+            <SidebarBtn active={activePage === 'face-attendance'} onClick={() => { setActivePage('face-attendance'); setMobileMenuOpen(false); }} icon={<UserFocus size={20} />} label="Face Attendance" count={null} />
           </nav>
 
           <button onClick={onLogout} style={S.logoutBtn} className="logout-btn">

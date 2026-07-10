@@ -49,13 +49,21 @@ export default function SDAttendance({ attendanceStats, attendanceLogs }) {
                     <td style={S.td}>{log.course_name}</td>
                     <td style={S.td}>{log.class_name}</td>
                     <td style={{...S.td, textAlign: 'right'}}>
-                      <span style={{
-                        ...S.statusBadge,
-                        background: log.status === 'present' ? '#dcfce7' : log.status === 'late' ? '#fed7aa' : '#fee2e2',
-                        color: log.status === 'present' ? '#166534' : log.status === 'late' ? '#9a3412' : '#991b1b'
-                      }}>
-                        {log.status.toUpperCase()}
-                      </span>
+                      <div style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                        <span style={{
+                          ...S.statusBadge,
+                          background: log.status === 'present' ? '#dcfce7' : log.status === 'late' ? '#fed7aa' : '#fee2e2',
+                          color: log.status === 'present' ? '#166534' : log.status === 'late' ? '#9a3412' : '#991b1b',
+                          margin: 0
+                        }}>
+                          {log.status.toUpperCase()}
+                        </span>
+                        {log.status === 'present' && (
+                          <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600, marginTop: '3px' }}>
+                            {log.method === 'Face AI' ? 'via Face ID Check-in' : 'via Teacher'}
+                          </span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

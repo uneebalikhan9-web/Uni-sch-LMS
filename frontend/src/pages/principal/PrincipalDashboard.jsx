@@ -3,9 +3,9 @@ import "../../responsive.css";
 import { Chart } from "chart.js/auto";
 import {
   House, ChalkboardTeacher, UserCircle, Buildings, BookOpen,
-  UserPlus, SignOut, Plus, DotsThreeOutline, Clock, SquaresFour,
+  UserPlus, SignOut, Plus, List, Clock, SquaresFour,
   ChartLine, FileText, ChatCircle, GraduationCap, ShieldCheck, Cardholder
-, Globe } from "@phosphor-icons/react";
+, Globe, UserFocus } from "@phosphor-icons/react";
 import { useNavigate } from "react-router-dom";
 import API_BASE_URL from "../../config/api";
 import { useToast } from "../../components/Toast";
@@ -17,6 +17,7 @@ import PDTimetable     from "./sections/PDTimetable";
 import PDFeedback      from "./sections/PDFeedback";
 import PDCourseReports from "./sections/PDCourseReports";
 import EPayroll        from "./sections/EPayroll";
+import PDFaceAttendance from "./sections/PDFaceAttendance";
 import FinExpenses     from "../finance/sections/FinExpenses";
 import "../finance/finance.css";
 import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal, StudentProfileModal } from "./sections/PDModals";
@@ -563,6 +564,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     ['courses',       'Programs & Courses', <BookOpen size={20}/>,             courses.filter(c=>c.status==='active').length],
     ['history',       'Course History',     <Clock size={20}/>,                courses.filter(c=>c.status==='completed').length],
     ['course_reports','Course Reports', <FileText size={20}/>,                  campusReports.length],
+    ['face-attendance', 'Face Attendance', <UserFocus size={20}/>, null],
     ['timetable',     'Academic Schedule', <Clock size={20}/>,                timetables.length],
     ['labs',          'Lab & Assets',      <SquaresFour size={20}/>,          labs.length],
     // ['exams',      'Exam & Results',     <FileText size={20}/>,             null],
@@ -582,8 +584,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
 
       <div style={S.bgOrb1}/><div style={S.bgOrb2}/><div style={S.bgOrb3}/>
 
-      <button onClick={() => { console.log("Sidebar toggled. Current state:", mobileMenuOpen, "-> Next:", !mobileMenuOpen); setMobileMenuOpen(!mobileMenuOpen); }} style={S.mobileMenuBtn} className="mobile-menu-btn">
-        <DotsThreeOutline size={24} weight="bold"/>
+      <button onClick={() => { console.log("Sidebar toggled. Current state:", mobileMenuOpen, "-> Next:", !mobileMenuOpen); setMobileMenuOpen(!mobileMenuOpen); }} className="mobile-menu-btn">
+        <List size={24} weight="bold"/>
       </button>
 
       {/* Backdrop overlay for mobile menu */}
@@ -630,7 +632,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
         overflow: 'visible',
         padding: 0,
-      }} className={`sidebar ${mobileMenuOpen?'mobile-open':''} ${leftSidebarOpen?'':'collapsed'}`}>
+      }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : (leftSidebarOpen ? '' : 'collapsed')}`}>
         
         {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
         <button
@@ -752,7 +754,11 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           <PDCourseReports campusReports={campusReports} reportsLoading={reportsLoading} onViewDetails={fetchReportDetails}/>
         )}
 
-        {!['overview','timetable','feedback','course_reports', 'my-leaves', 'my-payroll', 'campus-expenses'].includes(activeTab) && (
+        {activeTab === 'face-attendance' && (
+          <PDFaceAttendance token={token} />
+        )}
+
+        {!['overview','timetable','feedback','course_reports', 'my-leaves', 'my-payroll', 'campus-expenses', 'face-attendance'].includes(activeTab) && (
           <PDDataTable activeTab={activeTab} tableData={getTableData()}
             setShowAddModal={setShowAddModal} setEditingItem={setEditingItem}
             onDelete={handleDelete} onApprove={handleApprove} onReject={handleReject}

@@ -344,7 +344,33 @@ export function TimetableModal({ show, onClose, editingItem, newTimetableEntry, 
 }
 // ─── Student Profile View Modal ───────────────────────────────────────────────
 export function StudentProfileModal({ show, student, onClose }) {
+  const [isLinking, setIsLinking] = useState(false);
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentName, setParentName] = useState('');
+  const [parentPassword, setParentPassword] = useState('Lancers123');
+
   if (!show || !student) return null;
+
+  const handleLinkParent = () => {
+    if (!parentEmail || !parentName || !parentPassword) {
+      alert("Please fill all fields");
+      return;
+    }
+    const token = sessionStorage.getItem('token');
+    fetch(`http://localhost:5000/api/students/${student.id}/parent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ parent_email: parentEmail, parent_name: parentName, password: parentPassword, parent_phone: student.father_number })
+    }).then(r => r.json()).then(d => {
+      if(d.success) {
+        alert("Parent account created and linked successfully!");
+        setIsLinking(false);
+      } else {
+        alert("Error: " + d.message);
+      }
+    }).catch(e => alert("Network error"));
+  };
+
   return (
     <div style={S.modalOverlay} onClick={onClose}>
       <div style={{ ...S.modal, width:'650px', padding:0, borderRadius:'32px', overflow:'hidden', border:'none', boxShadow:'0 30px 60px -12px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
@@ -373,7 +399,7 @@ export function StudentProfileModal({ show, student, onClose }) {
           </div>
         </div>
         
-        <div style={{ padding:'40px', background:'#fff' }}>
+        <div style={{ padding:'40px', background:'#fff', maxHeight:'50vh', overflowY:'auto' }}>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'45px' }}>
             
             {/* Left Column: Profile */}
@@ -406,6 +432,27 @@ export function StudentProfileModal({ show, student, onClose }) {
                   <p style={{ margin:'8px 0 0', fontSize:'14px', color:'#0f172a', fontWeight:700, display:'flex', alignItems:'center', gap:'8px' }}>
                     Access Status: <span style={{ color:'#16a34a', background:'#dcfce7', padding:'2px 8px', borderRadius:'6px' }}>Active</span>
                   </p>
+                  
+                  {isLinking ? (
+                    <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }} className="animate-fadeIn">
+                      <input placeholder="Parent Email" type="email" value={parentEmail} onChange={e => setParentEmail(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                      <input placeholder="Parent Name" value={parentName} onChange={e => setParentName(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                      <input placeholder="Set Password" value={parentPassword} onChange={e => setParentPassword(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                        <button onClick={handleLinkParent} style={{ flex: 1, padding: '8px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '12px' }}>Save</button>
+                        <button onClick={() => setIsLinking(false)} style={{ flex: 1, padding: '8px', background: '#e2e8f0', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '12px' }}>Cancel</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        setParentName(student.father_name || "");
+                        setIsLinking(true);
+                      }}
+                      style={{ marginTop: '15px', padding: '10px 16px', background: '#4f46e5', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', width: '100%', boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)' }}>
+                      + Link Parent Portal
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

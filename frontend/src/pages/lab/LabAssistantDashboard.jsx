@@ -155,12 +155,19 @@ const LabAssistantDashboard = ({ user, onLogout }) => {
                 <div className="card-header">
                   <h3>Maintenance Status</h3>
                 </div>
-                <div className="maintenance-list">
-                  <MaintenanceItem label="Chemistry Lab 01" status="Ready" progress={100} color="#10b981" />
-                  <MaintenanceItem label="Physics Optics Lab" status="In Progress" progress={45} color="#f59e0b" />
-                  <MaintenanceItem label="Bio-Tech Research" status="Ready" progress={100} color="#10b981" />
-                  <MaintenanceItem label="Computer Science Lab 3" status="Scheduled" progress={0} color="#64748b" />
-                </div>
+                  {labs.length > 0 ? (
+                    labs.map((lab, i) => (
+                      <MaintenanceItem 
+                        key={i} 
+                        label={lab.item_name || 'Lab Node'} 
+                        status={lab.status || 'Available'} 
+                        progress={lab.status === 'Available' ? 100 : (lab.status === 'Maintenance' ? 45 : 0)} 
+                        color={lab.status === 'Available' ? '#10b981' : (lab.status === 'Maintenance' ? '#f59e0b' : '#64748b')} 
+                      />
+                    ))
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#94a3b8', padding: '20px' }}>No labs configured.</div>
+                  )}
               </div>
             </div>
           )}

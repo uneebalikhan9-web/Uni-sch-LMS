@@ -18,12 +18,10 @@ router.get('/engagement-stats', async (req, res) => {
   try {
     const campusId = getCampusId(req);
     
-    // Query last 7 days of activity from system_logs
-    const [stats] = await pool.query(`
-      SELECT 
-        DATE(created_at) as date,
-        COUNT(*) as count
-      FROM system_logs
+    // Query last 7 days of activity from audit_logs
+    const [activityLogs] = await pool.query(
+      `SELECT DATE(created_at) as date, COUNT(*) as action_count
+      FROM audit_logs
       WHERE campus_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
       GROUP BY DATE(created_at)
       ORDER BY date ASC
@@ -38,7 +36,7 @@ router.get('/engagement-stats', async (req, res) => {
       const dateStr = d.toISOString().split('T')[0];
       const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
       
-      const stat = stats.find(s => {
+      const stat = activityLogs.find(s => {
         // Handle both Date objects and strings depending on MySQL driver config
         const sDate = s.date instanceof Date ? s.date.toISOString().split('T')[0] : s.date;
         return sDate === dateStr;

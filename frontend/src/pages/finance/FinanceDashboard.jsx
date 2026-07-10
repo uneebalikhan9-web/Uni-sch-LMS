@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   ChartPie, CreditCard, Users, Buildings, 
   FileText, SignOut, List, CalendarBlank, 
-  Download, Plus, ChatCircle
+  Download, Plus, ChatCircle, Wrench, GraduationCap
 } from "@phosphor-icons/react";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
@@ -18,6 +18,8 @@ import FinPayroll from './sections/FinPayroll';
 import FinExpenses from './sections/FinExpenses';
 import FinReports from './sections/FinReports';
 import FinModals from './sections/FinModals';
+import FinFeeStructures from './sections/FinFeeStructures';
+import FinScholarships from './sections/FinScholarships';
 
 const NavItem = ({ active, icon, label, count, onClick }) => (
   <button 
@@ -131,6 +133,8 @@ const FinanceDashboard = ({ user, onLogout }) => {
       case 'fees': return <FinFees challans={challans} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
       case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
       case 'expenses': return <FinExpenses expenses={expenses} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('expense'); setShowModal(true); }} />;
+      case 'fee-structures': return <FinFeeStructures />;
+      case 'scholarships': return <FinScholarships students={students} />;
       case 'reports': return <FinReports stats={stats} challans={challans} payroll={payroll} expenses={expenses} />;
       default: return <FinOverview stats={stats} trend={trend} setActiveTab={setActiveTab} />;
     }
@@ -238,10 +242,12 @@ const FinanceDashboard = ({ user, onLogout }) => {
           <div className="fin-live-dot"></div>
         </div>
 
-        <nav className="fin-nav">
+         <nav className="fin-nav">
           <NavItem active={false} onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} icon={<ChatCircle size={20} />} label="Chat" />
           <NavItem active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} icon={<ChartPie size={20} />} label="Overview" />
           <NavItem active={activeTab === 'fees'} onClick={() => { setActiveTab('fees'); setMobileMenuOpen(false); }} icon={<CreditCard size={20} />} label="Fee Management" count={challans.filter(c => c.status === 'overdue').length} />
+          <NavItem active={activeTab === 'fee-structures'} onClick={() => { setActiveTab('fee-structures'); setMobileMenuOpen(false); }} icon={<Wrench size={20} />} label="Fee Structures" />
+          <NavItem active={activeTab === 'scholarships'} onClick={() => { setActiveTab('scholarships'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Scholarships" />
           <NavItem active={activeTab === 'payroll'} onClick={() => { setActiveTab('payroll'); setMobileMenuOpen(false); }} icon={<Users size={20} />} label="Payroll" count={payroll.filter(p => p.status === 'pending').length} />
           <NavItem active={activeTab === 'expenses'} onClick={() => { setActiveTab('expenses'); setMobileMenuOpen(false); }} icon={<Buildings size={20} />} label="Expenses" />
           <NavItem active={activeTab === 'reports'} onClick={() => { setActiveTab('reports'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Reports" />

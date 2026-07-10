@@ -12,7 +12,7 @@ router.use(isAdmin);
 // Get All Pending Students
 router.get('/', async (req, res) => {
   try {
-    const { role, campus_id: adminCampusId } = req.user;
+    const { role, campus_id: adminCampusId = null } = req.user;
     let query = `
       SELECT u.id, u.name, u.email, u.created_at, s.semester, c.name as department_name, u.campus_id
        FROM users u
@@ -50,11 +50,14 @@ router.put('/:id/approve', async (req, res) => {
   console.log(`[PendingStudents] Approval attempt for ID: ${id}`);
   
   try {
-    const { role, campus_id: adminCampusId } = req.user;
+    const { role, campus_id: adminCampusId = null } = req.user;
 
     // 1. Fetch student data first without strict filtering to diagnose
     const [studentCheck] = await pool.query(
-      'SELECT id, name, email, campus_id, role, is_approved, semester FROM users WHERE id = ?', 
+      `SELECT u.id, u.name, u.email, u.campus_id, u.role, u.is_approved, s.semester 
+       FROM users u 
+       LEFT JOIN students s ON u.id = s.user_id 
+       WHERE u.id = ?`, 
       [id]
     );
 
@@ -131,7 +134,7 @@ router.put('/:id/approve', async (req, res) => {
 router.delete('/:id/reject', async (req, res) => {
   const { id } = req.params;
   try {
-    const { role, campus_id: adminCampusId } = req.user;
+    const { role, campus_id: adminCampusId = null } = req.user;
 
     const [students] = await pool.query('SELECT id, campus_id FROM users WHERE id = ?', [id]);
     if (students.length === 0) return res.status(404).json({ success: false, message: 'Student not found' });
@@ -140,7 +143,19 @@ router.delete('/:id/reject', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    await pool.query('DELETE FROM users WHERE id = ?', [id]);
+    // Delete student records safely, bypassing potential corrupted/orphaned constraints
+    const connection = await pool.getConnection();
+    try {
+      await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      await connection.query('DELETE FROM students WHERE user_id = ?', [id]);
+      await connection.query('DELETE FROM users WHERE id = ?', [id]);
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+    } catch (err) {
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      throw err;
+    } finally {
+      connection.release();
+    }
     res.status(200).json({ success: true, message: 'Student rejected successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error rejecting student' });

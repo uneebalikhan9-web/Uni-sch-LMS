@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../../responsive.css";
 import { 
-  Globe, SignOut, ChartBar, Buildings, UserCircle, IdentificationCard, ChartLine, List, ShieldCheck, UserCirclePlus
+  Globe, SignOut, ChartBar, Buildings, UserCircle, IdentificationCard, ChartLine, List, ShieldCheck, UserCirclePlus, Briefcase
 } from "@phosphor-icons/react";
 
 import API_BASE_URL from "../../config/api";
@@ -15,6 +15,7 @@ import SAHODs        from "./sections/SAHODs";
 import SABDUsers     from "./sections/SABDUsers";
 import SAReports     from "./sections/SAReports";
 import SAStaffManagement from "./sections/SAStaffManagement";
+import SATrainings     from "./sections/SATrainings";
 import { S }         from "./sections/SAStyles";
 
 const API = `${API_BASE_URL}/api`;
@@ -324,7 +325,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   // ─── Sidebar Nav Items ────────────────────────────────────────
   const isModuleAllowed = (moduleId) => {
-    if (['overview', 'campuses', 'reports'].includes(moduleId)) return true;
+    if (['overview', 'campuses', 'reports', 'trainings'].includes(moduleId)) return true;
     if (!user.allowed_modules) return true; // Backward compatibility
     return user.allowed_modules.includes(moduleId);
   };
@@ -343,6 +344,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
     ['library',     'Digital Library',   <List size={20} />],
     ['it',          'IT & Systems',      <ShieldCheck size={20} />],
     ['reports',     'Institutional KPI', <ChartLine  size={20} />],
+    ['trainings',   'Trainings Manager', <Briefcase size={20} />],
   ].filter(item => isModuleAllowed(item[0]));
 
   // ─── Render ───────────────────────────────────────────────────
@@ -402,7 +404,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
         transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
         overflow: 'visible',
         padding: 0,
-      }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''} ${leftSidebarOpen ? '' : 'collapsed'}`}>
+      }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : (leftSidebarOpen ? '' : 'collapsed')}`}>
         
         {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
         <button
@@ -640,6 +642,10 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
             isReportDetailsLoading={isReportDetailsLoading}
             onViewDetails={handleViewReportDetails}
           />
+        )}
+
+        {activeTab === "trainings" && (
+          <SATrainings />
         )}
       </main>
 

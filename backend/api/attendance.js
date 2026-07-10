@@ -5,6 +5,19 @@ const { verifyToken, isTeacher, isStudent } = require('../middleware/auth');
 const router = express.Router();
 router.use(verifyToken);
 
+// ── Ensure table has method column ──────────────────────────────────────────
+const ensureAttendanceMethodColumn = async () => {
+  try {
+    await pool.query("ALTER TABLE attendance ADD COLUMN method VARCHAR(50) DEFAULT 'Manual'");
+    console.log('✅ Added method column to attendance table');
+  } catch (e) {
+    if (e.code !== 'ER_DUP_FIELDNAME') {
+      console.error('Error altering attendance table:', e);
+    }
+  }
+};
+ensureAttendanceMethodColumn();
+
 // ==========================================
 // TEACHER: Mark Attendance for Class
 // ==========================================
@@ -58,12 +71,13 @@ router.post('/mark', isTeacher, async (req, res) => {
         s.student_id,
         req.user.employee_id,
         s.status || 'present',
-        attendance_date
+        attendance_date,
+        s.method || 'Manual'
       ]);
 
       await pool.query(
         `INSERT INTO attendance 
-         (class_id, course_id, student_id, teacher_id, status, date) 
+         (class_id, course_id, student_id, teacher_id, status, date, method) 
          VALUES ?`,
         [values]
       );
@@ -94,7 +108,7 @@ router.get('/class/:class_id/date/:date', isTeacher, async (req, res) => {
     const { class_id, date } = req.params;
     const { course_id } = req.query; // Support filtering by course
     
-    let query = "SELECT student_id, status, course_id, DATE_FORMAT(date, '%Y-%m-%d') as date FROM attendance WHERE class_id = ? AND date = ?";
+    let query = "SELECT student_id, status, course_id, method, DATE_FORMAT(date, '%Y-%m-%d') as date FROM attendance WHERE class_id = ? AND date = ?";
     let params = [class_id, date];
 
     if (course_id) {
@@ -119,7 +133,7 @@ router.get('/class/:class_id/students', isTeacher, async (req, res) => {
     const { class_id } = req.params;
     
     const [students] = await pool.query(
-      `SELECT s.id, u.name, u.email 
+      `SELECT s.id, u.name, u.email, s.roll_number 
        FROM student_classes sc
        JOIN students s ON sc.student_id = s.id
        JOIN users u ON s.user_id = u.id
@@ -146,6 +160,7 @@ router.get('/my-attendance', isStudent, async (req, res) => {
       `SELECT 
         a.date as attendance_date,
         a.status,
+        a.method,
         c.title as course_name,
         cl.name as class_name
        FROM attendance a
@@ -231,7 +246,8 @@ router.get('/history/all', isTeacher, async (req, res) => {
         u.name   AS student_name,
         u.email  AS student_email,
         DATE_FORMAT(a.date, '%Y-%m-%d') as date,
-        a.status
+        a.status,
+        a.method
       FROM attendance a
       JOIN students s ON a.student_id = s.id
       JOIN users u ON s.user_id = u.id

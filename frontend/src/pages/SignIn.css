@@ -580,6 +580,7 @@
   }
   .form-title-block p {
     font-size: 0.9rem;
+    margin-bottom: 2rem;
   }
   .form-aux-options {
     flex-direction: column;

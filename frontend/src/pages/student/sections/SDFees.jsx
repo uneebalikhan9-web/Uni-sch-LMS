@@ -124,7 +124,19 @@ export default function SDFees({ challans, onPrint }) {
                         {new Date(c.due_date).toLocaleDateString()}
                       </div>
                     </td>
-                    <td style={{ padding: '20px', fontWeight: '800', color: '#0f172a' }}>Rs. {c.total_amount.toLocaleString()}</td>
+                    <td style={{ padding: '20px' }}>
+                      <div style={{ fontWeight: '800', color: '#0f172a' }}>Rs. {(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</div>
+                      {c.discount_amount > 0 && (
+                        <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}>
+                          - Rs. {parseFloat(c.discount_amount).toLocaleString()} (Scholarship)
+                        </div>
+                      )}
+                      {c.accrued_late_fee > 0 && (
+                        <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
+                          + Rs. {parseFloat(c.accrued_late_fee).toLocaleString()} (Late fee)
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: '20px' }}>
                       <span style={{
                         background: badge.bg,

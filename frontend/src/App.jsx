@@ -15,7 +15,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import PublicRoute from './components/PublicRoute'
 import Chat from './pages/Chat'
 import VerifyOTP from './pages/VerifyOTP'
+import Trainings from './pages/Trainings'
 import { ToastProvider } from './components/Toast'
+import FaceAttendancePage from './pages/FaceAttendancePage'
 
 function App() {
 
@@ -32,6 +34,7 @@ function App() {
           {/* <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} /> */}
           {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
           <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
+          <Route path="/trainings" element={<Trainings />} />
           
           {/* Protected Routes - Only accessible if logged in */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -44,10 +47,12 @@ function App() {
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           <Route path="/apply" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
           <Route path="/apply/:jobId" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
+          <Route path="/face-attendance" element={<ProtectedRoute><FaceAttendancePage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </ToastProvider>
   )
 }
+
 
 export default App

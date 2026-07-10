@@ -40,7 +40,7 @@ export const S = {
     position: 'fixed', 
     height: '100vh', 
     overflowY: 'auto',
-    zIndex: 10,
+    zIndex: 99999,
     boxShadow: '10px 0 30px -10px rgba(0,0,0,0.2)',
   },
   logoWrapper: {
@@ -390,7 +390,7 @@ export const S = {
     top: 0,
     height: '100vh',
     overflowY: 'auto',
-    zIndex: 10,
+    zIndex: 99999,
     boxShadow: '-10px 0 30px -10px rgba(0,0,0,0.05)',
   },
   profileCard: {

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { Server } = require('socket.io');
 const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
 require('dotenv').config();
 
 const { testConnection } = require('./config/database');
@@ -140,14 +141,10 @@ app.options('*', cors(corsOptions));     // Handle preflight requests
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Basic Security Headers (no helmet.js needed for these)
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  next();
-});
+// Security Headers using helmet
+app.use(helmet({
+  crossOriginResourcePolicy: false, // Needed if serving images across domains
+}));
 
 // Health check route
 app.get('/', (req, res) => {
@@ -212,10 +209,13 @@ try {
   app.use('/api', require('./api/forgotPassword'));
 
   app.use('/api/users', require('./api/users'));
+  app.use('/api/trainings', require('./api/trainings'));
+
+  const { cacheMiddleware } = require('./middleware/cache');
 
   // ─── Academic Routes (internally protected via verifyToken + role checks) ────
   app.use('/api/teachers',        require('./api/teachers'));
-  app.use('/api/courses',         require('./api/courses'));
+  app.use('/api/courses',         cacheMiddleware(60), require('./api/courses'));
   app.use('/api/assignments',     require('./api/assignmentFiles'));
   app.use('/api/assignments',     require('./api/assignments'));
   app.use('/api/submissions',     require('./api/studentSubmissions'));
@@ -226,12 +226,27 @@ try {
   app.use('/api/challans',        require('./api/challans'));
   app.use('/api/timetables',      require('./api/timetables'));
   app.use('/api/classes',         require('./api/classes'));
+  app.use('/api/semesters',       cacheMiddleware(60), require('./api/semesters'));
+  app.use('/api/rooms',           require('./api/rooms'));
+  app.use('/api/degree-plans',    cacheMiddleware(60), require('./api/degreePlans'));
+  app.use('/api/course-sections', require('./api/courseSections'));
+  app.use('/api/course-prerequisites', cacheMiddleware(60), require('./api/coursePrerequisites'));
   app.use('/api/logs',            require('./api/logs'));
   app.use('/api/labs',            require('./api/labs'));
+  app.use('/api/parent',          require('./api/parent'));
   app.use('/api/pending-students',require('./api/pending-students'));
   app.use('/api/students',        require('./api/students'));
   app.use('/api/feedback',        require('./api/feedback'));
   app.use('/api/chat',            require('./api/chat'));
+  app.use('/api/face-attendance', require('./api/faceAttendance'));
+
+  // ─── Phase 2 & 3: New HEC Compliance Routes ─────────────────────────────────
+  app.use('/api/teacher-workload',     require('./api/teacherWorkload'));
+  app.use('/api/enrollment-rules',     require('./api/enrollmentRules'));
+  app.use('/api/enrollment',           require('./api/enrollmentRegistrations'));
+
+  // Phase 5: Reporting & Graduation Audit
+  app.use('/api/graduation',           require('./api/graduation'));
 
   // ─── Strictly Protected Institutional Routes ─────────────────────────────────
   // FIX (CRIT-02): Removed duplicate unprotected registrations.

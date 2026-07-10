@@ -393,5 +393,65 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Error deleting student' });
   }
 });
+// Create and link Parent Account
+router.post('/:id/parent', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const campusId = req.user.campus_id;
+    const { id } = req.params; // users.id of the student
+    const { parent_name, parent_email, parent_phone, password, relationship } = req.body;
+
+    if (!parent_name || !parent_email || !password) {
+      connection.release();
+      return res.status(400).json({ success: false, message: 'Parent name, email, and password are required' });
+    }
+
+    // Verify student exists
+    const [[studentUser]] = await connection.query(
+      'SELECT s.id as student_id FROM users u JOIN students s ON u.id = s.user_id WHERE u.id = ? AND u.role = ? AND u.campus_id = ?',
+      [id, 'student', campusId]
+    );
+    if (!studentUser) {
+      connection.release();
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    await connection.beginTransaction();
+
+    let parentUserId;
+    // Check if parent user already exists
+    const [[existingUser]] = await connection.query('SELECT id, role FROM users WHERE email = ?', [parent_email]);
+    
+    if (existingUser) {
+      if (existingUser.role !== 'parent') {
+        throw new Error('Email is already in use by a non-parent account');
+      }
+      parentUserId = existingUser.id;
+    } else {
+      // Create new parent user
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const [result] = await connection.query(
+        'INSERT INTO users (name, email, phone, password, role, campus_id, is_approved, client_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [parent_name, parent_email, parent_phone || null, hashedPassword, 'parent', campusId, true, req.user.client_id || null]
+      );
+      parentUserId = result.insertId;
+    }
+
+    // Link parent to student
+    await connection.query(
+      'INSERT IGNORE INTO student_parents (parent_user_id, student_id, relationship) VALUES (?, ?, ?)',
+      [parentUserId, studentUser.student_id, relationship || 'Parent']
+    );
+
+    await connection.commit();
+    res.json({ success: true, message: 'Parent account linked successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Error creating parent account:', error);
+    res.status(500).json({ success: false, message: error.message || 'Error creating parent account' });
+  } finally {
+    connection.release();
+  }
+});
 
 module.exports = router;

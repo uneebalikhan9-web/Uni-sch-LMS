@@ -435,11 +435,12 @@ export const S = {
 
   // Tables
   tableCard: {
-    background: '#fff',
-    borderRadius: '32px',
+    background: '#ffffff',
+    borderRadius: '28px',
     border: '1px solid #e2e8f0',
     overflow: 'hidden',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05)',
+    boxShadow: '0 20px 40px -15px rgba(0, 0, 0, 0.08)',
+    transition: 'all 0.3s ease',
   },
 
   tableContainer: {
@@ -667,7 +668,7 @@ export const S = {
     top: 0,
     height: '100vh',
     overflowY: 'auto',
-    zIndex: 10,
+    zIndex: 99999,
     boxShadow: '-10px 0 30px -10px rgba(0, 0, 0, 0.05)',
   },
 
@@ -842,14 +843,15 @@ export const S = {
   },
 
   modal: {
-    background: '#fff',
+    background: '#ffffff',
     padding: '40px',
-    borderRadius: '40px',
-    width: '560px',
+    borderRadius: '24px',
+    width: '640px',
     maxHeight: '90vh',
     overflowY: 'auto',
-    boxShadow: '0 50px 70px -20px rgba(0, 0, 0, 0.4)',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+    border: '1px solid #e2e8f0',
+    position: 'relative',
   },
 
   modalHeader: {
@@ -902,15 +904,17 @@ export const S = {
 
   input: {
     padding: '14px 20px',
-    borderRadius: '18px',
-    border: '2px solid #f1f5f9',
+    borderRadius: '14px',
+    border: '2px solid #e2e8f0',
     outline: 'none',
     width: '100%',
-    fontSize: '1rem',
-    fontWeight: '600',
-    transition: 'all 0.2s ease',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    color: '#0f172a',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     boxSizing: 'border-box',
     fontFamily: "'Plus Jakarta Sans', sans-serif",
+    background: '#f8fafc',
   },
 
   row: {
@@ -933,8 +937,8 @@ export const S = {
     padding: '16px',
     background: '#f1f5f9',
     border: 'none',
-    borderRadius: '18px',
-    fontWeight: '800',
+    borderRadius: '14px',
+    fontWeight: '700',
     color: '#64748b',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
@@ -943,13 +947,13 @@ export const S = {
   saveBtn: {
     flex: 2,
     padding: '16px',
-    background: 'var(--primary-color, #4f46e5)',
+    background: 'linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #818cf8 100%)',
     color: '#fff',
     border: 'none',
-    borderRadius: '18px',
-    fontWeight: '800',
+    borderRadius: '14px',
+    fontWeight: '700',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    transition: 'all 0.3s ease',
     boxShadow: '0 10px 20px -8px rgba(var(--primary-rgb, 79, 70, 229), 0.5)',
   },
 

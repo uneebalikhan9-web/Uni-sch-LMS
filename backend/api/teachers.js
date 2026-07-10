@@ -194,14 +194,13 @@ router.get('/students', async (req, res) => {
       LEFT JOIN student_classes sc ON s.id = sc.student_id
       LEFT JOIN classes cl ON sc.class_id = cl.id
       WHERE u.role = 'student' AND (
-        u.campus_id = ? 
-        OR c.teacher_id = ? 
+        c.teacher_id = ? 
         OR cl.teacher_id = ?
       )
       GROUP BY u.id, s.id, u.name, u.email, s.roll_number, s.semester, u.created_at,
                s.father_name, s.father_cnic, s.last_education, s.father_number, s.bform_number
       ORDER BY u.name
-    `, [campus_id, teacherId, teacherId]);
+    `, [teacherId, teacherId]);
     res.status(200).json({ success: true, students });
   } catch (err) { 
     console.error('Error fetching teacher students:', err);

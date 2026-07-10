@@ -17,6 +17,7 @@ import LibraryDashboard from './library/LibraryDashboard'
 import ITDashboard from './it/ITDashboard'
 import LabAssistantDashboard from './lab/LabAssistantDashboard'
 import RectorDashboard from './rector/RectorDashboard'
+import ParentDashboard from './parent/ParentDashboard'
 import API_BASE_URL from '../config/api'
 import './Dashboard.css'
 
@@ -38,6 +39,7 @@ const ROLE_COMPONENTS = {
   lab_assistant:    LabAssistantDashboard,
   student:          StudentDashboard,
   teacher:          TeacherDashboard,
+  parent:           ParentDashboard,
 };
 
 function Dashboard() {
@@ -112,7 +114,12 @@ function Dashboard() {
     })
 
     return () => {
-      if (socketRef.current) socketRef.current.disconnect()
+      // Delay disconnect slightly to avoid "WebSocket is closed before the connection is established"
+      // during React Strict Mode's rapid mount/unmount cycle in development.
+      const currentSocket = socketRef.current;
+      if (currentSocket) {
+        setTimeout(() => currentSocket.disconnect(), 1000);
+      }
     }
   }, [navigate])
 

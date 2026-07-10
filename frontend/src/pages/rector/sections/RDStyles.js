@@ -4,7 +4,7 @@ export const S = {
   bgOrb1: { position:'fixed', width:'800px', height:'800px', borderRadius:'50%', background:'radial-gradient(circle at 30% 30%, rgba(30,58,138,0.08), transparent 70%)', top:'-300px', left:'-300px', zIndex:0, animation:'float 25s infinite alternate ease-in-out' },
   bgOrb2: { position:'fixed', width:'600px', height:'600px', borderRadius:'50%', background:'radial-gradient(circle at 70% 70%, rgba(59,130,246,0.08), transparent 70%)', bottom:'-250px', right:'-250px', zIndex:0, animation:'float 30s infinite alternate ease-in-out' },
   
-  sidebar: { width:'280px', background:'linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%)', color:'#fff', display:'flex', flexDirection:'column', padding:'32px 20px', position:'fixed', height:'100vh', overflowY:'auto', zIndex:10, boxShadow:'10px 0 30px -10px rgba(0,0,0,0.2)' },
+  sidebar: { width:'280px', background:'linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%)', color:'#fff', display:'flex', flexDirection:'column', padding:'32px 20px', position:'fixed', height:'100vh', overflowY:'auto', zIndex:99999, boxShadow:'10px 0 30px -10px rgba(0,0,0,0.2)' },
   logoWrapper: { display:'flex', alignItems:'center', gap:'12px', marginBottom:'24px', padding:'0 8px' },
   logoIcon: { width:'40px', height:'40px', background:'rgba(255,255,255,0.15)', borderRadius:'14px', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', boxShadow:'0 8px 16px rgba(0,0,0,0.1)' },
   logoText: { fontSize:'1.4rem', fontWeight:'800', letterSpacing:'-0.02em', color:'#fff' },

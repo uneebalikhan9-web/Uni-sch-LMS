@@ -24,12 +24,14 @@ const getChatVisibilityFilter = (user) => {
           (u.role IN ('admin', 'principal') AND u.campus_id = ?)
           OR
           (u.role = 'teacher' AND u.id IN (
-            SELECT c.teacher_id FROM courses c 
+            SELECT emp.user_id FROM courses c 
             JOIN enrollments e ON c.id = e.course_id 
+            JOIN employees emp ON c.teacher_id = emp.id
             WHERE e.student_id = ? AND e.status = 'approved'
             UNION
-            SELECT cl.teacher_id FROM classes cl 
+            SELECT emp.user_id FROM classes cl 
             JOIN student_classes sc ON cl.id = sc.class_id 
+            JOIN employees emp ON cl.teacher_id = emp.id
             WHERE sc.student_id = ? AND sc.status = 'approved'
           ))
         )
@@ -48,7 +50,7 @@ const getChatVisibilityFilter = (user) => {
       `,
       params: [...baseParams, campusId, campusId]
     };
-  } else if (['rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager'].includes(role)) {
+  } else if (['rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager', 'master_admin'].includes(role)) {
     // Masters see EVERYONE across ALL campuses in their university (except super_admin)
     return {
       condition: baseCond,

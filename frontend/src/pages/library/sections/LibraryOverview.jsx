@@ -46,18 +46,20 @@ const LibraryOverview = ({ stats, transactions }) => {
               <tr><th>Title</th><th>Subject</th><th>Checkouts</th><th>Trend</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ fontWeight: 800, color: '#0f172a' }}>Introduction to Algorithms</td>
-                <td style={{ fontWeight: 600, color: '#475569' }}>CS / Engineering</td>
-                <td style={{ fontWeight: 900 }}>245</td>
-                <td><TrendUp size={18} weight="bold" color="#10b981" /></td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 800, color: '#0f172a' }}>Business Psychology</td>
-                <td style={{ fontWeight: 600, color: '#475569' }}>Management</td>
-                <td style={{ fontWeight: 900 }}>182</td>
-                <td><TrendUp size={18} weight="bold" color="#10b981" /></td>
-              </tr>
+              {stats.popularResources && stats.popularResources.length > 0 ? (
+                stats.popularResources.map((res, i) => (
+                  <tr key={i}>
+                    <td style={{ fontWeight: 800, color: '#0f172a' }}>{res.title}</td>
+                    <td style={{ fontWeight: 600, color: '#475569' }}>{res.subject || 'General'}</td>
+                    <td style={{ fontWeight: 900 }}>{res.checkouts}</td>
+                    <td><TrendUp size={18} weight="bold" color="#10b981" /></td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '30px', color: '#94a3b8', fontWeight: 600 }}>No popular resources data available yet.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

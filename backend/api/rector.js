@@ -125,9 +125,9 @@ router.get('/faculty', verifyToken, isRector, async (req, res) => {
         IFNULL(e.designation, 'Staff') as desig,
         IFNULL(d.name, 'General') as dept,
         CONCAT(
-          IFNULL((SELECT COUNT(*) FROM courses c 
+          CAST(IFNULL((SELECT COUNT(*) FROM courses c 
                   JOIN classes cl ON c.class_id = cl.id 
-                  WHERE c.teacher_id = e.id AND c.status = 'active' AND cl.campus_id IN (?)), 0),
+                  WHERE c.teacher_id = e.id AND c.status = 'active' AND cl.campus_id IN (?)), 0) AS CHAR),
           ' course(s)'
         ) as load_hrs,
         IFNULL(u.status, 'active') as status
@@ -221,7 +221,7 @@ router.get('/finance', verifyToken, isRector, async (req, res) => {
     const campusIds = await getRectorCampusIds(req.user);
 
     const [[{ totalRevenue }]] = await pool.query(
-      "SELECT IFNULL(SUM(fc.total_amount), 0) as totalRevenue FROM finance_challans fc WHERE fc.status = 'paid' AND fc.campus_id IN (?)", [campusIds]
+      "SELECT IFNULL(SUM(fc.total_amount), 0) as totalRevenue FROM finance_student_challans fc WHERE fc.status = 'paid' AND fc.campus_id IN (?)", [campusIds]
     );
     const [[{ totalExpenses }]] = await pool.query(
       'SELECT IFNULL(SUM(amount), 0) as totalExpenses FROM finance_expenses WHERE campus_id IN (?)', [campusIds]
@@ -280,7 +280,7 @@ router.get('/departments', verifyToken, isRector, async (req, res) => {
         d.name as dept,
         IFNULL(
           CONCAT(
-            ROUND(
+            CAST(ROUND(
               (SELECT COUNT(DISTINCT sc.student_id) FROM student_classes sc 
                JOIN classes cl ON sc.class_id = cl.id 
                JOIN programs p2 ON cl.program_id = p2.id 
@@ -289,7 +289,7 @@ router.get('/departments', verifyToken, isRector, async (req, res) => {
                       JOIN classes cl2 ON sc2.class_id = cl2.id 
                       JOIN programs p3 ON cl2.program_id = p3.id 
                       WHERE p3.department_id = d.id), 0) * 100, 1
-            ), '%'
+            ) AS CHAR), '%'
           ), 'N/A'
         ) as rate,
         'N/A' as att,
@@ -349,7 +349,7 @@ router.get('/research', verifyToken, isRector, async (req, res) => {
       SELECT 
         CONCAT('Active Research — ', c.title) as title,
         u.name as lead_pi,
-        CONCAT(COUNT(DISTINCT e2.student_id), ' students') as funding,
+        CONCAT(CAST(COUNT(DISTINCT e2.student_id) AS CHAR), ' students') as funding,
         'Current' as duration,
         CASE
           WHEN COUNT(DISTINCT e2.student_id) > 10 THEN 'High'

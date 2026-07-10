@@ -242,10 +242,12 @@ router.delete('/jobs/:id', verifyToken, async (req, res) => {
 
 // Announcements
 router.get('/announcements', verifyToken, async (req, res) => {
-    res.json([
-        { id: 1, title: 'New HR Policy 2026', msg: 'The updated leave and appraisal policy is now live.', type: 'policy', date: 'Today' },
-        { id: 2, title: 'Spring Training Workshop', msg: 'Mandatory training starts next Monday.', type: 'training', date: '2 Days Left' }
-    ]);
+    try {
+        const [rows] = await db.query('SELECT id, title, msg, type, DATE_FORMAT(created_at, "%b %d, %Y") as date FROM hr_announcements WHERE client_id = ? ORDER BY created_at DESC LIMIT 5', [req.user.client_id]);
+        res.json(rows);
+    } catch (e) {
+        res.json([]);
+    }
 });
 
 router.get('/attendance-trend', verifyToken, async (req, res) => {

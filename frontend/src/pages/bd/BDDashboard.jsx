@@ -32,12 +32,34 @@ _s.textContent = `
   @keyframes float { 0% { transform:translate(0,0) scale(1); } 100% { transform:translate(3%,3%) scale(1.05); } }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:.7;transform:scale(1.1);} }
   @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
-  @keyframes slideUp { from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);} }
-  .metric-card:hover{transform:translateY(-5px);box-shadow:0 20px 30px -10px rgba(var(--primary-rgb, 79, 70, 229),0.15);border-color:#c7d2fe;}
-  .add-btn:hover{transform:translateY(-3px);box-shadow:0 15px 25px -8px rgba(var(--primary-rgb, 79, 70, 229),0.6);}
-  .logout-btn:hover{background:rgba(239,68,68,0.2)!important;}
-  .animate-fadeIn{animation:fadeIn 0.3s ease forwards;}
-  .animate-slideUp{animation:slideUp 0.3s ease forwards;}
+  @keyframes slideUp { from{opacity:0;transform:translateY(30px) scale(0.95);}to{opacity:1;transform:translateY(0) scale(1);} }
+  .metric-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 1px solid #f1f5f9; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+  .metric-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgba(var(--primary-rgb, 79, 70, 229), 0.2); border-color: var(--primary-color, #4f46e5); }
+  .add-btn { transition: all 0.3s ease; background: linear-gradient(135deg, var(--primary-color, #4f46e5) 0%, #818cf8 100%) !important; }
+  .add-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 30px -10px rgba(var(--primary-rgb, 79, 70, 229), 0.6) !important; }
+  .logout-btn:hover { background: rgba(239,68,68,0.15) !important; color: #dc2626 !important; border-color: rgba(239,68,68,0.3) !important; }
+  .animate-fadeIn { animation: fadeIn 0.4s ease forwards; }
+  .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  
+  /* Input focus states for premium feel */
+  .dashboard-wrapper input, .dashboard-wrapper select, .dashboard-wrapper textarea { transition: all 0.3s ease; }
+  .dashboard-wrapper input:hover, .dashboard-wrapper select:hover, .dashboard-wrapper textarea:hover { border-color: #cbd5e1 !important; background: #fff !important; }
+  .dashboard-wrapper input:focus, .dashboard-wrapper select:focus, .dashboard-wrapper textarea:focus { border-color: var(--primary-color, #4f46e5) !important; background: #ffffff !important; box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 79, 70, 229), 0.15) !important; outline: none !important; }
+  
+  /* Card hover states */
+  .table-container { transition: all 0.4s ease; border: 1px solid transparent; }
+  .table-container:hover { border-color: #e2e8f0; }
+  
+  /* Mobile Responsiveness */
+  @media (max-width: 1024px) {
+    .sidebar { position: fixed !important; left: -280px; z-index: 1000 !important; }
+    .sidebar.mobile-open { left: 0 !important; box-shadow: 10px 0 30px rgba(0,0,0,0.5) !important; }
+    .main-content { margin-left: 0 !important; margin-right: 0 !important; padding: 80px 20px 20px 20px !important; }
+    .right-panel { display: none !important; }
+    .mobile-menu-btn { display: flex !important; background: #fff !important; border-radius: 12px; z-index: 1001; }
+    .left-open-btn, .left-close-btn, .right-open-btn, .right-close-btn { display: none !important; }
+    .dashboard-wrapper header { flex-direction: column; gap: 16px; }
+  }
 `;
 if (!document.head.querySelector('[data-bd-styles]')) { _s.setAttribute('data-bd-styles','true'); document.head.appendChild(_s); }
 
@@ -512,7 +534,7 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
       </aside>
 
       <BDModals 
-        showModal={showModal} setShowModal={setShowModal} activeTab={activeTab} editingItem={editingItem} form={form} setForm={setForm} handleSubmit={handleSubmit} LEAD_STATUSES={LEAD_STATUSES} BATCH_STATUSES={BATCH_STATUSES} campuses={globalCampuses}
+        showModal={showModal} setShowModal={setShowModal} activeTab={activeTab} editingItem={editingItem} form={form} setForm={setForm} handleSubmit={handleSubmit} LEAD_STATUSES={LEAD_STATUSES} BATCH_STATUSES={BATCH_STATUSES} campuses={globalCampuses} jobs={jobs}
         showReportModal={showReportModal} setShowReportModal={setShowReportModal} selectedReport={selectedReport} reportDetails={reportDetails} isReportDetailsLoading={isReportDetailsLoading} onRefreshReport={() => fetchReportDetails(selectedReport)}
       />
     </div>

@@ -3,7 +3,7 @@ import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, Ch
 import { S } from './BDStyles';
 
 export default function BDModals({ 
-  showModal, setShowModal, activeTab, editingItem, form, setForm, handleSubmit, LEAD_STATUSES, BATCH_STATUSES, campuses,
+  showModal, setShowModal, activeTab, editingItem, form, setForm, handleSubmit, LEAD_STATUSES, BATCH_STATUSES, campuses, jobs,
   showReportModal, setShowReportModal, selectedReport, reportDetails, isReportDetailsLoading, onRefreshReport
 }) {
   return (
@@ -120,6 +120,46 @@ export default function BDModals({
                       <option value="">Any / Global</option>
                       {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
+                  </div>
+                </>
+              )}
+
+              {activeTab === 'applicants' && (
+                <>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Applicant Name</label>
+                    <input required style={S.input} value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} />
+                  </div>
+                  <div style={S.row}>
+                    <div style={{flex:1}}>
+                      <label style={S.inputLabel}>Email</label>
+                      <input required type="email" style={S.input} value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} />
+                    </div>
+                    <div style={{flex:1}}>
+                      <label style={S.inputLabel}>Phone</label>
+                      <input type="text" style={S.input} value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} />
+                    </div>
+                  </div>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Job Posting</label>
+                    <select required style={S.input} value={form.job_id || ''} onChange={e => setForm({...form, job_id: e.target.value})}>
+                      <option value="">Select a Job...</option>
+                      {jobs && jobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
+                    </select>
+                  </div>
+                  <div style={S.row}>
+                    <div style={{flex:1}}>
+                      <label style={S.inputLabel}>Years of Experience</label>
+                      <input type="number" style={S.input} value={form.experience_years || ''} onChange={e => setForm({...form, experience_years: e.target.value})} />
+                    </div>
+                    <div style={{flex:1}}>
+                      <label style={S.inputLabel}>Subjects / Expertise</label>
+                      <input type="text" style={S.input} value={form.subjects || ''} onChange={e => setForm({...form, subjects: e.target.value})} />
+                    </div>
+                  </div>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Notes</label>
+                    <textarea style={{...S.input, minHeight: '80px', resize: 'vertical'}} value={form.notes || ''} onChange={e => setForm({...form, notes: e.target.value})}></textarea>
                   </div>
                 </>
               )}

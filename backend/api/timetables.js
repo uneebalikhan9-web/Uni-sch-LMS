@@ -16,10 +16,21 @@ router.post('/', verifyToken, async (req, res) => {
     const { course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester } = req.body;
     const campus_id = req.user.campus_id;
     
+    let room_id = null;
+    if (room_number) {
+      const [existingRoom] = await pool.query('SELECT id FROM rooms WHERE room_number = ? AND campus_id = ?', [room_number, campus_id]);
+      if (existingRoom.length > 0) {
+        room_id = existingRoom[0].id;
+      } else {
+        const [newRoom] = await pool.query('INSERT INTO rooms (room_number, campus_id, room_type) VALUES (?, ?, ?)', [room_number, campus_id, 'lecture']);
+        room_id = newRoom.insertId;
+      }
+    }
+    
     const [result] = await pool.query(
-      `INSERT INTO timetables (course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester, campus_id)
+      `INSERT INTO timetables (course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_id, academic_year, semester, campus_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester, campus_id]
+      [course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_id, academic_year, semester, campus_id]
     );
 
     res.status(201).json({
@@ -39,10 +50,11 @@ router.get('/my-timetable', verifyToken, isTeacher, async (req, res) => {
     const teacher_id = req.user.employee_id;
 
     const [timetable] = await pool.query(
-      `SELECT t.*, c.title as course_title, cl.name as class_name, cl.section
+      `SELECT t.*, c.title as course_title, cl.name as class_name, cl.section, r.room_number
        FROM timetables t
        JOIN courses c ON t.course_id = c.id
        LEFT JOIN classes cl ON t.class_id = cl.id
+       LEFT JOIN rooms r ON t.room_id = r.id
        WHERE t.teacher_id = ?
        ORDER BY FIELD(t.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.start_time`,
       [teacher_id]
@@ -65,12 +77,13 @@ router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
     fs.appendFileSync(logFile, `${timestamp} - Fetching for student_id: ${student_id}\n`);
 
     const [timetable] = await pool.query(
-      `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section
+      `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section, r.room_number
        FROM timetables t
        JOIN courses c ON t.course_id = c.id
        LEFT JOIN employees e ON t.teacher_id = e.id
        LEFT JOIN users u ON e.user_id = u.id
        LEFT JOIN classes cl ON t.class_id = cl.id
+       LEFT JOIN rooms r ON t.room_id = r.id
        WHERE t.course_id IN (
          SELECT course_id FROM enrollments WHERE student_id = ?
        ) OR t.class_id IN (
@@ -95,12 +108,13 @@ router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
 router.get('/', verifyToken, isAdmin, async (req, res) => {
   try {
     const { role, campus_id } = req.user;
-    let query = `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section
+    let query = `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section, r.room_number
                  FROM timetables t
                  JOIN courses c ON t.course_id = c.id
                  LEFT JOIN employees e ON t.teacher_id = e.id
                  LEFT JOIN users u ON e.user_id = u.id
-                 LEFT JOIN classes cl ON t.class_id = cl.id`;
+                 LEFT JOIN classes cl ON t.class_id = cl.id
+                 LEFT JOIN rooms r ON t.room_id = r.id`;
     const params = [];
 
     if (role !== 'super_admin') {
@@ -123,17 +137,29 @@ router.put('/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester } = req.body;
+    const campus_id = req.user.campus_id;
 
     // Verify role
     if (req.user.role !== 'principal' && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
       return res.status(403).json({ success: false, message: 'Access denied. Only HODs or Admins can update timetable entries.' });
     }
 
+    let room_id = null;
+    if (room_number) {
+      const [existingRoom] = await pool.query('SELECT id FROM rooms WHERE room_number = ? AND campus_id = ?', [room_number, campus_id]);
+      if (existingRoom.length > 0) {
+        room_id = existingRoom[0].id;
+      } else {
+        const [newRoom] = await pool.query('INSERT INTO rooms (room_number, campus_id, room_type) VALUES (?, ?, ?)', [room_number, campus_id, 'lecture']);
+        room_id = newRoom.insertId;
+      }
+    }
+
     await pool.query(
       `UPDATE timetables 
-       SET course_id = ?, class_id = ?, teacher_id = ?, day_of_week = ?, start_time = ?, end_time = ?, room_number = ?, academic_year = ?, semester = ?
+       SET course_id = ?, class_id = ?, teacher_id = ?, day_of_week = ?, start_time = ?, end_time = ?, room_id = ?, academic_year = ?, semester = ?
        WHERE id = ?`,
-      [course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_number, academic_year, semester, id]
+      [course_id, class_id, teacher_id, day_of_week, start_time, end_time, room_id, academic_year, semester, id]
     );
 
     res.status(200).json({ success: true, message: 'Timetable updated successfully' });
@@ -168,11 +194,12 @@ router.get('/class/:classId', verifyToken, async (req, res) => {
     const { classId } = req.params;
 
     const [timetable] = await pool.query(
-      `SELECT t.*, c.title as course_title, u.name as teacher_name
+      `SELECT t.*, c.title as course_title, u.name as teacher_name, r.room_number
        FROM timetables t
        JOIN courses c ON t.course_id = c.id
        LEFT JOIN employees e ON t.teacher_id = e.id
        LEFT JOIN users u ON e.user_id = u.id
+       LEFT JOIN rooms r ON t.room_id = r.id
        WHERE t.class_id = ?
        ORDER BY FIELD(t.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.start_time`,
       [classId]
@@ -192,7 +219,7 @@ router.get('/history', verifyToken, isAdmin, async (req, res) => {
     const role = req.user.role;
 
     let query = `
-      SELECT t.id, t.day_of_week, t.start_time, t.end_time, t.room_number,
+      SELECT t.id, t.day_of_week, t.start_time, t.end_time, r.room_number,
              t.academic_year, t.semester,
              c.title as course_title,
              cl.name as class_name, cl.section,
@@ -202,6 +229,7 @@ router.get('/history', verifyToken, isAdmin, async (req, res) => {
       LEFT JOIN classes cl ON t.class_id = cl.id
       LEFT JOIN employees e ON t.teacher_id = e.id
       LEFT JOIN users u ON e.user_id = u.id
+      LEFT JOIN rooms r ON t.room_id = r.id
     `;
     const params = [];
 

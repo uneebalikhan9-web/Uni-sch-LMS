@@ -1,94 +1,417 @@
-import React, { useState } from 'react';
-import { GraduationCap, ArrowLeft, Table } from "@phosphor-icons/react";
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  GraduationCap, Table, Eye, CheckCircle, Warning, BookOpen,
+  Student, Percent, Trophy, X, FloppyDisk, ArrowLeft
+} from "@phosphor-icons/react";
 import { S } from "./TDStyles";
+import API_BASE_URL from '../../../config/api';
 
-export default function TDGrades({ courses, students, grades, selectedCourse, setSelectedCourse, setActivePage, showGradeModal, setShowGradeModal, newGrade, setNewGrade, editingItem, setEditingItem, bulkGrades, setBulkGrades, showBulkGradeModal, setShowBulkGradeModal, handleGradesCourseSelect, fetchCourseGrades, bulkGradeHeader, setBulkGradeHeader, onBulkGradeSubmit }) {
-  const [selectedExamType, setSelectedExamType] = useState('final');
-  
-  const filteredStudents = selectedCourse 
-    ? students.filter(s => s.class_id === selectedCourse.class_id)
-    : [];
+const API = `${API_BASE_URL}/api`;
 
-  const filteredGradesForExam = grades.filter(g => g.exam_type === selectedExamType);
-  const avgGrade = filteredGradesForExam.length > 0 ? Math.round(filteredGradesForExam.reduce((acc, g) => acc + (g.percentage || 0), 0) / filteredGradesForExam.length) : 0;
-  
-  const formatExamType = (type) => {
-    const types = { 'midterm': 'Midterm Exam', 'final': 'Final Exam', 'quiz': 'Quiz', 'assignment': 'Assignment', 'presentation': 'Presentation' };
-    return types[type] || type;
+// Grade color helper
+function gradeColor(letter) {
+  if (!letter) return '#94a3b8';
+  if (['A+','A','A-'].includes(letter)) return '#10b981';
+  if (['B+','B','B-'].includes(letter)) return '#3b82f6';
+  if (['C+','C','C-'].includes(letter)) return '#f59e0b';
+  if (['D+','D'].includes(letter)) return '#f97316';
+  return '#ef4444'; // F
+}
+
+// Compute grade letter from percentage locally (mirrors HEC scale)
+function computeGrade(pct) {
+  if (pct >= 90) return { letter: 'A+', points: 4.00 };
+  if (pct >= 85) return { letter: 'A',  points: 4.00 };
+  if (pct >= 80) return { letter: 'A-', points: 3.70 };
+  if (pct >= 75) return { letter: 'B+', points: 3.30 };
+  if (pct >= 71) return { letter: 'B',  points: 3.00 };
+  if (pct >= 68) return { letter: 'B-', points: 2.70 };
+  if (pct >= 64) return { letter: 'C+', points: 2.30 };
+  if (pct >= 60) return { letter: 'C',  points: 2.00 };
+  if (pct >= 57) return { letter: 'C-', points: 1.70 };
+  if (pct >= 53) return { letter: 'D+', points: 1.30 };
+  if (pct >= 50) return { letter: 'D',  points: 1.00 };
+  return { letter: 'F', points: 0.00 };
+}
+
+export default function TDGrades({ courses }) {
+  const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+  const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedSection, setSelectedSection] = useState(null);
+  const [sections, setSections] = useState([]);
+  const [semesters, setSemesters] = useState([]);
+  const [selectedSemester, setSelectedSemester] = useState('');
+  const [enrolledStudents, setEnrolledStudents] = useState([]);
+  const [existingGrades, setExistingGrades] = useState([]);
+  const [bulkGrades, setBulkGrades] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Load semesters
+  useEffect(() => {
+    fetch(`${API}/semesters`, { headers }).then(r => r.json()).then(d => {
+      if (d.success) setSemesters(d.semesters || []);
+    });
+  }, []);
+
+  // Load sections when course + semester selected
+  useEffect(() => {
+    if (!selectedCourse || !selectedSemester) { setSections([]); setSelectedSection(null); return; }
+    fetch(`${API}/course-sections?semester_id=${selectedSemester}`, { headers })
+      .then(r => r.json()).then(d => {
+        if (d.success) {
+          const filtered = (d.courseSections || []).filter(
+            s => String(s.course_id) === String(selectedCourse.id)
+          );
+          setSections(filtered);
+        }
+      });
+  }, [selectedCourse, selectedSemester]);
+
+  // Load enrolled students + existing grades when section selected
+  useEffect(() => {
+    if (!selectedSection || !selectedSemester) { setEnrolledStudents([]); setExistingGrades([]); setBulkGrades([]); return; }
+
+    // Enrolled students
+    fetch(`${API}/enrollment/section/${selectedSection}`, { headers })
+      .then(r => r.json()).then(d => {
+        if (d.success) setEnrolledStudents(d.enrollments || []);
+      });
+
+    // Existing grades
+    fetch(`${API}/grades/final/section/${selectedSection}?semester_id=${selectedSemester}`, { headers })
+      .then(r => r.json()).then(d => {
+        if (d.success) setExistingGrades(d.grades || []);
+      });
+  }, [selectedSection, selectedSemester]);
+
+  // Build bulk grade rows whenever enrolled students or existing grades change
+  useEffect(() => {
+    if (enrolledStudents.length === 0) { setBulkGrades([]); return; }
+    const rows = enrolledStudents.filter(e => e.status === 'enrolled').map(e => {
+      const existing = existingGrades.find(g => g.student_id === e.student_id);
+      return {
+        student_id: e.student_id,
+        student_name: e.student_name,
+        roll_number: e.roll_number,
+        midterm_marks: existing?.midterm_marks ?? '',
+        final_marks: existing?.final_marks ?? '',
+        assignment_marks: existing?.assignment_marks ?? '',
+        quiz_marks: existing?.quiz_marks ?? '',
+        lab_marks: existing?.lab_marks ?? '',
+        existing_grade: existing?.letter_grade || null,
+        is_published: existing?.is_published || false,
+      };
+    });
+    setBulkGrades(rows);
+  }, [enrolledStudents, existingGrades]);
+
+  const updateRow = (idx, field, value) => {
+    setBulkGrades(prev => {
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], [field]: value };
+      return copy;
+    });
   };
 
+  const getRowTotal = (row) => {
+    const mid = parseFloat(row.midterm_marks) || 0;
+    const fin = parseFloat(row.final_marks) || 0;
+    const asgn = parseFloat(row.assignment_marks) || 0;
+    const quiz = parseFloat(row.quiz_marks) || 0;
+    const lab = parseFloat(row.lab_marks) || 0;
+    return mid + fin + asgn + quiz + lab;
+  };
+
+  const handleSaveAll = async () => {
+    if (!selectedCourse || !selectedSection || !selectedSemester) return;
+    setSaving(true);
+    setMsg(null);
+    try {
+      const students_grades = bulkGrades.map(row => ({
+        student_id: row.student_id,
+        midterm_marks: row.midterm_marks,
+        final_marks: row.final_marks,
+        assignment_marks: row.assignment_marks,
+        quiz_marks: row.quiz_marks,
+        lab_marks: row.lab_marks
+      }));
+
+      const res = await fetch(`${API}/grades/final/bulk`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          course_id: selectedCourse.id,
+          section_id: selectedSection,
+          semester_id: selectedSemester,
+          students_grades
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMsg({ type: 'success', text: data.message });
+        // Refresh grades
+        const gr = await fetch(`${API}/grades/final/section/${selectedSection}?semester_id=${selectedSemester}`, { headers });
+        const gd = await gr.json();
+        if (gd.success) setExistingGrades(gd.grades || []);
+      } else {
+        setMsg({ type: 'error', text: data.message });
+      }
+    } catch {
+      setMsg({ type: 'error', text: 'Error saving grades. Please try again.' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePublish = async () => {
+    if (!selectedCourse || !selectedSemester) return;
+    if (!window.confirm('Are you sure you want to PUBLISH these grades? Students will be able to see them and GPA will be recalculated.')) return;
+    setPublishing(true);
+    setMsg(null);
+    try {
+      const res = await fetch(`${API}/grades/publish`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          course_id: selectedCourse.id,
+          section_id: selectedSection,
+          semester_id: selectedSemester
+        })
+      });
+      const data = await res.json();
+      setMsg({ type: data.success ? 'success' : 'error', text: data.message });
+      if (data.success) {
+        const gr = await fetch(`${API}/grades/final/section/${selectedSection}?semester_id=${selectedSemester}`, { headers });
+        const gd = await gr.json();
+        if (gd.success) setExistingGrades(gd.grades || []);
+      }
+    } catch {
+      setMsg({ type: 'error', text: 'Error publishing grades.' });
+    } finally {
+      setPublishing(false);
+    }
+  };
+
+  const previewRows = bulkGrades.map(row => {
+    const total = getRowTotal(row);
+    const grade = computeGrade(total);
+    return { ...row, total, letter: grade.letter, points: grade.points };
+  });
+
+  const avgPct = previewRows.length > 0
+    ? Math.round(previewRows.reduce((s, r) => s + r.total, 0) / previewRows.length)
+    : 0;
+
+  const passCount = previewRows.filter(r => r.letter !== 'F').length;
+
   return (
-    <div style={S.tableCard} className="table-container animate-fadeIn">
+    <div style={S.tableCard} className="animate-fadeIn">
+      {/* Header */}
       <div style={S.tableHeader}>
         <div>
-          <div style={{ display:'flex', alignItems:'center', gap:'12px', marginBottom:'8px' }}>
-            <button onClick={() => setActivePage('classes')} style={{ ...S.iconBtn, background:'#fff', border:'1px solid #e2e8f0', width:'32px', height:'32px' }}><ArrowLeft size={16} weight="bold" /></button>
-            <h2 style={{ ...S.tableTitle, margin:0 }}><GraduationCap size={28} weight="duotone" color="#7c3aed" style={{ verticalAlign:'middle', marginRight:'12px' }} />Student Performance</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <h2 style={{ ...S.tableTitle, margin: 0 }}>
+              <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{ verticalAlign: 'middle', marginRight: '12px' }} />
+              Grade Management — HEC Compliant
+            </h2>
           </div>
-          <p style={S.tableSubtitle}>Manage grades {selectedCourse ? `for ${selectedCourse.title}` : ''}</p>
+          <p style={S.tableSubtitle}>Enter midterm, final, assignment, quiz & lab marks. Grades computed automatically using HEC scale.</p>
         </div>
-        <button onClick={() => {
-          if (selectedCourse) {
-            const initialBulk = filteredStudents.map(s => {
-              const existing = filteredGradesForExam.find(g => g.student_id === s.student_id);
-              return { student_id:s.student_id, student_name:s.name, marks_obtained: existing ? existing.marks_obtained : '', remarks: existing ? existing.remarks : '' };
-            });
-            setBulkGrades(initialBulk);
-            setBulkGradeHeader(prev => ({ ...prev, exam_type: selectedExamType }));
-          } else {
-            setBulkGrades([]);
-          }
-          setShowBulkGradeModal(true);
-        }} style={S.addBtn} className="add-btn"><Table size={18} weight="bold" /> Bulk Grade</button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {selectedSection && (
+            <>
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                style={{ ...S.addBtn, background: '#6366f1', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Eye size={16} /> {showPreview ? 'Edit Mode' : 'Preview'}
+              </button>
+              <button
+                onClick={handleSaveAll}
+                disabled={saving || bulkGrades.length === 0}
+                style={{ ...S.addBtn, background: '#059669', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FloppyDisk size={16} /> {saving ? 'Saving...' : 'Save All'}
+              </button>
+              <button
+                onClick={handlePublish}
+                disabled={publishing}
+                style={{ ...S.addBtn, background: '#dc2626', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircle size={16} /> {publishing ? 'Publishing...' : 'Publish Grades'}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div style={{...S.gradesFilter, display: 'flex', gap: '12px'}}>
-        <select onChange={e => { const cid = e.target.value; handleGradesCourseSelect(cid); if (cid) fetchCourseGrades(cid); }} style={{...S.modernSelect, flex: 1}} value={selectedCourse?.id || ''}>
-          <option value="">Select a course to view grades</option>
-          {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+      {/* Filters Row */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <select
+          style={{ ...S.modernSelect, flex: 1, minWidth: '200px' }}
+          value={selectedCourse?.id || ''}
+          onChange={e => {
+            const c = courses.find(x => String(x.id) === e.target.value);
+            setSelectedCourse(c || null);
+            setSelectedSection(null);
+          }}>
+          <option value="">Select Course</option>
+          {courses.map(c => <option key={c.id} value={c.id}>{c.title} ({c.code})</option>)}
         </select>
-        
-        {selectedCourse && (
-          <select onChange={e => setSelectedExamType(e.target.value)} style={{...S.modernSelect, width: '200px'}} value={selectedExamType}>
-            <option value="midterm">Midterm Exam</option>
-            <option value="final">Final Exam</option>
-            <option value="quiz">Quiz</option>
-            <option value="assignment">Assignment</option>
-            <option value="presentation">Presentation</option>
+
+        <select
+          style={{ ...S.modernSelect, minWidth: '180px' }}
+          value={selectedSemester}
+          onChange={e => { setSelectedSemester(e.target.value); setSelectedSection(null); }}>
+          <option value="">Select Semester</option>
+          {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+
+        {sections.length > 0 && (
+          <select
+            style={{ ...S.modernSelect, minWidth: '150px' }}
+            value={selectedSection || ''}
+            onChange={e => setSelectedSection(e.target.value || null)}>
+            <option value="">Select Section</option>
+            {sections.map(s => <option key={s.id} value={s.id}>Section {s.section_label} ({s.current_enrolled}/{s.max_capacity})</option>)}
           </select>
         )}
       </div>
 
-      {selectedCourse && (
-        <>
-          <div style={S.gradesSummary}>
-            <div style={S.summaryItem}><span>Total Students</span><strong>{filteredStudents.length}</strong></div>
-            <div style={S.summaryItem}><span>Graded ({formatExamType(selectedExamType)})</span><strong>{filteredGradesForExam.length}</strong></div>
-            <div style={S.summaryItem}><span>Average</span><strong>{avgGrade}%</strong></div>
-          </div>
-          <table style={S.table}>
-            <thead><tr style={S.tableHeadRow}><th style={S.th}>STUDENT</th><th style={S.th}>EXAM</th><th style={S.th}>MARKS</th><th style={S.th}>GRADE</th><th style={S.th}>DATE</th></tr></thead>
-            <tbody>
-              {filteredStudents.map(s => {
-                const g = filteredGradesForExam.find(grade => grade.student_id === s.student_id);
-                return (
-                  <tr key={s.student_id} style={{ ...S.tableRow, cursor:'pointer' }} onClick={() => {
-                    if (g) { setEditingItem(g); setNewGrade({ student_id:g.student_id, exam_type:g.exam_type, marks_obtained:g.marks_obtained, max_marks:g.max_marks, exam_date:new Date(g.exam_date).toISOString().split('T')[0], remarks:g.remarks||'' }); }
-                    else { setEditingItem(null); setNewGrade({ ...newGrade, student_id:s.student_id, exam_type:selectedExamType, exam_date:new Date().toISOString().split('T')[0] }); }
-                    setShowGradeModal(true);
-                  }}>
-                    <td style={{ ...S.tdName, color:'var(--primary-color, #4f46e5)' }}>{s.name}</td>
-                    <td style={S.td}>{g ? <span style={S.examType}>{formatExamType(g.exam_type)}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
-                    <td style={S.td}>{g ? `${g.marks_obtained}/${g.max_marks}` : <span style={{ color:'#94a3b8', fontSize:'0.8rem' }}>Not Graded</span>}</td>
-                    <td style={S.td}>{g ? <span style={S.gradeBadge}>{g.grade_letter}</span> : <span style={{ color:'#94a3b8' }}>—</span>}</td>
-                    <td style={S.td}>{g ? new Date(g.exam_date).toLocaleDateString() : <span style={{ color:'#94a3b8' }}>—</span>}</td>
-                  </tr>
-                );
-              })}
-              {filteredStudents.length === 0 && <tr><td colSpan="5" style={S.emptyTableCell}>No students enrolled in this course yet</td></tr>}
-            </tbody>
-          </table>
-        </>
+      {/* Message */}
+      {msg && (
+        <div style={{
+          padding: '12px 16px', borderRadius: '8px', marginBottom: '16px',
+          background: msg.type === 'success' ? '#d1fae5' : '#fee2e2',
+          color: msg.type === 'success' ? '#065f46' : '#991b1b',
+          display: 'flex', alignItems: 'center', gap: '8px'
+        }}>
+          {msg.type === 'success' ? <CheckCircle size={18} /> : <Warning size={18} />}
+          {msg.text}
+          <button onClick={() => setMsg(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer' }}><X size={14} /></button>
+        </div>
+      )}
+
+      {/* Summary Cards */}
+      {selectedSection && previewRows.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+          {[
+            { icon: <Student size={20} color="#6366f1" />, label: 'Students', value: previewRows.length, bg: '#eef2ff' },
+            { icon: <Percent size={20} color="#059669" />, label: 'Class Average', value: `${avgPct}%`, bg: '#d1fae5' },
+            { icon: <Trophy size={20} color="#f59e0b" />, label: 'Pass Rate', value: `${Math.round(passCount / previewRows.length * 100)}%`, bg: '#fef3c7' },
+            { icon: <BookOpen size={20} color="#3b82f6" />, label: 'Published', value: existingGrades.filter(g => g.is_published).length, bg: '#dbeafe' },
+          ].map((card, i) => (
+            <div key={i} style={{ background: card.bg, borderRadius: '10px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {card.icon}
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{card.label}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>{card.value}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Grade Table */}
+      {selectedSection && (
+        <div style={{ overflowX: 'auto' }}>
+          {bulkGrades.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+              <Student size={40} style={{ marginBottom: '12px' }} />
+              <p>No enrolled students found for this section.</p>
+            </div>
+          ) : (
+            <table style={{ ...S.table, minWidth: '900px' }}>
+              <thead>
+                <tr style={S.tableHeadRow}>
+                  <th style={S.th}>STUDENT</th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>MIDTERM<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 30)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>FINAL<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 50)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>ASSIGNMENT<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 10)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>QUIZ<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>LAB<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>TOTAL %</th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>GRADE</th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bulkGrades.map((row, idx) => {
+                  const total = getRowTotal(row);
+                  const grade = computeGrade(total);
+                  return (
+                    <tr key={row.student_id} style={S.tableRow}>
+                      <td style={S.tdName}>
+                        <div style={{ fontWeight: 600 }}>{row.student_name}</div>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{row.roll_number}</div>
+                      </td>
+                      {showPreview ? (
+                        <>
+                          <td style={{ ...S.td, textAlign: 'center' }}>{row.midterm_marks || '—'}</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>{row.final_marks || '—'}</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>{row.assignment_marks || '—'}</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>{row.quiz_marks || '—'}</td>
+                          <td style={{ ...S.td, textAlign: 'center' }}>{row.lab_marks || '—'}</td>
+                        </>
+                      ) : (
+                        ['midterm_marks', 'final_marks', 'assignment_marks', 'quiz_marks', 'lab_marks'].map(field => (
+                          <td key={field} style={{ ...S.td, textAlign: 'center' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              max={field === 'midterm_marks' ? 30 : field === 'final_marks' ? 50 : field === 'assignment_marks' ? 10 : 5}
+                              value={row[field]}
+                              onChange={e => updateRow(idx, field, e.target.value)}
+                              disabled={row.is_published}
+                              style={{
+                                width: '60px', textAlign: 'center', padding: '4px 6px',
+                                border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem',
+                                background: row.is_published ? '#f1f5f9' : '#fff'
+                              }}
+                            />
+                          </td>
+                        ))
+                      )}
+                      <td style={{ ...S.td, textAlign: 'center', fontWeight: 600 }}>
+                        {total > 0 ? `${total}%` : '—'}
+                      </td>
+                      <td style={{ ...S.td, textAlign: 'center' }}>
+                        {total > 0 ? (
+                          <span style={{
+                            padding: '3px 10px', borderRadius: '12px', fontWeight: 700,
+                            fontSize: '0.8rem', background: `${gradeColor(grade.letter)}20`,
+                            color: gradeColor(grade.letter)
+                          }}>
+                            {grade.letter}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td style={{ ...S.td, textAlign: 'center' }}>
+                        {row.is_published ? (
+                          <span style={{ padding: '3px 10px', borderRadius: '12px', background: '#d1fae5', color: '#065f46', fontSize: '0.75rem', fontWeight: 600 }}>Published</span>
+                        ) : row.existing_grade ? (
+                          <span style={{ padding: '3px 10px', borderRadius: '12px', background: '#fef3c7', color: '#92400e', fontSize: '0.75rem', fontWeight: 600 }}>Saved</span>
+                        ) : (
+                          <span style={{ padding: '3px 10px', borderRadius: '12px', background: '#f1f5f9', color: '#64748b', fontSize: '0.75rem' }}>Pending</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {!selectedSection && (
+        <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
+          <GraduationCap size={48} style={{ marginBottom: '16px', opacity: 0.4 }} />
+          <p style={{ fontSize: '1rem', marginBottom: '8px' }}>Select a course, semester, and section to manage grades</p>
+          <p style={{ fontSize: '0.85rem' }}>HEC Grade Scale: A+(90+) → A(85) → B+(75) → C(60) → D(50) → F(&lt;50)</p>
+        </div>
       )}
     </div>
   );

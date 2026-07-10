@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MagnifyingGlass, Printer, Envelope, 
-  CheckCircle, Receipt, Trash
+  CheckCircle, Receipt, Trash, CalendarBlank
 } from "@phosphor-icons/react";
+import API_BASE_URL from '../../../config/api';
 
 const StatusBadge = ({ status }) => {
   const statusClass = `fin-badge fin-badge-${status.toLowerCase()}`;
@@ -12,6 +13,35 @@ const StatusBadge = ({ status }) => {
 const FinFees = ({ challans, onAction, onEdit }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  
+  const [semesters, setSemesters] = useState([]);
+  const [showGenModal, setShowGenModal] = useState(false);
+  const [selectedSem, setSelectedSem] = useState('');
+  const [genLoading, setGenLoading] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    fetch(`${API_BASE_URL}/api/finance/semesters`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success && data.semesters) {
+        setSemesters(data.semesters);
+        if (data.semesters.length > 0) setSelectedSem(data.semesters[0].id);
+      }
+    });
+  }, []);
+
+  const handleGenerateSemesterChallans = async () => {
+    if (!selectedSem) return;
+    setGenLoading(true);
+    const success = await onAction('POST', '/challans/generate-semester', { semester_id: selectedSem });
+    setGenLoading(false);
+    if (success) {
+      setShowGenModal(false);
+    }
+  };
 
   const filteredChallans = challans.filter(c => {
     const matchesSearch = c.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -132,9 +162,21 @@ const FinFees = ({ challans, onAction, onEdit }) => {
                   <td style="text-align: right; font-weight: 600;">Rs. ${(c.other_fee || 0).toLocaleString()}</td>
                 </tr>
                 ` : ''}
+                ${c.discount_amount > 0 ? `
+                <tr style="color: #10b981; font-weight: 600;">
+                  <td>Scholarship Discount</td>
+                  <td style="text-align: right;">- Rs. ${(c.discount_amount || 0).toLocaleString()}</td>
+                </tr>
+                ` : ''}
+                ${c.accrued_late_fee > 0 ? `
+                <tr style="color: #ef4444; font-weight: 600;">
+                  <td>Accrued Late Surcharge</td>
+                  <td style="text-align: right;">+ Rs. ${(c.accrued_late_fee || 0).toLocaleString()}</td>
+                </tr>
+                ` : ''}
                 <tr class="total-row">
                   <td>Total Amount Payable</td>
-                  <td style="text-align: right; font-size: 16px;">Rs. ${(c.total_amount || 0).toLocaleString()}</td>
+                  <td style="text-align: right; font-size: 16px;">Rs. ${(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</td>
                 </tr>
               </tbody>
             </table>
@@ -142,7 +184,7 @@ const FinFees = ({ challans, onAction, onEdit }) => {
             <div style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 30px;">
               <strong>Important Notes:</strong><br/>
               1. Please deposit the fee in any designated bank branch before the due date: <strong>${new Date(c.due_date).toLocaleDateString()}</strong>.<br/>
-              2. Late fee surcharge of Rs. 1,000 will be applicable after the due date.<br/>
+              2. Late fee surcharge of Rs. ${c.late_fee_per_day || 100}/day will be applicable after the due date.<br/>
               3. This is a computer-generated voucher and does not require manual signature unless stamped by the cashier.
             </div>
 
@@ -174,7 +216,27 @@ const FinFees = ({ challans, onAction, onEdit }) => {
     <div className="fin-animate">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Fee Challan Management</h2>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button 
+            onClick={() => setShowGenModal(true)} 
+            style={{ 
+              padding: '10px 16px', 
+              background: 'var(--fin-primary, #4f46e5)', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '10px', 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' 
+            }}
+          >
+            <CalendarBlank size={18} weight="bold" /> Auto-Generate Dues
+          </button>
+
           <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
             <MagnifyingGlass size={18} color="#94a3b8" />
             <input 
@@ -223,7 +285,19 @@ const FinFees = ({ challans, onAction, onEdit }) => {
                 </td>
                 <td>{c.roll_number}</td>
                 <td style={{fontWeight: '600', color: 'var(--fin-primary)'}}>{c.challan_no}</td>
-                <td className="fin-net">Rs. {c.total_amount.toLocaleString()}</td>
+                <td className="fin-net">
+                  <div>Rs. {(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</div>
+                  {c.discount_amount > 0 && (
+                    <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}>
+                      - Rs. {parseFloat(c.discount_amount).toLocaleString()} (Scholarship)
+                    </div>
+                  )}
+                  {c.accrued_late_fee > 0 && (
+                    <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
+                      + Rs. {parseFloat(c.accrued_late_fee).toLocaleString()} (Late fee)
+                    </div>
+                  )}
+                </td>
                 <td>{new Date(c.due_date).toLocaleDateString()}</td>
                 <td><StatusBadge status={c.status} /></td>
                 <td>
@@ -254,6 +328,33 @@ const FinFees = ({ challans, onAction, onEdit }) => {
           </tbody>
         </table>
       </div>
+
+      {showGenModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)' }} onClick={() => setShowGenModal(false)}>
+          <div style={{ background: 'white', borderRadius: 24, padding: '2.5rem', width: '90%', maxWidth: '450px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative' }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 1.5rem 0' }}>Auto-Generate Semester Dues</h3>
+            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>Select a semester term to automatically calculate and generate tuition and registration fee challans for all enrolled students based on their registered credit hours.</p>
+            
+            <div style={{ marginBottom: '1.5rem' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Select Semester Term</label>
+              <select 
+                value={selectedSem} 
+                onChange={(e) => setSelectedSem(e.target.value)} 
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#0f172a', outline: 'none' }}
+              >
+                {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button onClick={() => setShowGenModal(false)} style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleGenerateSemesterChallans} disabled={genLoading} style={{ padding: '10px 20px', background: 'var(--fin-primary, #4f46e5)', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                {genLoading ? 'Calculating...' : 'Generate Now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

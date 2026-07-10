@@ -20,14 +20,15 @@ router.get('/my-challans', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Student record not found' });
     }
 
-    // NOTE: reminder_count and last_reminder_at columns must exist in finance_challans.
-    // Run this once via migration: ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0;
-    //                              ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL;
+    // NOTE: reminder_count and last_reminder_at columns must exist in finance_student_challans.
+    // Run this once via migration: ALTER TABLE finance_student_challans ADD COLUMN reminder_count INT DEFAULT 0;
+    //                              ALTER TABLE finance_student_challans ADD COLUMN last_reminder_at DATETIME NULL;
     const [challans] = await pool.query(
-      `SELECT fc.*, u.name as student_name, s.roll_number
-       FROM finance_challans fc
+      `SELECT fc.*, u.name as student_name, s.roll_number, sem.name as semester
+       FROM finance_student_challans fc
        JOIN students s ON fc.student_id = s.id
        JOIN users u ON s.user_id = u.id
+       LEFT JOIN semesters sem ON fc.semester_id = sem.id
        WHERE fc.student_id = ?
        ORDER BY fc.created_at DESC`,
       [student.id]
@@ -104,17 +105,17 @@ router.get('/overview', async (req, res) => {
     const challanFilter = isSuperAdmin ? '' : 'WHERE fc.campus_id = ?';
 
     const [[{ totalRevenue }]] = await pool.query(
-      `SELECT COALESCE(SUM(total_amount),0) as totalRevenue FROM finance_challans ${!isSuperAdmin ? 'WHERE campus_id = ? AND status = \'paid\'' : 'WHERE status = \'paid\''}`,
+      `SELECT COALESCE(SUM(total_amount),0) as totalRevenue FROM finance_student_challans ${!isSuperAdmin ? 'WHERE campus_id = ? AND status = \'paid\'' : 'WHERE status = \'paid\''}`,
       params
     );
 
     const [[{ pendingFees }]] = await pool.query(
-      `SELECT COALESCE(SUM(total_amount),0) as pendingFees FROM finance_challans WHERE status IN ('pending','overdue') ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
+      `SELECT COALESCE(SUM(total_amount),0) as pendingFees FROM finance_student_challans WHERE status IN ('pending','unpaid','overdue') ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
       isSuperAdmin ? [] : [campusId]
     );
 
     const [[{ overdueCount }]] = await pool.query(
-      `SELECT COUNT(*) as overdueCount FROM finance_challans WHERE status = 'overdue' ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
+      `SELECT COUNT(*) as overdueCount FROM finance_student_challans WHERE status = 'overdue' ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
       isSuperAdmin ? [] : [campusId]
     );
 
@@ -134,9 +135,9 @@ router.get('/overview', async (req, res) => {
 
     // Fetch Last 6 Months Trend Data
     const [revTrend] = await pool.query(
-      `SELECT DATE_FORMAT(paid_date, '%Y-%m') as month, COALESCE(SUM(total_amount),0) as revenue 
-       FROM finance_challans 
-       WHERE status = 'paid' AND paid_date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
+      `SELECT DATE_FORMAT(COALESCE(paid_date, created_at), '%Y-%m') as month, COALESCE(SUM(total_amount),0) as revenue 
+       FROM finance_student_challans 
+       WHERE status = 'paid' AND COALESCE(paid_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
        GROUP BY month ORDER BY month ASC`,
       isSuperAdmin ? [] : [campusId]
     );
@@ -178,10 +179,12 @@ router.get('/challans', async (req, res) => {
       SELECT fc.*, 
              u.name as student_name, 
              u.email as student_email,
-             s.roll_number
-      FROM finance_challans fc
+             s.roll_number,
+             sem.name as semester
+      FROM finance_student_challans fc
       LEFT JOIN students s ON fc.student_id = s.id
       LEFT JOIN users u ON s.user_id = u.id
+      LEFT JOIN semesters sem ON fc.semester_id = sem.id
       WHERE 1=1
     `;
     const params = [];
@@ -221,12 +224,23 @@ router.post('/challans', async (req, res) => {
     // Generate unique challan number
     const challan_no = `LT-FEE-${Date.now()}`;
 
+    let semester_id = null;
+    if (semester) {
+      const [existingSem] = await pool.query('SELECT id FROM semesters WHERE name = ? AND campus_id = ?', [semester, campusId]);
+      if (existingSem.length > 0) {
+        semester_id = existingSem[0].id;
+      } else {
+        const [newSem] = await pool.query('INSERT INTO semesters (name, term_type, campus_id) VALUES (?, ?, ?)', [semester, 'Fall', campusId]);
+        semester_id = newSem.insertId;
+      }
+    }
+
     const [result] = await pool.query(
-      `INSERT INTO finance_challans 
-       (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee, total_amount, due_date, semester, academic_year, notes, campus_id)
+      `INSERT INTO finance_student_challans 
+       (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee, total_amount, due_date, semester_id, academic_year, notes, campus_id)
        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
       [student_id, challan_no, tuition_fee || 0, lab_fee || 0, library_fee || 0, other_fee || 0,
-       total_amount, due_date || null, semester, academic_year, notes, campusId]
+       total_amount, due_date || null, semester_id, academic_year, notes, campusId]
     );
 
     res.status(201).json({ success: true, message: 'Challan created successfully', id: result.insertId, challan_no });
@@ -244,7 +258,7 @@ router.put('/challans/:id/status', async (req, res) => {
     if (!validStatuses.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
 
     const paidDate = status === 'paid' ? new Date().toISOString().split('T')[0] : null;
-    await pool.query('UPDATE finance_challans SET status = ?, paid_date = ? WHERE id = ?', [status, paidDate, id]);
+    await pool.query('UPDATE finance_student_challans SET status = ?, paid_date = ? WHERE id = ?', [status, paidDate, id]);
     res.json({ success: true, message: `Challan marked as ${status}` });
   } catch (error) {
     console.error('Update challan error:', error);
@@ -254,7 +268,7 @@ router.put('/challans/:id/status', async (req, res) => {
 
 router.delete('/challans/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM finance_challans WHERE id = ?', [req.params.id]);
+    await pool.query('DELETE FROM finance_student_challans WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Challan deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error deleting challan' });
@@ -266,10 +280,10 @@ router.post('/challans/:id/remind', async (req, res) => {
     const { id } = req.params;
 
     // FIX (HIGH-01): Removed ALTER TABLE calls — these columns must exist in the schema.
-    // Run migration once: ALTER TABLE finance_challans ADD COLUMN reminder_count INT DEFAULT 0;
-    //                     ALTER TABLE finance_challans ADD COLUMN last_reminder_at DATETIME NULL;
+    // Run migration once: ALTER TABLE finance_student_challans ADD COLUMN reminder_count INT DEFAULT 0;
+    //                     ALTER TABLE finance_student_challans ADD COLUMN last_reminder_at DATETIME NULL;
     await pool.query(
-      `UPDATE finance_challans 
+      `UPDATE finance_student_challans 
        SET reminder_count = COALESCE(reminder_count, 0) + 1, last_reminder_at = NOW() 
        WHERE id = ?`,
       [id]
@@ -277,7 +291,7 @@ router.post('/challans/:id/remind', async (req, res) => {
 
     const [[challan]] = await pool.query(
       `SELECT fc.*, u.name as student_name, u.email as student_email 
-       FROM finance_challans fc
+       FROM finance_student_challans fc
        LEFT JOIN students s ON fc.student_id = s.id
        LEFT JOIN users u ON s.user_id = u.id
        WHERE fc.id = ?`,
@@ -303,7 +317,7 @@ router.post('/challans/mark-overdue', async (req, res) => {
     const campusId = req.user.campus_id;
     const isSuperAdmin = req.user.role === 'super_admin';
     await pool.query(
-      `UPDATE finance_challans SET status = 'overdue' 
+      `UPDATE finance_student_challans SET status = 'overdue' 
        WHERE status = 'pending' AND due_date < CURDATE() ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
       isSuperAdmin ? [] : [campusId]
     );
@@ -458,6 +472,86 @@ router.get('/employees-list', async (req, res) => {
     res.json({ success: true, employees });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching employees' });
+  }
+});
+
+// ==================== MISSING DROPDOWNS & CONFIG ====================
+router.get('/semesters', async (req, res) => {
+  try {
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const filter = isSuperAdmin ? '' : 'WHERE campus_id = ?';
+    const params = isSuperAdmin ? [] : [req.user.campus_id];
+    const [rows] = await pool.query(`SELECT id, name FROM semesters ${filter} ORDER BY start_date DESC`, params);
+    res.json({ success: true, semesters: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.get('/programs', async (req, res) => {
+  try {
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const filter = isSuperAdmin ? '' : 'WHERE d.campus_id = ?';
+    const params = isSuperAdmin ? [] : [req.user.campus_id];
+    const [rows] = await pool.query(`
+      SELECT p.id, p.name, p.code 
+      FROM programs p
+      LEFT JOIN departments d ON p.department_id = d.id
+      ${filter} 
+      ORDER BY p.name ASC`, params);
+    res.json({ success: true, programs: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.get('/fee-structures', async (req, res) => {
+  try {
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const filter = isSuperAdmin ? '' : 'WHERE f.campus_id = ?';
+    const params = isSuperAdmin ? [] : [req.user.campus_id];
+    const [rows] = await pool.query(`
+      SELECT f.*, p.name as program_name, s.name as semester_name 
+      FROM finance_fee_structures f
+      JOIN programs p ON f.program_id = p.id
+      JOIN semesters s ON f.semester_id = s.id
+      ${filter}
+      ORDER BY f.created_at DESC`, params);
+    res.json({ success: true, structures: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.get('/scholarships/types', async (req, res) => {
+  try {
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const filter = isSuperAdmin ? '' : 'WHERE campus_id = ?';
+    const params = isSuperAdmin ? [] : [req.user.campus_id];
+    const [rows] = await pool.query(`SELECT * FROM finance_scholarship_types ${filter} ORDER BY name ASC`, params);
+    res.json({ success: true, types: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+router.get('/scholarships/students', async (req, res) => {
+  try {
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const filter = isSuperAdmin ? '' : 'WHERE fs.campus_id = ?';
+    const params = isSuperAdmin ? [] : [req.user.campus_id];
+    const [rows] = await pool.query(`
+      SELECT fs.*, u.name as student_name, s.roll_number, t.name as scholarship_name, t.discount_percentage, sem.name as semester_name
+      FROM finance_student_scholarships fs
+      JOIN students s ON fs.student_id = s.id
+      JOIN users u ON s.user_id = u.id
+      JOIN finance_scholarship_types t ON fs.scholarship_id = t.id
+      LEFT JOIN semesters sem ON fs.semester_id = sem.id
+      ${filter}
+      ORDER BY fs.created_at DESC`, params);
+    res.json({ success: true, scholarships: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 

@@ -24,7 +24,7 @@ router.get('/', async (req, res) => {
     const { role, campus_id } = req.user;
 
     let query = `SELECT sl.*, u.name as user_name, u.email as user_email, u.role as user_role
-                 FROM system_logs sl
+                 FROM audit_logs sl
                  LEFT JOIN users u ON sl.user_id = u.id`;
     const params = [];
 
@@ -38,7 +38,7 @@ router.get('/', async (req, res) => {
 
     const [logs] = await pool.query(query, params);
 
-    const [countResult] = await pool.query('SELECT COUNT(*) as total FROM system_logs');
+    const [countResult] = await pool.query('SELECT COUNT(*) as total FROM audit_logs');
     const total = countResult[0].total;
 
     res.status(200).json({
@@ -68,7 +68,7 @@ const logAction = async (user_id, action, entity_type, entity_id, description, i
     }
 
     await pool.query(
-      `INSERT INTO system_logs (user_id, action, entity_type, entity_id, description, ip_address, user_agent, campus_id)
+      `INSERT INTO audit_logs (user_id, action, entity_type, entity_id, description, ip_address, user_agent, campus_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [user_id, action, entity_type, entity_id, description, ip_address, user_agent, finalCampusId]
     );

@@ -16,7 +16,12 @@ import {
   SignOut,
   ChatCircle,
   CaretLeft,
-  CaretRight
+  CaretRight,
+  Calendar,
+  Building,
+  BookOpen,
+  Presentation,
+  ShieldCheck
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import './registrar.css';
@@ -27,6 +32,14 @@ import RegistrarStudentRecords from './sections/RegistrarStudentRecords';
 import RegistrarDegreeVerification from './sections/RegistrarDegreeVerification';
 import RegistrarTranscriptRequests from './sections/RegistrarTranscriptRequests';
 import RegistrarAlumniDirectory from './sections/RegistrarAlumniDirectory';
+import RegistrarSemesters from './sections/RegistrarSemesters';
+import RegistrarRooms from './sections/RegistrarRooms';
+import RegistrarDegreePlans from './sections/RegistrarDegreePlans';
+import RegistrarCourseSections from './sections/RegistrarCourseSections';
+import RegistrarEnrollment from './sections/RegistrarEnrollment';
+import RegistrarEnrollmentRules from './sections/RegistrarEnrollmentRules';
+import RegistrarTeacherWorkload from './sections/RegistrarTeacherWorkload';
+import RegistrarGraduationAudit from './sections/RegistrarGraduationAudit';
 
 const RegistrarDashboard = ({ user, onLogout }) => {
   // Navigation & UI States
@@ -170,8 +183,16 @@ const RegistrarDashboard = ({ user, onLogout }) => {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: House },
     { id: 'students', label: 'Student Records', icon: Student },
+    { id: 'semesters', label: 'Semesters Calendar', icon: Calendar },
+    { id: 'rooms', label: 'Classrooms / Rooms', icon: Building },
+    { id: 'degree-plans', label: 'Degree Plans', icon: BookOpen },
+    { id: 'sections', label: 'Course Sections', icon: Presentation },
+    { id: 'enrollment', label: 'Enrollment Management', icon: Student },
+    { id: 'enrollment-rules', label: 'HEC Enrollment Rules', icon: GraduationCap },
+    { id: 'teacher-workload', label: 'Teacher Workload', icon: Certificate },
     { id: 'verification', label: 'Degree Verification', icon: Certificate },
     { id: 'transcripts', label: 'Transcript Requests', icon: FileText },
+    { id: 'graduation-audit', label: 'Graduation Audit', icon: ShieldCheck },
     { id: 'alumni', label: 'Alumni Directory', icon: GraduationCap },
   ];
 
@@ -286,18 +307,18 @@ const RegistrarDashboard = ({ user, onLogout }) => {
               <span>{item.label}</span>
             </div>
           ))}
-        </nav>
-        
-        <div className="sidebar-bottom" style={{ padding: '20px 16px' }}>
-          <button onClick={onLogout} className="logout-btn" style={{ justifyContent: 'flex-start', padding: '14px 18px' }}>
-            <SignOut size={20} weight="bold" />
-            <span>Sign Out</span>
-          </button>
-          <div className="sidebar-footer">
-            <div>Lancers Tech Institute</div>
-            <div>v2.0</div>
+          
+          <div className="sidebar-bottom" style={{ padding: '20px 16px', marginTop: 'auto' }}>
+            <button onClick={onLogout} className="logout-btn" style={{ justifyContent: 'flex-start', padding: '14px 18px' }}>
+              <SignOut size={20} weight="bold" />
+              <span>Sign Out</span>
+            </button>
+            <div className="sidebar-footer">
+              <div>Lancers Tech Institute</div>
+              <div>v2.0</div>
+            </div>
           </div>
-        </div>
+        </nav>
       </aside>
 
       <main 
@@ -349,6 +370,27 @@ const RegistrarDashboard = ({ user, onLogout }) => {
                 handleViewTranscript={handleViewStudentRecord} 
               />
             )}
+            {activeNav === 'semesters' && (
+              <RegistrarSemesters />
+            )}
+            {activeNav === 'rooms' && (
+              <RegistrarRooms />
+            )}
+            {activeNav === 'degree-plans' && (
+              <RegistrarDegreePlans />
+            )}
+            {activeNav === 'sections' && (
+              <RegistrarCourseSections />
+            )}
+            {activeNav === 'enrollment' && (
+              <RegistrarEnrollment />
+            )}
+            {activeNav === 'enrollment-rules' && (
+              <RegistrarEnrollmentRules />
+            )}
+            {activeNav === 'teacher-workload' && (
+              <RegistrarTeacherWorkload />
+            )}
             {activeNav === 'verification' && (
               <RegistrarDegreeVerification 
                 verifications={pendingVerifications} 
@@ -363,6 +405,9 @@ const RegistrarDashboard = ({ user, onLogout }) => {
                 filterData={filterData} 
                 handleProcessTranscript={handleProcessTranscript} 
               />
+            )}
+            {activeNav === 'graduation-audit' && (
+              <RegistrarGraduationAudit />
             )}
             {activeNav === 'alumni' && (
               <RegistrarAlumniDirectory 

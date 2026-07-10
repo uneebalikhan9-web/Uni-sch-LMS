@@ -86,7 +86,7 @@ function SignUp() {
       if (data.success) {
         if (data.pending) {
           setError(""); 
-          showToast("Registration submitted successfully! Your account is pending teacher approval.", "success");
+          showToast("Registration successful! Pending admin approval.", "success");
           setTimeout(() => navigate("/signin"), 3000);
         } else {
           sessionStorage.setItem("user", JSON.stringify(data.user));
