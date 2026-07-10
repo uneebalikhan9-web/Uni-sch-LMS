@@ -332,14 +332,19 @@ router.get('/my-academic-record', verifyToken, isStudent, async (req, res) => {
 
     // --- AUTO-FIX SCHEMA INJECTION START ---
     try {
-      const studentCols = [
+      const dbFixes = [
         'ALTER TABLE students ADD COLUMN current_gpa DECIMAL(3,2) DEFAULT 0.00',
         'ALTER TABLE students ADD COLUMN academic_status ENUM("regular", "probation", "suspended", "graduated", "good", "warning", "dismissed") DEFAULT "regular"',
         'ALTER TABLE students ADD COLUMN father_name VARCHAR(100) DEFAULT NULL',
         'ALTER TABLE students ADD COLUMN cnic VARCHAR(20) DEFAULT NULL',
-        'ALTER TABLE students ADD COLUMN bform_number VARCHAR(20) DEFAULT NULL'
+        'ALTER TABLE students ADD COLUMN bform_number VARCHAR(20) DEFAULT NULL',
+        'ALTER TABLE courses ADD COLUMN course_type ENUM("theory","lab","theory+lab","seminar","internship") DEFAULT "theory"',
+        'ALTER TABLE courses ADD COLUMN credit_hours INT(11) DEFAULT 3',
+        'ALTER TABLE semesters ADD COLUMN term_type ENUM("Fall","Spring","Summer") DEFAULT "Fall"',
+        'ALTER TABLE semesters ADD COLUMN is_summer TINYINT(1) DEFAULT 0',
+        'ALTER TABLE programs ADD COLUMN level VARCHAR(50) DEFAULT "Undergraduate"'
       ];
-      for (let q of studentCols) {
+      for (let q of dbFixes) {
         try { await pool.query(q); } catch(e) {} // ignore duplicates
       }
       
@@ -492,7 +497,12 @@ router.get('/my-academic-record', verifyToken, isStudent, async (req, res) => {
     });
   } catch (error) {
     console.error('Get academic record error:', error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Server error', 
+      debug_error: error.message,
+      debug_sql: error.sql 
+    });
   }
 });
 
