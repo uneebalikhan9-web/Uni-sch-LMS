@@ -357,7 +357,7 @@ export function StudentProfileModal({ show, student, onClose }) {
       return;
     }
     const token = sessionStorage.getItem('token');
-    fetch(`http://localhost:5000/api/students/${student.id}/parent`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/students/${student.id}/parent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ parent_email: parentEmail, parent_name: parentName, password: parentPassword, parent_phone: student.father_number })
