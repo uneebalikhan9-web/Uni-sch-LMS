@@ -141,6 +141,10 @@ app.options('*', cors(corsOptions));     // Handle preflight requests
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// XSS Protection Middleware
+const xssSanitizer = require('./middleware/xssSanitizer');
+app.use(xssSanitizer);
+
 // Security Headers using helmet
 app.use(helmet({
   crossOriginResourcePolicy: false, // Needed if serving images across domains
