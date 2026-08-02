@@ -11,12 +11,27 @@ async function updateVPSDatabase() {
       if (columns.length === 0) {
         console.log('➕ Adding "institution_type" column to users...');
         await pool.query("ALTER TABLE users ADD COLUMN institution_type ENUM('university', 'school') DEFAULT 'university'");
-        console.log('✅ Column "institution_type" added successfully.');
+        console.log('✅ Column "institution_type" added successfully to users.');
       } else {
         console.log('ℹ️ Column "institution_type" already exists in users.');
       }
     } catch (err) {
       console.error('❌ Error updating users table:', err.message);
+    }
+
+    // 1.5 Update `lancers_clients` table
+    console.log('⏳ Checking lancers_clients table for institution_type...');
+    try {
+      const [columns] = await pool.query('SHOW COLUMNS FROM lancers_clients LIKE "institution_type"');
+      if (columns.length === 0) {
+        console.log('➕ Adding "institution_type" column to lancers_clients...');
+        await pool.query("ALTER TABLE lancers_clients ADD COLUMN institution_type ENUM('university', 'school') DEFAULT 'university'");
+        console.log('✅ Column "institution_type" added successfully to lancers_clients.');
+      } else {
+        console.log('ℹ️ Column "institution_type" already exists in lancers_clients.');
+      }
+    } catch (err) {
+      console.error('❌ Error updating lancers_clients table:', err.message);
     }
 
     // 2. Update `student_classes` table
