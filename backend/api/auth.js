@@ -110,7 +110,7 @@ router.post('/signin', async (req, res) => {
 
     // Check if user exists
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id, lc.logo_url, lc.primary_color, lc.allowed_modules
+      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id, lc.logo_url, lc.primary_color, lc.allowed_modules, lc.institution_type
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
        LEFT JOIN students s ON u.id = s.user_id
@@ -172,7 +172,8 @@ router.post('/signin', async (req, res) => {
         campus_id: user.campus_id,
         student_id: user.student_id || null,
         employee_id: user.employee_id || null,
-        client_id: user.client_id || null
+        client_id: user.client_id || null,
+        institution_type: user.institution_type || 'university'
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -193,6 +194,7 @@ router.post('/signin', async (req, res) => {
         client_id: user.client_id,
         logo_url: user.logo_url,
         primary_color: user.primary_color,
+        institution_type: user.institution_type || 'university',
         allowed_modules: user.allowed_modules
           ? (typeof user.allowed_modules === 'string' ? JSON.parse(user.allowed_modules) : user.allowed_modules)
           : null
@@ -438,7 +440,7 @@ router.post('/verify-otp', async (req, res) => {
 router.get('/verify-token', require('../middleware/auth').verifyToken, async (req, res) => {
   try {
     const [users] = await pool.query(
-      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id, lc.logo_url, lc.primary_color, lc.allowed_modules
+      `SELECT u.*, c.name as department_name, s.roll_number, s.semester, e.employee_code, e.designation, s.id as student_id, e.id as employee_id, lc.logo_url, lc.primary_color, lc.allowed_modules, lc.institution_type
        FROM users u 
        LEFT JOIN campuses c ON u.campus_id = c.id 
        LEFT JOIN students s ON u.id = s.user_id
@@ -467,6 +469,7 @@ router.get('/verify-token', require('../middleware/auth').verifyToken, async (re
         client_id: user.client_id,
         logo_url: user.logo_url,
         primary_color: user.primary_color,
+        institution_type: user.institution_type || 'university',
         allowed_modules: user.allowed_modules ? (typeof user.allowed_modules === 'string' ? JSON.parse(user.allowed_modules) : user.allowed_modules) : null
       }
     });

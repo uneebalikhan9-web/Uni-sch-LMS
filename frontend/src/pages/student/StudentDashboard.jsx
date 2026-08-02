@@ -506,7 +506,18 @@ function StudentDashboard({ user, onLogout }) {
       case 'graduation':
         return <SDGraduation user={user} />;
       case 'registration':
-        return <SDRegistration />;
+        return <SDRegistration 
+          user={user}
+          availableClasses={availableClasses}
+          myClassInfo={myClassInfo}
+          myClassSubjects={myClassSubjects}
+          availableCourses={availableCourses}
+          courses={courses}
+          handleRegisterClass={handleRegisterClass}
+          handleEnrollCourse={handleEnrollCourse}
+          registering={registering}
+          enrolling={enrolling}
+        />;
       case 'timetable':
         return <SDTimetable groupTimetableByDay={groupTimetableByDay} exams={exams} />
       case 'assignments':

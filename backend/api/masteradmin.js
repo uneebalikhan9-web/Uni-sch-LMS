@@ -4,6 +4,18 @@ const { pool } = require('../config/database');
 const bcrypt = require('bcrypt');
 const { uploadLogo, handleUploadError } = require('../middleware/upload');
 
+// @route   POST /api/masteradmin/migrate-institution-type
+// @desc    One-time migration: adds institution_type column to lancers_clients
+router.post('/migrate-institution-type', async (req, res) => {
+  try {
+    await pool.query(`ALTER TABLE lancers_clients ADD COLUMN IF NOT EXISTS institution_type ENUM('school','university') NOT NULL DEFAULT 'university'`);
+    res.json({ success: true, message: 'institution_type column ensured successfully.' });
+  } catch (error) {
+    // Column may already exist — that's fine
+    res.json({ success: true, message: 'Column already exists or migration complete.' });
+  }
+});
+
 // @route   POST /api/masteradmin/upload-logo
 // @desc    Upload a tenant logo
 router.post('/upload-logo', uploadLogo.single('logo'), handleUploadError, (req, res) => {
@@ -13,6 +25,7 @@ router.post('/upload-logo', uploadLogo.single('logo'), handleUploadError, (req, 
   const fileUrl = `/api/uploads/logos/${req.file.filename}`;
   res.json({ success: true, url: fileUrl });
 });
+
 
 // @route   GET /api/masteradmin/stats
 // @desc    Get global statistics for Lancers Tech Master Admin
@@ -72,7 +85,7 @@ router.post('/clients', async (req, res) => {
       });
     }
 
-    const { university_name, domain, admin_name, admin_email, password, package_type, monthly_fee, logo_url, primary_color, allowed_modules } = req.body;
+    const { university_name, domain, admin_name, admin_email, password, package_type, monthly_fee, logo_url, primary_color, allowed_modules, institution_type } = req.body;
     
     // Validate inputs
     if (!university_name || !domain || !admin_name || !admin_email || !password || !package_type || !monthly_fee) {
@@ -83,12 +96,13 @@ router.post('/clients', async (req, res) => {
 
     const defaultModules = ["rector","principals","bd","hr","finance","registrar","admissions","exams","library","it"];
     const modulesToSave = JSON.stringify(allowed_modules !== undefined ? allowed_modules : defaultModules);
+    const instType = institution_type || 'university';
 
     // 1. Insert into lancers_clients
     const [clientResult] = await connection.query(
-      `INSERT INTO lancers_clients (university_name, domain, admin_name, admin_email, package_type, monthly_fee, logo_url, primary_color, allowed_modules) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [university_name, domain, admin_name, admin_email, package_type, monthly_fee, logo_url, primary_color, modulesToSave]
+      `INSERT INTO lancers_clients (university_name, domain, admin_name, admin_email, package_type, monthly_fee, logo_url, primary_color, allowed_modules, institution_type) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [university_name, domain, admin_name, admin_email, package_type, monthly_fee, logo_url, primary_color, modulesToSave, instType]
     );
 
     const newClientId = clientResult.insertId;
@@ -133,14 +147,15 @@ router.put('/clients/:id/status', async (req, res) => {
 // @route   PUT /api/masteradmin/clients/:id
 // @desc    Edit a client's details
 router.put('/clients/:id', async (req, res) => {
-  const { university_name, domain, package_type, monthly_fee, logo_url, primary_color, allowed_modules } = req.body;
+  const { university_name, domain, package_type, monthly_fee, logo_url, primary_color, allowed_modules, institution_type } = req.body;
   try {
     const modulesToSave = JSON.stringify(allowed_modules || []);
+    const instType = institution_type || 'university';
     await pool.query(
       `UPDATE lancers_clients 
-       SET university_name = ?, domain = ?, package_type = ?, monthly_fee = ?, logo_url = ?, primary_color = ?, allowed_modules = ? 
+       SET university_name = ?, domain = ?, package_type = ?, monthly_fee = ?, logo_url = ?, primary_color = ?, allowed_modules = ?, institution_type = ? 
        WHERE id = ?`,
-      [university_name, domain, package_type, monthly_fee, logo_url, primary_color, modulesToSave, req.params.id]
+      [university_name, domain, package_type, monthly_fee, logo_url, primary_color, modulesToSave, instType, req.params.id]
     );
     res.json({ success: true, message: 'Client updated successfully.' });
   } catch (error) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, PencilSimple, Trash, Briefcase, CalendarBlank } from '@phosphor-icons/react';
 import { S } from './SAStyles';
+import API_BASE_URL from '../../../config/api';
 
 export default function SATrainings() {
   const [trainings, setTrainings] = useState([]);
@@ -25,7 +26,7 @@ export default function SATrainings() {
   const fetchTrainings = async () => {
     try {
       setIsLoading(true);
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/trainings`, {
+      const res = await axios.get(`${API_BASE_URL}/api/trainings`, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem('token') || localStorage.getItem('token')}` }
       });
       if (res.data.success) {
@@ -33,7 +34,6 @@ export default function SATrainings() {
       }
     } catch (err) {
       console.error(err);
-      alert('Error fetching trainings');
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +56,8 @@ export default function SATrainings() {
     e.preventDefault();
     try {
       const url = formData.id 
-        ? `${import.meta.env.VITE_API_URL}/api/trainings/${formData.id}` 
-        : `${import.meta.env.VITE_API_URL}/api/trainings`;
+        ? `${API_BASE_URL}/api/trainings/${formData.id}` 
+        : `${API_BASE_URL}/api/trainings`;
       const method = formData.id ? 'put' : 'post';
       
       const res = await axios[method](url, formData, {
@@ -77,7 +77,7 @@ export default function SATrainings() {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this training?')) {
       try {
-        await axios.delete(`${import.meta.env.VITE_API_URL}/api/trainings/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/trainings/${id}`, {
           headers: { Authorization: `Bearer ${sessionStorage.getItem('token') || localStorage.getItem('token')}` }
         });
         fetchTrainings();

@@ -2,6 +2,7 @@ import { Plus, Trash, ChartLine, Buildings, Globe, ShieldCheck, Calendar, Users,
 import { S } from "./SAStyles";
 
 export default function SAHODs({
+  isSchool = false,
   hods, departments,
   showAddModal, setShowAddModal,
   newHOD, setNewHOD,
@@ -15,10 +16,10 @@ export default function SAHODs({
     <>
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
-          <h2 style={S.tableTitle}>Deans & Academic Heads</h2>
+          <h2 style={S.tableTitle}>{isSchool ? 'Principals & Headmasters' : 'Deans & Academic Heads'}</h2>
           <button onClick={() => { setEditingItem(null); setNewHOD({ name: "", email: "", password: "", campus_id: "" }); setShowAddModal(true); }} style={S.addBtn} className="add-btn">
             <Plus size={18} weight="bold" />
-            <span>Add Dean / Head</span>
+            <span>{isSchool ? 'Add Principal / Head' : 'Add Dean / Head'}</span>
           </button>
         </div>
         <div style={S.tableContainer} className="table-container">
@@ -27,7 +28,7 @@ export default function SAHODs({
               <tr>
                 <th style={S.th}>NAME</th>
                 <th style={S.th}>EMAIL</th>
-                <th style={S.th}>CAMPUS</th>
+                <th style={S.th}>{isSchool ? 'BRANCH' : 'CAMPUS'}</th>
                 <th style={S.th}>JOINED</th>
                 <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
               </tr>
@@ -53,14 +54,14 @@ export default function SAHODs({
                         style={{...S.editBtn, background: '#e0e7ff', color: '#4338ca'}} 
                         className="edit-btn"
                         onClick={() => { setEditingItem(p); setShowAddModal(true); }}
-                        title="Edit Dean / Head"
+                        title={isSchool ? "Edit Principal / Head" : "Edit Dean / Head"}
                       >
                         <PencilSimple size={16} weight="bold" />
                       </button>
                       <button 
                         style={S.deleteBtn} className="delete-btn"
                         onClick={() => onDelete(p.id)}
-                        title="Delete Dean / Head"
+                        title={isSchool ? "Delete Principal / Head" : "Delete Dean / Head"}
                       >
                         <Trash size={16} />
                       </button>
@@ -78,18 +79,18 @@ export default function SAHODs({
         <div style={S.overlay} onClick={() => setShowAddModal(false)}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={S.modalHeader}>
-            <h3 style={S.modalTitle}>{editingItem ? 'Edit Dean / Academic Head' : 'Add New Dean / Academic Head'}</h3>
+            <h3 style={S.modalTitle}>{editingItem ? (isSchool ? 'Edit Principal / Head' : 'Edit Dean / Academic Head') : (isSchool ? 'Add New Principal / Headmaster' : 'Add New Dean / Academic Head')}</h3>
               <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
             </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Full Name</label>
-                <input placeholder="e.g., Prof. Ahmed" required value={editingItem ? editingItem.name : newHOD.name} 
+                <input placeholder={isSchool ? "e.g., Mr. Ahmed / Mrs. Sara" : "e.g., Prof. Ahmed"} required value={editingItem ? editingItem.name : newHOD.name} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, name: e.target.value}) : setNewHOD({...newHOD, name: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Email Address</label>
-                <input placeholder="principal@department.edu" required type="email" value={editingItem ? editingItem.email : newHOD.email} 
+                <input placeholder={isSchool ? "principal@school.edu" : "principal@department.edu"} required type="email" value={editingItem ? editingItem.email : newHOD.email} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, email: e.target.value}) : setNewHOD({...newHOD, email: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
@@ -98,16 +99,16 @@ export default function SAHODs({
                   value={editingItem ? (editingItem.password || '') : newHOD.password} onChange={e => editingItem ? setEditingItem({...editingItem, password: e.target.value}) : setNewHOD({...newHOD, password: e.target.value})} style={S.input} />
               </div>
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Assign to Campus</label>
+                <label style={S.inputLabel}>{isSchool ? 'Assign to Branch' : 'Assign to Campus'}</label>
                 <select required value={editingItem ? editingItem.campus_id : newHOD.campus_id} 
                   onChange={e => editingItem ? setEditingItem({...editingItem, campus_id: e.target.value}) : setNewHOD({...newHOD, campus_id: e.target.value})} style={S.input}>
-                  <option value="">Select a Campus...</option>
+                  <option value="">{isSchool ? 'Select a Branch...' : 'Select a Campus...'}</option>
                   {departments.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div style={S.modalActions}>
                 <button type="button" onClick={() => setShowAddModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>{editingItem ? 'Save Changes' : 'Create Dean / Head'}</button>
+                <button type="submit" style={S.saveBtn}>{editingItem ? 'Save Changes' : (isSchool ? 'Create Principal / Head' : 'Create Dean / Head')}</button>
               </div>
             </form>
           </div>

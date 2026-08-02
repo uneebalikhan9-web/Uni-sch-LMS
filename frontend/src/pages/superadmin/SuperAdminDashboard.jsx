@@ -324,6 +324,8 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   );
 
   // ─── Sidebar Nav Items ────────────────────────────────────────
+  const isSchool = (user?.institution_type || 'university') === 'school';
+
   const isModuleAllowed = (moduleId) => {
     if (['overview', 'campuses', 'reports', 'trainings'].includes(moduleId)) return true;
     if (!user.allowed_modules) return true; // Backward compatibility
@@ -331,20 +333,20 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   };
 
   const navItems = [
-    ['overview',    'VC Overview',       <ChartBar   size={20} />],
-    ['rector',      'Rectorate / Pro-VC', <Buildings size={20} />],
-    ['campuses',    'Academic Depts',    <Buildings  size={20} />],
-    ['principals',  'Dean & HODs',       <UserCircle size={20} />],
-    ['bd',          'BD Management',     <IdentificationCard size={20} />],
-    ['hr',          'HR & Faculty',      <IdentificationCard size={20} />],
-    ['finance',     'Financial Ops',     <ShieldCheck size={20} />],
-    ['registrar',   'Registrar Office',  <List size={20} />],
-    ['admissions',  'Admissions',        <UserCirclePlus size={20} />],
-    ['exams',       'Exams & Grading',   <Globe size={20} />],
-    ['library',     'Digital Library',   <List size={20} />],
-    ['it',          'IT & Systems',      <ShieldCheck size={20} />],
-    ['reports',     'Institutional KPI', <ChartLine  size={20} />],
-    ['trainings',   'Trainings Manager', <Briefcase size={20} />],
+    ['overview',    isSchool ? 'School Overview' : 'VC Overview',            <ChartBar   size={20} />],
+    ['rector',      isSchool ? 'Executive Office' : 'Rectorate / Pro-VC',    <Buildings  size={20} />],
+    ['campuses',    isSchool ? 'School Branches' : 'Academic Depts',         <Buildings  size={20} />],
+    ['principals',  isSchool ? 'Principals & Heads' : 'Dean & HODs',         <UserCircle size={20} />],
+    ['bd',          'BD Management',                                         <IdentificationCard size={20} />],
+    ['hr',          isSchool ? 'HR & Staff' : 'HR & Faculty',                <IdentificationCard size={20} />],
+    ['finance',     'Financial Ops',                                         <ShieldCheck size={20} />],
+    ['registrar',   'Registrar Office',                                      <List size={20} />],
+    ['admissions',  'Admissions',                                            <UserCirclePlus size={20} />],
+    ['exams',       isSchool ? 'Exams & Results' : 'Exams & Grading',        <Globe size={20} />],
+    ['library',     'Digital Library',                                       <List size={20} />],
+    ['it',          'IT & Systems',                                          <ShieldCheck size={20} />],
+    ['reports',     'Institutional KPI',                                     <ChartLine  size={20} />],
+    ['trainings',   'Trainings Manager',                                     <Briefcase size={20} />],
   ].filter(item => isModuleAllowed(item[0]));
 
   // ─── Render ───────────────────────────────────────────────────
@@ -460,7 +462,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
           <div style={S.globalBadge}>
             <ShieldCheck size={14} weight="fill" />
-            <span>VC Institutional Master</span>
+            <span>{isSchool ? 'School Executive Portal' : 'VC Institutional Master'}</span>
           </div>
 
           <nav style={S.nav}>
@@ -492,12 +494,12 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       }} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>VC Institutional Master</h1>
-            <p style={S.subtitle}>University-wide Operations & KPI Monitoring</p>
+            <h1 style={S.title}>{isSchool ? 'School Executive Portal' : 'VC Institutional Master'}</h1>
+            <p style={S.subtitle}>{isSchool ? 'School-wide Operations & Branch Management' : 'University-wide Operations & KPI Monitoring'}</p>
           </div>
           <div style={S.campusCounter}>
             <Buildings size={16} color="#94a3b8" />
-            <span>{overview.totalCampuses || 0} Departments Active</span>
+            <span>{overview.totalCampuses || 0} {isSchool ? 'Branches Active' : 'Departments Active'}</span>
           </div>
         </header>
 
@@ -508,6 +510,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
         {activeTab === "campuses" && (
           <SADepartments
+            isSchool={isSchool}
             departments={departments}
             editingItem={editingItem} setEditingItem={setEditingItem}
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
@@ -519,6 +522,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
         {activeTab === "principals" && (
           <SAHODs
+            isSchool={isSchool}
             hods={hods} departments={departments}
             showAddModal={showAddModal} setShowAddModal={setShowAddModal}
             newHOD={newHOD} setNewHOD={setNewHOD}
@@ -735,7 +739,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
               {user.name.charAt(0)}
             </div>
             <h3 style={S.profileName}>{user.name}</h3>
-            <span style={S.roleBadge}>Vice Chancellor</span>
+            <span style={S.roleBadge}>{isSchool ? 'School Director / Exec' : 'Vice Chancellor'}</span>
             <div style={S.profileStats}>
               <div style={S.profileStat}>
                 <span style={S.profileStatLabel}>Last Login</span>

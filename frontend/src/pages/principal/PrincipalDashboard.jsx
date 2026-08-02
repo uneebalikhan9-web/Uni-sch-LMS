@@ -412,6 +412,10 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           bform_number:editingItem.bform_number
         };
         if (newPerson.password) body.password=newPerson.password;
+      } else if (activeTab==='courses') {
+        body={title:editingItem.title, description:editingItem.description, teacher_id:editingItem.teacher_id||null, class_id:editingItem.class_id||null};
+      } else if (activeTab==='classes') {
+        body={name:editingItem.name, section:editingItem.section, academic_year:editingItem.academic_year, teacher_id:editingItem.teacher_id||null};
       }
     }
     const res  = await fetch(url,{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -556,26 +560,25 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     </div>
   );
 
+  const isSchool = (user?.institution_type || 'university') === 'school';
+
   const navItems = [
-    ['overview',      'Academic Analytics', <House size={20}/>,                teachers.length+students.length],
-    ['teachers',      'Faculty Management', <ChalkboardTeacher size={20}/>,    teachers.length],
-    ['students',      'Student Lifecycle', <UserCircle size={20}/>,           students.length],
-    ['classes',       'Academic Groups',   <Buildings size={20}/>,            classes.length],
-    ['courses',       'Programs & Courses', <BookOpen size={20}/>,             courses.filter(c=>c.status==='active').length],
-    ['history',       'Course History',     <Clock size={20}/>,                courses.filter(c=>c.status==='completed').length],
-    ['course_reports','Course Reports', <FileText size={20}/>,                  campusReports.length],
-    ['face-attendance', 'Face Attendance', <UserFocus size={20}/>, null],
-    ['timetable',     'Academic Schedule', <Clock size={20}/>,                timetables.length],
-    ['labs',          'Lab & Assets',      <SquaresFour size={20}/>,          labs.length],
-    // ['exams',      'Exam & Results',     <FileText size={20}/>,             null],
-    // ['finance',    'Dept. Finance',     <ShieldCheck size={20}/>,          null],
-    // ['library',    'Research Resources', <BookOpen size={20}/>,             null],
-    // ['feedback',   'Quality Assurance', <ChartLine size={20} weight="duotone"/>, null],
-    ['pending',       'Enrollment Queue',  <UserPlus size={20}/>,             pendingStudents.length],
-    ['my-payroll',    'My Payroll',        <Cardholder size={20}/>,           myPayroll.length],
-    ['campus-expenses','Campus Expenses',     <Buildings size={20}/>,            campusExpenses.length],
-    ['my-leaves',     'My Leaves',         <Clock size={20}/>,                null],
+    ['overview',      'Academic Analytics',                                   <House size={20}/>,                teachers.length+students.length],
+    ['teachers',      isSchool ? 'Teachers' : 'Faculty Management',          <ChalkboardTeacher size={20}/>,    teachers.length],
+    ['students',      isSchool ? 'Students' : 'Student Lifecycle',           <UserCircle size={20}/>,           students.length],
+    ['classes',       isSchool ? 'Classes' : 'Programs & Courses',           <Buildings size={20}/>,           classes.length],
+    ['courses',       isSchool ? 'Subjects / Courses' : 'Courses',           <BookOpen size={20}/>,            courses.filter(c=>c.status==='active').length],
+    ['history',       'Course History',                                       <Clock size={20}/>,                courses.filter(c=>c.status==='completed').length],
+    ['course_reports','Course Reports',                                       <FileText size={20}/>,             campusReports.length],
+    ['face-attendance','Face Attendance',                                     <UserFocus size={20}/>,            null],
+    ['timetable',     isSchool ? 'School Schedule' : 'Academic Schedule',    <Clock size={20}/>,                timetables.length],
+    ['labs',          'Lab & Assets',                                        <SquaresFour size={20}/>,          labs.length],
+    ['pending',       isSchool ? 'Admission Queue' : 'Enrollment Queue',     <UserPlus size={20}/>,             pendingStudents.length],
+    ['my-payroll',    'My Payroll',                                          <Cardholder size={20}/>,           myPayroll.length],
+    ['campus-expenses','Campus Expenses',                                    <Buildings size={20}/>,            campusExpenses.length],
+    ['my-leaves',     'My Leaves',                                           <Clock size={20}/>,                null],
   ];
+
 
   return (
     <div style={S.container} className="dashboard-wrapper">
@@ -690,6 +693,25 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             <span>{user.department_name ? `Dean of ${user.department_name}` : 'Academic Dean'}</span>
             <div style={S.liveIndicator}/>
           </div>
+          {/* Institution Type Badge */}
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '6px 14px',
+            borderRadius: '20px',
+            marginBottom: '16px',
+            background: isSchool ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.12)',
+            border: `1px solid ${isSchool ? 'rgba(16, 185, 129, 0.25)' : 'rgba(99, 102, 241, 0.25)'}`,
+            fontSize: '12px',
+            fontWeight: '700',
+            color: isSchool ? '#10b981' : '#818cf8',
+            letterSpacing: '0.02em',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+          }}>
+            {isSchool ? <Buildings size={16} weight="duotone" color="#10b981" /> : <GraduationCap size={16} weight="duotone" color="#818cf8" />}
+            <span>{isSchool ? 'School Mode' : 'University Mode'}</span>
+          </div>
           <nav style={S.nav}>
             <button type="button" onClick={()=>{navigate('/chat');setMobileMenuOpen(false);}} style={S.navBtn} className="nav-btn">
               <ChatCircle size={20}/><span style={{flex:1,textAlign:'left'}}>Chat</span>
@@ -766,7 +788,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             onOpenClassCourses={(item)=>{setSelectedClassForCourses(item);setShowClassCoursesModal(true);}}
             onOpenStudentProfile={(item)=>{setSelectedStudentForProfile(item);setShowStudentProfileModal(true);}}
             onOpenBulkModal={(type) => { setBulkModalType(type); setShowBulkModal(true); }}
-            setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses}/>
+            setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses} isSchool={isSchool}/>
         )}
 
         {activeTab === 'my-payroll' && (
@@ -1000,10 +1022,9 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
       </aside>
 
       {/* Modals */}
-      <AddEditModal show={showAddModal} onClose={()=>{setShowAddModal(false);resetForms();}}
-        activeTab={activeTab} editingItem={editingItem} setEditingItem={setEditingItem}
-        newPerson={newPerson} setNewPerson={setNewPerson}
-        newClass={newClass} setNewClass={setNewClass}
+      <AddEditModal show={showAddModal} onClose={()=>{setShowAddModal(false);resetForms();}} 
+        activeTab={editingItem?.hasOwnProperty('title') ? 'courses' : activeTab} editingItem={editingItem} setEditingItem={setEditingItem}
+        newPerson={newPerson} setNewPerson={setNewPerson} newClass={newClass} setNewClass={setNewClass}
         newCourse={newCourse} setNewCourse={setNewCourse}
         newLab={newLab} setNewLab={setNewLab}
         teachers={teachers} classes={classes} onSubmit={handleAddSubmit}
@@ -1021,7 +1042,8 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         onRefresh={()=>fetchReportDetails(selectedReport)}/>
 
       <ClassCoursesModal show={showClassCoursesModal} selectedClass={selectedClassForCourses}
-        onClose={()=>setShowClassCoursesModal(false)} courses={courses}/>
+        onClose={()=>setShowClassCoursesModal(false)} courses={courses} 
+        onEditCourse={(course)=>{setEditingItem(course); setShowAddModal(true); setShowClassCoursesModal(false);}} />
 
       <StudentProfileModal show={showStudentProfileModal} student={selectedStudentForProfile}
         onClose={()=>setShowStudentProfileModal(false)} />

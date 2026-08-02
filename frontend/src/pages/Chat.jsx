@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle } from '@phosphor-icons/react'
+import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle, PencilSimple, Trash } from '@phosphor-icons/react'
 import { io } from 'socket.io-client'
 import API_BASE_URL from '../config/api'
 import ConfirmModal from '../components/ConfirmModal'
@@ -21,6 +21,8 @@ function Chat() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
+  const [editingMessageId, setEditingMessageId] = useState(null)
+  const [editMessageText, setEditMessageText] = useState('')
   const { showToast } = useToast()
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -129,13 +131,25 @@ function Chat() {
       }
     }
 
+    const onMsgUpdated = (data) => {
+      setMessages(prev => prev.map(m => m.id === data.id ? { ...m, message: data.message, is_edited: data.is_edited } : m))
+    }
+    const onMsgDeleted = (data) => {
+      setMessages(prev => prev.map(m => m.id === data.id ? { ...m, message: data.message, is_deleted: data.is_deleted } : m))
+    }
+
+    socket.on('chat:message', onMsg)
     socket.on('chat:typing', onTyping)
     socket.on('chat:stop_typing', onStopTyping)
+    socket.on('chat:message_updated', onMsgUpdated)
+    socket.on('chat:message_deleted', onMsgDeleted)
 
     return () => {
       socket.off('chat:message', onMsg)
       socket.off('chat:typing', onTyping)
       socket.off('chat:stop_typing', onStopTyping)
+      socket.off('chat:message_updated', onMsgUpdated)
+      socket.off('chat:message_deleted', onMsgDeleted)
     }
   }, [user?.id, selectedUser?.id])
 
@@ -212,6 +226,64 @@ function Chat() {
       showToast('Failed to send message', 'error')
     }
     setSending(false)
+  }
+
+  const handleEditStart = (m) => {
+    setEditingMessageId(m.id)
+    setEditMessageText(m.message)
+  }
+
+  const handleEditCancel = () => {
+    setEditingMessageId(null)
+    setEditMessageText('')
+  }
+
+  const handleEditSave = async () => {
+    const text = editMessageText.trim()
+    if (!text || !editingMessageId) return
+    const token = sessionStorage.getItem('token')
+    try {
+      const res = await fetch(`${API}/chat/messages/${editingMessageId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setMessages(prev => prev.map(m => m.id === editingMessageId ? { ...m, message: text, is_edited: 1 } : m))
+        handleEditCancel()
+      } else {
+        showToast(data.message || 'Failed to edit', 'error')
+      }
+    } catch (e) {
+      showToast('Failed to edit', 'error')
+    }
+  }
+
+  const handleDeleteClick = (m) => {
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Message",
+      message: "Are you sure you want to delete this message? This cannot be undone.",
+      onConfirm: async () => {
+        setConfirmModal(prev => ({...prev, isOpen: false}))
+        const token = sessionStorage.getItem('token')
+        try {
+          const res = await fetch(`${API}/chat/messages/${m.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          const data = await res.json()
+          if (data.success) {
+            setMessages(prev => prev.map(msg => msg.id === m.id ? { ...msg, message: "This message was deleted", is_deleted: 1 } : msg))
+          } else {
+            showToast(data.message || 'Failed to delete', 'error')
+          }
+        } catch(e) {
+          showToast('Failed to delete', 'error')
+        }
+      }
+    })
   }
 
   const handleLogout = () => {
@@ -401,15 +473,36 @@ function Chat() {
                     {msgs.map((m) => (
                       <div
                         key={m.id}
-                        className={`msg-bubble ${m.sender_id === user.id ? 'sent' : 'received'}`}
+                        className={`msg-bubble ${m.sender_id === user.id ? 'sent' : 'received'} ${m.is_deleted ? 'deleted' : ''}`}
                       >
-                        <span className="msg-text">{m.message}</span>
-                        <span className="msg-time">
-                          {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {m.sender_id === user.id && (
-                             <CheckCircle size={12} weight={m.read_at ? "fill" : "regular"} className="read-icon" />
-                          )}
-                        </span>
+                        {editingMessageId === m.id ? (
+                          <div className="msg-edit-mode">
+                            <input type="text" value={editMessageText} onChange={(e) => setEditMessageText(e.target.value)} autoFocus onKeyDown={(e) => e.key === 'Enter' && handleEditSave()} />
+                            <div className="msg-edit-actions">
+                              <button onClick={handleEditCancel}>Cancel</button>
+                              <button onClick={handleEditSave} className="save-btn">Save</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="msg-text" style={{ fontStyle: m.is_deleted ? 'italic' : 'normal', opacity: m.is_deleted ? 0.7 : 1 }}>
+                              {m.message}
+                            </span>
+                            <span className="msg-time">
+                              {m.is_edited === 1 && !m.is_deleted && <span className="edited-tag" style={{fontSize: '0.65rem', marginRight: '4px', opacity: 0.8}}>(edited)</span>}
+                              {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {m.sender_id === user.id && (
+                                <CheckCircle size={12} weight={m.read_at ? "fill" : "regular"} className="read-icon" />
+                              )}
+                            </span>
+                            {m.sender_id === user.id && !m.is_deleted && (
+                              <div className="msg-hover-actions">
+                                <button onClick={() => handleEditStart(m)} title="Edit"><PencilSimple size={14} /></button>
+                                <button onClick={() => handleDeleteClick(m)} title="Delete"><Trash size={14} /></button>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>

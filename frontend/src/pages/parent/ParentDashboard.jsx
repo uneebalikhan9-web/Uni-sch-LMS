@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CaretDown, CaretUp, IdentificationBadge, SignOut, BookOpen, Clock, PresentationChart, CheckCircle } from '@phosphor-icons/react';
+import { CaretDown, CaretUp, IdentificationBadge, SignOut, BookOpen, Clock, PresentationChart, CheckCircle, ChatCircle } from '@phosphor-icons/react';
 import { S } from './sections/PDStyles';
 import PDSummary from './sections/PDSummary';
 import PDAttendance from './sections/PDAttendance';
@@ -45,7 +45,8 @@ export default function ParentDashboard() {
     { id: 'summary', label: 'Overview', icon: <PresentationChart size={20} /> },
     { id: 'attendance', label: 'Attendance', icon: <CheckCircle size={20} /> },
     { id: 'fees', label: 'Fee Challans', icon: <Clock size={20} /> },
-    { id: 'diary', label: 'Digital Diary', icon: <BookOpen size={20} /> }
+    { id: 'diary', label: 'Digital Diary', icon: <BookOpen size={20} /> },
+    { id: 'chat', label: 'Teacher Chat', icon: <ChatCircle size={20} /> }
   ];
 
   if (loading) return (
@@ -90,7 +91,13 @@ export default function ParentDashboard() {
           {tabs.map(tab => (
             <div
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                if (tab.id === 'chat') {
+                  navigate('/chat');
+                } else {
+                  setActiveTab(tab.id);
+                }
+              }}
               style={{ ...S.navItem, ...(activeTab === tab.id ? S.navItemActive : {}) }}
             >
               {tab.icon} {tab.label}

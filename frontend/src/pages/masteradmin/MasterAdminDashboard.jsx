@@ -9,19 +9,36 @@ import { useToast } from "../../components/Toast";
 // Import exact VC styles
 import { S } from "../superadmin/sections/SAStyles";
 
-const availableModules = [
-  { id: 'rector', label: 'Pro-VC / Rectorate' },
+// University-specific modules
+const universityModules = [
+  { id: 'rector',     label: 'Pro-VC / Rectorate' },
   { id: 'principals', label: 'Dean & HODs' },
-  { id: 'bd', label: 'BD Management' },
-  { id: 'hr', label: 'HR & Faculty' },
-  { id: 'finance', label: 'Financial Ops' },
-  { id: 'registrar', label: 'Registrar Office' },
+  { id: 'bd',         label: 'BD Management' },
+  { id: 'hr',         label: 'HR & Faculty' },
+  { id: 'finance',    label: 'Financial Operations' },
+  { id: 'registrar',  label: 'Registrar Office' },
   { id: 'admissions', label: 'Admissions' },
-  { id: 'exams', label: 'Exams & Grading' },
-  { id: 'library', label: 'Digital Library' },
-  { id: 'it', label: 'IT & Systems' }
+  { id: 'exams',      label: 'Exams & Grading' },
+  { id: 'library',    label: 'Digital Library' },
+  { id: 'it',         label: 'IT & Systems' },
 ];
-const defaultModules = availableModules.map(m => m.id);
+
+// School-specific modules
+const schoolModules = [
+  { id: 'principals', label: 'Principal & HOD' },
+  { id: 'hr',         label: 'HR & Staff' },
+  { id: 'finance',    label: 'Fee & Finance' },
+  { id: 'admissions', label: 'Admissions' },
+  { id: 'exams',      label: 'Exams & Results' },
+  { id: 'library',    label: 'Library' },
+  { id: 'it',         label: 'IT & Systems' },
+  { id: 'parent',     label: 'Parent Portal' },
+];
+
+const defaultUniversityModules = universityModules.map(m => m.id);
+const defaultSchoolModules = schoolModules.map(m => m.id);
+const defaultModules = defaultUniversityModules; // backward compat
+
 
 export default function MasterAdminDashboard({ user, onLogout }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -38,7 +55,7 @@ export default function MasterAdminDashboard({ user, onLogout }) {
   // Add Client state
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingClientId, setEditingClientId] = useState(null);
-  const [newClient, setNewClient] = useState({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules });
+  const [newClient, setNewClient] = useState({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules, institution_type: 'university' });
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [newInvoice, setNewInvoice] = useState({ client_id: '', amount: '', billing_month: new Date().toISOString().substring(0, 7) });
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -135,6 +152,7 @@ export default function MasterAdminDashboard({ user, onLogout }) {
       monthly_fee: client.monthly_fee || '',
       logo_url: client.logo_url || '',
       primary_color: client.primary_color || 'var(--primary-color, #4f46e5)',
+      institution_type: client.institution_type || 'university',
       allowed_modules: client.allowed_modules ? (typeof client.allowed_modules === 'string' ? JSON.parse(client.allowed_modules) : client.allowed_modules) : defaultModules
     });
     setShowAddModal(true);
@@ -428,8 +446,8 @@ export default function MasterAdminDashboard({ user, onLogout }) {
             <div style={S.tableCard}>
               <div style={S.tableHeader}>
                 <h3 style={S.tableTitle}>Tenant Directory</h3>
-                <button style={S.addBtn} className="add-btn" onClick={() => { setEditingClientId(null); setNewClient({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules }); setShowAddModal(true); }}>
-                  <UserCirclePlus size={20} weight="bold" /> Onboard University
+                <button style={S.addBtn} className="add-btn" onClick={() => { setEditingClientId(null); setNewClient({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules, institution_type: 'university' }); setShowAddModal(true); }}>
+                  <UserCirclePlus size={20} weight="bold" /> Onboard Institution
                 </button>
               </div>
               
@@ -456,6 +474,9 @@ export default function MasterAdminDashboard({ user, onLogout }) {
                         </td>
                         <td style={S.td}>
                           <span style={S.planBadge}>{c.package_type} • ${c.monthly_fee}</span>
+                          <span style={{ display: 'block', marginTop: '4px', fontSize: '11px', padding: '2px 8px', borderRadius: '6px', fontWeight: '700', background: c.institution_type === 'school' ? '#ecfdf5' : '#eff6ff', color: c.institution_type === 'school' ? '#065f46' : '#1d4ed8' }}>
+                            {c.institution_type === 'school' ? '🏫 School' : '🎓 University'}
+                          </span>
                         </td>
                         <td style={S.td}>
                           <span style={{
@@ -754,24 +775,60 @@ export default function MasterAdminDashboard({ user, onLogout }) {
               </div>
             ) : (
             <form onSubmit={handleAddClient} style={S.modalForm}>
+              {/* Institution Type Selector at the top of the form */}
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>University Full Name</label>
-                <input required style={S.input} value={newClient.university_name} onChange={e => setNewClient({...newClient, university_name: e.target.value})} placeholder="e.g. National University" />
+                <label style={S.inputLabel}>Institution Type *</label>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  {[['university', '🎓', 'University', 'Registrar manages semesters & courses'], ['school', '🏫', 'School', 'Principal manages all academics']].map(([type, emoji, label, desc]) => (
+                    <label key={type} onClick={() => {
+                      const autoModules = type === 'school' ? defaultSchoolModules : defaultUniversityModules;
+                      setNewClient(prev => ({ ...prev, institution_type: type, allowed_modules: autoModules }));
+                    }} style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, cursor: 'pointer', padding: '14px 16px', borderRadius: '12px', border: newClient.institution_type === type ? '2px solid var(--primary-color, #4f46e5)' : '2px solid #e2e8f0', background: newClient.institution_type === type ? '#eff6ff' : '#f8fafc', transition: 'all 0.2s', fontWeight: '600', color: newClient.institution_type === type ? 'var(--primary-color, #4f46e5)' : '#64748b' }}>
+                      <span style={{ fontSize: '22px' }}>{emoji}</span>
+                      <div>
+                        <div style={{ fontWeight: '700', fontSize: '14px' }}>{label}</div>
+                        <div style={{ fontSize: '11px', opacity: 0.75 }}>{desc}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
               </div>
+
+              <div style={S.inputGroup}>
+                <label style={S.inputLabel}>
+                  {newClient.institution_type === 'school' ? 'School / Institution Full Name' : 'University Full Name'}
+                </label>
+                <input required style={S.input} value={newClient.university_name} onChange={e => setNewClient({...newClient, university_name: e.target.value})} 
+                  placeholder={newClient.institution_type === 'school' ? 'e.g. Beaconhouse Grammar School' : 'e.g. National University'} 
+                />
+              </div>
+
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Assigned Subdomain</label>
-                <input required style={S.input} value={newClient.domain} onChange={e => setNewClient({...newClient, domain: e.target.value})} placeholder="e.g. national.lancerstech.com" />
+                <input required style={S.input} value={newClient.domain} onChange={e => setNewClient({...newClient, domain: e.target.value})} 
+                  placeholder={newClient.institution_type === 'school' ? 'e.g. beaconhouse.lancerstech.com' : 'e.g. national.lancerstech.com'} 
+                />
               </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={S.inputGroup}>
-                  <label style={S.inputLabel}>VC Name</label>
-                  <input required style={S.input} value={newClient.admin_name} onChange={e => setNewClient({...newClient, admin_name: e.target.value})} placeholder="Dr. XYZ" />
+                  <label style={S.inputLabel}>
+                    {newClient.institution_type === 'school' ? 'Director / Principal Name' : 'VC Name'}
+                  </label>
+                  <input required style={S.input} value={newClient.admin_name} onChange={e => setNewClient({...newClient, admin_name: e.target.value})} 
+                    placeholder={newClient.institution_type === 'school' ? 'Mr. / Mrs. ABC' : 'Dr. XYZ'} 
+                  />
                 </div>
                 <div style={S.inputGroup}>
-                  <label style={S.inputLabel}>VC Email</label>
-                  <input required type="email" style={S.input} value={newClient.admin_email} onChange={e => setNewClient({...newClient, admin_email: e.target.value})} placeholder="vc@univ.edu" />
+                  <label style={S.inputLabel}>
+                    {newClient.institution_type === 'school' ? 'Director / Principal Email' : 'VC Email'}
+                  </label>
+                  <input required type="email" style={S.input} value={newClient.admin_email} onChange={e => setNewClient({...newClient, admin_email: e.target.value})} 
+                    placeholder={newClient.institution_type === 'school' ? 'director@school.edu' : 'vc@univ.edu'} 
+                  />
                 </div>
               </div>
+
               {!editingClientId && (
                 <div style={S.inputGroup}>
                   <label style={S.inputLabel}>Initial Password</label>
@@ -822,7 +879,7 @@ export default function MasterAdminDashboard({ user, onLogout }) {
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Allowed Modules</label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  {availableModules.map(mod => (
+                  {(newClient.institution_type === 'school' ? schoolModules : universityModules).map(mod => (
                     <label key={mod.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#475569', fontSize: '14px', fontWeight: '500' }}>
                       <input 
                         type="checkbox" 

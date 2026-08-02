@@ -2,6 +2,7 @@ import { Plus, PencilSimple, Trash } from "@phosphor-icons/react";
 import { S } from "./SAStyles";
 
 export default function SADepartments({ 
+  isSchool = false,
   departments, 
   editingItem, setEditingItem,
   showAddModal, setShowAddModal,
@@ -12,13 +13,13 @@ export default function SADepartments({
     <>
       <div style={S.tableCard}>
         <div style={S.tableHeader}>
-          <h2 style={S.tableTitle}>Faculties & Departments</h2>
+          <h2 style={S.tableTitle}>{isSchool ? 'School Branches & Wings' : 'Faculties & Departments'}</h2>
           <button 
             onClick={() => { setEditingItem(null); setShowAddModal(true); }} 
             style={S.addBtn} className="add-btn"
           >
             <Plus size={18} weight="bold" />
-            <span>Add Faculty</span>
+            <span>{isSchool ? 'Add Branch' : 'Add Faculty'}</span>
           </button>
         </div>
         <div style={S.tableContainer} className="table-container">
@@ -44,14 +45,14 @@ export default function SADepartments({
                       <button 
                         style={S.editBtn} className="edit-btn"
                         onClick={() => { setEditingItem({...c}); setShowAddModal(true); }}
-                        title="Edit Department"
+                        title={isSchool ? "Edit Branch" : "Edit Department"}
                       >
                         <PencilSimple size={16} />
                       </button>
                       <button 
                         style={S.deleteBtn} className="delete-btn"
                         onClick={() => onDelete(c.id)}
-                        title="Delete Department"
+                        title={isSchool ? "Delete Branch" : "Delete Department"}
                       >
                         <Trash size={16} />
                       </button>
@@ -69,14 +70,14 @@ export default function SADepartments({
         <div style={S.overlay} onClick={() => { setShowAddModal(false); setEditingItem(null); }}>
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={S.modalHeader}>
-            <h3 style={S.modalTitle}>{editingItem ? 'Edit Department' : 'Add New Department'}</h3>
+            <h3 style={S.modalTitle}>{editingItem ? (isSchool ? 'Edit Branch' : 'Edit Department') : (isSchool ? 'Add New Branch' : 'Add New Department')}</h3>
               <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
             </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
-                <label style={S.inputLabel}>Department Name</label>
+                <label style={S.inputLabel}>{isSchool ? 'Branch / Wing Name' : 'Department Name'}</label>
                 <input 
-                  placeholder="e.g., Main Department" required 
+                  placeholder={isSchool ? 'e.g., Main Branch / Primary Wing' : 'e.g., Main Department'} required 
                   value={editingItem ? editingItem.name : newDepartment.name} 
                   onChange={e => editingItem 
                     ? setEditingItem({...editingItem, name: e.target.value}) 
@@ -87,7 +88,7 @@ export default function SADepartments({
               <div style={S.inputGroup}>
                 <label style={S.inputLabel}>Location</label>
                 <input 
-                  placeholder="e.g., New York" 
+                  placeholder={isSchool ? 'e.g., Gulberg, Lahore' : 'e.g., New York'} 
                   value={editingItem ? editingItem.location : newDepartment.location} 
                   onChange={e => editingItem 
                     ? setEditingItem({...editingItem, location: e.target.value}) 
@@ -103,7 +104,7 @@ export default function SADepartments({
                     onChange={e => setEditingItem({...editingItem, is_active: e.target.checked})} 
                     style={S.checkbox}
                   />
-                  <label htmlFor="activeCheckbox" style={S.checkboxLabel}>Active Department</label>
+                  <label htmlFor="activeCheckbox" style={S.checkboxLabel}>{isSchool ? 'Active Branch' : 'Active Department'}</label>
                 </div>
               )}
               <div style={S.modalActions}>
@@ -111,7 +112,7 @@ export default function SADepartments({
                   Cancel
                 </button>
                 <button type="submit" style={S.saveBtn}>
-                  {editingItem ? 'Update Faculty' : 'Create Faculty'}
+                  {editingItem ? (isSchool ? 'Update Branch' : 'Update Faculty') : (isSchool ? 'Create Branch' : 'Create Faculty')}
                 </button>
               </div>
             </form>

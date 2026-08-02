@@ -598,3 +598,15 @@
   .message-viewport { padding: 16px; }
   .msg-bubble { max-width: 82%; }
 }
+
+.msg-bubble { position: relative; }
+.msg-hover-actions { position: absolute; top: 0; right: 0; transform: translateY(-50%); display: none; gap: 4px; background: white; padding: 4px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+.msg-bubble:hover .msg-hover-actions { display: flex; }
+.msg-hover-actions button { background: none; border: none; cursor: pointer; color: #64748b; padding: 4px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.msg-hover-actions button:hover { background: #f1f5f9; color: #1e293b; }
+.msg-hover-actions button[title='Delete']:hover { color: #ef4444; background: #fee2e2; }
+.msg-edit-mode { display: flex; flex-direction: column; gap: 8px; }
+.msg-edit-mode input { border: 1px solid rgba(255,255,255,0.4); background: rgba(0,0,0,0.1); color: inherit; padding: 8px; border-radius: 6px; outline: none; font-size: 0.9rem; }
+.msg-edit-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.msg-edit-actions button { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: inherit; cursor: pointer; padding: 4px 12px; border-radius: 6px; font-size: 0.8rem; }
+.msg-edit-actions .save-btn { background: white; color: var(--primary-color, #4f46e5); font-weight: bold; border: none; }

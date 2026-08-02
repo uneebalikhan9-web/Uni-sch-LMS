@@ -44,7 +44,138 @@ function StatusBadge({ status }) {
   );
 }
 
-export default function SDRegistration() {
+function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjects, availableCourses, courses, handleRegisterClass, handleEnrollCourse, registering, enrolling }) {
+  const [activeTab, setActiveTab] = useState('classes');
+  
+  return (
+    <div className="animate-fadeIn">
+       <div style={{ marginBottom: '24px' }}>
+        <h2 style={{ ...S.sectionTitle, marginBottom: '4px' }}>
+          <BookOpen size={28} weight="duotone" color="var(--primary-color, #4f46e5)" style={{ verticalAlign: 'middle', marginRight: '12px' }} />
+          Class & Course Registration
+        </h2>
+        <p style={{ color: '#64748b', fontSize: '0.875rem', margin: 0 }}>
+          Register for a class and enroll in subjects.
+        </p>
+      </div>
+      <div style={{ display: 'flex', gap: '4px', borderBottom: '2px solid #e2e8f0', marginBottom: '24px' }}>
+        <button onClick={() => setActiveTab('classes')} style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '10px 18px', border: 'none', cursor: 'pointer',
+          background: 'none', fontWeight: activeTab === 'classes' ? 700 : 500,
+          fontSize: '0.85rem', color: activeTab === 'classes' ? 'var(--primary-color, #4f46e5)' : '#64748b',
+          borderBottom: activeTab === 'classes' ? '2px solid var(--primary-color, #4f46e5)' : '2px solid transparent',
+          marginBottom: '-2px', transition: 'all 0.2s'
+        }}>
+          <Buildings size={16} /> Classes
+        </button>
+        <button onClick={() => setActiveTab('courses')} style={{
+          display: 'flex', alignItems: 'center', gap: '6px',
+          padding: '10px 18px', border: 'none', cursor: 'pointer',
+          background: 'none', fontWeight: activeTab === 'courses' ? 700 : 500,
+          fontSize: '0.85rem', color: activeTab === 'courses' ? 'var(--primary-color, #4f46e5)' : '#64748b',
+          borderBottom: activeTab === 'courses' ? '2px solid var(--primary-color, #4f46e5)' : '2px solid transparent',
+          marginBottom: '-2px', transition: 'all 0.2s'
+        }}>
+          <BookOpen size={16} /> Subjects / Courses
+        </button>
+      </div>
+
+      {activeTab === 'classes' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {myClassInfo ? (
+            <div style={{ padding: '24px', background: '#f0fdf4', borderRadius: '12px', border: '1px solid #bbf7d0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                <CheckCircle size={28} color="#16a34a" weight="fill" />
+                <div>
+                  <h3 style={{ margin: 0, color: '#166534', fontSize: '1.1rem' }}>Registered in {myClassInfo.name}</h3>
+                  <p style={{ margin: 0, color: '#15803d', fontSize: '0.85rem' }}>Section {myClassInfo.section}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+              {availableClasses && availableClasses.length > 0 ? availableClasses.map(c => (
+                <div key={c.id} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.name}</h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Section {c.section}</p>
+                  
+                  {c.registration_status === 'pending' ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                      <Clock size={20} weight="fill" /> Pending Approval
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => handleRegisterClass(c.id)}
+                      disabled={registering}
+                      style={{
+                        width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 600, cursor: 'pointer',
+                        opacity: registering ? 0.7 : 1
+                      }}>
+                      {registering ? 'Processing...' : 'Register for this Class'}
+                    </button>
+                  )}
+                </div>
+              )) : (
+                <p>No classes available for registration.</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'courses' && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+          {/* First show courses that are already enrolled or pending */}
+          {courses && courses.length > 0 && courses.map(c => (
+            <div key={`enrolled-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              
+              {c.status === 'pending' ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                  <Clock size={20} weight="fill" /> Pending Approval
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#10b981', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
+                  <CheckCircle size={20} weight="fill" /> Enrolled
+                </div>
+              )}
+            </div>
+          ))}
+
+          {/* Then show available courses that the student hasn't requested yet */}
+          {availableCourses && availableCourses.length > 0 && availableCourses.map(c => (
+            <div key={`avail-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              <button 
+                onClick={() => handleEnrollCourse(c.id)}
+                disabled={enrolling}
+                style={{
+                  width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 600, cursor: 'pointer',
+                  opacity: enrolling ? 0.7 : 1
+                }}>
+                {enrolling ? 'Processing...' : 'Enroll Now'}
+              </button>
+            </div>
+          ))}
+
+          {(!courses || courses.length === 0) && (!availableCourses || availableCourses.length === 0) && (
+            <p>No courses available.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function SDRegistration({ user, availableClasses, myClassInfo, myClassSubjects, availableCourses, courses, handleRegisterClass, handleEnrollCourse, registering, enrolling }) {
+  const isSchool = (user?.institution_type || 'university') === 'school';
+  if (isSchool) {
+    return <SchoolRegistration user={user} availableClasses={availableClasses} myClassInfo={myClassInfo} myClassSubjects={myClassSubjects} availableCourses={availableCourses} courses={courses} handleRegisterClass={handleRegisterClass} handleEnrollCourse={handleEnrollCourse} registering={registering} enrolling={enrolling} />;
+  }
+
   const token = sessionStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 

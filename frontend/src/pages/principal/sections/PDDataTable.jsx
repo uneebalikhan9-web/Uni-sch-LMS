@@ -24,7 +24,7 @@ export default function PDDataTable({
   onDelete, onApprove, onReject,
   onUpdateCourseStatus, onGenerateReport,
   onOpenClassCourses, onOpenStudentProfile, setActiveTab, setNewCourse,
-  courses, onOpenBulkModal
+  courses, onOpenBulkModal, isSchool
 }) {
   const singularTab = (tab) => {
     if (tab === 'classes') return 'class';
@@ -169,8 +169,8 @@ export default function PDDataTable({
                         </button>
                       )}
                       {activeTab !== 'lab_reports' && (
-                        <button style={S.iconBtn} onClick={() => { setEditingItem(item); setShowAddModal(true); }}>
-                          <PencilSimple size={16} />
+                        <button style={S.iconBtn} onClick={() => { setEditingItem(item); setShowAddModal(true); }} title={['classes', 'courses'].includes(activeTab) ? "Assign Teacher" : "Edit"}>
+                          {['classes', 'courses'].includes(activeTab) ? <BookOpen size={16} /> : <PencilSimple size={16} />}
                         </button>
                       )}
                       <button style={S.deleteBtn} onClick={() => onDelete(item.id, activeTab === 'history' ? 'course' : singularTab(activeTab))}>

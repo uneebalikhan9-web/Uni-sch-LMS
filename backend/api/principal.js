@@ -459,11 +459,18 @@ router.delete('/students/:id', async (req, res) => {
       await connection.query('DELETE FROM finance_challans WHERE student_id = ?', [studentRealId]).catch(() => {});
       // 7. Delete student_classes associations
       await connection.query('DELETE FROM student_classes WHERE student_id = ?', [studentRealId]).catch(() => {});
-      // 8. Delete student profile
+      // 8. Delete parents and face descriptors
+      await connection.query('DELETE FROM student_parents WHERE student_id = ?', [studentRealId]).catch(() => {});
+      await connection.query('DELETE FROM face_descriptors WHERE student_id = ?', [studentRealId]).catch(() => {});
+      // 9. Delete student profile
       await connection.query('DELETE FROM students WHERE id = ?', [studentRealId]).catch(() => {});
     }
 
-    // 9. Finally delete the user
+    // 10. Clean up user-level records and finally delete the user
+    await connection.query('DELETE FROM chat_messages WHERE sender_id = ? OR receiver_id = ?', [id, id]).catch(() => {});
+    await connection.query('DELETE FROM course_feedbacks WHERE student_id = ?', [id]).catch(() => {});
+    await connection.query('DELETE FROM lab_feedbacks WHERE student_id = ?', [id]).catch(() => {});
+    
     await connection.query('DELETE FROM users WHERE id = ?', [id]);
 
     await connection.commit();

@@ -17,7 +17,7 @@ const getChatVisibilityFilter = (user) => {
   const baseParams = [clientId, myId];
 
   if (role === 'student') {
-    // Students see HOD/Admin of their campus + Teachers of their enrolled courses/classes. NO other students.
+    // Students see HOD/Admin of their campus + Teachers of their enrolled courses/classes/sections. NO other students.
     return {
       condition: `
         ${baseCond} AND (
@@ -33,10 +33,15 @@ const getChatVisibilityFilter = (user) => {
             JOIN student_classes sc ON cl.id = sc.class_id 
             JOIN employees emp ON cl.teacher_id = emp.id
             WHERE sc.student_id = ? AND sc.status = 'approved'
+            UNION
+            SELECT emp.user_id FROM course_sections cs 
+            JOIN enrollments e ON cs.course_id = e.course_id AND cs.semester_id = e.semester
+            JOIN employees emp ON cs.teacher_id = emp.id
+            WHERE e.student_id = ? AND e.status = 'approved'
           ))
         )
       `,
-      params: [...baseParams, campusId, myId, myId]
+      params: [...baseParams, campusId, myId, myId, myId]
     };
   } else if (role === 'teacher') {
     // Teachers see HOD/Admin of their campus + Students in their campus.
@@ -156,7 +161,7 @@ router.get('/messages/:otherUserId', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid user id' });
     }
     const [rows] = await pool.query(
-      `SELECT id, sender_id, receiver_id, message, created_at, read_at
+      `SELECT id, sender_id, receiver_id, message, created_at, read_at, is_edited, is_deleted
        FROM chat_messages
        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
        ORDER BY created_at ASC`,
@@ -253,6 +258,74 @@ router.post('/messages', async (req, res) => {
   } catch (err) {
     console.error('Send message error:', err);
     res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+});
+
+// Edit a sent message
+router.put('/messages/:id', async (req, res) => {
+  try {
+    const myId = req.user.id;
+    const msgId = parseInt(req.params.id, 10);
+    const { message } = req.body;
+    if (!msgId || !message || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Invalid payload' });
+    }
+
+    const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [msgId]);
+    if (!msg) return res.status(404).json({ success: false, message: 'Message not found' });
+    if (msg.sender_id !== myId) return res.status(403).json({ success: false, message: 'Unauthorized' });
+    if (msg.is_deleted) return res.status(400).json({ success: false, message: 'Cannot edit deleted message' });
+
+    await pool.query(
+      'UPDATE chat_messages SET message = ?, is_edited = 1 WHERE id = ?',
+      [message.trim(), msgId]
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${msg.receiver_id}`).emit('chat:message_updated', {
+        id: msg.id,
+        message: message.trim(),
+        is_edited: 1
+      });
+    }
+    
+    res.json({ success: true, message: 'Message updated' });
+  } catch (err) {
+    console.error('Edit message error:', err);
+    res.status(500).json({ success: false, message: 'Failed to edit message' });
+  }
+});
+
+// Delete a sent message (soft delete)
+router.delete('/messages/:id', async (req, res) => {
+  try {
+    const myId = req.user.id;
+    const msgId = parseInt(req.params.id, 10);
+    if (!msgId) return res.status(400).json({ success: false, message: 'Invalid payload' });
+
+    const [[msg]] = await pool.query('SELECT * FROM chat_messages WHERE id = ?', [msgId]);
+    if (!msg) return res.status(404).json({ success: false, message: 'Message not found' });
+    if (msg.sender_id !== myId) return res.status(403).json({ success: false, message: 'Unauthorized' });
+
+    await pool.query(
+      'UPDATE chat_messages SET message = ?, is_deleted = 1 WHERE id = ?',
+      ["This message was deleted", msgId]
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${msg.receiver_id}`).emit('chat:message_deleted', {
+        id: msg.id,
+        message: "This message was deleted",
+        is_deleted: 1
+      });
+    }
+
+    res.json({ success: true, message: 'Message deleted' });
+  } catch (err) {
+    console.error('Delete message error:', err);
+    res.status(500).json({ success: false, message: 'Failed to delete message' });
   }
 });
 

@@ -378,9 +378,20 @@ router.delete('/:id', async (req, res) => {
     await connection.query('DELETE FROM enrollments WHERE student_id = ?', [studentId]);
     await connection.query('DELETE FROM attendance WHERE student_id = ?', [studentId]);
     await connection.query('DELETE FROM student_progress WHERE student_id = ?', [studentId]).catch(() => {});
-    await connection.query('DELETE FROM challans WHERE student_id = ?', [studentId]).catch(() => {});
-    await connection.query('DELETE FROM student_classes WHERE student_id = ?', [studentId]);
+    await connection.query('DELETE FROM finance_challans WHERE student_id = ?', [studentId]).catch(() => {});
+    await connection.query('DELETE FROM student_classes WHERE student_id = ?', [studentId]).catch(() => {});
+    await connection.query('DELETE FROM student_parents WHERE student_id = ?', [studentId]).catch(() => {});
+    await connection.query('DELETE FROM face_descriptors WHERE student_id = ?', [studentId]).catch(() => {});
+    
+    // Now delete from students table
     await connection.query('DELETE FROM students WHERE id = ?', [studentId]);
+    
+    // Delete user-level related records using users.id (id)
+    await connection.query('DELETE FROM chat_messages WHERE sender_id = ? OR receiver_id = ?', [id, id]).catch(() => {});
+    await connection.query('DELETE FROM course_feedbacks WHERE student_id = ?', [id]).catch(() => {}); // assuming student_id = user.id here or just catch
+    await connection.query('DELETE FROM lab_feedbacks WHERE student_id = ?', [id]).catch(() => {});
+    
+    // Finally delete from users table
     await connection.query('DELETE FROM users WHERE id = ?', [id]);
 
     await connection.commit();

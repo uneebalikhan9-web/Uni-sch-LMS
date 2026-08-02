@@ -61,17 +61,17 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Create new course (admin/HOD only - teachers cannot create courses)
+// Create new course (admin and principal/HOD)
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { title, description, teacher_id, class_id } = req.body;
-    const isAdminUser = req.user.role === 'admin' || req.user.role === 'principal' || req.user.role === 'super_admin';
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin' || req.user.role === 'principal';
     const campusId = req.user.campus_id;
 
     if (!isAdminUser) {
       return res.status(403).json({
         success: false,
-        message: `Access denied. Role '${req.user.role}' is not allowed to create courses. (Admin/HOD only)`
+        message: `Access denied. Role '${req.user.role}' is not allowed to create courses.`
       });
     }
 
@@ -277,16 +277,35 @@ router.get('/:courseId/students', verifyToken, async (req, res) => {
   }
 });
 
-// Update Course (Admin only)
-router.put('/:id', verifyToken, isAdmin, async (req, res) => {
+// Update Course (Admin and Principal)
+router.put('/:id', verifyToken, async (req, res) => {
   try {
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const isPrincipal = req.user.role === 'principal';
+    
+    if (!isAdminUser && !isPrincipal) {
+      return res.status(403).json({ success: false, message: 'Permission denied.' });
+    }
+
     const { id } = req.params;
     const { title, description, teacher_id, class_id } = req.body;
 
-    await pool.query(
-      'UPDATE courses SET title = ?, description = ?, teacher_id = ?, class_id = ? WHERE id = ?',
-      [title, description, teacher_id || null, class_id || null, id]
-    );
+    if (isPrincipal) {
+      // Principal can update all fields for their campus courses
+      const [[existing]] = await pool.query('SELECT campus_id FROM courses WHERE id = ?', [id]);
+      if (!existing) return res.status(404).json({ success: false, message: 'Course not found' });
+      if (existing.campus_id !== req.user.campus_id) return res.status(403).json({ success: false, message: 'Access denied.' });
+      await pool.query(
+        'UPDATE courses SET title = ?, description = ?, teacher_id = ?, class_id = ? WHERE id = ?',
+        [title, description, teacher_id || null, class_id || null, id]
+      );
+    } else {
+      // Admin can update everything
+      await pool.query(
+        'UPDATE courses SET title = ?, description = ?, teacher_id = ?, class_id = ? WHERE id = ?',
+        [title, description, teacher_id || null, class_id || null, id]
+      );
+    }
 
     res.status(200).json({ success: true, message: 'Course updated successfully' });
   } catch (error) {
@@ -295,11 +314,27 @@ router.put('/:id', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// Delete Course (Admin only)
-router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
+// Delete Course (Admin and Principal/HOD)
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const isPrincipal = req.user.role === 'principal';
+    if (!isAdminUser && !isPrincipal) {
+      return res.status(403).json({ success: false, message: 'Permission denied.' });
+    }
     const { id } = req.params;
 
+    // Principal can only delete courses from their own campus
+    if (isPrincipal) {
+      const [[course]] = await pool.query('SELECT campus_id FROM courses WHERE id = ?', [id]);
+      if (!course) return res.status(404).json({ success: false, message: 'Course not found' });
+      if (course.campus_id !== req.user.campus_id) {
+        return res.status(403).json({ success: false, message: 'Access denied: not your campus.' });
+      }
+    }
+
+    await pool.query('DELETE FROM enrollments WHERE course_id = ?', [id]).catch(() => {});
+    await pool.query('DELETE FROM assignments WHERE course_id = ?', [id]).catch(() => {});
     await pool.query('DELETE FROM courses WHERE id = ?', [id]);
 
     res.status(200).json({ success: true, message: 'Course deleted successfully' });

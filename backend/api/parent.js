@@ -72,12 +72,28 @@ router.get('/fees/:studentId', async (req, res) => {
     const { studentId } = req.params;
     if (!(await verifyLink(req.user.id, studentId))) return res.status(403).json({ success: false, message: 'Unauthorized access to this student' });
 
-    const [challans] = await pool.query(`
-      SELECT id, challan_no as title, total_amount as amount, due_date, status, created_at, paid_date
-      FROM finance_student_challans
-      WHERE student_id = ?
-      ORDER BY due_date DESC
-    `, [studentId]);
+    let challans = [];
+    try {
+      const [rows] = await pool.query(`
+        SELECT id, challan_no as title, total_amount as amount, due_date, status, created_at, paid_date
+        FROM finance_student_challans
+        WHERE student_id = ?
+        ORDER BY due_date DESC
+      `, [studentId]);
+      challans = rows;
+    } catch (e) {
+      try {
+        const [rows] = await pool.query(`
+          SELECT id, challan_number as title, amount, due_date, status, created_at, paid_date
+          FROM challans
+          WHERE student_id = ?
+          ORDER BY due_date DESC
+        `, [studentId]);
+        challans = rows;
+      } catch (err) {
+        challans = [];
+      }
+    }
     
     res.json({ success: true, challans });
   } catch (error) {

@@ -76,15 +76,29 @@ const ensureTables = async () => {
 };
 ensureTables().catch(e => console.error('Face attendance table setup error:', e));
 
-// ── GET all face descriptors (for recognition in browser) ──────────────────
+// ── GET all face descriptors (filtered by tenant) ──────────────────────────
 router.get('/descriptors', async (req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const clientId = req.user.client_id;
+    const campusId = req.user.campus_id;
+    let query = `
       SELECT fd.student_id, fd.label, fd.descriptor, u.name as student_name, s.roll_number
       FROM face_descriptors fd
       JOIN students s ON fd.student_id = s.id
       JOIN users u ON s.user_id = u.id
-    `);
+      WHERE 1=1
+    `;
+    const params = [];
+    if (clientId && req.user.role !== 'master_admin') {
+      query += ` AND u.client_id = ?`;
+      params.push(clientId);
+    }
+    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
+      query += ` AND s.campus_id = ?`;
+      params.push(campusId);
+    }
+
+    const [rows] = await pool.query(query, params);
     const descriptors = rows.map(r => ({
       student_id: r.student_id,
       label: r.label,
@@ -106,9 +120,16 @@ router.post('/register', async (req, res) => {
     if (!student_id || !label || !descriptor) {
       return res.status(400).json({ success: false, message: 'student_id, label, and descriptor are required' });
     }
-    // Verify student exists
-    const [[student]] = await pool.query('SELECT id FROM students WHERE id = ?', [student_id]);
+    // Verify student exists and belongs to the user's client
+    const [[student]] = await pool.query(
+      'SELECT s.id, u.client_id FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?',
+      [student_id]
+    );
     if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    if (req.user.role !== 'master_admin' && req.user.client_id && student.client_id !== req.user.client_id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Student belongs to another institution.' });
+    }
 
     await pool.query(
       `INSERT INTO face_descriptors (student_id, label, descriptor) VALUES (?, ?, ?)
@@ -127,6 +148,17 @@ router.post('/mark', async (req, res) => {
   try {
     const { student_id } = req.body;
     if (!student_id) return res.status(400).json({ success: false, message: 'student_id is required' });
+
+    // Verify student exists and belongs to user's client
+    const [[studentInfo]] = await pool.query(
+      `SELECT u.name, u.client_id, s.roll_number FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?`,
+      [student_id]
+    );
+    if (!studentInfo) return res.status(404).json({ success: false, message: 'Student not found' });
+
+    if (req.user.role !== 'master_admin' && req.user.client_id && studentInfo.client_id !== req.user.client_id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. Student belongs to another institution.' });
+    }
 
     const today = new Date().toISOString().split('T')[0];
     const now = new Date().toTimeString().split(' ')[0];
@@ -175,12 +207,6 @@ router.post('/mark', async (req, res) => {
       console.error('Error auto-syncing face attendance to courses:', e);
     }
 
-    // Get student details for response
-    const [[studentInfo]] = await pool.query(
-      `SELECT u.name, s.roll_number FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?`,
-      [student_id]
-    );
-
     res.json({
       success: true,
       status: 'marked',
@@ -193,20 +219,36 @@ router.post('/mark', async (req, res) => {
   }
 });
 
-// ── GET today's campus attendance log ───────────────────────────────────────
+// ── GET today's campus attendance log (filtered by tenant) ──────────────────
 router.get('/today', async (req, res) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const date = req.query.date || today;
-    const [rows] = await pool.query(`
+    const clientId = req.user.client_id;
+    const campusId = req.user.campus_id;
+
+    let query = `
       SELECT ca.id, ca.date, ca.time, ca.marked_at, ca.student_id,
              u.name as student_name, s.roll_number
       FROM campus_attendance ca
       JOIN students s ON ca.student_id = s.id
       JOIN users u ON s.user_id = u.id
       WHERE ca.date = ?
-      ORDER BY ca.time ASC
-    `, [date]);
+    `;
+    const params = [date];
+
+    if (clientId && req.user.role !== 'master_admin') {
+      query += ` AND u.client_id = ?`;
+      params.push(clientId);
+    }
+    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
+      query += ` AND s.campus_id = ?`;
+      params.push(campusId);
+    }
+
+    query += ` ORDER BY ca.time ASC`;
+
+    const [rows] = await pool.query(query, params);
     res.json({ success: true, date: date, attendance: rows });
   } catch (error) {
     console.error('Get today attendance error:', error);
@@ -234,16 +276,33 @@ router.get('/my-history', async (req, res) => {
   }
 });
 
-// ── GET students list (for registration dropdown) ───────────────────────────
+// ── GET students list for registration (filtered by tenant) ─────────────────
 router.get('/students', async (req, res) => {
   try {
-    const [students] = await pool.query(`
+    const clientId = req.user.client_id;
+    const campusId = req.user.campus_id;
+
+    let query = `
       SELECT s.id as student_id, u.name, s.roll_number,
              (SELECT COUNT(*) FROM face_descriptors fd WHERE fd.student_id = s.id) as is_registered
       FROM students s
       JOIN users u ON s.user_id = u.id
-      ORDER BY u.name ASC
-    `);
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (clientId && req.user.role !== 'master_admin') {
+      query += ` AND u.client_id = ?`;
+      params.push(clientId);
+    }
+    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
+      query += ` AND s.campus_id = ?`;
+      params.push(campusId);
+    }
+
+    query += ` ORDER BY u.name ASC`;
+
+    const [students] = await pool.query(query, params);
     res.json({ success: true, students });
   } catch (error) {
     console.error('Get students error:', error);
@@ -254,7 +313,18 @@ router.get('/students', async (req, res) => {
 // ── DELETE face descriptor ───────────────────────────────────────────────────
 router.delete('/descriptor/:studentId', async (req, res) => {
   try {
-    await pool.query('DELETE FROM face_descriptors WHERE student_id = ?', [req.params.studentId]);
+    const { studentId } = req.params;
+    // Verify student belongs to user's client
+    const [[student]] = await pool.query(
+      'SELECT s.id, u.client_id FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?',
+      [studentId]
+    );
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+    if (req.user.role !== 'master_admin' && req.user.client_id && student.client_id !== req.user.client_id) {
+      return res.status(403).json({ success: false, message: 'Unauthorized' });
+    }
+
+    await pool.query('DELETE FROM face_descriptors WHERE student_id = ?', [studentId]);
     res.json({ success: true, message: 'Face data removed' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error removing face data' });

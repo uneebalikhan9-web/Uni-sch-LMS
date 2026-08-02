@@ -449,6 +449,18 @@ const startServer = async () => {
     console.error('⚠️  Please check your MySQL configuration');
   }
 
+  // ─── Auto-migrate: add institution_type column if missing ────────────────────
+  if (dbConnected) {
+    try {
+      const { pool } = require('./config/database');
+      await pool.query(`ALTER TABLE lancers_clients ADD COLUMN IF NOT EXISTS institution_type ENUM('school','university') NOT NULL DEFAULT 'university'`);
+      console.log('✅ DB Migration: institution_type column ensured on lancers_clients');
+    } catch (e) {
+      // Ignore: column may already exist or DB not available yet
+    }
+  }
+
+
   // Log startup to file to verify write permissions
   try {
     const fs = require('fs');

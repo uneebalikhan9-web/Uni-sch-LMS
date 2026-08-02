@@ -145,15 +145,31 @@ router.post('/generate/:courseId', async (req, res) => {
 // GET /api/reports
 
 router.get('/', async (req, res) => {
-  const allowed = ['super_admin', 'bd_agent'];
+  const allowed = ['super_admin', 'bd_agent', 'master_admin'];
   if (!allowed.includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Access denied' });
   }
 
   try {
-    const [reports] = await pool.query(`
-      SELECT * FROM course_reports ORDER BY completed_at DESC
-    `);
+    const clientId = req.user.client_id;
+    let reports = [];
+
+    if (req.user.role === 'master_admin' && !clientId) {
+      // Master Admin can see all system reports if no specific client_id set
+      [reports] = await pool.query('SELECT * FROM course_reports ORDER BY completed_at DESC');
+    } else if (clientId) {
+      // Strict Tenant Isolation: Only return reports belonging to campuses of this client
+      [reports] = await pool.query(`
+        SELECT cr.* 
+        FROM course_reports cr
+        JOIN campuses c ON cr.campus_id = c.id
+        WHERE c.client_id = ?
+        ORDER BY cr.completed_at DESC
+      `, [clientId]);
+    } else {
+      [reports] = await pool.query('SELECT * FROM course_reports ORDER BY completed_at DESC');
+    }
+
     res.json({ success: true, reports });
   } catch (error) {
     console.error('Get all reports error:', error);
@@ -172,10 +188,24 @@ router.get('/campus', async (req, res) => {
 
   try {
     const campusId = req.user.campus_id;
-    const [reports] = await pool.query(
-      'SELECT * FROM course_reports WHERE campus_id = ? ORDER BY completed_at DESC',
-      [campusId]
-    );
+    const clientId = req.user.client_id;
+    let reports = [];
+
+    if (campusId) {
+      [reports] = await pool.query(
+        'SELECT * FROM course_reports WHERE campus_id = ? ORDER BY completed_at DESC',
+        [campusId]
+      );
+    } else if (clientId) {
+      [reports] = await pool.query(`
+        SELECT cr.* 
+        FROM course_reports cr
+        JOIN campuses c ON cr.campus_id = c.id
+        WHERE c.client_id = ?
+        ORDER BY cr.completed_at DESC
+      `, [clientId]);
+    }
+
     res.json({ success: true, reports });
   } catch (error) {
     console.error('Get campus reports error:', error);
@@ -219,6 +249,14 @@ router.get('/:id', async (req, res) => {
     );
     if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
 
+    // Multi-tenant Security: Verify report campus belongs to user's client_id
+    if (req.user.role !== 'master_admin' && req.user.client_id && report.campus_id) {
+      const [[campus]] = await pool.query('SELECT client_id FROM campuses WHERE id = ?', [report.campus_id]);
+      if (!campus || campus.client_id !== req.user.client_id) {
+        return res.status(403).json({ success: false, message: 'Access denied to this tenant report' });
+      }
+    }
+
     // HOD can only see their campus
     if (req.user.role === 'principal' && report.campus_id !== req.user.campus_id) {
       return res.status(403).json({ success: false, message: 'Access denied to this report' });
@@ -245,6 +283,14 @@ router.get('/:id/details', async (req, res) => {
     // 1. Get report header
     const [[report]] = await pool.query('SELECT * FROM course_reports WHERE id = ?', [id]);
     if (!report) return res.status(404).json({ success: false, message: 'Report not found' });
+
+    // Multi-tenant Security: Verify report campus belongs to user's client_id
+    if (user.role !== 'master_admin' && user.client_id && report.campus_id) {
+      const [[campus]] = await pool.query('SELECT client_id FROM campuses WHERE id = ?', [report.campus_id]);
+      if (!campus || campus.client_id !== user.client_id) {
+        return res.status(403).json({ success: false, message: 'Access denied to this tenant report' });
+      }
+    }
 
     // Role-based access check
     if (user.role === 'principal' && report.campus_id !== user.campus_id) {

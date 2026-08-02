@@ -131,11 +131,11 @@ router.post('/register', isStudent, async (req, res) => {
   }
 });
 
-// Create Class (Admin/Principal only — teachers cannot create classes)
+// Create Class (Admin & Principal/HOD)
 router.post('/', verifyToken, async (req, res) => {
   try {
     const { name, section, academic_year, teacher_id } = req.body;
-    const isAdminUser = req.user.role === 'admin' || req.user.role === 'principal' || req.user.role === 'super_admin';
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin' || req.user.role === 'principal';
     const campusId = req.user.campus_id;
 
     if (!isAdminUser) {
@@ -174,17 +174,32 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// Update Class (Admin only)
-router.put('/:id', isAdmin, async (req, res) => {
+// Update Class (Admin and Principal)
+router.put('/:id', verifyToken, async (req, res) => {
   try {
+    const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const isPrincipal = req.user.role === 'principal';
+    
+    if (!isAdminUser && !isPrincipal) {
+      return res.status(403).json({ success: false, message: 'Permission denied.' });
+    }
+
     const { id } = req.params;
     const { name, section, academic_year, teacher_id } = req.body;
-    console.log(`[DEBUG] Updating class ${id}:`, { name, section, academic_year, teacher_id });
 
-    const [result] = await pool.query(
-      'UPDATE classes SET name = ?, section = ?, academic_year = ?, teacher_id = ? WHERE id = ?',
-      [name, section, academic_year, teacher_id || null, id]
-    );
+    if (isPrincipal) {
+      // Principal can only update teacher_id
+      const [result] = await pool.query(
+        'UPDATE classes SET teacher_id = ? WHERE id = ? AND campus_id = ?',
+        [teacher_id || null, id, req.user.campus_id]
+      );
+    } else {
+      // Admin can update everything
+      const [result] = await pool.query(
+        'UPDATE classes SET name = ?, section = ?, academic_year = ?, teacher_id = ? WHERE id = ?',
+        [name, section, academic_year, teacher_id || null, id]
+      );
+    }
 
     console.log(`[DEBUG] Update result for class ${id}:`, result);
     res.status(200).json({ success: true, message: 'Class updated successfully' });
@@ -194,8 +209,13 @@ router.put('/:id', isAdmin, async (req, res) => {
   }
 });
 
-// Delete Class (Admin only)
-router.delete('/:id', isAdmin, async (req, res) => {
+// Delete Class (Admin and Principal/HOD)
+router.delete('/:id', verifyToken, async (req, res) => {
+  const isPrincipal = req.user.role === 'principal';
+  const isAdminUser = req.user.role === 'admin' || req.user.role === 'super_admin';
+  if (!isAdminUser && !isPrincipal) {
+    return res.status(403).json({ success: false, message: 'Permission denied.' });
+  }
   const connection = await pool.getConnection();
   try {
     const { id } = req.params;

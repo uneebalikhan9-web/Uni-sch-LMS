@@ -4,6 +4,7 @@ import {
   Clock, UserCircle, ChartLine, ChartBar, CheckCircle, WarningCircle, Flask, X, GraduationCap, Lightning
 } from "@phosphor-icons/react";
 import { S } from "./PDStyles";
+import API_BASE_URL from "../../../config/api";
 
 const safeFloat = (v) => { const n = parseFloat(v); return isNaN(n) ? 0 : n; };
 const safePercent = (num, den) => (!den || den === 0) ? 0 : Math.round((num / den) * 100);
@@ -151,9 +152,18 @@ export function ClassCoursesModal({ show, selectedClass, onClose, courses }) {
                     <p style={{ margin:'2px 0 0', fontSize:'13px', color:'#64748b' }}>Teacher: <strong>{course.teacher_name || 'Not assigned'}</strong></p>
                   </div>
                 </div>
-                <span style={{ ...S.statusBadge, background: course.status === 'active' ? '#dcfce7' : '#fee2e2', color: course.status === 'active' ? '#166534' : '#991b1b', fontSize:'11px', padding:'4px 10px' }}>
-                  {course.status.toUpperCase()}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <span style={{ ...S.statusBadge, background: course.status === 'active' ? '#dcfce7' : '#fee2e2', color: course.status === 'active' ? '#166534' : '#991b1b', fontSize:'11px', padding:'4px 10px' }}>
+                    {course.status.toUpperCase()}
+                  </span>
+                  <button 
+                    onClick={() => onEditCourse(course)}
+                    style={{ background: '#f1f5f9', border: 'none', padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', color: '#475569', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}
+                    title="Assign Teacher"
+                  >
+                    <BookOpen size={16} /> Assign Teacher
+                  </button>
+                </div>
               </div>
             )) : (
               <div style={{ textAlign:'center', padding:'40px 20px', color:'#94a3b8' }}>
@@ -193,9 +203,9 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
           {activeTab === 'classes' ? (
             <>
               <div style={S.inputGroup}><label style={S.inputLabel}>Class Name</label><input placeholder="e.g., Grade 10" required autoComplete="off" value={editingItem ? editingItem.name : newClass.name} onChange={e => editingItem ? setEditingItem({...editingItem, name:e.target.value}) : setNewClass({...newClass, name:e.target.value})} style={S.input} /></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Section</label><input placeholder="e.g., A" required autoComplete="off" value={editingItem ? editingItem.section : newClass.section} onChange={e => editingItem ? setEditingItem({...editingItem, section:e.target.value}) : setNewClass({...newClass, section:e.target.value})} style={S.input} /></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Section</label><input placeholder="e.g., A" autoComplete="off" value={editingItem ? editingItem.section : newClass.section} onChange={e => editingItem ? setEditingItem({...editingItem, section:e.target.value}) : setNewClass({...newClass, section:e.target.value})} style={S.input} /></div>
               <div style={S.inputGroup}><label style={S.inputLabel}>Academic Year</label><input placeholder="2024-2025" autoComplete="off" value={editingItem ? editingItem.academic_year : newClass.academic_year} onChange={e => editingItem ? setEditingItem({...editingItem, academic_year:e.target.value}) : setNewClass({...newClass, academic_year:e.target.value})} style={S.input} /></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newClass.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewClass({...newClass, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher (Optional)</label><select value={editingItem ? editingItem.teacher_id : newClass.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewClass({...newClass, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
             </>
           ) : activeTab === 'labs' ? (
             <>
@@ -214,10 +224,10 @@ export function AddEditModal({ show, onClose, activeTab, editingItem, setEditing
             </>
           ) : activeTab === 'courses' ? (
             <>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Course Title</label><input placeholder="e.g., Mathematics 101" required autoComplete="off" value={editingItem ? editingItem.title : newCourse.title} onChange={e => editingItem ? setEditingItem({...editingItem, title:e.target.value}) : setNewCourse({...newCourse, title:e.target.value})} style={S.input} /></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Description</label><textarea placeholder="Course description..." value={editingItem ? editingItem.description : newCourse.description} onChange={e => editingItem ? setEditingItem({...editingItem, description:e.target.value}) : setNewCourse({...newCourse, description:e.target.value})} style={{...S.input, height:'100px', resize:'vertical'}} /></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Class (Required)</label><select required value={editingItem ? editingItem.class_id : newCourse.class_id} onChange={e => editingItem ? setEditingItem({...editingItem, class_id:e.target.value}) : setNewCourse({...newCourse, class_id:e.target.value})} style={S.input}><option value="">Select a Class...</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}</select></div>
-              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher</label><select value={editingItem ? editingItem.teacher_id : newCourse.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewCourse({...newCourse, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Course / Subject Title</label><input placeholder="e.g., Mathematics" required autoComplete="off" value={editingItem ? editingItem.title : newCourse.title} onChange={e => editingItem ? setEditingItem({...editingItem, title:e.target.value}) : setNewCourse({...newCourse, title:e.target.value})} style={S.input} /></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Description (Optional)</label><textarea placeholder="Course description..." value={editingItem ? editingItem.description : newCourse.description} onChange={e => editingItem ? setEditingItem({...editingItem, description:e.target.value}) : setNewCourse({...newCourse, description:e.target.value})} style={{...S.input, height:'80px', resize:'vertical'}} /></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Assign to Class (Required)</label><select required value={editingItem ? editingItem.class_id : newCourse.class_id} onChange={e => editingItem ? setEditingItem({...editingItem, class_id:e.target.value}) : setNewCourse({...newCourse, class_id:e.target.value})} style={S.input}><option value="">Select a Class...</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name} {c.section ? `(${c.section})` : ''}</option>)}</select></div>
+              <div style={S.inputGroup}><label style={S.inputLabel}>Assign Teacher (Optional)</label><select value={editingItem ? editingItem.teacher_id : newCourse.teacher_id} onChange={e => editingItem ? setEditingItem({...editingItem, teacher_id:e.target.value}) : setNewCourse({...newCourse, teacher_id:e.target.value})} style={S.input}><option value="">No Teacher</option>{teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}</select></div>
             </>
           ) : activeTab === 'students' ? (
             <div style={{maxHeight:'50vh', overflowY:'auto', paddingRight:'10px', marginBottom:'20px'}}>
@@ -357,7 +367,7 @@ export function StudentProfileModal({ show, student, onClose }) {
       return;
     }
     const token = sessionStorage.getItem('token');
-    fetch(`${import.meta.env.VITE_API_URL}/api/students/${student.id}/parent`, {
+    fetch(`${API_BASE_URL}/api/students/${student.id}/parent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ parent_email: parentEmail, parent_name: parentName, password: parentPassword, parent_phone: student.father_number })

@@ -1,58 +1,175 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import SignIn from './pages/SignIn'
-import SignUp from './pages/SignUp'
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 // import ForgotPassword from './pages/ForgotPassword'
 // import ResetPassword from './pages/ResetPassword'
-import Dashboard from './pages/Dashboard'
-import TeacherSignIn from './pages/TeacherSignIn'
-import Courses from './pages/Courses'
-import Analytics from './pages/Analytics'
-import StudentAssignments from './pages/StudentAssignments'
-import PendingStudents from './pages/PendingStudents'
-import ApplyPage from './pages/ApplyPage'
-import LabPlayer from './pages/LabPlayer'
-import ProtectedRoute from './components/ProtectedRoute'
-import PublicRoute from './components/PublicRoute'
-import Chat from './pages/Chat'
-import VerifyOTP from './pages/VerifyOTP'
-import Trainings from './pages/Trainings'
-import { ToastProvider } from './components/Toast'
-import FaceAttendancePage from './pages/FaceAttendancePage'
+import Dashboard from "./pages/Dashboard";
+import TeacherSignIn from "./pages/TeacherSignIn";
+import Courses from "./pages/Courses";
+import Analytics from "./pages/Analytics";
+import StudentAssignments from "./pages/StudentAssignments";
+import PendingStudents from "./pages/PendingStudents";
+import ApplyPage from "./pages/ApplyPage";
+import LabPlayer from "./pages/LabPlayer";
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicRoute from "./components/PublicRoute";
+import Chat from "./pages/Chat";
+import VerifyOTP from "./pages/VerifyOTP";
+import Trainings from "./pages/Trainings";
+import { ToastProvider } from "./components/Toast";
+import FaceAttendancePage from "./pages/FaceAttendancePage";
 
 function App() {
-
   return (
     <ToastProvider>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/" element={<Navigate to="/signin" replace />} />
-          
+
           {/* Public Routes - Only accessible if NOT logged in */}
-          <Route path="/signin" element={<PublicRoute><SignIn /></PublicRoute>} />
-          <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
-          <Route path="/teacher/signin" element={<PublicRoute><TeacherSignIn /></PublicRoute>} />
+          <Route
+            path="/signin"
+            element={
+              <PublicRoute>
+                <SignIn />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PublicRoute>
+                <SignUp />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/teacher/signin"
+            element={
+              <PublicRoute>
+                <TeacherSignIn />
+              </PublicRoute>
+            }
+          />
           {/* <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} /> */}
           {/* <Route path="/reset-password/:token" element={<ResetPassword />} /> */}
-          <Route path="/verify-otp" element={<PublicRoute><VerifyOTP /></PublicRoute>} />
+          <Route
+            path="/verify-otp"
+            element={
+              <PublicRoute>
+                <VerifyOTP />
+              </PublicRoute>
+            }
+          />
           <Route path="/trainings" element={<Trainings />} />
-          
+
           {/* Protected Routes - Only accessible if logged in */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/teacher/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/courses" element={<ProtectedRoute><Courses /></ProtectedRoute>} />
-          <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-          <Route path="/assignments" element={<ProtectedRoute><StudentAssignments /></ProtectedRoute>} />
-          <Route path="/pending-students" element={<ProtectedRoute><PendingStudents /></ProtectedRoute>} />
-          <Route path="/labs/:labId" element={<ProtectedRoute><LabPlayer /></ProtectedRoute>} />
-          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-          <Route path="/apply" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
-          <Route path="/apply/:jobId" element={<ProtectedRoute><ApplyPage /></ProtectedRoute>} />
-          <Route path="/face-attendance" element={<ProtectedRoute><FaceAttendancePage /></ProtectedRoute>} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/teacher/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/courses"
+            element={
+              <ProtectedRoute>
+                <Courses />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/assignments"
+            element={
+              <ProtectedRoute>
+                <StudentAssignments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pending-students"
+            element={
+              <ProtectedRoute>
+                <PendingStudents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/labs/:labId"
+            element={
+              <ProtectedRoute>
+                <LabPlayer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/chat"
+            element={
+              <ProtectedRoute>
+                <Chat />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/apply"
+            element={
+              <ProtectedRoute>
+                <ApplyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/apply/:jobId"
+            element={
+              <ProtectedRoute>
+                <ApplyPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/face-attendance"
+            element={
+              <ProtectedRoute>
+                <FaceAttendancePage />
+              </ProtectedRoute>
+            }
+          />
+          {/* Admin Aliases */}
+          <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/admin/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/superadmin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/masteradmin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/principal" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+
+          {/* Fallback Catch-All Route */}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </ToastProvider>
-  )
+  );
 }
 
-
-export default App
+export default App;
