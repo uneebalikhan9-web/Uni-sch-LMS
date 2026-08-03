@@ -1,43 +1,95 @@
 -- =========================================================
 -- LancersTech LMS - Complete Database Migration Script
--- Run this ONCE on your live VPS MySQL database
--- Safe to run multiple times (uses IF NOT EXISTS / IF EXISTS)
+-- Compatible with MySQL 5.7+
+-- Safe to run multiple times
 -- =========================================================
 
--- 1. CHAT MESSAGES TABLE - Add missing columns for edit/delete/read
-ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_edited TINYINT(1) DEFAULT 0;
-ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted TINYINT(1) DEFAULT 0;
-ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS read_at DATETIME DEFAULT NULL;
+-- Use stored procedure approach for safe column addition
 
--- 2. LANCERS CLIENTS TABLE - Add institution_type for School vs University
-ALTER TABLE lancers_clients ADD COLUMN IF NOT EXISTS institution_type ENUM('school','university') NOT NULL DEFAULT 'university';
+DROP PROCEDURE IF EXISTS AddColumnIfNotExists;
+DELIMITER //
+CREATE PROCEDURE AddColumnIfNotExists(
+    IN tableName VARCHAR(128),
+    IN columnName VARCHAR(128),
+    IN columnDef TEXT
+)
+BEGIN
+    IF NOT EXISTS (
+        SELECT * FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = tableName
+        AND COLUMN_NAME = columnName
+    ) THEN
+        SET @sql = CONCAT('ALTER TABLE `', tableName, '` ADD COLUMN `', columnName, '` ', columnDef);
+        PREPARE stmt FROM @sql;
+        EXECUTE stmt;
+        DEALLOCATE PREPARE stmt;
+    END IF;
+END //
+DELIMITER ;
 
--- 3. STUDENTS TABLE - Add extra profile columns
-ALTER TABLE students ADD COLUMN IF NOT EXISTS current_gpa DECIMAL(3,2) DEFAULT 0.00;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS academic_status ENUM('regular','probation','suspended','graduated','good','warning','dismissed') DEFAULT 'regular';
-ALTER TABLE students ADD COLUMN IF NOT EXISTS father_name VARCHAR(100) DEFAULT NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS cnic VARCHAR(20) DEFAULT NULL;
-ALTER TABLE students ADD COLUMN IF NOT EXISTS bform_number VARCHAR(20) DEFAULT NULL;
+-- =========================================================
+-- 1. CHAT MESSAGES - Add edit/delete/read columns
+-- =========================================================
+CALL AddColumnIfNotExists('chat_messages', 'is_edited', 'TINYINT(1) DEFAULT 0');
+CALL AddColumnIfNotExists('chat_messages', 'is_deleted', 'TINYINT(1) DEFAULT 0');
+CALL AddColumnIfNotExists('chat_messages', 'read_at', 'DATETIME DEFAULT NULL');
 
--- 4. COURSES TABLE - Add course type and credit hours
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS course_type ENUM('theory','lab','theory+lab','seminar','internship') DEFAULT 'theory';
-ALTER TABLE courses ADD COLUMN IF NOT EXISTS credit_hours INT(11) DEFAULT 3;
+-- =========================================================
+-- 2. LANCERS CLIENTS - Add institution_type for School vs University
+-- =========================================================
+CALL AddColumnIfNotExists('lancers_clients', 'institution_type', "ENUM('school','university') NOT NULL DEFAULT 'university'");
 
--- 5. SEMESTERS TABLE - Add term type
-ALTER TABLE semesters ADD COLUMN IF NOT EXISTS term_type ENUM('Fall','Spring','Summer') DEFAULT 'Fall';
-ALTER TABLE semesters ADD COLUMN IF NOT EXISTS is_summer TINYINT(1) DEFAULT 0;
+-- =========================================================
+-- 3. STUDENTS TABLE - Extra profile columns
+-- =========================================================
+CALL AddColumnIfNotExists('students', 'current_gpa', 'DECIMAL(3,2) DEFAULT 0.00');
+CALL AddColumnIfNotExists('students', 'academic_status', "ENUM('regular','probation','suspended','graduated','good','warning','dismissed') DEFAULT 'regular'");
+CALL AddColumnIfNotExists('students', 'father_name', 'VARCHAR(100) DEFAULT NULL');
+CALL AddColumnIfNotExists('students', 'cnic', 'VARCHAR(20) DEFAULT NULL');
+CALL AddColumnIfNotExists('students', 'bform_number', 'VARCHAR(20) DEFAULT NULL');
 
--- 6. PROGRAMS TABLE - Add program level
-ALTER TABLE programs ADD COLUMN IF NOT EXISTS level VARCHAR(50) DEFAULT 'Undergraduate';
+-- =========================================================
+-- 4. COURSES TABLE
+-- =========================================================
+CALL AddColumnIfNotExists('courses', 'course_type', "ENUM('theory','lab','theory+lab','seminar','internship') DEFAULT 'theory'");
+CALL AddColumnIfNotExists('courses', 'credit_hours', 'INT(11) DEFAULT 3');
 
--- 7. ATTENDANCE TABLE - Add attendance method column
-ALTER TABLE attendance ADD COLUMN IF NOT EXISTS method VARCHAR(50) DEFAULT 'Manual';
+-- =========================================================
+-- 5. SEMESTERS TABLE
+-- =========================================================
+CALL AddColumnIfNotExists('semesters', 'term_type', "ENUM('Fall','Spring','Summer') DEFAULT 'Fall'");
+CALL AddColumnIfNotExists('semesters', 'is_summer', 'TINYINT(1) DEFAULT 0');
 
--- 8. FINANCE CHALLANS TABLE - Add reminder tracking columns
-ALTER TABLE finance_student_challans ADD COLUMN IF NOT EXISTS reminder_count INT DEFAULT 0;
-ALTER TABLE finance_student_challans ADD COLUMN IF NOT EXISTS last_reminder_at DATETIME NULL;
+-- =========================================================
+-- 6. PROGRAMS TABLE
+-- =========================================================
+CALL AddColumnIfNotExists('programs', 'level', "VARCHAR(50) DEFAULT 'Undergraduate'");
 
--- 9. EXAM RESULTS TABLE (NEW)
+-- =========================================================
+-- 7. ATTENDANCE TABLE
+-- =========================================================
+CALL AddColumnIfNotExists('attendance', 'method', "VARCHAR(50) DEFAULT 'Manual'");
+
+-- =========================================================
+-- 8. FINANCE CHALLANS TABLE
+-- =========================================================
+CALL AddColumnIfNotExists('finance_student_challans', 'reminder_count', 'INT DEFAULT 0');
+CALL AddColumnIfNotExists('finance_student_challans', 'last_reminder_at', 'DATETIME NULL');
+
+-- =========================================================
+-- 9. COURSE FINAL GRADES - New marking columns
+-- =========================================================
+CALL AddColumnIfNotExists('course_final_grades', 'midterm_marks', 'DECIMAL(5,2) DEFAULT 0.00');
+CALL AddColumnIfNotExists('course_final_grades', 'final_marks', 'DECIMAL(5,2) DEFAULT 0.00');
+CALL AddColumnIfNotExists('course_final_grades', 'assignment_marks', 'DECIMAL(5,2) DEFAULT 0.00');
+CALL AddColumnIfNotExists('course_final_grades', 'quiz_marks', 'DECIMAL(5,2) DEFAULT 0.00');
+CALL AddColumnIfNotExists('course_final_grades', 'lab_marks', 'DECIMAL(5,2) DEFAULT 0.00');
+
+-- =========================================================
+-- 10. NEW TABLES
+-- =========================================================
+
 CREATE TABLE IF NOT EXISTS `exam_results` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `enrollment_id` int(11) NOT NULL,
@@ -47,7 +99,6 @@ CREATE TABLE IF NOT EXISTS `exam_results` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 10. PROGRAM GRADUATION POLICIES TABLE (NEW)
 CREATE TABLE IF NOT EXISTS `program_graduation_policies` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `program_id` int(11) NOT NULL,
@@ -57,7 +108,6 @@ CREATE TABLE IF NOT EXISTS `program_graduation_policies` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 11. GRADUATION APPLICATIONS TABLE (NEW)
 CREATE TABLE IF NOT EXISTS `graduation_applications` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
@@ -69,7 +119,6 @@ CREATE TABLE IF NOT EXISTS `graduation_applications` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 12. GRADE POLICIES TABLE (NEW)
 CREATE TABLE IF NOT EXISTS `grade_policies` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `grade_letter` varchar(5) NOT NULL,
@@ -81,7 +130,6 @@ CREATE TABLE IF NOT EXISTS `grade_policies` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 13. COURSE FINAL GRADES TABLE (NEW) - Main grading table
 CREATE TABLE IF NOT EXISTS `course_final_grades` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `enrollment_id` int(11) DEFAULT NULL,
@@ -104,14 +152,6 @@ CREATE TABLE IF NOT EXISTS `course_final_grades` (
   UNIQUE KEY `unique_grade` (`student_id`, `course_id`, `semester_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- If course_final_grades already existed, add new marking columns safely
-ALTER TABLE course_final_grades ADD COLUMN IF NOT EXISTS midterm_marks DECIMAL(5,2) DEFAULT 0.00;
-ALTER TABLE course_final_grades ADD COLUMN IF NOT EXISTS final_marks DECIMAL(5,2) DEFAULT 0.00;
-ALTER TABLE course_final_grades ADD COLUMN IF NOT EXISTS assignment_marks DECIMAL(5,2) DEFAULT 0.00;
-ALTER TABLE course_final_grades ADD COLUMN IF NOT EXISTS quiz_marks DECIMAL(5,2) DEFAULT 0.00;
-ALTER TABLE course_final_grades ADD COLUMN IF NOT EXISTS lab_marks DECIMAL(5,2) DEFAULT 0.00;
-
--- 14. STUDENT SEMESTER RECORDS TABLE (NEW) - GPA tracking per semester
 CREATE TABLE IF NOT EXISTS `student_semester_records` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
@@ -130,7 +170,6 @@ CREATE TABLE IF NOT EXISTS `student_semester_records` (
   UNIQUE KEY `unique_semester_record` (`student_id`, `semester_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 15. IT TICKETS TABLE (NEW)
 CREATE TABLE IF NOT EXISTS `it_tickets` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
@@ -146,7 +185,6 @@ CREATE TABLE IF NOT EXISTS `it_tickets` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 16. FACE DESCRIPTORS TABLE (NEW) - For biometric attendance
 CREATE TABLE IF NOT EXISTS `face_descriptors` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
@@ -156,7 +194,6 @@ CREATE TABLE IF NOT EXISTS `face_descriptors` (
   UNIQUE KEY `unique_student_face` (`student_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 17. CAMPUS ATTENDANCE TABLE (NEW) - For face/biometric attendance
 CREATE TABLE IF NOT EXISTS `campus_attendance` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `student_id` int(11) NOT NULL,
@@ -170,6 +207,8 @@ CREATE TABLE IF NOT EXISTS `campus_attendance` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================================================
--- DONE! All tables and columns are now up to date.
+-- Cleanup
 -- =========================================================
+DROP PROCEDURE IF EXISTS AddColumnIfNotExists;
+
 SELECT 'Migration completed successfully!' AS Status;
