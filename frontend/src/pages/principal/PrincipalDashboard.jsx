@@ -82,7 +82,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
   const [newClass,   setNewClass]   = useState({ name:"", section:"", academic_year:"2024-2025", teacher_id:"" });
   const [newCourse,  setNewCourse]  = useState({ title:"", description:"", teacher_id:"", class_id:"" });
   const [newLab,     setNewLab]     = useState({ name:"", description:"", icon:"Flask", environment:"Python", classId:"", url:"" });
-  const [newTimetableEntry, setNewTimetableEntry] = useState({ course_id:'', class_id:'', teacher_id:'', day_of_week:'Monday', start_time:'09:00', end_time:'11:00', room_number:'', academic_year:'2024-2025', semester:'Fall' });
+  const [newTimetableEntry, setNewTimetableEntry] = useState({ course_id:'', class_id:'', teacher_id:'', day_of_week:['Monday'], start_time:'09:00', end_time:'11:00', room_number:'', academic_year:'2024-2025', semester:'Fall' });
 
   const [campusReports,  setCampusReports]  = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
@@ -486,12 +486,38 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
 
   const handleTimetableSubmit = async (e) => {
     e.preventDefault();
-    const url    = editingItem ? `${API}/timetables/${editingItem.id}` : `${API}/timetables`;
-    const method = editingItem ? 'PUT' : 'POST';
-    const res    = await fetch(url,{method,headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify(newTimetableEntry)});
-    const data   = await res.json();
-    if (data.success) { showToast(`Timetable ${editingItem?'updated':'added'}!`,"success"); setShowTimetableModal(false); fetchData(); resetForms(); }
-    else showToast(data.message||"Error","error");
+    const days = Array.isArray(newTimetableEntry.day_of_week) ? newTimetableEntry.day_of_week : [newTimetableEntry.day_of_week].filter(Boolean);
+    
+    if (days.length === 0) {
+      showToast("Please select at least one day", "error");
+      return;
+    }
+
+    try {
+      const url = editingItem ? `${API_BASE_URL}/api/timetables/${editingItem.id}` : `${API_BASE_URL}/api/timetables`;
+      const method = editingItem ? 'PUT' : 'POST';
+      
+      const promises = days.map(day => {
+         const entry = {...newTimetableEntry, day_of_week: day};
+         return fetch(url, {method, headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'}, body:JSON.stringify(entry)});
+      });
+      
+      const responses = await Promise.all(promises);
+      const dataResults = await Promise.all(responses.map(r => r.json()));
+      
+      const hasError = dataResults.some(d => !d.success);
+      if (!hasError) {
+        showToast(`Timetable ${editingItem?'updated':'added'} successfully!`, "success");
+        setShowTimetableModal(false);
+        fetchData();
+        resetForms();
+      } else {
+        const errorMsg = dataResults.find(d => !d.success)?.message || "Error";
+        showToast(errorMsg, "error");
+      }
+    } catch (err) {
+       showToast("Error saving timetable", "error");
+    }
   };
 
   const confirm = (title,message,onConfirm,isDanger=false) => setConfirmModal({isOpen:true,title,message,onConfirm,isDanger});

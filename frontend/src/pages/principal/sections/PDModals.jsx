@@ -323,10 +323,34 @@ export function TimetableModal({ show, onClose, editingItem, newTimetableEntry, 
           </div>
           <div style={S.row}>
             <div style={S.flex1}>
-              <label style={S.inputLabel}><CalendarBlank size={14} /> Scheduled Day</label>
-              <select style={S.input} value={newTimetableEntry.day_of_week} onChange={e => setNewTimetableEntry({...newTimetableEntry, day_of_week:e.target.value})}>
-                {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
+              <label style={S.inputLabel}><CalendarBlank size={14} /> Scheduled Day(s)</label>
+              <div style={{display:'flex', flexWrap:'wrap', gap:'6px', marginTop:'8px'}}>
+                {['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'].map(d => {
+                  const daysArray = Array.isArray(newTimetableEntry.day_of_week) ? newTimetableEntry.day_of_week : [newTimetableEntry.day_of_week].filter(Boolean);
+                  const isSelected = daysArray.includes(d);
+                  return (
+                    <button type="button" key={d} onClick={() => {
+                      if (editingItem) {
+                        setNewTimetableEntry({...newTimetableEntry, day_of_week: [d]});
+                      } else {
+                        if (isSelected) {
+                          setNewTimetableEntry({...newTimetableEntry, day_of_week: daysArray.filter(day => day !== d)});
+                        } else {
+                          setNewTimetableEntry({...newTimetableEntry, day_of_week: [...daysArray, d]});
+                        }
+                      }
+                    }} style={{
+                      padding:'6px 10px', borderRadius:'16px', border:isSelected?'none':'1px solid #e2e8f0', 
+                      background:isSelected?'linear-gradient(135deg, #7c3aed, #6366f1)':'#f8fafc',
+                      color:isSelected?'#fff':'#64748b', fontSize:'0.75rem', fontWeight:'600', cursor:'pointer',
+                      transition:'all 0.2s',
+                      boxShadow:isSelected?'0 2px 6px rgba(124,58,237,0.3)':'none'
+                    }}>
+                      {d.slice(0,3)}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
             <div style={S.flex1}>
               <label style={S.inputLabel}><Flask size={14} /> Room / Lab</label>
