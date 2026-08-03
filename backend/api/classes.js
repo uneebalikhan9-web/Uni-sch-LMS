@@ -75,7 +75,22 @@ router.get('/available', isStudent, async (req, res) => {
       [studentId, campusId]
     );
 
-    res.status(200).json({ success: true, classes });
+    // Fetch courses safely without JSON_ARRAYAGG for older MySQL/MariaDB support
+    let formattedClasses = [];
+    if (classes.length > 0) {
+      const classIds = classes.map(c => c.id);
+      const [courses] = await pool.query(
+        `SELECT id, title, code, class_id FROM courses WHERE class_id IN (?) AND status != 'archived'`,
+        [classIds]
+      );
+      
+      formattedClasses = classes.map(c => ({
+        ...c,
+        courses: courses.filter(cr => cr.class_id === c.id)
+      }));
+    }
+
+    res.status(200).json({ success: true, classes: formattedClasses });
   } catch (error) {
     console.error('Get available classes error:', error);
     res.status(500).json({ success: false, message: 'Error fetching classes' });
