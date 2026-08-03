@@ -9,9 +9,8 @@ router.use(isChatUser);
 
 // Chat allowed for: admin, principal, teacher, student, bd_agent. NOT super_admin.
 
-// Helper function to get the visibility subquery/condition for a given user
 const getChatVisibilityFilter = (user) => {
-  const { id: myId, role, campus_id: campusId, client_id: clientId } = user;
+  const { id: myId, role, campus_id: campusId, client_id: clientId, student_id: studentId } = user;
   
   const baseCond = `u.client_id = ? AND u.id != ? AND u.role != 'super_admin'`;
   const baseParams = [clientId, myId];
@@ -41,7 +40,7 @@ const getChatVisibilityFilter = (user) => {
           ))
         )
       `,
-      params: [...baseParams, campusId, myId, myId, myId]
+      params: [...baseParams, campusId, studentId, studentId, studentId]
     };
   } else if (role === 'teacher') {
     // Teachers see HOD/Admin of their campus + Students in their campus.
