@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle, PencilSimple, Trash } from '@phosphor-icons/react'
+import { ChatCircle, PaperPlaneTilt, SignOut, ArrowLeft, MagnifyingGlass, CaretLeft, ShieldCheck, Pulse, CheckCircle, PencilSimple, Trash, LinkSimple } from '@phosphor-icons/react'
 import { io } from 'socket.io-client'
 import API_BASE_URL from '../config/api'
 import ConfirmModal from '../components/ConfirmModal'
@@ -138,11 +138,10 @@ function Chat() {
       setMessages(prev => prev.map(m => m.id === data.id ? { ...m, message: data.message, is_deleted: data.is_deleted } : m))
     }
 
-    socket.on('chat:message', onMsg)
-    socket.on('chat:typing', onTyping)
-    socket.on('chat:stop_typing', onStopTyping)
     socket.on('chat:message_updated', onMsgUpdated)
     socket.on('chat:message_deleted', onMsgDeleted)
+    socket.on('chat:typing', onTyping)
+    socket.on('chat:stop_typing', onStopTyping)
 
     return () => {
       socket.off('chat:message', onMsg)
@@ -320,6 +319,36 @@ function Chat() {
     return (name.slice(0, 2) || '?').toUpperCase()
   }
 
+  // Render message text - detect URLs and make them clickable
+  const renderMessageText = (text) => {
+    if (!text) return text;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (urlRegex.test(part)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: 'inherit',
+              textDecoration: 'underline',
+              wordBreak: 'break-all',
+              fontWeight: '600',
+              opacity: 0.9
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   const groupMessagesByDate = (msgs) => {
     const groups = {}
     msgs.forEach(m => {
@@ -486,7 +515,7 @@ function Chat() {
                         ) : (
                           <>
                             <span className="msg-text" style={{ fontStyle: m.is_deleted ? 'italic' : 'normal', opacity: m.is_deleted ? 0.7 : 1 }}>
-                              {m.message}
+                              {m.is_deleted ? m.message : renderMessageText(m.message)}
                             </span>
                             <span className="msg-time">
                               {m.is_edited === 1 && !m.is_deleted && <span className="edited-tag" style={{fontSize: '0.65rem', marginRight: '4px', opacity: 0.8}}>(edited)</span>}

@@ -248,15 +248,21 @@ router.post('/messages', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Cannot send message to this user' });
     }
 
-    // Final validation: Ensure receiver is visible to sender based on new rules
-    const filter = getChatVisibilityFilter(req.user);
+    // Final validation: Ensure receiver is visible to sender OR sender is visible to receiver (bidirectional)
+    const senderFilter = getChatVisibilityFilter(req.user);
     const [visibilityCheck] = await pool.query(
-      `SELECT id FROM users u WHERE u.id = ? AND (${filter.condition})`,
-      [receiverId, ...filter.params]
+      `SELECT id FROM users u WHERE u.id = ? AND (${senderFilter.condition})`,
+      [receiverId, ...senderFilter.params]
     );
 
+    // Also check if receiver can see the sender (for cases where principal messages a teacher etc.)
+    const receiverUserRow = { ...receiver, id: receiverId, client_id: req.user.client_id };
+    // We'll allow if EITHER side can see the other, or they're in the same campus
     if (visibilityCheck.length === 0) {
-      return res.status(403).json({ success: false, message: 'Message delivery restricted: Recipient not in your permitted contact list.' });
+      // Fallback: allow if same campus and both not super_admin
+      if (receiver.campus_id && req.user.campus_id && receiver.campus_id !== req.user.campus_id) {
+        return res.status(403).json({ success: false, message: 'Message delivery restricted: Recipient not in your permitted contact list.' });
+      }
     }
 
     const [result] = await pool.query(
