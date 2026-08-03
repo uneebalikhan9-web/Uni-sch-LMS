@@ -88,15 +88,22 @@ router.post('/final', verifyToken, isTeacher, async (req, res) => {
     await connection.query(
       `INSERT INTO course_final_grades 
         (enrollment_id, student_id, course_id, section_id, semester_id,
+         midterm_marks, final_marks, assignment_marks, quiz_marks, lab_marks,
          total_marks, percentage, letter_grade, grade_points, is_published)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
        ON DUPLICATE KEY UPDATE
+         midterm_marks = VALUES(midterm_marks),
+         final_marks = VALUES(final_marks),
+         assignment_marks = VALUES(assignment_marks),
+         quiz_marks = VALUES(quiz_marks),
+         lab_marks = VALUES(lab_marks),
          total_marks = VALUES(total_marks),
          percentage = VALUES(percentage),
          letter_grade = VALUES(letter_grade),
          grade_points = VALUES(grade_points),
          is_published = 0`,
       [enrollment_id, student_id, course_id, section_id || null, semester_id,
+       mid, fin, asgn, quiz, lab,
        total_marks, percentage.toFixed(2), letter_grade, grade_points]
     );
 
@@ -171,15 +178,22 @@ router.post('/final/bulk', verifyToken, isTeacher, async (req, res) => {
       await connection.query(
         `INSERT INTO course_final_grades 
           (enrollment_id, student_id, course_id, section_id, semester_id,
+           midterm_marks, final_marks, assignment_marks, quiz_marks, lab_marks,
            total_marks, percentage, letter_grade, grade_points, is_published)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
          ON DUPLICATE KEY UPDATE
+           midterm_marks = VALUES(midterm_marks),
+           final_marks = VALUES(final_marks),
+           assignment_marks = VALUES(assignment_marks),
+           quiz_marks = VALUES(quiz_marks),
+           lab_marks = VALUES(lab_marks),
            total_marks = VALUES(total_marks),
            percentage = VALUES(percentage),
            letter_grade = VALUES(letter_grade),
            grade_points = VALUES(grade_points),
            is_published = 0`,
         [enrollment_id, student_id, course_id, section_id || null, semester_id,
+         mid, fin, asgn, quiz, lab,
          total_marks, percentage.toFixed(2), letter_grade, grade_points]
       );
       saved++;
@@ -342,7 +356,12 @@ router.get('/my-academic-record', verifyToken, isStudent, async (req, res) => {
         'ALTER TABLE courses ADD COLUMN credit_hours INT(11) DEFAULT 3',
         'ALTER TABLE semesters ADD COLUMN term_type ENUM("Fall","Spring","Summer") DEFAULT "Fall"',
         'ALTER TABLE semesters ADD COLUMN is_summer TINYINT(1) DEFAULT 0',
-        'ALTER TABLE programs ADD COLUMN level VARCHAR(50) DEFAULT "Undergraduate"'
+        'ALTER TABLE programs ADD COLUMN level VARCHAR(50) DEFAULT "Undergraduate"',
+        'ALTER TABLE course_final_grades ADD COLUMN midterm_marks DECIMAL(5,2) DEFAULT 0.00',
+        'ALTER TABLE course_final_grades ADD COLUMN final_marks DECIMAL(5,2) DEFAULT 0.00',
+        'ALTER TABLE course_final_grades ADD COLUMN assignment_marks DECIMAL(5,2) DEFAULT 0.00',
+        'ALTER TABLE course_final_grades ADD COLUMN quiz_marks DECIMAL(5,2) DEFAULT 0.00',
+        'ALTER TABLE course_final_grades ADD COLUMN lab_marks DECIMAL(5,2) DEFAULT 0.00'
       ];
       for (let q of dbFixes) {
         try { await pool.query(q); } catch(e) {} // ignore duplicates
@@ -392,6 +411,11 @@ router.get('/my-academic-record', verifyToken, isStudent, async (req, res) => {
           \`course_id\` int(11) NOT NULL,
           \`section_id\` int(11) DEFAULT NULL,
           \`semester_id\` int(11) NOT NULL,
+          \`midterm_marks\` decimal(5,2) DEFAULT 0.00,
+          \`final_marks\` decimal(5,2) DEFAULT 0.00,
+          \`assignment_marks\` decimal(5,2) DEFAULT 0.00,
+          \`quiz_marks\` decimal(5,2) DEFAULT 0.00,
+          \`lab_marks\` decimal(5,2) DEFAULT 0.00,
           \`total_marks\` decimal(5,2) DEFAULT 0.00,
           \`percentage\` decimal(5,2) DEFAULT 0.00,
           \`letter_grade\` varchar(5) DEFAULT NULL,

@@ -106,6 +106,7 @@ function TeacherDashboard({ user, onLogout }) {
   const [newLeave, setNewLeave] = useState({ leave_type: 'Casual', start_date: '', end_date: '', reason: '' })
 
   const token = sessionStorage.getItem('token')
+  const isSchool = (user?.institution_type || 'university') === 'school';
 
   useEffect(() => {
     fetchDashboardData();
@@ -596,6 +597,7 @@ function TeacherDashboard({ user, onLogout }) {
         return (
           <TDGrades 
             courses={courses} 
+            isSchool={isSchool}
             selectedCourse={selectedCourse} 
             setSelectedCourse={setSelectedCourse} 
             students={students} 
@@ -759,7 +761,7 @@ function TeacherDashboard({ user, onLogout }) {
           .sidebar.mobile-open { 
             left: 0 !important; 
             box-shadow: 10px 0 30px rgba(0,0,0,0.2) !important;
-            z-index: 1002 !important;
+            z-index: 99999 !important;
           }
           .main-content { margin-left: 0 !important; padding: 20px !important; }
           .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
@@ -773,9 +775,21 @@ function TeacherDashboard({ user, onLogout }) {
       <div style={S.bgOrb2}></div>
       <div style={S.bgOrb3}></div>
 
-      <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={S.mobileMenuBtn} className="mobile-menu-btn">
-        <DotsThreeOutline size={24} weight="bold" />
-      </button>
+      {!mobileMenuOpen && (
+        <button onClick={() => setMobileMenuOpen(true)} style={S.mobileMenuBtn} className="mobile-menu-btn">
+          <DotsThreeOutline size={24} weight="bold" />
+        </button>
+      )}
+
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)} 
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', zIndex: 1000
+          }} 
+          className="sidebar-backdrop"
+        />
+      )}
 
       {globalLoading && <LoadingSpinner fullPage size="large" />}
 

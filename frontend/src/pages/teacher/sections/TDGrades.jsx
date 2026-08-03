@@ -33,8 +33,17 @@ function computeGrade(pct) {
   if (pct >= 50) return { letter: 'D',  points: 1.00 };
   return { letter: 'F', points: 0.00 };
 }
+// Compute grade letter for schools (Standard Percentage Scale)
+function computeSchoolGrade(pct) {
+  if (pct >= 80) return { letter: 'A+', points: 4.00 };
+  if (pct >= 70) return { letter: 'A',  points: 3.70 };
+  if (pct >= 60) return { letter: 'B',  points: 3.00 };
+  if (pct >= 50) return { letter: 'C',  points: 2.00 };
+  if (pct >= 40) return { letter: 'D',  points: 1.00 };
+  return { letter: 'F', points: 0.00 };
+}
 
-export default function TDGrades({ courses }) {
+export default function TDGrades({ courses, isSchool }) {
   const token = sessionStorage.getItem('token') || localStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
@@ -199,7 +208,7 @@ export default function TDGrades({ courses }) {
 
   const previewRows = bulkGrades.map(row => {
     const total = getRowTotal(row);
-    const grade = computeGrade(total);
+    const grade = isSchool ? computeSchoolGrade(total) : computeGrade(total);
     return { ...row, total, letter: grade.letter, points: grade.points };
   });
 
@@ -217,10 +226,14 @@ export default function TDGrades({ courses }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
             <h2 style={{ ...S.tableTitle, margin: 0 }}>
               <GraduationCap size={28} weight="duotone" color="#7c3aed" style={{ verticalAlign: 'middle', marginRight: '12px' }} />
-              Grade Management — HEC Compliant
+              {isSchool ? 'Grade Management — Standard Evaluation' : 'Grade Management — HEC Compliant'}
             </h2>
           </div>
-          <p style={S.tableSubtitle}>Enter midterm, final, assignment, quiz & lab marks. Grades computed automatically using HEC scale.</p>
+          <p style={S.tableSubtitle}>
+            {isSchool 
+              ? 'Enter First Term, Final Term, Assessment, Monthly Tests & Practical marks. Grades computed automatically.'
+              : 'Enter midterm, final, assignment, quiz & lab marks. Grades computed automatically using HEC scale.'}
+          </p>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {selectedSection && (
@@ -257,7 +270,7 @@ export default function TDGrades({ courses }) {
             setSelectedCourse(c || null);
             setSelectedSection(null);
           }}>
-          <option value="">Select Course</option>
+          <option value="">{isSchool ? 'Select Subject' : 'Select Course'}</option>
           {courses.map(c => <option key={c.id} value={c.id}>{c.title} ({c.code})</option>)}
         </select>
 
@@ -265,7 +278,7 @@ export default function TDGrades({ courses }) {
           style={{ ...S.modernSelect, minWidth: '180px' }}
           value={selectedSemester}
           onChange={e => { setSelectedSemester(e.target.value); setSelectedSection(null); }}>
-          <option value="">Select Semester</option>
+          <option value="">{isSchool ? 'Select Term/Year' : 'Select Semester'}</option>
           {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
 
@@ -327,11 +340,11 @@ export default function TDGrades({ courses }) {
               <thead>
                 <tr style={S.tableHeadRow}>
                   <th style={S.th}>STUDENT</th>
-                  <th style={{ ...S.th, textAlign: 'center' }}>MIDTERM<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 30)</span></th>
-                  <th style={{ ...S.th, textAlign: 'center' }}>FINAL<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 50)</span></th>
-                  <th style={{ ...S.th, textAlign: 'center' }}>ASSIGNMENT<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 10)</span></th>
-                  <th style={{ ...S.th, textAlign: 'center' }}>QUIZ<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
-                  <th style={{ ...S.th, textAlign: 'center' }}>LAB<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>{isSchool ? '1ST TERM' : 'MIDTERM'}<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 30)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>{isSchool ? 'FINAL TERM' : 'FINAL'}<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 50)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>{isSchool ? 'ASSESSMENT' : 'ASSIGNMENT'}<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 10)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>{isSchool ? 'MONTHLY TEST' : 'QUIZ'}<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
+                  <th style={{ ...S.th, textAlign: 'center' }}>{isSchool ? 'PRACTICAL' : 'LAB'}<br /><span style={{ fontWeight: 400, fontSize: '0.7rem' }}>(out of 5)</span></th>
                   <th style={{ ...S.th, textAlign: 'center' }}>TOTAL %</th>
                   <th style={{ ...S.th, textAlign: 'center' }}>GRADE</th>
                   <th style={{ ...S.th, textAlign: 'center' }}>STATUS</th>
@@ -340,7 +353,7 @@ export default function TDGrades({ courses }) {
               <tbody>
                 {bulkGrades.map((row, idx) => {
                   const total = getRowTotal(row);
-                  const grade = computeGrade(total);
+                  const grade = isSchool ? computeSchoolGrade(total) : computeGrade(total);
                   return (
                     <tr key={row.student_id} style={S.tableRow}>
                       <td style={S.tdName}>
@@ -409,8 +422,12 @@ export default function TDGrades({ courses }) {
       {!selectedSection && (
         <div style={{ textAlign: 'center', padding: '60px', color: '#94a3b8' }}>
           <GraduationCap size={48} style={{ marginBottom: '16px', opacity: 0.4 }} />
-          <p style={{ fontSize: '1rem', marginBottom: '8px' }}>Select a course, semester, and section to manage grades</p>
-          <p style={{ fontSize: '0.85rem' }}>HEC Grade Scale: A+(90+) → A(85) → B+(75) → C(60) → D(50) → F(&lt;50)</p>
+          <p style={{ fontSize: '1rem', marginBottom: '8px' }}>Select a {isSchool ? 'subject, term' : 'course, semester'}, and section to manage grades</p>
+          <p style={{ fontSize: '0.85rem' }}>
+            {isSchool 
+              ? 'Standard School Scale: A+(80+) → A(70+) → B(60+) → C(50+) → D(40+) → F(<40)'
+              : 'HEC Grade Scale: A+(90+) → A(85) → B+(75) → C(60) → D(50) → F(<50)'}
+          </p>
         </div>
       )}
     </div>
