@@ -555,4 +555,235 @@ router.get('/scholarships/students', async (req, res) => {
   }
 });
 
+// ==================== SCHOOL FEE STRUCTURES ====================
+
+// Auto-create school_fee_structures table if not exists
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS school_fee_structures (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        campus_id INT NOT NULL,
+        client_id INT NOT NULL,
+        class_name VARCHAR(100) NOT NULL,
+        tuition_fee DECIMAL(10,2) DEFAULT 0,
+        transport_fee DECIMAL(10,2) DEFAULT 0,
+        activity_fee DECIMAL(10,2) DEFAULT 0,
+        computer_fee DECIMAL(10,2) DEFAULT 0,
+        other_fee DECIMAL(10,2) DEFAULT 0,
+        late_fine_per_day DECIMAL(8,2) DEFAULT 50,
+        due_day INT DEFAULT 10,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+    `);
+
+    // Also add school monthly columns to finance_student_challans if missing
+    const schoolCols = [
+      "ALTER TABLE finance_student_challans ADD COLUMN fee_type VARCHAR(20) DEFAULT 'semester'",
+      "ALTER TABLE finance_student_challans ADD COLUMN fee_month INT DEFAULT NULL",
+      "ALTER TABLE finance_student_challans ADD COLUMN fee_year INT DEFAULT NULL",
+      "ALTER TABLE finance_student_challans ADD COLUMN transport_fee DECIMAL(10,2) DEFAULT 0",
+      "ALTER TABLE finance_student_challans ADD COLUMN activity_fee DECIMAL(10,2) DEFAULT 0",
+      "ALTER TABLE finance_student_challans ADD COLUMN computer_fee DECIMAL(10,2) DEFAULT 0",
+    ];
+    for (const q of schoolCols) {
+      try { await pool.query(q); } catch(e) { /* ignore duplicate column */ }
+    }
+  } catch(e) { console.error('School fee structure init error:', e.message); }
+})();
+
+// GET school fee structures
+router.get('/school-fee-structures', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    const clientId = req.user.client_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const [rows] = await pool.query(
+      `SELECT * FROM school_fee_structures WHERE ${isSuperAdmin ? '1=1' : 'campus_id = ?'} ORDER BY class_name ASC`,
+      isSuperAdmin ? [] : [campusId]
+    );
+    res.json({ success: true, structures: rows });
+  } catch (error) {
+    console.error('Get school fee structures error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching school fee structures' });
+  }
+});
+
+// POST create/update school fee structure for a class
+router.post('/school-fee-structures', async (req, res) => {
+  try {
+    const { class_name, tuition_fee, transport_fee, activity_fee, computer_fee, other_fee, late_fine_per_day, due_day } = req.body;
+    const campusId = req.user.campus_id;
+    const clientId = req.user.client_id;
+    if (!class_name) return res.status(400).json({ success: false, message: 'Class name is required' });
+
+    // Upsert by class_name + campus_id
+    const [existing] = await pool.query(
+      'SELECT id FROM school_fee_structures WHERE class_name = ? AND campus_id = ?',
+      [class_name, campusId]
+    );
+
+    if (existing.length > 0) {
+      await pool.query(
+        `UPDATE school_fee_structures SET tuition_fee=?, transport_fee=?, activity_fee=?, computer_fee=?, other_fee=?, late_fine_per_day=?, due_day=? WHERE id=?`,
+        [tuition_fee||0, transport_fee||0, activity_fee||0, computer_fee||0, other_fee||0, late_fine_per_day||50, due_day||10, existing[0].id]
+      );
+      res.json({ success: true, message: `Fee structure for ${class_name} updated successfully` });
+    } else {
+      await pool.query(
+        `INSERT INTO school_fee_structures (campus_id, client_id, class_name, tuition_fee, transport_fee, activity_fee, computer_fee, other_fee, late_fine_per_day, due_day) VALUES (?,?,?,?,?,?,?,?,?,?)`,
+        [campusId, clientId, class_name, tuition_fee||0, transport_fee||0, activity_fee||0, computer_fee||0, other_fee||0, late_fine_per_day||50, due_day||10]
+      );
+      res.status(201).json({ success: true, message: `Fee structure for ${class_name} created successfully` });
+    }
+  } catch (error) {
+    console.error('Create school fee structure error:', error);
+    res.status(500).json({ success: false, message: 'Error saving fee structure' });
+  }
+});
+
+// DELETE a school fee structure
+router.delete('/school-fee-structures/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM school_fee_structures WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Fee structure deleted' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error deleting fee structure' });
+  }
+});
+
+// POST generate monthly challans for ALL students of the school campus
+router.post('/challans/generate-monthly', async (req, res) => {
+  try {
+    const { month, year } = req.body;
+    const campusId = req.user.campus_id;
+    const clientId = req.user.client_id;
+
+    if (!month || !year) return res.status(400).json({ success: false, message: 'Month and year are required' });
+
+    const monthNum = parseInt(month);
+    const yearNum = parseInt(year);
+
+    // Check no duplicates for this month/year
+    const [existing] = await pool.query(
+      "SELECT COUNT(*) as cnt FROM finance_student_challans WHERE campus_id = ? AND fee_type = 'monthly' AND fee_month = ? AND fee_year = ?",
+      [campusId, monthNum, yearNum]
+    );
+    if (existing[0].cnt > 0) {
+      return res.status(409).json({ success: false, message: `Monthly fee challans for ${monthNum}/${yearNum} have already been generated.` });
+    }
+
+    // Get all approved students
+    const [students] = await pool.query(
+      `SELECT s.id as student_id, u.name, s.roll_number, s.class_name
+       FROM students s
+       JOIN users u ON s.user_id = u.id
+       WHERE u.campus_id = ? AND u.role = 'student'
+       ORDER BY u.name`,
+      [campusId]
+    );
+
+    if (students.length === 0) {
+      return res.status(404).json({ success: false, message: 'No students found for this campus' });
+    }
+
+    // Get fee structures for this campus
+    const [feeStructures] = await pool.query(
+      'SELECT * FROM school_fee_structures WHERE campus_id = ?',
+      [campusId]
+    );
+    const feeMap = {};
+    feeStructures.forEach(f => { feeMap[f.class_name?.toLowerCase()] = f; });
+
+    // Default fee structure if none set for a class
+    const defaultFee = { tuition_fee: 0, transport_fee: 0, activity_fee: 0, computer_fee: 0, other_fee: 0, due_day: 10, late_fine_per_day: 50 };
+
+    // Due date = due_day of the given month/year
+    let created = 0;
+    for (const student of students) {
+      const fee = feeMap[student.class_name?.toLowerCase()] || defaultFee;
+      const totalAmount = (fee.tuition_fee||0) + (fee.transport_fee||0) + (fee.activity_fee||0) + (fee.computer_fee||0) + (fee.other_fee||0);
+      const dueDay = fee.due_day || 10;
+      const dueDate = `${yearNum}-${String(monthNum).padStart(2,'0')}-${String(dueDay).padStart(2,'0')}`;
+      const challanNo = `SCH-${yearNum}${String(monthNum).padStart(2,'0')}-${student.roll_number || student.student_id}`;
+
+      await pool.query(
+        `INSERT INTO finance_student_challans
+          (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee,
+           transport_fee, activity_fee, computer_fee,
+           total_amount, due_date, campus_id, fee_type, fee_month, fee_year, status)
+         VALUES (?,?,?,0,0,?,?,?,?,?,?,?,?,?,?,'pending')`,
+        [
+          student.student_id, challanNo,
+          fee.tuition_fee||0, fee.other_fee||0,
+          fee.transport_fee||0, fee.activity_fee||0, fee.computer_fee||0,
+          totalAmount, dueDate, campusId, 'monthly', monthNum, yearNum
+        ]
+      );
+      created++;
+    }
+
+    const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
+    res.status(201).json({
+      success: true,
+      message: `✅ ${created} monthly fee challans generated for ${monthNames[monthNum]} ${yearNum}`
+    });
+  } catch (error) {
+    console.error('Generate monthly challans error:', error);
+    res.status(500).json({ success: false, message: 'Error generating monthly challans' });
+  }
+});
+
+// GET challans/generate-semester (existing university mode - keep as is)
+router.post('/challans/generate-semester', async (req, res) => {
+  try {
+    const { semester_id } = req.body;
+    const campusId = req.user.campus_id;
+    if (!semester_id) return res.status(400).json({ success: false, message: 'Semester ID required' });
+
+    const [feeStructures] = await pool.query(
+      'SELECT * FROM finance_fee_structures WHERE semester_id = ? AND campus_id = ?',
+      [semester_id, campusId]
+    );
+    if (feeStructures.length === 0) {
+      return res.status(404).json({ success: false, message: 'No fee structures found for this semester' });
+    }
+
+    const [enrollments] = await pool.query(
+      `SELECT DISTINCT e.student_id, s.program_id, s.roll_number
+       FROM enrollments e
+       JOIN students s ON e.student_id = s.id
+       WHERE e.semester = ? AND e.status = 'approved'`,
+      [semester_id]
+    );
+
+    let created = 0;
+    for (const enrollment of enrollments) {
+      const feeStruct = feeStructures.find(f => f.program_id === enrollment.program_id) || feeStructures[0];
+      const totalAmount = (feeStruct.tuition_fee||0) + (feeStruct.lab_fee||0) + (feeStruct.library_fee||0) + (feeStruct.other_fee||0);
+      const challanNo = `LT-SEM-${semester_id}-${enrollment.roll_number || enrollment.student_id}`;
+
+      const [existCheck] = await pool.query(
+        'SELECT id FROM finance_student_challans WHERE challan_no = ?',
+        [challanNo]
+      );
+      if (existCheck.length > 0) continue;
+
+      await pool.query(
+        `INSERT INTO finance_student_challans
+          (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee, total_amount, due_date, semester_id, campus_id, fee_type, status)
+         VALUES (?,?,?,?,?,?,?,DATE_ADD(CURDATE(), INTERVAL 30 DAY),?,?,'semester','pending')`,
+        [enrollment.student_id, challanNo, feeStruct.tuition_fee||0, feeStruct.lab_fee||0, feeStruct.library_fee||0, feeStruct.other_fee||0, totalAmount, semester_id, campusId]
+      );
+      created++;
+    }
+
+    res.status(201).json({ success: true, message: `${created} semester challan(s) generated successfully` });
+  } catch (error) {
+    console.error('Generate semester challans error:', error);
+    res.status(500).json({ success: false, message: 'Error generating semester challans' });
+  }
+});
+
 module.exports = router;

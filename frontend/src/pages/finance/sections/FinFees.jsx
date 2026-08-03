@@ -10,7 +10,7 @@ const StatusBadge = ({ status }) => {
   return <span className={statusClass}>{status.toUpperCase()}</span>;
 };
 
-const FinFees = ({ challans, onAction, onEdit }) => {
+const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   
@@ -215,13 +215,15 @@ const FinFees = ({ challans, onAction, onEdit }) => {
   return (
     <div className="fin-animate">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Fee Challan Management</h2>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+          {isSchool ? '🏫 Monthly Fee Register' : 'Fee Challan Management'}
+        </h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <button 
             onClick={() => setShowGenModal(true)} 
             style={{ 
               padding: '10px 16px', 
-              background: 'var(--fin-primary, #4f46e5)', 
+              background: isSchool ? 'linear-gradient(135deg, #059669, #10b981)' : 'var(--fin-primary, #4f46e5)', 
               color: 'white', 
               border: 'none', 
               borderRadius: '10px', 
@@ -231,10 +233,11 @@ const FinFees = ({ challans, onAction, onEdit }) => {
               display: 'flex', 
               alignItems: 'center', 
               gap: '6px',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.25)' 
+              boxShadow: isSchool ? '0 4px 12px rgba(16,185,129,0.25)' : '0 4px 12px rgba(79, 70, 229, 0.25)'
             }}
           >
-            <CalendarBlank size={18} weight="bold" /> Auto-Generate Dues
+            <CalendarBlank size={18} weight="bold" /> 
+            {isSchool ? 'View Monthly Fees' : 'Auto-Generate Dues'}
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
@@ -268,6 +271,7 @@ const FinFees = ({ challans, onAction, onEdit }) => {
               <th>Student</th>
               <th>Roll No</th>
               <th>Challan ID</th>
+              <th>{isSchool ? 'Month / Year' : 'Amount'}</th>
               <th>Amount</th>
               <th>Due Date</th>
               <th>Status</th>
@@ -285,6 +289,11 @@ const FinFees = ({ challans, onAction, onEdit }) => {
                 </td>
                 <td>{c.roll_number}</td>
                 <td style={{fontWeight: '600', color: 'var(--fin-primary)'}}>{c.challan_no}</td>
+                {isSchool && (
+                  <td style={{ fontWeight: 700, color: '#6366f1' }}>
+                    {c.fee_month ? `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][c.fee_month]} ${c.fee_year}` : 'N/A'}
+                  </td>
+                )}
                 <td className="fin-net">
                   <div>Rs. {(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</div>
                   {c.discount_amount > 0 && (
