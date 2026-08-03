@@ -23,24 +23,29 @@ const getChatVisibilityFilter = (user) => {
           (u.role IN ('admin', 'principal') AND u.campus_id = ?)
           OR
           (u.role = 'teacher' AND u.id IN (
-            SELECT emp.user_id FROM courses c 
+            SELECT COALESCE(emp.user_id, c.teacher_id) FROM courses c 
             JOIN enrollments e ON c.id = e.course_id 
-            JOIN employees emp ON c.teacher_id = emp.id
+            LEFT JOIN employees emp ON c.teacher_id = emp.id
             WHERE e.student_id = ? AND e.status = 'approved'
             UNION
-            SELECT emp.user_id FROM classes cl 
+            SELECT COALESCE(emp.user_id, cl.teacher_id) FROM classes cl 
             JOIN student_classes sc ON cl.id = sc.class_id 
-            JOIN employees emp ON cl.teacher_id = emp.id
+            LEFT JOIN employees emp ON cl.teacher_id = emp.id
             WHERE sc.student_id = ? AND sc.status = 'approved'
             UNION
-            SELECT emp.user_id FROM course_sections cs 
+            SELECT COALESCE(emp.user_id, cs.teacher_id) FROM course_sections cs 
             JOIN enrollments e ON cs.course_id = e.course_id AND cs.semester_id = e.semester
-            JOIN employees emp ON cs.teacher_id = emp.id
+            LEFT JOIN employees emp ON cs.teacher_id = emp.id
             WHERE e.student_id = ? AND e.status = 'approved'
+            UNION
+            SELECT COALESCE(emp.user_id, c.teacher_id) FROM courses c
+            JOIN student_classes sc ON c.class_id = sc.class_id
+            LEFT JOIN employees emp ON c.teacher_id = emp.id
+            WHERE sc.student_id = ? AND sc.status = 'approved'
           ))
         )
       `,
-      params: [...baseParams, campusId, studentId, studentId, studentId]
+      params: [...baseParams, campusId, studentId, studentId, studentId, studentId]
     };
   } else if (role === 'teacher') {
     // Teachers see HOD/Admin of their campus + Students in their campus.
