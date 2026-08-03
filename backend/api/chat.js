@@ -187,8 +187,22 @@ router.get('/messages/:otherUserId', async (req, res) => {
     if (!otherId) {
       return res.status(400).json({ success: false, message: 'Invalid user id' });
     }
+
+    // Auto-fix: ensure chat_messages table has required columns
+    const chatFixes = [
+      `ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_edited TINYINT(1) DEFAULT 0`,
+      `ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted TINYINT(1) DEFAULT 0`,
+      `ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS read_at DATETIME DEFAULT NULL`
+    ];
+    for (const fix of chatFixes) {
+      try { await pool.query(fix); } catch(e) { /* column may already exist */ }
+    }
+
     const [rows] = await pool.query(
-      `SELECT id, sender_id, receiver_id, message, created_at, read_at, is_edited, is_deleted
+      `SELECT id, sender_id, receiver_id, message, created_at, 
+              COALESCE(read_at, NULL) as read_at, 
+              COALESCE(is_edited, 0) as is_edited, 
+              COALESCE(is_deleted, 0) as is_deleted
        FROM chat_messages
        WHERE (sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)
        ORDER BY created_at ASC`,
@@ -197,7 +211,7 @@ router.get('/messages/:otherUserId', async (req, res) => {
     res.json({ success: true, messages: rows });
   } catch (err) {
     console.error('Chat messages error:', err);
-    res.status(500).json({ success: false, message: 'Failed to load messages' });
+    res.status(500).json({ success: false, message: 'Failed to load messages', error: err.message });
   }
 });
 
