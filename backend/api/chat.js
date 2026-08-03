@@ -48,16 +48,39 @@ const getChatVisibilityFilter = (user) => {
       params: [...baseParams, campusId, studentId, studentId, studentId, studentId]
     };
   } else if (role === 'teacher') {
-    // Teachers see HOD/Admin of their campus + Students in their campus.
+    // Teachers see HOD/Admin of their campus + Approved students in their courses/classes
     return {
       condition: `
         ${baseCond} AND (
           (u.role IN ('admin', 'principal') AND u.campus_id = ?)
           OR
-          (u.role = 'student' AND u.campus_id = ?)
+          (u.role = 'student' AND u.id IN (
+            SELECT s.user_id FROM students s
+            WHERE s.id IN (
+              SELECT e.student_id FROM enrollments e
+              JOIN courses c ON e.course_id = c.id
+              JOIN employees emp ON c.teacher_id = emp.id
+              WHERE emp.user_id = ? AND e.status = 'approved'
+              UNION
+              SELECT sc.student_id FROM student_classes sc
+              JOIN classes cl ON sc.class_id = cl.id
+              JOIN employees emp ON cl.teacher_id = emp.id
+              WHERE emp.user_id = ? AND sc.status = 'approved'
+              UNION
+              SELECT e.student_id FROM enrollments e
+              JOIN course_sections cs ON e.course_id = cs.course_id AND e.semester = cs.semester_id
+              JOIN employees emp ON cs.teacher_id = emp.id
+              WHERE emp.user_id = ? AND e.status = 'approved'
+              UNION
+              SELECT sc.student_id FROM student_classes sc
+              JOIN courses c ON sc.class_id = c.class_id
+              JOIN employees emp ON c.teacher_id = emp.id
+              WHERE emp.user_id = ? AND sc.status = 'approved'
+            )
+          ))
         )
       `,
-      params: [...baseParams, campusId, campusId]
+      params: [...baseParams, campusId, myId, myId, myId, myId]
     };
   } else if (['rector', 'hr_manager', 'finance_manager', 'registrar', 'admission_officer', 'library_manager', 'master_admin'].includes(role)) {
     // Masters see EVERYONE across ALL campuses in their university (except super_admin)
