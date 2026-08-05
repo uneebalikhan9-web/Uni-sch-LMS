@@ -40,6 +40,9 @@ export default function SDModals({
             <p style={S.uploadText}>
               {submissionFile ? submissionFile.name : 'Click to upload file (optional)'}
             </p>
+            <p style={{marginTop: '8px', fontSize: '11px', color: '#94a3b8', textAlign: 'center'}}>
+              Supported: PDF, Word (.doc, .docx), Images (.jpg, .png), ZIP (Max 5MB)
+            </p>
             <input 
               type="file" 
               id="fileUpload" 

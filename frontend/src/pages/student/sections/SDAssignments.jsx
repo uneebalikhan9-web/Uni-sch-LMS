@@ -53,7 +53,7 @@ export default function SDAssignments({
                 </div>
               )}
 
-              {!a.marks_obtained && (
+              {!a.marks_obtained && !a.submitted_at && (
                 <button 
                   onClick={() => { 
                     setSelectedAssignment(a); 
@@ -62,11 +62,11 @@ export default function SDAssignments({
                   }}
                   style={{
                     ...S.submitBtn,
-                    background: a.submitted_at ? '#cbd5e1' : 'var(--primary-color, #4f46e5)',
-                    color: a.submitted_at ? '#475569' : '#fff'
+                    background: 'var(--primary-color, #4f46e5)',
+                    color: '#fff'
                   }}
                 >
-                  {a.submitted_at ? 'Update Submission' : 'Submit Assignment'}
+                  Submit Assignment
                 </button>
               )}
             </div>

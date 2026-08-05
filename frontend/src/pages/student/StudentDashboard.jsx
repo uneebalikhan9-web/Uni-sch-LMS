@@ -414,7 +414,9 @@ function StudentDashboard({ user, onLogout }) {
         }
       } catch (e) { console.error(e) }
     }
-    setAssignments(allAssignments);
+    // Deduplicate by assignment id just in case a course is fetched twice
+    const uniqueAssignments = Array.from(new Map(allAssignments.map(a => [a.id, a])).values());
+    setAssignments(uniqueAssignments);
   }
 
   const handleSubmitAssignment = async (e) => {
@@ -545,9 +547,21 @@ function StudentDashboard({ user, onLogout }) {
       <div style={S.bgOrb2}></div>
       <div style={S.bgOrb3}></div>
 
-      <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={S.mobileMenuBtn} className="mobile-menu-btn">
-        <DotsThreeOutline size={24} weight="bold" />
-      </button>
+      {!mobileMenuOpen && (
+        <button onClick={() => setMobileMenuOpen(true)} style={S.mobileMenuBtn} className="mobile-menu-btn">
+          <DotsThreeOutline size={24} weight="bold" />
+        </button>
+      )}
+
+      {mobileMenuOpen && (
+        <div 
+          onClick={() => setMobileMenuOpen(false)} 
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', zIndex: 1000
+          }} 
+          className="sidebar-backdrop"
+        />
+      )}
 
       {globalLoading && <LoadingSpinner fullPage size="large" />}
 
