@@ -227,12 +227,14 @@ function StudentAssignments() {
                       </button>
                     )}
                     
-                    <button 
-                      onClick={() => {setSelectedAssignment(assignment); setShowSubmitForm(true)}}
-                      style={{padding: '10px 20px', backgroundColor: assignment.submitted_at ? '#FF9800' : '#4CAF50', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap'}}
-                    >
-                      {assignment.submitted_at ? '🔄 Resubmit' : '📤 Submit'}
-                    </button>
+                    {!assignment.submitted_at && (
+                      <button 
+                        onClick={() => {setSelectedAssignment(assignment); setShowSubmitForm(true)}}
+                        style={{padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap'}}
+                      >
+                        📤 Submit
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -256,7 +258,10 @@ function StudentAssignments() {
                 </div>
                 
                 <div style={{marginBottom: '20px'}}>
-                  <label style={{display: 'block', marginBottom: '5px', fontWeight: '600'}}>Upload File (Optional)</label>
+                  <label style={{display: 'block', marginBottom: '2px', fontWeight: '600'}}>Upload File (Optional)</label>
+                  <p style={{marginTop: '0', marginBottom: '8px', fontSize: '12px', color: '#666'}}>
+                    Supported formats: <strong>PDF, Word (.doc, .docx), Images (.jpg, .png), ZIP</strong>. Maximum size: 5MB.
+                  </p>
                   <input
                     type="file"
                     onChange={(e) => setSubmissionFile(e.target.files[0])}
