@@ -229,8 +229,22 @@ router.get('/my-enrollments', verifyToken, async (req, res) => {
       JOIN courses c ON e.course_id = c.id
       LEFT JOIN classes cl ON c.class_id = cl.id
       WHERE e.student_id = ?
-      ORDER BY e.enrolled_at DESC
-    `, [studentId]);
+      
+      UNION
+      
+      SELECT c.*, 
+        COALESCE(
+          (SELECT u.name FROM users u JOIN employees emp ON emp.user_id = u.id WHERE emp.id = c.teacher_id),
+          (SELECT name FROM users WHERE id = c.teacher_id AND role = 'teacher')
+        ) as teacher_name, 
+        NOW() as enrolled_at, 'approved' as status, cl.name as class_name
+      FROM student_classes sc
+      JOIN courses c ON sc.class_id = c.class_id
+      LEFT JOIN classes cl ON c.class_id = cl.id
+      WHERE sc.student_id = ?
+      
+      ORDER BY enrolled_at DESC
+    `, [studentId, studentId]);
 
     res.status(200).json({
       success: true,
