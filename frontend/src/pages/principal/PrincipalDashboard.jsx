@@ -18,6 +18,7 @@ import PDFeedback      from "./sections/PDFeedback";
 import PDCourseReports from "./sections/PDCourseReports";
 import EPayroll        from "./sections/EPayroll";
 import PDFaceAttendance from "./sections/PDFaceAttendance";
+import PDStaffAttendance from "./sections/PDStaffAttendance";
 import FinExpenses     from "../finance/sections/FinExpenses";
 import "../finance/finance.css";
 import { AddEditModal, TimetableModal, ReportModal, ClassCoursesModal, StudentProfileModal } from "./sections/PDModals";
@@ -596,6 +597,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     ['courses',       isSchool ? 'Subjects / Courses' : 'Courses',           <BookOpen size={20}/>,            courses.filter(c=>c.status==='active').length],
     ['history',       'Course History',                                       <Clock size={20}/>,                courses.filter(c=>c.status==='completed').length],
     ['course_reports','Course Reports',                                       <FileText size={20}/>,             campusReports.length],
+    ...(isSchool ? [['staff-attendance', 'Staff Attendance', <UserFocus size={20}/>, null]] : []),
     ['face-attendance','Face Attendance',                                     <UserFocus size={20}/>,            null],
     ['timetable',     isSchool ? 'School Schedule' : 'Academic Schedule',    <Clock size={20}/>,                timetables.length],
     ['labs',          'Lab & Assets',                                        <SquaresFour size={20}/>,          labs.length],
@@ -792,6 +794,10 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             setShowTimetableModal={setShowTimetableModal}
             setEditingItem={setEditingItem} setNewTimetableEntry={setNewTimetableEntry}
             onDelete={handleDeleteTimetable}/>
+        )}
+
+        {activeTab==='staff-attendance' && (
+          <PDStaffAttendance leftSidebarOpen={leftSidebarOpen} />
         )}
 
         {activeTab==='feedback' && (

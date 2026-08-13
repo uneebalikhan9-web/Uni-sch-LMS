@@ -47,7 +47,7 @@ router.use(isHRManager);
 // Middleware is now applied globally to the router
 router.get('/stats', async (req, res) => {
     try {
-        const [totalRes] = await db.query('SELECT COUNT(*) as count FROM users WHERE client_id = ?', [req.user.client_id]);
+        const [totalRes] = await db.query('SELECT COUNT(*) as count FROM users WHERE client_id = ? AND role NOT IN ("student", "super_admin") AND status = "active"', [req.user.client_id]);
         const total = totalRes[0].count;
         let leaveCount = 0;
         try {
@@ -65,9 +65,22 @@ router.get('/stats', async (req, res) => {
             console.warn(">>> [DEBUG] hr_job_postings table might be missing:", e.message);
         }
 
+        let presentCount = 0;
+        try {
+            const [pc] = await db.query(`
+                SELECT COUNT(*) as count 
+                FROM staff_attendance sa
+                JOIN users u ON sa.user_id = u.id
+                WHERE sa.date = CURDATE() AND sa.status = 'Present' AND u.client_id = ?
+            `, [req.user.client_id]);
+            presentCount = pc[0].count;
+        } catch (e) {
+            console.warn(">>> [DEBUG] staff_attendance table might be missing:", e.message);
+        }
+
         res.json({
             totalStaff: total,
-            activePresent: Math.floor(total * 0.95),
+            activePresent: presentCount,
             leaveRequests: leaveCount,
             openVacancies: jobCount
         });
@@ -251,7 +264,45 @@ router.get('/announcements', verifyToken, async (req, res) => {
 });
 
 router.get('/attendance-trend', verifyToken, async (req, res) => {
-    res.json([92, 88, 94, 89, 96, 93]);
+    try {
+        // Get the last 6 days including today
+        const trendData = [0, 0, 0, 0, 0, 0];
+        
+        const query = `
+            SELECT 
+                DATE(sa.date) as log_date,
+                COUNT(*) as total_marked,
+                SUM(CASE WHEN sa.status = 'Present' THEN 1 ELSE 0 END) as total_present
+            FROM staff_attendance sa
+            JOIN users u ON sa.user_id = u.id
+            WHERE u.client_id = ? AND sa.date >= DATE_SUB(CURDATE(), INTERVAL 5 DAY)
+            GROUP BY DATE(sa.date)
+            ORDER BY log_date ASC
+        `;
+        
+        const [logs] = await db.query(query, [req.user.client_id]);
+        
+        // Map the results to the last 6 days array
+        for (let i = 5; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            
+            const log = logs.find(l => {
+                const lDate = l.log_date instanceof Date ? l.log_date.toISOString().split('T')[0] : l.log_date;
+                return lDate === dateStr;
+            });
+            
+            if (log && log.total_marked > 0) {
+                trendData[5 - i] = Math.round((log.total_present / log.total_marked) * 100);
+            }
+        }
+        
+        res.json(trendData);
+    } catch (error) {
+        console.error("HR Trend Error:", error);
+        res.json([0, 0, 0, 0, 0, 0]); // Fallback safely
+    }
 });
 
 module.exports = router;

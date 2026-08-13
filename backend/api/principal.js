@@ -484,5 +484,64 @@ router.delete('/students/:id', async (req, res) => {
   }
 });
 
+// ==================== STAFF ATTENDANCE ====================
+
+// Get staff attendance for a specific date
+router.get('/staff-attendance', async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ success: false, message: 'Date is required' });
+
+    const query = `
+      SELECT 
+        u.id as user_id,
+        u.name,
+        u.role,
+        COALESCE(sa.status, 'Present') as status,
+        sa.id as attendance_id
+      FROM users u
+      LEFT JOIN staff_attendance sa ON u.id = sa.user_id AND sa.date = ?
+      WHERE u.client_id = ? AND u.role NOT IN ('student', 'super_admin') AND u.status = 'active'
+      ORDER BY u.role, u.name
+    `;
+    const [staff] = await pool.query(query, [date, req.user.client_id]);
+    res.json({ success: true, staff });
+  } catch (error) {
+    console.error('Get staff attendance error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching staff attendance' });
+  }
+});
+
+// Save or Update staff attendance
+router.post('/staff-attendance', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { date, attendance } = req.body;
+    if (!date || !Array.isArray(attendance)) {
+      connection.release();
+      return res.status(400).json({ success: false, message: 'Invalid data format' });
+    }
+
+    await connection.beginTransaction();
+
+    for (const record of attendance) {
+      await connection.query(`
+        INSERT INTO staff_attendance (user_id, date, status, marked_by) 
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE status = VALUES(status), marked_by = VALUES(marked_by)
+      `, [record.user_id, date, record.status, req.user.id]);
+    }
+
+    await connection.commit();
+    connection.release();
+    res.json({ success: true, message: 'Attendance saved successfully' });
+  } catch (error) {
+    await connection.rollback();
+    connection.release();
+    console.error('Save staff attendance error:', error);
+    res.status(500).json({ success: false, message: 'Error saving staff attendance' });
+  }
+});
+
 module.exports = router;
 
