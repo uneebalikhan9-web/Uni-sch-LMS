@@ -45,7 +45,7 @@ export default function TDAssignments({
               onClick={() => {
                 setNewAssignment({ 
                   title: '', description: '', course_id: '', due_date: '', max_marks: 100, 
-                  status: 'draft', assignment_type: 'Homework', academic_period: '2026-2027' 
+                  status: 'draft', assignment_type: 'Homework', academic_period: '2026-2027', external_link: '' 
                 });
                 setEditingItem(null);
                 setAssignmentViewMode('create');
@@ -160,7 +160,8 @@ export default function TDAssignments({
                           max_marks: a.max_marks,
                           status: a.status || 'published',
                           assignment_type: a.assignment_type || 'Homework',
-                          academic_period: a.academic_period || '2026-2027'
+                          academic_period: a.academic_period || '2026-2027',
+                          external_link: a.external_link || ''
                         });
                         setAssignmentViewMode('create');
                       }}
@@ -429,7 +430,25 @@ export default function TDAssignments({
                 <option value="Project">Project</option>
                 <option value="Quiz">Quiz</option>
                 <option value="Lab">Lab</option>
+                <option value="Video Lecture">Video Lecture</option>
               </select>
+            </div>
+
+            <div style={{ ...S.inputGroup, ...S.fullWidth }}>
+              <label style={S.inputLabel}>External URL / YouTube Link {newAssignment.assignment_type === 'Video Lecture' && '*'}</label>
+              <input 
+                type="url" 
+                placeholder="https://..." 
+                style={S.input}
+                value={newAssignment.external_link || ''}
+                onChange={(e) => setNewAssignment({ ...newAssignment, external_link: e.target.value })}
+                required={newAssignment.assignment_type === 'Video Lecture'}
+              />
+              {newAssignment.assignment_type === 'Video Lecture' && (
+                <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block', fontWeight: '600' }}>
+                  Video Lectures will automatically expire 24 hours after creation.
+                </span>
+              )}
             </div>
 
             <div style={S.inputGroup}>

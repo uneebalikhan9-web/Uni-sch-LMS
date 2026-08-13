@@ -183,7 +183,27 @@ function StudentAssignments() {
           </div>
         ) : (
           <div style={{padding: '20px'}}>
-            {assignments.map(assignment => (
+            {assignments.map(assignment => {
+              const isVideoLecture = assignment.assignment_type === 'Video Lecture';
+              let isVideoExpired = false;
+              let embedUrl = null;
+              
+              if (isVideoLecture && assignment.external_link) {
+                const createdDate = new Date(assignment.created_at);
+                const diffHours = (new Date() - createdDate) / (1000 * 60 * 60);
+                if (diffHours >= 24) {
+                  isVideoExpired = true;
+                } else {
+                  const ytMatch = assignment.external_link.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+                  if (ytMatch && ytMatch[1]) {
+                    embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                  } else {
+                    embedUrl = assignment.external_link;
+                  }
+                }
+              }
+
+              return (
               <div key={assignment.id} style={{backgroundColor: 'white', padding: '25px', borderRadius: '10px', marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'start'}}>
                   <div style={{flex: 1}}>
@@ -204,7 +224,7 @@ function StudentAssignments() {
                       )}
                     </div>
 
-                    {assignment.submitted_at && (
+                    {assignment.submitted_at && !isVideoLecture && (
                       <div style={{padding: '10px', backgroundColor: '#e8f5e9', borderRadius: '6px', marginBottom: '10px'}}>
                         <strong style={{color: '#2e7d32'}}>✓ Submitted:</strong> {new Date(assignment.submitted_at).toLocaleString()}
                         {assignment.marks_obtained !== null && (
@@ -212,6 +232,55 @@ function StudentAssignments() {
                             <strong>Marks:</strong> {assignment.marks_obtained}/{assignment.max_marks}
                             {assignment.feedback && <div><strong>Feedback:</strong> {assignment.feedback}</div>}
                           </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* External Link / Video Render */}
+                    {assignment.external_link && !isVideoLecture && (
+                      <div style={{ marginTop: '15px' }}>
+                        <a 
+                          href={assignment.external_link} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          style={{ display: 'inline-block', padding: '8px 16px', background: '#e0e7ff', color: '#4f46e5', textDecoration: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '14px' }}
+                        >
+                          🔗 Open Resource Link
+                        </a>
+                      </div>
+                    )}
+
+                    {isVideoLecture && (
+                      <div style={{ marginTop: '20px', borderTop: '1px solid #f1f5f9', paddingTop: '20px' }}>
+                        <h4 style={{ margin: '0 0 10px 0', color: '#1e293b' }}>Lecture Video</h4>
+                        {isVideoExpired ? (
+                          <div style={{ padding: '20px', background: '#fee2e2', color: '#991b1b', borderRadius: '8px', textAlign: 'center', fontWeight: '600' }}>
+                            This video lecture has expired (exceeded 24 hours).
+                          </div>
+                        ) : embedUrl ? (
+                          <>
+                            <div style={{ marginBottom: '10px', fontSize: '14px', color: '#ef4444', fontWeight: '600' }}>
+                              <span style={{ display: 'inline-block', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%', marginRight: '6px', animation: 'pulse 2s infinite' }}></span>
+                              Available for 24 hours from creation
+                            </div>
+                            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000' }}>
+                              <iframe 
+                                src={embedUrl} 
+                                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowFullScreen
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <a 
+                            href={assignment.external_link} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            style={{ display: 'inline-block', padding: '8px 16px', background: '#e0e7ff', color: '#4f46e5', textDecoration: 'none', borderRadius: '6px', fontWeight: '600' }}
+                          >
+                            Open Video Link
+                          </a>
                         )}
                       </div>
                     )}
@@ -227,7 +296,7 @@ function StudentAssignments() {
                       </button>
                     )}
                     
-                    {!assignment.submitted_at && (
+                    {!assignment.submitted_at && !isVideoLecture && (
                       <button 
                         onClick={() => {setSelectedAssignment(assignment); setShowSubmitForm(true)}}
                         style={{padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap'}}
@@ -238,7 +307,7 @@ function StudentAssignments() {
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
 
