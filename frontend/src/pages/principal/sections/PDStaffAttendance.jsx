@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarBlank, CheckCircle, XCircle, Clock, AirplaneTilt, FloppyDisk, UserCircle } from '@phosphor-icons/react';
-import API_BASE_URL from '../../../../config/api';
-import { useToast } from '../../../../components/Toast';
+import API_BASE_URL from '../../../config/api';
+import { useToast } from '../../../components/Toast';
 import { S } from './PDStyles';
 
 export default function PDStaffAttendance({ leftSidebarOpen }) {
