@@ -205,7 +205,7 @@ export default function PDStaffAttendance({ leftSidebarOpen }) {
                                 fontWeight: 700,
                                 background: colors.bg,
                                 color: colors.text,
-                                border: \`1px solid \${colors.border}\`,
+                                border: `1px solid ${colors.border}`,
                                 cursor: 'pointer',
                                 transition: 'all 0.2s',
                                 transform: isSelected ? 'scale(1.05)' : 'scale(1)',
