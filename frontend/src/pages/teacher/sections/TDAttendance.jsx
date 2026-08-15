@@ -19,6 +19,10 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
   const [faceDate, setFaceDate] = useState(new Date().toISOString().split('T')[0]);
   const [faceLog, setFaceLog] = useState([]);
   const [faceLoading, setFaceLoading] = useState(false);
+  
+  // Monthly Sheet State
+  const [historyMonth, setHistoryMonth] = useState(new Date().getMonth() + 1);
+  const [historyYear, setHistoryYear] = useState(new Date().getFullYear());
 
   // Fetch courses when class is selected
   useEffect(() => {
@@ -91,7 +95,7 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
     }
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/attendance/history/all?class_id=${selectedClassId}&course_id=${selectedCourseId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/attendance/history/all?class_id=${selectedClassId}&course_id=${selectedCourseId}&month=${historyMonth}&year=${historyYear}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -100,7 +104,7 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
         setViewMode('history');
       }
     } catch (error) { showToast('Failed to fetch history', 'error'); }
-    finally { setLoading(true); setLoading(false); }
+    finally { setLoading(false); }
   };
 
   const fetchFaceAttendance = async (targetDate) => {
@@ -130,18 +134,27 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
   }, [mainTab]);
 
   const exportToExcel = () => {
-    if (!history || !history.dates || !history.records) return;
+    const daysInMonth = new Date(historyYear, historyMonth, 0).getDate();
+    const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+    
     const studentMap = {};
-    history.records.forEach(r => {
-      if (!studentMap[r.student_id]) {
-        studentMap[r.student_id] = { name: r.student_name, email: r.student_email };
-        history.dates.forEach(d => studentMap[r.student_id][d] = '-');
-      }
-      studentMap[r.student_id][r.date] = r.status.toUpperCase().charAt(0);
+    students.forEach(s => {
+      studentMap[s.id] = { name: s.name, email: s.email };
+      monthDays.forEach(d => studentMap[s.id][d] = '-');
     });
-    const headers = ['Student Name', 'Email', ...history.dates];
+
+    if (history && history.records) {
+      history.records.forEach(r => {
+        if (studentMap[r.student_id]) {
+          const dayNum = parseInt(r.date.split('-')[2], 10);
+          studentMap[r.student_id][dayNum] = r.status.toUpperCase().charAt(0);
+        }
+      });
+    }
+
+    const headers = ['Student Name', 'Email', ...monthDays];
     const rows = Object.values(studentMap).map(s =>
-      [s.name, s.email, ...history.dates.map(d => s[d] || '-')]
+      [s.name, s.email, ...monthDays.map(d => s[d] || '-')]
         .map(cell => `"${String(cell).replace(/"/g, '""')}"`)
         .join(',')
     );
@@ -150,7 +163,7 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Attendance_${selectedClassId}_${selectedCourseId}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `Attendance_${historyYear}_${historyMonth}_${classCourses.find(c => c.id == selectedCourseId)?.title || 'Course'}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -356,69 +369,96 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
     </div>
   );
 
-  const renderSheetView = () => (
-    <div style={{ marginTop: '2rem' }}>
-      <div style={{ ...S.card, padding: '1.5rem', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h3 style={S.cardTitle}>Attendance Master Sheet</h3>
-            <p style={{ fontSize: '12px', color: '#64748b' }}>Showing all records for {classCourses.find(c => c.id == selectedCourseId)?.title}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={exportToExcel} style={{ ...S.secondaryBtn, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #10b981', color: '#10b981' }}>
-              <DownloadSimple size={18} /> Download Excel
-            </button>
-            <button onClick={() => setViewMode('mark')} style={{ ...S.secondaryBtn, padding: '0.5rem 1rem' }}>
-              Back to Marking
-            </button>
-          </div>
-        </div>
+  const renderSheetView = () => {
+    const daysInMonth = new Date(historyYear, historyMonth, 0).getDate();
+    const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
-        {history && history.dates.length > 0 ? (
+    return (
+      <div style={{ marginTop: '2rem' }}>
+        <div style={{ ...S.card, padding: '1.5rem', overflow: 'hidden' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h3 style={S.cardTitle}>Monthly Attendance Sheet</h3>
+              <p style={{ fontSize: '12px', color: '#64748b' }}>Showing all records for {classCourses.find(c => c.id == selectedCourseId)?.title}</p>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <select style={{...S.input, padding: '6px 10px', minWidth: '100px'}} value={historyMonth} onChange={e => setHistoryMonth(parseInt(e.target.value))}>
+                {Array.from({length: 12}, (_, i) => i + 1).map(m => <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'short' })}</option>)}
+              </select>
+              <select style={{...S.input, padding: '6px 10px', minWidth: '80px'}} value={historyYear} onChange={e => setHistoryYear(parseInt(e.target.value))}>
+                {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+              <button onClick={fetchHistory} style={{ ...S.primaryBtn, padding: '0.5rem 1rem' }}>Load Month</button>
+
+              <button onClick={exportToExcel} style={{ ...S.secondaryBtn, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #10b981', color: '#10b981' }}>
+                <DownloadSimple size={18} /> Excel
+              </button>
+              <button onClick={() => setViewMode('mark')} style={{ ...S.secondaryBtn, padding: '0.5rem 1rem' }}>
+                Back
+              </button>
+            </div>
+          </div>
+
           <div className="table-responsive" style={{ overflowX: 'auto', maxHeight: '600px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
             <table style={{ ...S.table, borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr>
                   <th style={{ ...S.th, position: 'sticky', left: 0, background: '#f8fafc', zIndex: 20, minWidth: '180px', borderRight: '2px solid #e2e8f0' }}>Student Name</th>
-                  {history.dates.map(date => (
-                    <th key={date} style={{ ...S.th, textAlign: 'center', minWidth: '100px', fontSize: '11px', whiteSpace: 'nowrap' }}>
-                      {new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                    </th>
-                  ))}
+                  {monthDays.map(day => {
+                    const dateObj = new Date(historyYear, historyMonth - 1, day);
+                    const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                    return (
+                      <th key={day} style={{ ...S.th, textAlign: 'center', minWidth: '35px', padding: '10px 4px', fontSize: '11px', background: isWeekend ? '#f1f5f9' : '#f8fafc', color: isWeekend ? '#94a3b8' : '#475569' }}>
+                        {day}
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody>
-                {/* Prepare the grid data */}
                 {(() => {
                   const studentData = {};
-                  history.records.forEach(r => {
-                    if (!studentData[r.student_id]) {
-                      studentData[r.student_id] = { name: r.student_name, records: {}, methods: {} };
-                    }
-                    studentData[r.student_id].records[r.date] = r.status;
-                    studentData[r.student_id].methods[r.date] = r.method;
+                  // Initialize all students
+                  students.forEach(s => {
+                    studentData[s.id] = { name: s.name, records: {}, methods: {} };
                   });
+                  // Map history records
+                  if (history && history.records) {
+                    history.records.forEach(r => {
+                      if (!studentData[r.student_id]) {
+                        studentData[r.student_id] = { name: r.student_name, records: {}, methods: {} };
+                      }
+                      const dayStr = r.date.split('-')[2];
+                      const dayNum = parseInt(dayStr, 10);
+                      studentData[r.student_id].records[dayNum] = r.status;
+                      studentData[r.student_id].methods[dayNum] = r.method;
+                    });
+                  }
 
                   return Object.entries(studentData).map(([sId, data]) => (
                     <tr key={sId} style={S.tr}>
                       <td style={{ ...S.td, fontWeight: 600, position: 'sticky', left: 0, background: 'white', zIndex: 5, borderRight: '2px solid #e2e8f0' }}>
                         {data.name}
                       </td>
-                      {history.dates.map(date => {
-                        const status = data.records[date];
-                        const method = data.methods[date];
+                      {monthDays.map(day => {
+                        const status = data.records[day];
+                        const method = data.methods[day];
+                        const dateObj = new Date(historyYear, historyMonth - 1, day);
+                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+
                         return (
-                          <td key={date} style={{ ...S.td, textAlign: 'center' }}>
+                          <td key={day} style={{ ...S.td, textAlign: 'center', background: isWeekend ? '#f8fafc' : 'white', padding: '8px 4px' }}>
                             {status ? (
                               <span 
-                                title={method === 'Face AI' ? 'Face ID verified' : 'Manually marked by Teacher'}
+                                title={method === 'Face AI' ? 'Face ID verified' : 'Manually marked'}
                                 style={{
                                   display: 'inline-flex',
-                                  flexDirection: 'column',
                                   alignItems: 'center',
                                   justifyContent: 'center',
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
+                                  width: '20px',
+                                  height: '20px',
+                                  borderRadius: '4px',
                                   fontSize: '11px',
                                   fontWeight: 'bold',
                                   color: status === 'present' ? '#10b981' : status === 'absent' ? '#ef4444' : status === 'leave' ? '#3b82f6' : '#f97316',
@@ -426,14 +466,9 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
                                   cursor: 'help'
                                 }}
                               >
-                                <span>{status.toUpperCase().charAt(0)}</span>
-                                {status === 'present' && (
-                                  <span style={{ fontSize: '7px', fontWeight: 700, opacity: 0.8, marginTop: '2px', textTransform: 'uppercase' }}>
-                                    {method === 'Face AI' ? 'Face' : 'Man'}
-                                  </span>
-                                )}
+                                {status.toUpperCase().charAt(0)}
                               </span>
-                            ) : '-'}
+                            ) : <span style={{ color: '#cbd5e1' }}>-</span>}
                           </td>
                         );
                       })}
@@ -443,15 +478,10 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
               </tbody>
             </table>
           </div>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '3rem', color: '#64748b' }}>
-            <FileText size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
-            <p>No attendance history found for this course</p>
-          </div>
-        )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderFaceSheet = () => (
     <div style={{ marginTop: '2rem' }}>
