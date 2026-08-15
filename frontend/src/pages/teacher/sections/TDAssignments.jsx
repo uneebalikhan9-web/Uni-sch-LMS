@@ -264,6 +264,18 @@ export default function TDAssignments({
                   </div>
                 </div>
 
+                {selectedAssignment?.assignment_type === 'Video Lecture' && (
+                  <div style={S.contentSection}>
+                    <label style={S.sectionLabel}><Clock size={18} /> Video Watch Time</label>
+                    <div style={{ ...S.textSubmission, fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--primary-color, #4f46e5)' }}>
+                      {selectedSubmissionStudent.watch_time_seconds ? 
+                        `${Math.floor(selectedSubmissionStudent.watch_time_seconds / 60)} minutes ${selectedSubmissionStudent.watch_time_seconds % 60} seconds` : 
+                        '0 minutes 0 seconds'
+                      }
+                    </div>
+                  </div>
+                )}
+
                 {selectedSubmissionStudent.submission_text && (
                   <div style={S.contentSection}>
                     <label style={S.sectionLabel}><FileText size={18} /> Student Submission</label>

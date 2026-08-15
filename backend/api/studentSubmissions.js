@@ -165,4 +165,30 @@ router.put('/:id/grade', verifyToken, isTeacher, async (req, res) => {
   }
 });
 
+// Student: Track watch time for video lectures
+router.post('/watch-time', verifyToken, isStudent, async (req, res) => {
+  try {
+    const { assignment_id, seconds_watched } = req.body;
+    const student_id = req.user.student_id;
+    
+    if (!assignment_id || !seconds_watched) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // Upsert into submissions: if it doesn't exist, insert it. If it does, add to watch_time_seconds
+    await pool.query(`
+      INSERT INTO submissions (assignment_id, student_id, watch_time_seconds, submitted_at)
+      VALUES (?, ?, ?, NOW())
+      ON DUPLICATE KEY UPDATE 
+        watch_time_seconds = watch_time_seconds + VALUES(watch_time_seconds),
+        submitted_at = NOW()
+    `, [assignment_id, student_id, seconds_watched]);
+
+    res.status(200).json({ success: true, message: 'Watch time updated' });
+  } catch (error) {
+    console.error('Watch time error:', error);
+    res.status(500).json({ success: false, message: 'Error updating watch time' });
+  }
+});
+
 module.exports = router;

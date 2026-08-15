@@ -1,6 +1,7 @@
 import React from 'react';
 import { ClipboardText, FileText } from "@phosphor-icons/react";
 import { S } from './SDStyles';
+import VideoPlayer from './VideoPlayer';
 
 export default function SDAssignments({ 
   assignments, 
@@ -38,9 +39,9 @@ export default function SDAssignments({
               } else {
                 const ytMatch = a.external_link.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
                 if (ytMatch && ytMatch[1]) {
-                  embedUrl = `https://www.youtube.com/embed/${ytMatch[1]}`;
+                  embedUrl = ytMatch[1]; // Store just the ID for react-youtube
                 } else {
-                  embedUrl = a.external_link;
+                  embedUrl = null; // Can't play non-YT properly with this player
                 }
               }
             }
@@ -103,20 +104,7 @@ export default function SDAssignments({
                           <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%', marginRight: '6px', animation: 'pulse 2s infinite' }}></span>
                           Available for 24 hours
                         </div>
-                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000' }}>
-                          <iframe 
-                            src={embedUrl} 
-                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowFullScreen
-                          />
-                        </div>
-                        <button 
-                          onClick={() => setPlayingVideoId(null)}
-                          style={{ marginTop: '12px', padding: '6px 14px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
-                        >
-                          Close Video
-                        </button>
+                        <VideoPlayer videoId={embedUrl} assignmentId={a.id} onClose={() => setPlayingVideoId(null)} />
                       </>
                     ) : (
                       <button 
