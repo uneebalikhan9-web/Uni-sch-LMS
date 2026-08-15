@@ -46,6 +46,7 @@ function StatusBadge({ status }) {
 
 function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjects, availableCourses, courses, handleRegisterClass, handleEnrollCourse, registering, enrolling }) {
   const [activeTab, setActiveTab] = useState('classes');
+  const [showSubjectsModal, setShowSubjectsModal] = useState(false);
   
   return (
     <div className="animate-fadeIn">
@@ -92,29 +93,69 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
                   <p style={{ margin: 0, color: '#15803d', fontSize: '0.85rem' }}>Section {myClassInfo.section}</p>
                 </div>
               </div>
+              
+              {myClassSubjects && myClassSubjects.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <button 
+                    onClick={() => setShowSubjectsModal(true)}
+                    style={{ 
+                      display: 'flex', alignItems: 'center', gap: '8px', 
+                      padding: '10px 20px', background: '#fff', color: '#166534', 
+                      border: '1px solid #16a34a', borderRadius: '8px', 
+                      fontWeight: '600', fontSize: '0.9rem', cursor: 'pointer',
+                      transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                    }}
+                    onMouseEnter={(e) => { e.target.style.background = '#f0fdf4'; }}
+                    onMouseLeave={(e) => { e.target.style.background = '#fff'; }}
+                  >
+                    <BookOpen size={18} weight="bold" /> View Enrolled Subjects
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
               {availableClasses && availableClasses.length > 0 ? availableClasses.map(c => (
-                <div key={c.id} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                  <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.name}</h4>
-                  <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Section {c.section}</p>
+                <div key={c.id} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.name}</h4>
+                    <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Section {c.section}</p>
+                    
+                    {c.courses && c.courses.length > 0 ? (
+                      <div style={{ marginBottom: '20px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Included Subjects</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {c.courses.map(course => (
+                            <div key={course.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: '#334155' }}>
+                              <BookOpen size={14} color="#64748b" /> {course.title}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ marginBottom: '20px', padding: '12px', background: '#fef2f2', borderRadius: '8px', border: '1px dashed #fca5a5' }}>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#ef4444', textAlign: 'center' }}>No subjects added yet</p>
+                      </div>
+                    )}
+                  </div>
                   
-                  {c.registration_status === 'pending' ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                      <Clock size={20} weight="fill" /> Pending Approval
-                    </div>
-                  ) : (
-                    <button 
-                      onClick={() => handleRegisterClass(c.id)}
-                      disabled={registering}
-                      style={{
-                        width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 600, cursor: 'pointer',
-                        opacity: registering ? 0.7 : 1
-                      }}>
-                      {registering ? 'Processing...' : 'Register for this Class'}
-                    </button>
-                  )}
+                  <div>
+                    {c.registration_status === 'pending' ? (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
+                        <Clock size={20} weight="fill" /> Pending Approval
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => handleRegisterClass(c.id)}
+                        disabled={registering}
+                        style={{
+                          width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 600, cursor: 'pointer',
+                          opacity: registering ? 0.7 : 1
+                        }}>
+                        {registering ? 'Processing...' : 'Register for this Class'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )) : (
                 <p>No classes available for registration.</p>
@@ -164,6 +205,44 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
           {(!courses || courses.length === 0) && (!availableCourses || availableCourses.length === 0) && (
             <p>No courses available.</p>
           )}
+        </div>
+      )}
+
+      {/* Subjects Modal */}
+      {showSubjectsModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '24px', width: '100%', maxWidth: '450px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', animation: 'fadeIn 0.2s ease-out' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #e2e8f0', paddingBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <BookOpen size={24} weight="duotone" color="#4f46e5" /> Enrolled Subjects
+              </h3>
+              <button onClick={() => setShowSubjectsModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '60vh', overflowY: 'auto' }} className="hidden-scrollbar">
+              {myClassSubjects?.map(sub => (
+                <div key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5' }}>
+                    <BookOpen size={18} weight="bold" />
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: '600', fontSize: '0.95rem', color: '#1e293b' }}>{sub.title}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ marginTop: '24px', textAlign: 'right' }}>
+              <button 
+                onClick={() => setShowSubjectsModal(false)}
+                style={{ padding: '8px 20px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
