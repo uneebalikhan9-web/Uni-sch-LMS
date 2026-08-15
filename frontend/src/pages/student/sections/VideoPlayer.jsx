@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import YouTube from 'react-youtube';
+import API_BASE_URL from '../../../config/api';
 
 export default function VideoPlayer({ videoId, assignmentId, onClose }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true); // Start playing immediately when opened
   const watchTimeRef = useRef(0);
   const intervalRef = useRef(null);
   
@@ -16,20 +17,37 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
   };
 
   const onStateChange = (event) => {
+    // We optionally keep this if we want to pause when video pauses
     // event.data: 1 = playing, 2 = paused, 0 = ended
     if (event.data === 1) {
       setIsPlaying(true);
-    } else {
+    } else if (event.data === 2 || event.data === 0) {
       setIsPlaying(false);
     }
   };
 
   useEffect(() => {
+    // Handle tab switching
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsPlaying(false);
+      } else {
+        setIsPlaying(true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
     if (isPlaying) {
       intervalRef.current = setInterval(() => {
-        watchTimeRef.current += 10;
-        // Ping backend every 10 seconds
-        fetch('/api/student-submissions/watch-time', {
+        watchTimeRef.current += 5;
+        // Ping backend every 5 seconds
+        fetch(`${API_BASE_URL}/api/student-submissions/watch-time`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -37,10 +55,10 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
           },
           body: JSON.stringify({
             assignment_id: assignmentId,
-            seconds_watched: 10
+            seconds_watched: 5
           })
         }).catch(err => console.error('Watch time ping failed', err));
-      }, 10000);
+      }, 5000);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
