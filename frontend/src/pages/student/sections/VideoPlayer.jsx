@@ -51,7 +51,7 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${sessionStorage.getItem('token')}`
           },
           body: JSON.stringify({
             assignment_id: assignmentId,
