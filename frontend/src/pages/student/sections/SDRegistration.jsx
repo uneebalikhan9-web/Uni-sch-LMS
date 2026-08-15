@@ -171,7 +171,8 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
           {courses && courses.length > 0 && courses.map(c => (
             <div key={`enrolled-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: {c.class_name || 'General'}</p>
               
               {c.status === 'pending' ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
@@ -189,7 +190,8 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
           {availableCourses && availableCourses.length > 0 && availableCourses.map(c => (
             <div key={`avail-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
               <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
+              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: {c.class_name || 'General'}</p>
               <button 
                 onClick={() => handleEnrollCourse(c.id)}
                 disabled={enrolling}
