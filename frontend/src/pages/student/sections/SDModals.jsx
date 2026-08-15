@@ -55,7 +55,15 @@ export default function SDModals({
             <button type="button" onClick={() => setShowSubmitModal(false)} style={S.cancelBtn}>
               Cancel
             </button>
-            <button type="submit" style={S.saveBtn}>
+            <button 
+              type="submit" 
+              style={{
+                ...S.saveBtn,
+                opacity: (!submissionText.trim() && !submissionFile) ? 0.5 : 1,
+                cursor: (!submissionText.trim() && !submissionFile) ? 'not-allowed' : 'pointer'
+              }}
+              disabled={!submissionText.trim() && !submissionFile}
+            >
               Submit Work
             </button>
           </div>

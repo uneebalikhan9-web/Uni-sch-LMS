@@ -27,7 +27,16 @@ export const S = {
   overviewContainer: { display:'flex', flexDirection:'column', gap:'32px' },
   statsGrid: { display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'20px' },
   metricCard: { background:'#fff', padding:'20px', borderRadius:'24px', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', gap:'16px', transition:'all 0.3s ease', boxShadow:'0 4px 6px -2px rgba(0,0,0,0.05)' },
-  metricIconWrapper: (color) => ({ width:'48px', height:'48px', borderRadius:'16px', background:`${color}15`, display:'flex', alignItems:'center', justifyContent:'center', color }),
+  metricIconWrapper: (color) => {
+    let bg = `${color}15`;
+    if (color.startsWith('#') && color.length === 7) {
+      const r = parseInt(color.slice(1,3), 16);
+      const g = parseInt(color.slice(3,5), 16);
+      const b = parseInt(color.slice(5,7), 16);
+      bg = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    }
+    return { width:'48px', height:'48px', borderRadius:'16px', background:bg, display:'flex', alignItems:'center', justifyContent:'center', color };
+  },
   metricLabel: { margin:0, fontSize:'0.75rem', fontWeight:'600', color:'#64748b', letterSpacing:'0.02em' },
   metricValue: { margin:'2px 0 0', fontSize:'1.6rem', fontWeight:'800' },
   metricTrend: { fontSize:'0.65rem', fontWeight:'600', color:'#22c55e', background:'#dcfce7', padding:'2px 8px', borderRadius:'30px', display:'inline-block' },
@@ -111,12 +120,12 @@ export const S = {
   roomInfo: { display:'flex', alignItems:'center', gap:'4px', fontSize:'0.75rem', color:'#64748b', marginTop:'4px' },
   roomBadge: { padding:'4px 12px', borderRadius:'20px', background:'#e0e7ff', color:'#4338ca', fontSize:'0.75rem', fontWeight:'700' },
   assignmentsList: { padding:'20px', display:'flex', flexDirection:'column', gap:'16px' },
-  assignmentCard: { background:'#fff', padding:'20px', borderRadius:'24px', border:'1px solid #e2e8f0' },
+  assignmentCard: { background:'#fff', padding:'24px', borderRadius:'24px', border:'1px solid #e2e8f0', boxShadow: '0 4px 20px -5px rgba(0,0,0,0.05)', transition: 'transform 0.2s ease, box-shadow 0.2s ease' },
   assignmentHeader: { display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px' },
   assignmentCourse: { display:'block', fontSize:'0.75rem', fontWeight:'700', color:'var(--primary-color, #4f46e5)', marginBottom:'4px' },
   assignmentDue: { display:'block', fontSize:'0.75rem', color:'#94a3b8' },
   scoreBadge: { background:'#0f172a', color:'#fff', padding:'4px 12px', borderRadius:'8px', fontWeight:'800', fontSize:'0.85rem' },
-  assignmentTitle: { fontSize:'1rem', fontWeight:'700', color:'#0f172a', margin:'0 0 8px' },
+  assignmentTitle: { fontSize:'1.1rem', fontWeight:'800', color:'#0f172a', margin:'0 0 10px', letterSpacing:'-0.01em' },
   assignmentDesc: { fontSize:'0.85rem', color:'#64748b', margin:'0 0 16px', lineHeight:'1.5' },
   feedbackBox: { background:'#f8fafc', padding:'12px 16px', borderRadius:'12px', marginBottom:'16px', border:'1px solid #f1f5f9' },
   feedbackLabel: { fontWeight:'700', fontSize:'0.8rem', color:'var(--primary-color, #4f46e5)', margin:'0 0 4px' },
