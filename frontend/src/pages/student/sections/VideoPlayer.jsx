@@ -47,7 +47,7 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
       intervalRef.current = setInterval(() => {
         watchTimeRef.current += 5;
         // Ping backend every 5 seconds
-        fetch(`${API_BASE_URL}/api/student-submissions/watch-time`, {
+        fetch(`${API_BASE_URL}/api/submissions/watch-time`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
