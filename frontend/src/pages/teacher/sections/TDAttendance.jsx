@@ -133,6 +133,12 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
     if (mainTab === 'face') fetchFaceAttendance();
   }, [mainTab]);
 
+  useEffect(() => {
+    if (viewMode === 'history' && selectedClassId && selectedCourseId) {
+      fetchHistory();
+    }
+  }, [historyMonth, historyYear]);
+
   const exportToExcel = () => {
     const daysInMonth = new Date(historyYear, historyMonth, 0).getDate();
     const monthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -389,7 +395,6 @@ export default function TDAttendance({ teacherClasses, token, showToast }) {
               <select style={{...S.input, padding: '6px 10px', minWidth: '80px'}} value={historyYear} onChange={e => setHistoryYear(parseInt(e.target.value))}>
                 {[new Date().getFullYear() - 1, new Date().getFullYear(), new Date().getFullYear() + 1].map(y => <option key={y} value={y}>{y}</option>)}
               </select>
-              <button onClick={fetchHistory} style={{ ...S.primaryBtn, padding: '0.5rem 1rem' }}>Load Month</button>
 
               <button onClick={exportToExcel} style={{ ...S.secondaryBtn, padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid #10b981', color: '#10b981' }}>
                 <DownloadSimple size={18} /> Excel
