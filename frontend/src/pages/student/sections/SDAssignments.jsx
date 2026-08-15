@@ -8,6 +8,8 @@ export default function SDAssignments({
   setShowSubmitModal, 
   setSubmissionText 
 }) {
+  const [playingVideoId, setPlayingVideoId] = React.useState(null);
+
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
@@ -95,20 +97,36 @@ export default function SDAssignments({
                       This video lecture has expired (exceeded 24 hours).
                     </div>
                   ) : embedUrl ? (
-                    <>
-                      <div style={{ marginBottom: '8px', fontSize: '13px', color: '#ef4444', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
-                        <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%', marginRight: '6px', animation: 'pulse 2s infinite' }}></span>
-                        Available for 24 hours
-                      </div>
-                      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000' }}>
-                        <iframe 
-                          src={embedUrl} 
-                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                          allowFullScreen
-                        />
-                      </div>
-                    </>
+                    playingVideoId === a.id ? (
+                      <>
+                        <div style={{ marginBottom: '8px', fontSize: '13px', color: '#ef4444', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
+                          <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%', marginRight: '6px', animation: 'pulse 2s infinite' }}></span>
+                          Available for 24 hours
+                        </div>
+                        <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000' }}>
+                          <iframe 
+                            src={embedUrl} 
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowFullScreen
+                          />
+                        </div>
+                        <button 
+                          onClick={() => setPlayingVideoId(null)}
+                          style={{ marginTop: '12px', padding: '6px 14px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '13px', cursor: 'pointer' }}
+                        >
+                          Close Video
+                        </button>
+                      </>
+                    ) : (
+                      <button 
+                        onClick={() => setPlayingVideoId(a.id)}
+                        style={{ padding: '8px 16px', background: 'var(--primary-color, #4f46e5)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                      >
+                        <span style={{ display: 'inline-block', width: '0', height: '0', borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #fff' }}></span>
+                        Watch Video
+                      </button>
+                    )
                   ) : (
                     <a 
                       href={a.external_link} 
