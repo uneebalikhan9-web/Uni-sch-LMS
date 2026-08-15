@@ -914,9 +914,9 @@ function TeacherDashboard({ user, onLogout }) {
               ['grades', 'Grading', <GraduationCap size={20} />, null],
               ['reports', 'Reports', <ChartLineUp size={20} />, reports.length],
               ['lab-usage', 'Lab Insights', <Pulse size={20} />, null],
-              ['profile', 'My Profile', <User size={20} />, null],
               ['my-payroll', 'My Payroll', <Cardholder size={20} />, myPayroll.length],
               ['my-leaves', 'My Leaves', <CalendarBlank size={20} />, null],
+              ['profile', 'My Profile', <User size={20} />, null],
             ].map(([page, label, icon, count]) => (
               <SidebarBtn 
                 key={page}
