@@ -13,6 +13,9 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
     width: '100%',
     playerVars: {
       autoplay: 1,
+      modestbranding: 1,
+      rel: 0,
+      fs: 1,
     },
   };
 
@@ -74,7 +77,7 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
 
   return (
     <>
-      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000' }}>
+      <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', background: '#000', pointerEvents: 'auto' }}>
         <YouTube 
           videoId={videoId} 
           opts={opts} 
@@ -82,6 +85,10 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
           iframeClassName="youtube-iframe"
         />
+        {/* Transparent overlay to block clicks on the YouTube title and channel logo at the top */}
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '80px', zIndex: 50, background: 'transparent' }} title="Video playing"></div>
+        {/* Transparent overlay to block clicks on the YouTube logo at the bottom right if it appears */}
+        <div style={{ position: 'absolute', bottom: '50px', right: '10px', width: '100px', height: '40px', zIndex: 50, background: 'transparent' }}></div>
         <style>{`.youtube-iframe { width: 100%; height: 100%; border: none; }`}</style>
       </div>
       <button 
