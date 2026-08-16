@@ -4,6 +4,7 @@ import API_BASE_URL from '../../../config/api';
 
 export default function VideoPlayer({ videoId, assignmentId, onClose }) {
   const [isPlaying, setIsPlaying] = useState(true); // Start playing immediately when opened
+  const [player, setPlayer] = useState(null);
   const watchTimeRef = useRef(0);
   const intervalRef = useRef(null);
   
@@ -26,6 +27,21 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
       setIsPlaying(true);
     } else if (event.data === 2 || event.data === 0) {
       setIsPlaying(false);
+    }
+  };
+
+  const onReady = (event) => {
+    setPlayer(event.target);
+  };
+
+  const handleOverlayClick = () => {
+    if (player) {
+      const state = player.getPlayerState();
+      if (state === 1) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
     }
   };
 
@@ -82,13 +98,17 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
           videoId={videoId} 
           opts={opts} 
           onStateChange={onStateChange} 
+          onReady={onReady}
           style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }} 
           iframeClassName="youtube-iframe"
         />
-        {/* Transparent overlay to block clicks on the YouTube title and channel logo at the top */}
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '80px', zIndex: 50, background: 'transparent' }} title="Video playing"></div>
-        {/* Transparent overlay to block clicks on the YouTube logo at the bottom right if it appears */}
-        <div style={{ position: 'absolute', bottom: '50px', right: '10px', width: '100px', height: '40px', zIndex: 50, background: 'transparent' }}></div>
+        {/* Massive transparent overlay covering everything EXCEPT the bottom 50px (controls) */}
+        {/* This blocks clicks on "More videos", channel avatars, and the title! */}
+        <div 
+          onClick={handleOverlayClick}
+          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: '50px', zIndex: 50, background: 'transparent', cursor: 'pointer' }} 
+          title="Click to play/pause"
+        ></div>
         <style>{`.youtube-iframe { width: 100%; height: 100%; border: none; }`}</style>
       </div>
       <button 
