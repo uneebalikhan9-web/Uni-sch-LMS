@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MagnifyingGlass, Printer, Envelope, 
-  CheckCircle, Receipt, Trash, CalendarBlank
+  CheckCircle, Receipt, Trash, CalendarBlank, Warning
 } from "@phosphor-icons/react";
 import API_BASE_URL from '../../../config/api';
 
@@ -95,6 +95,7 @@ const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
             @media print {
               body { background: white; padding: 0; }
               .voucher-container { border: none; box-shadow: none; padding: 0; }
+              #action-buttons { display: none !important; }
             }
           </style>
         </head>
@@ -203,8 +204,29 @@ const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
               </div>
             </div>
           </div>
+          
+          <div id="action-buttons" style="text-align: center; margin-top: 30px;">
+            <button onclick="window.print()" style="background: var(--primary-color, #4f46e5); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 10px; font-size: 14px;">Print Challan</button>
+            <button onclick="downloadPDF()" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">Download PDF</button>
+          </div>
+          
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
           <script>
-            window.onload = function() { window.print(); }
+            function downloadPDF() {
+              const element = document.querySelector('.voucher-container');
+              const opt = {
+                margin:       10,
+                filename:     'Challan_${c.challan_no}.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              };
+              // Hide buttons during generation
+              document.getElementById('action-buttons').style.display = 'none';
+              html2pdf().set(opt).from(element).save().then(() => {
+                 document.getElementById('action-buttons').style.display = 'block';
+              });
+            }
           </script>
         </body>
       </html>
@@ -219,6 +241,32 @@ const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
           {isSchool ? '🏫 Monthly Fee Register' : 'Fee Challan Management'}
         </h2>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button 
+            onClick={async () => {
+              if (window.confirm('Calculate and apply late fines to all overdue challans?')) {
+                await onAction('POST', '/challans/apply-late-fines');
+              }
+            }}
+            style={{ 
+              padding: '10px 16px', 
+              background: 'linear-gradient(135deg, #ef4444, #dc2626)', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '10px', 
+              fontSize: '0.85rem', 
+              fontWeight: 700, 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.25)'
+            }}
+            title="Auto-calculate late fees for overdue challans"
+          >
+            <Warning size={18} weight="bold" /> 
+            Calculate Fines
+          </button>
+
           <button 
             onClick={() => setShowGenModal(true)} 
             style={{ 

@@ -358,4 +358,23 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+
+// Get newly approved admissions
+router.get('/new-admissions', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    let query = 'SELECT * FROM admission_requests WHERE status = "approved"';
+    let params = [];
+    if (campusId && req.user.role !== 'super_admin') {
+      query += ' AND campus_id = ?';
+      params.push(campusId);
+    }
+    query += ' ORDER BY created_at DESC LIMIT 50';
+    const [rows] = await pool.query(query, params);
+    res.json({ success: true, admissions: rows });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 module.exports = router;

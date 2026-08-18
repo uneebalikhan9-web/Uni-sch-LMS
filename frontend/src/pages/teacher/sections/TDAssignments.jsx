@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, PlusCircle, PencilSimple, Circle, CalendarBlank, ArrowLeft, Flask, Download, List, Clock } from "@phosphor-icons/react";
+import { FileText, PlusCircle, PencilSimple, Circle, CalendarBlank, ArrowLeft, Flask, Download, List, Clock, Trash } from "@phosphor-icons/react";
 import { S } from './TDStyles';
 import API_BASE_URL from '../../../config/api';
 
@@ -25,7 +25,8 @@ export default function TDAssignments({
   editingItem, 
   courses, 
   newAssignment, 
-  showToast 
+  showToast,
+  handleDeleteAssignment
 }) {
   const token = sessionStorage.getItem('token');
 
@@ -156,7 +157,7 @@ export default function TDAssignments({
                           title: a.title,
                           description: a.description || '',
                           course_id: a.course_id,
-                          due_date: new Date(a.due_date).toISOString().split('T')[0],
+                          due_date: a.due_date ? new Date(a.due_date).toISOString().slice(0, 16) : '',
                           max_marks: a.max_marks,
                           status: a.status || 'published',
                           assignment_type: a.assignment_type || 'Homework',
@@ -168,6 +169,33 @@ export default function TDAssignments({
                       style={S.editAssignBtn}
                     >
                       <PencilSimple size={18} /> Edit
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (handleDeleteAssignment) {
+                          handleDeleteAssignment(a);
+                        }
+                      }}
+                      style={{
+                        padding: '10px 14px',
+                        borderRadius: '14px',
+                        border: '1px solid #fee2e2',
+                        background: '#fef2f2',
+                        color: '#ef4444',
+                        fontWeight: '700',
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+                      title="Delete Assignment"
+                    >
+                      <Trash size={18} weight="bold" /> Delete
                     </button>
                   </div>
                 </div>
@@ -539,6 +567,35 @@ export default function TDAssignments({
           >
             Cancel
           </button>
+          {editingItem && (
+            <button 
+              type="button"
+              onClick={() => {
+                if (handleDeleteAssignment) {
+                  handleDeleteAssignment(editingItem);
+                }
+              }}
+              style={{
+                padding: '14px 24px',
+                borderRadius: '16px',
+                border: '1px solid #fee2e2',
+                background: '#fef2f2',
+                color: '#ef4444',
+                fontWeight: '800',
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#fee2e2'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#fef2f2'; }}
+            >
+              <Trash size={20} weight="bold" /> Delete Assignment
+            </button>
+          )}
         </div>
       </div>
     </div>

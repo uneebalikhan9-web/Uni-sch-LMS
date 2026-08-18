@@ -340,6 +340,7 @@ try {
   app.post('/api/forgot-password', forgotPasswordLimiter); // Rate limit: 5 req / 15 min
   app.post('/api/verify-otp', forgotPasswordLimiter);
   app.use('/api', require('./api/forgotPassword'));
+  app.use('/api/public-admissions', require('./api/publicAdmissions'));
 
   app.use('/api/users', require('./api/users'));
   app.use('/api/trainings', require('./api/trainings'));

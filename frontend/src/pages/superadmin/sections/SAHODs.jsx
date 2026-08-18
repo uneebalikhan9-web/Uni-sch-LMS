@@ -125,8 +125,8 @@ export default function SAHODs({
                 <p style={{ marginTop: '16px', color: '#64748b' }}>Fetching real-time stats...</p>
               </div>
             ) : selectedHODDetails ? (
-              <div>
-                <div style={{ background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #7c3aed)', padding: '30px', color: 'white', position: 'relative' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+                <div style={{ background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #7c3aed)', padding: '30px', color: 'white', position: 'relative', flexShrink: 0 }}>
                   <div style={{ position: 'absolute', top: '20px', right: '20px', cursor: 'pointer', opacity: 0.8 }} onClick={() => setShowHODModal(false)}>
                     <Plus size={24} weight="bold" style={{ transform: 'rotate(45deg)' }} />
                   </div>
@@ -135,8 +135,8 @@ export default function SAHODs({
                       {selectedHODDetails.name.charAt(0)}
                     </div>
                     <div>
-                      <h2 style={{ fontSize: '1.6rem', fontWeight: '800', marginBottom: '4px' }}>{selectedHODDetails.name}</h2>
-                      <p style={{ opacity: 0.9, fontSize: '0.95rem' }}>{selectedHODDetails.email}</p>
+                      <h2 style={{ fontSize: '1.6rem', fontWeight: '800', margin: '0 0 4px 0' }}>{selectedHODDetails.name}</h2>
+                      <p style={{ opacity: 0.9, fontSize: '0.95rem', margin: 0 }}>{selectedHODDetails.email}</p>
                       <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.2)', padding: '4px 12px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '600' }}>
                         <Buildings size={14} weight="fill" />
                         {selectedHODDetails.campus_name}
@@ -145,19 +145,19 @@ export default function SAHODs({
                   </div>
                 </div>
                 
-                <div style={{ padding: '30px', background: '#fff' }}>
+                <div style={{ padding: '30px', background: '#fff', overflowY: 'auto', flex: 1 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '30px' }}>
                     <div>
                       <h4 style={{ color: '#0f172a', marginBottom: '12px', fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Principal Information</h4>
                       <div style={S.infoItem}>
-                        <Calendar size={18} color="#64748b" />
+                        <Calendar size={18} color="#64748b" style={{ flexShrink: 0 }} />
                         <div>
                           <p style={S.infoLabel}>Member Since</p>
                           <p style={S.infoValue}>{new Date(selectedHODDetails.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                         </div>
                       </div>
                       <div style={S.infoItem}>
-                        <ShieldCheck size={18} color="#64748b" />
+                        <ShieldCheck size={18} color="#64748b" style={{ flexShrink: 0 }} />
                         <div>
                           <p style={S.infoLabel}>System Role</p>
                           <p style={S.infoValue}>Dean / Academic Council</p>
@@ -167,7 +167,7 @@ export default function SAHODs({
                     <div>
                       <h4 style={{ color: '#0f172a', marginBottom: '12px', fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Department Context</h4>
                       <div style={S.infoItem}>
-                        <Globe size={18} color="#64748b" />
+                        <Globe size={18} color="#64748b" style={{ flexShrink: 0 }} />
                         <div>
                           <p style={S.infoLabel}>Location</p>
                           <p style={S.infoValue}>{selectedHODDetails.campus_location || 'Not Set'}</p>
@@ -177,7 +177,7 @@ export default function SAHODs({
                   </div>
 
                   <h4 style={{ color: '#0f172a', marginBottom: '16px', fontSize: '0.85rem', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Live Operational Stats</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '12px' }}>
                     {[
                       { label: 'Students', val: selectedHODDetails.stats.students, color: 'var(--primary-color, #4f46e5)', icon: <Users size={20} /> },
                       { label: 'Teachers', val: selectedHODDetails.stats.teachers, color: '#7c3aed', icon: <UserCircle size={20} /> },
@@ -185,23 +185,23 @@ export default function SAHODs({
                       { label: 'Courses', val: selectedHODDetails.stats.courses, color: '#2563eb', icon: <ChartLine size={20} /> },
                       { label: 'Labs', val: selectedHODDetails.stats.labs, color: '#ec4899', icon: <Globe size={20} /> },
                     ].map(stat => (
-                      <div key={stat.label} style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
+                      <div key={stat.label} style={{ background: '#f8fafc', padding: '16px 8px', borderRadius: '16px', textAlign: 'center', border: '1px solid #e2e8f0' }}>
                         <div style={{ color: stat.color, marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>{stat.icon}</div>
-                        <h3 style={{ fontSize: '1.5rem', fontWeight: '800', color: '#0f172a', margin: '4px 0' }}>{stat.val}</h3>
-                        <p style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</p>
+                        <h3 style={{ fontSize: '1.4rem', fontWeight: '800', color: '#0f172a', margin: '4px 0' }}>{stat.val}</h3>
+                        <p style={{ fontSize: '0.65rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', margin: 0 }}>{stat.label}</p>
                       </div>
                     ))}
                   </div>
 
                   <div style={{ marginTop: '24px', padding: '16px', background: '#f1f5f9', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <ShieldCheck size={20} color="#10b981" />
-                    <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600' }}>
+                    <ShieldCheck size={20} color="#10b981" style={{ flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.85rem', color: '#475569', fontWeight: '600', lineHeight: 1.5 }}>
                       This Head of Department has full operational control over the <strong style={{ color: '#0f172a' }}>{selectedHODDetails.campus_name}</strong> faculty.
                     </span>
                   </div>
                 </div>
 
-                <div style={{ padding: '20px 30px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ padding: '20px 30px', background: '#f8fafc', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
                   <button onClick={() => setShowHODModal(false)} style={{ padding: '10px 24px', background: '#0f172a', color: 'white', borderRadius: '10px', fontWeight: '700', border: 'none', cursor: 'pointer' }}>
                     Close
                   </button>

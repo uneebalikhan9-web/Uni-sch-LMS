@@ -180,7 +180,7 @@ router.post('/watch-time', verifyToken, isStudent, async (req, res) => {
       INSERT INTO submissions (assignment_id, student_id, watch_time_seconds, submitted_at)
       VALUES (?, ?, ?, NOW())
       ON DUPLICATE KEY UPDATE 
-        watch_time_seconds = watch_time_seconds + VALUES(watch_time_seconds),
+        watch_time_seconds = IFNULL(watch_time_seconds, 0) + VALUES(watch_time_seconds),
         submitted_at = NOW()
     `, [assignment_id, student_id, seconds_watched]);
 

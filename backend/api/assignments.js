@@ -93,6 +93,24 @@ router.put('/:id', verifyToken, isTeacher, async (req, res) => {
 router.delete('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Check ownership
+    const [check] = await pool.query(
+      'SELECT id FROM assignments WHERE id = ? AND teacher_id = ?',
+      [id, req.user.employee_id]
+    );
+
+    if (check.length === 0) {
+      return res.status(404).json({ success: false, message: 'Assignment not found or unauthorized' });
+    }
+
+    // Clean up related submissions first
+    try {
+      await pool.query('DELETE FROM submissions WHERE assignment_id = ?', [id]);
+    } catch (e) {
+      console.warn('Submissions cleanup note:', e.message);
+    }
+
     const [result] = await pool.query(
       'DELETE FROM assignments WHERE id = ? AND teacher_id = ?',
       [id, req.user.employee_id]

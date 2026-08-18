@@ -327,6 +327,34 @@ router.post('/challans/mark-overdue', async (req, res) => {
   }
 });
 
+// Calculate and Apply Late Fines
+router.post('/challans/apply-late-fines', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    
+    // First mark any pending past due as overdue
+    await pool.query(
+      `UPDATE finance_student_challans SET status = 'overdue' 
+       WHERE status = 'pending' AND due_date < CURDATE() ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
+      isSuperAdmin ? [] : [campusId]
+    );
+
+    // Calculate accrued late fee: days overdue * late_fee_per_day
+    const [result] = await pool.query(
+      `UPDATE finance_student_challans 
+       SET accrued_late_fee = DATEDIFF(CURDATE(), due_date) * COALESCE(late_fee_per_day, 100)
+       WHERE status = 'overdue' AND due_date < CURDATE() ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
+      isSuperAdmin ? [] : [campusId]
+    );
+
+    res.json({ success: true, message: `Successfully updated late fines for ${result.affectedRows} overdue challan(s).` });
+  } catch (error) {
+    console.error('Apply late fines error:', error);
+    res.status(500).json({ success: false, message: 'Error applying late fines' });
+  }
+});
+
 // ==================== PAYROLL ====================
 
 router.get('/payroll', async (req, res) => {
@@ -430,6 +458,22 @@ router.delete('/expenses/:id', async (req, res) => {
     res.json({ success: true, message: 'Expense deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error deleting expense' });
+  }
+});
+
+// ==================== SEMESTERS (for university mode challan generation) ====================
+
+router.get('/semesters', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    const isSuperAdmin = req.user.role === 'super_admin';
+    const [semesters] = await pool.query(
+      `SELECT * FROM semesters ${!isSuperAdmin ? 'WHERE campus_id = ?' : ''} ORDER BY start_date DESC`,
+      isSuperAdmin ? [] : [campusId]
+    );
+    res.json({ success: true, semesters });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching semesters' });
   }
 });
 
@@ -708,20 +752,25 @@ router.post('/challans/generate-monthly', async (req, res) => {
       const dueDate = `${yearNum}-${String(monthNum).padStart(2,'0')}-${String(dueDay).padStart(2,'0')}`;
       const challanNo = `SCH-${yearNum}${String(monthNum).padStart(2,'0')}-${student.roll_number || student.student_id}`;
 
-      await pool.query(
-        `INSERT INTO finance_student_challans
-          (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee,
-           transport_fee, activity_fee, computer_fee,
-           total_amount, due_date, campus_id, fee_type, fee_month, fee_year, status)
-         VALUES (?,?,?,0,0,?,?,?,?,?,?,?,?,?,?,'pending')`,
-        [
-          student.student_id, challanNo,
-          fee.tuition_fee||0, fee.other_fee||0,
-          fee.transport_fee||0, fee.activity_fee||0, fee.computer_fee||0,
-          totalAmount, dueDate, campusId, 'monthly', monthNum, yearNum
-        ]
-      );
-      created++;
+      try {
+        await pool.query(
+          `INSERT INTO finance_student_challans
+            (student_id, challan_no, tuition_fee, lab_fee, library_fee, other_fee,
+             transport_fee, activity_fee, computer_fee,
+             total_amount, due_date, campus_id, fee_type, fee_month, fee_year, status)
+           VALUES (?,?,?,0,0,?,?,?,?,?,?,?,?,?,?,'pending')`,
+          [
+            student.student_id, challanNo,
+            fee.tuition_fee||0, fee.other_fee||0,
+            fee.transport_fee||0, fee.activity_fee||0, fee.computer_fee||0,
+            totalAmount, dueDate, campusId, 'monthly', monthNum, yearNum
+          ]
+        );
+        created++;
+      } catch (insertError) {
+        console.error('Error inserting challan for student:', student.student_id, insertError);
+        throw insertError;
+      }
     }
 
     const monthNames = ['','January','February','March','April','May','June','July','August','September','October','November','December'];

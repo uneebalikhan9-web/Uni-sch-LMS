@@ -18,6 +18,7 @@ import PDFeedback      from "./sections/PDFeedback";
 import PDCourseReports from "./sections/PDCourseReports";
 import EPayroll        from "./sections/EPayroll";
 import PDFaceAttendance from "./sections/PDFaceAttendance";
+import PDAdmissionRequests from "./sections/PDAdmissionRequests";
 import PDStaffAttendance from "./sections/PDStaffAttendance";
 import FinExpenses     from "../finance/sections/FinExpenses";
 import "../finance/finance.css";
@@ -666,34 +667,36 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
       }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : (leftSidebarOpen ? '' : 'collapsed')}`}>
         
         {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
-        <button
-          onClick={() => setLeftSidebarOpen(false)}
-          style={{
-            position: 'absolute',
-            right: '-18px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 30,
-            background: '#7c3aed',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '0 10px 10px 0',
-            width: '18px',
-            height: '60px',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '4px 0 14px rgba(124,58,237,0.35)',
-            fontSize: '18px',
-            fontWeight: '800',
-            lineHeight: 1,
-          }}
-          className="sidebar-toggle-btn left-close-btn"
-          title="Close sidebar"
-        >
-          ‹
-        </button>
+        {leftSidebarOpen && (
+          <button
+            onClick={() => setLeftSidebarOpen(false)}
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              zIndex: 30,
+              background: '#7c3aed',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '0 10px 10px 0',
+              width: '18px',
+              height: '60px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '4px 0 14px rgba(124,58,237,0.35)',
+              fontSize: '18px',
+              fontWeight: '800',
+              lineHeight: 1,
+            }}
+            className="sidebar-toggle-btn left-close-btn"
+            title="Close sidebar"
+          >
+            ‹
+          </button>
+        )}
 
         {/* Inner Scrollable Container */}
         <div style={{

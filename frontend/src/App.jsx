@@ -23,6 +23,7 @@ import VerifyOTP from "./pages/VerifyOTP";
 import Trainings from "./pages/Trainings";
 import { ToastProvider } from "./components/Toast";
 import FaceAttendancePage from "./pages/FaceAttendancePage";
+import StudentAdmissionForm from "./pages/StudentAdmissionForm";
 
 function App() {
   return (
@@ -67,6 +68,7 @@ function App() {
             }
           />
           <Route path="/trainings" element={<Trainings />} />
+          <Route path="/student-admission" element={<StudentAdmissionForm />} />
 
           {/* Protected Routes - Only accessible if logged in */}
           <Route

@@ -553,6 +553,38 @@ function TeacherDashboard({ user, onLogout }) {
     } catch (err) { showToast('Grading failed', 'error'); }
   }
 
+  
+  const handleDeleteAssignment = (assignment) => {
+    if (!assignment) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Assignment',
+      message: `Are you sure you want to delete "${assignment.title}"? All student submissions for this assignment will also be removed.`,
+      isDanger: true,
+      onConfirm: async () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/assignments/${assignment.id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (data.success) {
+            showToast('Assignment deleted successfully!', 'success');
+            if (assignmentViewMode !== 'list') {
+              setAssignmentViewMode('list');
+            }
+            fetchAssignments();
+          } else {
+            showToast(data.message || 'Failed to delete assignment', 'error');
+          }
+        } catch (error) {
+          showToast('Network error while deleting assignment', 'error');
+        }
+      }
+    });
+  };
+
   const handleBackToAssignments = () => {
     setAssignmentViewMode('list');
     setSelectedAssignment(null);
@@ -642,6 +674,7 @@ function TeacherDashboard({ user, onLogout }) {
             courses={courses}
             newAssignment={newAssignment}
             showToast={showToast}
+            handleDeleteAssignment={handleDeleteAssignment}
           />
         )
       case 'attendance':

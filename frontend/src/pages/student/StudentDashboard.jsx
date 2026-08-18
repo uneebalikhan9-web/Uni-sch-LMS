@@ -141,6 +141,7 @@ function StudentDashboard({ user, onLogout }) {
             @media print {
               body { background: white; padding: 0; }
               .voucher-container { border: none; box-shadow: none; padding: 0; }
+              #action-buttons { display: none !important; }
             }
           </style>
         </head>
@@ -249,8 +250,29 @@ function StudentDashboard({ user, onLogout }) {
               </div>
             </div>
           </div>
+          
+          <div id="action-buttons" style="text-align: center; margin-top: 30px;">
+            <button onclick="window.print()" style="background: var(--primary-color, #4f46e5); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 10px; font-size: 14px;">Print Challan</button>
+            <button onclick="downloadPDF()" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">Download PDF</button>
+          </div>
+          
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
           <script>
-            window.onload = function() { window.print(); }
+            function downloadPDF() {
+              const element = document.querySelector('.voucher-container');
+              const opt = {
+                margin:       10,
+                filename:     'Challan_${c.challan_no}.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              };
+              // Hide buttons during generation
+              document.getElementById('action-buttons').style.display = 'none';
+              html2pdf().set(opt).from(element).save().then(() => {
+                 document.getElementById('action-buttons').style.display = 'block';
+              });
+            }
           </script>
         </body>
       </html>

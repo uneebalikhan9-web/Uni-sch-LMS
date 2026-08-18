@@ -98,7 +98,7 @@ export default function SDOverview({
           label="Enrolled Subjects" 
           value={courses.length} 
           icon={<BookOpen weight="duotone" />} 
-          color="var(--primary-color, #4f46e5)"
+          color="#4f46e5"
           trend={`${myClassSubjects.length} class subjects`}
         />
         <MetricBox 

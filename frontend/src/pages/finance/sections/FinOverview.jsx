@@ -4,6 +4,7 @@ import {
   ArrowUp, ArrowDown, CurrencyCircleDollar,
   Receipt, Wallet
 } from "@phosphor-icons/react";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true, tab, setActiveTab }) => (
   <div 
@@ -53,6 +54,12 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
     tempDate.setMonth(tempDate.getMonth() + 1);
   }
 
+  const chartData = months.map((month, idx) => ({
+    name: month,
+    Revenue: revenueData[idx],
+    Expenses: expenseData[idx]
+  }));
+
   return (
     <div className="fin-animate">
       <div className="fin-metrics-grid">
@@ -96,33 +103,23 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
       </div>
 
       <div style={{ background: 'white', borderRadius: 24, padding: '2rem', border: '1px solid #f1f5f9', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)', marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Revenue vs Expenses Trend (k)</h3>
-          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', fontWeight: 600 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: 'var(--primary-color, #4f46e5)' }}></span> Revenue</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#475569' }}><span style={{ width: 12, height: 12, borderRadius: 4, background: '#e2e8f0' }}></span> Expenses</span>
-          </div>
-        </div>
-        <div style={{ position: 'relative', height: 260, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingTop: 20, borderBottom: '2px solid #f1f5f9' }}>
-            {/* Grid lines */}
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, borderTop: '1px dashed #e2e8f0', zIndex: 0 }}></div>
-            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, borderTop: '1px dashed #e2e8f0', zIndex: 0 }}></div>
-
-          {months.map((month, idx) => (
-            <div key={month} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '10%', zIndex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6, height: 220, width: '100%', justifyContent: 'center' }}>
-                <div 
-                  style={{ width: 24, height: `${revenueData[idx] * 1.2}%`, maxHeight: '100%', background: 'linear-gradient(180deg, var(--primary-color, #4f46e5) 0%, #6366f1 100%)', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out', position: 'relative', cursor: 'pointer' }}
-                  title={`Revenue: Rs. ${revenueData[idx].toFixed(0)}k`}
-                />
-                <div 
-                  style={{ width: 24, height: `${expenseData[idx] * 1.2}%`, maxHeight: '100%', background: '#e2e8f0', borderRadius: '6px 6px 0 0', transition: 'height 1s ease-out 0.2s', position: 'relative', cursor: 'pointer' }}
-                  title={`Expenses: Rs. ${expenseData[idx].toFixed(0)}k`}
-                />
-              </div>
-              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#64748b' }}>{month}</span>
-            </div>
-          ))}
+        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: '0 0 1.5rem' }}>Revenue vs Expenses Trend (k)</h3>
+        <div style={{ width: '100%', minWidth: 0 }}>
+          <ResponsiveContainer width="99%" height={320}>
+            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: '#64748b', fontWeight: 600 }} dy={10} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 13, fill: '#64748b', fontWeight: 600 }} />
+              <Tooltip 
+                cursor={{ fill: '#f8fafc' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontWeight: 600 }}
+                formatter={(value) => [`Rs. ${value}k`, undefined]}
+              />
+              <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px', fontSize: '14px', fontWeight: 600, color: '#475569' }} />
+              <Bar dataKey="Revenue" fill="var(--primary-color, #4f46e5)" radius={[6, 6, 0, 0]} maxBarSize={40} />
+              <Bar dataKey="Expenses" fill="#cbd5e1" radius={[6, 6, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
