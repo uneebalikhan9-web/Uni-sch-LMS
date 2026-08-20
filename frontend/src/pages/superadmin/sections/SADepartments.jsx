@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { 
   Plus, PencilSimple, Trash, Buildings, ShieldCheck, CheckCircle, 
   Eye, User, ChalkboardTeacher, Student, BookOpen, MagnifyingGlass,
@@ -21,6 +21,7 @@ export default function SADepartments({
   const [loadingDetails, setLoadingDetails] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState('overview'); // 'overview' | 'teachers' | 'students' | 'classes'
   const [searchQuery, setSearchQuery] = useState('');
+  const isCollege = isSchool;
 
   const fetchBranchDetails = async (branch) => {
     setSelectedBranch(branch);
@@ -171,7 +172,7 @@ export default function SADepartments({
                       </div>
                     </div>
                   </td>
-                  <td style={S.td}>{c.location || '—'}</td>
+                  <td style={S.td}>{c.location || 'â€”'}</td>
                   <td style={S.td}>
                     <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '0.92rem' }}>
                       {c.student_count || 0}
@@ -258,7 +259,7 @@ export default function SADepartments({
         </div>
       </div>
 
-      {/* ── BRANCH 360° DETAILS MODAL ── */}
+      {/* â”€â”€ BRANCH 360Â° DETAILS MODAL â”€â”€ */}
       {selectedBranch && (
         <div style={S.overlay} onClick={() => setSelectedBranch(null)}>
           <div 
@@ -298,8 +299,8 @@ export default function SADepartments({
                       {selectedBranch.name}
                     </h3>
                     <p style={{ margin: '2px 0 0', fontSize: '0.85rem', color: '#c7d2fe', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>📍 {selectedBranch.location || 'Location Not Specified'}</span>
-                      {selectedBranch.dept_code && <span>• Code: {selectedBranch.dept_code}</span>}
+                      <span>ðŸ“ {selectedBranch.location || 'Location Not Specified'}</span>
+                      {selectedBranch.dept_code && <span>â€¢ Code: {selectedBranch.dept_code}</span>}
                     </p>
                   </div>
                 </div>
@@ -315,7 +316,7 @@ export default function SADepartments({
                   color: '#4ade80',
                   border: '1px solid rgba(74, 222, 128, 0.3)'
                 }}>
-                  ● Live Operational Branch
+                  â— Live Operational Branch
                 </span>
                 <button 
                   onClick={() => setSelectedBranch(null)}
@@ -330,7 +331,7 @@ export default function SADepartments({
                     display: 'flex', alignItems: 'center', justifyContent: 'center'
                   }}
                 >
-                  ×
+                  Ã—
                 </button>
               </div>
             </div>
@@ -504,7 +505,7 @@ export default function SADepartments({
                                 fontWeight: '700',
                                 fontSize: '0.78rem'
                               }}>
-                                ● Active Headmaster
+                                â— Active Headmaster
                               </span>
                             </div>
                           </div>
@@ -588,7 +589,7 @@ export default function SADepartments({
                                     </div>
                                   </td>
                                   <td style={S.td}>{t.email}</td>
-                                  <td style={S.td}>{t.phone || '—'}</td>
+                                  <td style={S.td}>{t.phone || 'â€”'}</td>
                                   <td style={S.td}>
                                     <span style={{
                                       padding: '3px 8px', borderRadius: '12px',
@@ -639,13 +640,13 @@ export default function SADepartments({
                                   <td style={S.tdName}>
                                     <span style={{ fontWeight: '700' }}>{s.name}</span>
                                   </td>
-                                  <td style={S.td}>{s.father_name || '—'}</td>
+                                  <td style={S.td}>{s.father_name || 'â€”'}</td>
                                   <td style={S.td}>
                                     <span style={{ fontWeight: '600', color: 'var(--primary-color, #4f46e5)' }}>
                                       {s.class_name || s.program_name || 'General Grade'}
                                     </span>
                                   </td>
-                                  <td style={S.td}>{s.phone || s.email || '—'}</td>
+                                  <td style={S.td}>{s.phone || s.email || 'â€”'}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -739,7 +740,7 @@ export default function SADepartments({
           <div style={S.modal} onClick={e => e.stopPropagation()}>
             <div style={S.modalHeader}>
               <h3 style={S.modalTitle}>{editingItem ? 'Edit Department' : 'Add New Department'}</h3>
-              <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>×</button>
+              <button onClick={() => { setShowAddModal(false); setEditingItem(null); }} style={S.modalClose}>Ã—</button>
             </div>
             <form onSubmit={onAdd} style={S.modalForm}>
               <div style={S.inputGroup}>
@@ -790,3 +791,4 @@ export default function SADepartments({
     </>
   );
 }
+
