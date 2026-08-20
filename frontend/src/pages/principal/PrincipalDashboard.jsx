@@ -654,7 +654,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           className="sidebar-toggle-btn left-open-btn"
           title="Open sidebar"
         >
-          >
+          &gt;
         </button>
       )}
 
@@ -695,7 +695,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             className="sidebar-toggle-btn left-close-btn"
             title="Close sidebar"
           >
-            <
+          &lt;
           </button>
         )}
 
@@ -946,7 +946,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           className="sidebar-toggle-btn right-open-btn"
           title="Open sidebar"
         >
-          <
+          &lt;
         </button>
       )}
 
@@ -985,7 +985,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           className="sidebar-toggle-btn right-close-btn"
           title="Close sidebar"
         >
-          >
+          &gt;
         </button>
 
         {/* Inner Scrollable Container */}
