@@ -20,7 +20,7 @@ import FinReports from './sections/FinReports';
 import FinModals from './sections/FinModals';
 import FinFeeStructures from './sections/FinFeeStructures';
 import FinScholarships from './sections/FinScholarships';
-import FinSchoolFees from './sections/FinSchoolFees';
+import FinCollegeFees from './sections/FinCollegeFees';
 
 const NavItem = ({ active, icon, label, count, onClick }) => (
   <button 
@@ -132,8 +132,8 @@ const FinanceDashboard = ({ user, onLogout }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} setActiveTab={setActiveTab} />;
-      case 'fees': return <FinFees challans={challans} onAction={handleAction} isSchool={isSchool} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
-      case 'school-fees': return <FinSchoolFees isSchool={isSchool} />;
+      case 'fees': return <FinFees challans={challans} onAction={handleAction} isCollege={isSchool} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
+      case 'school-fees': return <FinCollegeFees isCollege={isSchool} />;
       case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
       case 'expenses': return <FinExpenses expenses={expenses} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('expense'); setShowModal(true); }} />;
       case 'fee-structures': return <FinFeeStructures />;
@@ -250,7 +250,10 @@ const FinanceDashboard = ({ user, onLogout }) => {
           <NavItem active={activeTab === 'overview'} onClick={() => { setActiveTab('overview'); setMobileMenuOpen(false); }} icon={<ChartPie size={20} />} label="Overview" />
           <NavItem active={activeTab === 'fees'} onClick={() => { setActiveTab('fees'); setMobileMenuOpen(false); }} icon={<CreditCard size={20} />} label={isSchool ? 'Monthly Fees' : 'Fee Management'} count={challans.filter(c => c.status === 'overdue').length} />
           {isSchool ? (
-            <NavItem active={activeTab === 'school-fees'} onClick={() => { setActiveTab('school-fees'); setMobileMenuOpen(false); }} icon={<Wrench size={20} />} label="Class Fee Setup" />
+            <>
+              <NavItem active={activeTab === 'school-fees'} onClick={() => { setActiveTab('school-fees'); setMobileMenuOpen(false); }} icon={<Wrench size={20} />} label="Class / Grade Fee Setup" />
+              <NavItem active={activeTab === 'scholarships'} onClick={() => { setActiveTab('scholarships'); setMobileMenuOpen(false); }} icon={<GraduationCap size={20} />} label="Concessions & Sibling Aid" />
+            </>
           ) : (
             <>
               <NavItem active={activeTab === 'fee-structures'} onClick={() => { setActiveTab('fee-structures'); setMobileMenuOpen(false); }} icon={<Wrench size={20} />} label="Fee Structures" />

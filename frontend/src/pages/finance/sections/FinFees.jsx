@@ -1,249 +1,255 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MagnifyingGlass, Printer, Envelope, 
-  CheckCircle, Receipt, Trash, CalendarBlank, Warning
+  CheckCircle, Receipt, Trash, CalendarBlank, Warning, Plus, CurrencyDollar, X, Check
 } from "@phosphor-icons/react";
 import API_BASE_URL from '../../../config/api';
 
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
 const StatusBadge = ({ status }) => {
-  const statusClass = `fin-badge fin-badge-${status.toLowerCase()}`;
-  return <span className={statusClass}>{status.toUpperCase()}</span>;
+  const statusClass = `fin-badge fin-badge-${(status || 'pending').toLowerCase()}`;
+  return (
+    <span className={statusClass}>
+      {status === 'paid' ? '✓ PAID' : status === 'overdue' ? '⚠️ OVERDUE' : '⏳ PENDING'}
+    </span>
+  );
 };
 
-const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
+const FinFees = ({ challans = [], onAction, onEdit, isCollege = true }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [filterClass, setFilterClass] = useState('all');
+  const [feeSubTab, setFeeSubTab] = useState('challans'); // 'challans' | 'admissions'
   
-  const [semesters, setSemesters] = useState([]);
+  // Admission inquiries
+  const [admissionInquiries, setAdmissionInquiries] = useState([]);
+  const [admissionsLoading, setAdmissionsLoading] = useState(false);
+
+  // Monthly generation state
   const [showGenModal, setShowGenModal] = useState(false);
-  const [selectedSem, setSelectedSem] = useState('');
+  const [genMonth, setGenMonth] = useState(new Date().getMonth() + 1);
+  const [genYear, setGenYear] = useState(new Date().getFullYear());
   const [genLoading, setGenLoading] = useState(false);
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('token');
-    fetch(`${API_BASE_URL}/api/finance/semesters`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.success && data.semesters) {
-        setSemesters(data.semesters);
-        if (data.semesters.length > 0) setSelectedSem(data.semesters[0].id);
+  // Fast Cash Pay Modal state
+  const [showPayModal, setShowPayModal] = useState(false);
+  const [selectedPayChallan, setSelectedPayChallan] = useState(null);
+  const [payMethod, setPayMethod] = useState('Cash Counter');
+  const [payingLoading, setPayingLoading] = useState(false);
+
+  const fetchAdmissionInquiries = async () => {
+    try {
+      setAdmissionsLoading(true);
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/finance/admission-inquiries`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAdmissionInquiries(data.inquiries || []);
       }
-    });
+    } catch (err) {
+      console.error('Error fetching admission inquiries:', err);
+    } finally {
+      setAdmissionsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAdmissionInquiries();
   }, []);
 
-  const handleGenerateSemesterChallans = async () => {
-    if (!selectedSem) return;
+  const handleClearAdmissionFee = async (inquiryId) => {
+    if (!window.confirm('Verify and mark admission fee as PAID for this student?')) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/finance/admission-clearance/${inquiryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ payment_method: 'Finance Cash Desk' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message || 'Fee verified and forwarded to Principal!');
+        fetchAdmissionInquiries();
+      } else {
+        alert(data.message || 'Error clearing fee');
+      }
+    } catch (e) {
+      alert('Failed to clear fee');
+    }
+  };
+
+  const handleGenerateMonthlyChallans = async () => {
     setGenLoading(true);
-    const success = await onAction('POST', '/challans/generate-semester', { semester_id: selectedSem });
+    const success = await onAction('POST', '/challans/generate-monthly', {
+      month: genMonth,
+      year: genYear
+    });
     setGenLoading(false);
     if (success) {
       setShowGenModal(false);
     }
   };
 
-  const filteredChallans = challans.filter(c => {
-    const matchesSearch = c.student_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          c.challan_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          c.roll_number?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || c.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleUpdateStatus = async (id, status) => {
-    await onAction('PUT', `/challans/${id}/status`, { status });
+  const handleOpenPayModal = (challan) => {
+    setSelectedPayChallan(challan);
+    setShowPayModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this challan?')) {
-      await onAction('DELETE', `/challans/${id}`);
+  const handleConfirmPayment = async () => {
+    if (!selectedPayChallan) return;
+    setPayingLoading(true);
+    const success = await onAction('PUT', `/challans/${selectedPayChallan.id}/status`, {
+      status: 'paid',
+      payment_method: payMethod
+    });
+    setPayingLoading(false);
+    if (success) {
+      setShowPayModal(false);
+      setSelectedPayChallan(null);
     }
   };
 
-  const handleSendReminder = async (id) => {
-    await onAction('POST', `/challans/${id}/remind`);
-  };
-
-  const handlePrintChallan = (c) => {
+  // PRINT 3-COPY OFFICIAL COLLEGE CHALLAN
+  const handlePrint3CopyChallan = (c) => {
     const printWindow = window.open('', '_blank');
+    const monthName = MONTHS[(c.fee_month || 1) - 1] || 'Current';
+
     printWindow.document.write(`
       <html>
         <head>
-          <title>Fee Challan - ${c.challan_no}</title>
+          <title>College Fee Voucher - ${c.challan_no || c.id}</title>
           <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #1e293b; background: #f8fafc; }
-            .voucher-container { max-width: 800px; margin: 0 auto; background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 40px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative; }
-            .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 24px; }
-            .logo { font-size: 24px; font-weight: 800; color: var(--primary-color, #4f46e5); }
-            .badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; background: #dcfce7; color: #15803d; }
-            .badge.pending { background: #fef9c3; color: #a16207; }
-            .badge.overdue { background: #fee2e2; color: #b91c1c; }
-            .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.05em; margin-bottom: 12px; }
-            .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
-            .info-item { background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid #f1f5f9; }
-            .info-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
-            .info-val { font-size: 14px; font-weight: 700; color: #0f172a; }
-            .fees-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-            .fees-table th { background: #f8fafc; padding: 12px; text-align: left; font-size: 12px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
-            .fees-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
-            .total-row { background: #eef2ff; font-weight: 800; color: var(--primary-color, #4f46e5); }
-            .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 40px; border-top: 1px dashed #cbd5e1; padding-top: 20px; }
-            .signature { text-align: center; width: 150px; }
-            .signature-line { border-bottom: 1px solid #94a3b8; margin-bottom: 8px; height: 30px; }
-            .signature-label { font-size: 11px; color: #64748b; }
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #1e293b; background: #ffffff; }
+            .copies-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 1100px; margin: 0 auto; }
+            .copy-box { border: 1.5px dashed #94a3b8; border-radius: 12px; padding: 16px; font-size: 11px; display: flex; flex-direction: column; justify-content: space-between; background: #fafafa; }
+            .header { text-align: center; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 8px; }
+            .school-name { font-size: 13px; font-weight: 900; color: #0f172a; }
+            .copy-tag { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 4px; background: #e2e8f0; font-weight: 800; font-size: 9px; }
+            .meta-grid { display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid #cbd5e1; padding-bottom: 8px; margin-bottom: 8px; }
+            .meta-row { display: flex; justify-content: space-between; }
+            .meta-label { color: #64748b; }
+            .meta-val { font-weight: 700; color: #0f172a; }
+            .fees-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; font-size: 11px; }
+            .fees-table td { padding: 4px 0; border-bottom: 1px solid #f1f5f9; }
+            .total-row { font-weight: 900; font-size: 12px; color: #0f172a; border-top: 1px solid #cbd5e1; padding-top: 6px; }
+            .footer { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 10px; border-top: 1px dashed #94a3b8; font-size: 9px; }
             @media print {
-              body { background: white; padding: 0; }
-              .voucher-container { border: none; box-shadow: none; padding: 0; }
-              #action-buttons { display: none !important; }
+              body { padding: 0; background: white; }
+              .no-print { display: none !important; }
             }
           </style>
         </head>
         <body>
-          <div class="voucher-container">
-            <div class="header">
-              <div>
-                <div class="logo">LANCERS <span style="color:#a5b4fc">TECH</span></div>
-                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Lancers Tech Institute of Technology & Sciences</div>
-              </div>
-              <div>
-                <span class="badge ${c.status}">${c.status}</span>
-              </div>
-            </div>
-
-            <div style="text-align: center; margin-bottom: 30px;">
-              <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: -0.02em;">OFFICIAL FEE CHALLAN VOUCHER</h2>
-              <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Challan No: <strong>${c.challan_no}</strong></div>
-            </div>
-
-            <div class="section-title">Student Information</div>
-            <div class="info-grid">
-              <div class="info-item">
-                <div class="info-label">Student Name</div>
-                <div class="info-val">${c.student_name}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Roll Number</div>
-                <div class="info-val">${c.roll_number}</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Semester / Session</div>
-                <div class="info-val">${c.semester || 'N/A'} (${c.academic_year || 'N/A'})</div>
-              </div>
-              <div class="info-item">
-                <div class="info-label">Email Address</div>
-                <div class="info-val">${c.student_email || 'N/A'}</div>
-              </div>
-            </div>
-
-            <div class="section-title">Fee Particulars</div>
-            <table class="fees-table">
-              <thead>
-                <tr>
-                  <th>Particulars</th>
-                  <th style="text-align: right;">Amount (PKR)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Tuition Fee</td>
-                  <td style="text-align: right; font-weight: 600;">Rs. ${(c.tuition_fee || 0).toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td>Lab Charges</td>
-                  <td style="text-align: right; font-weight: 600;">Rs. ${(c.lab_fee || 0).toLocaleString()}</td>
-                </tr>
-                <tr>
-                  <td>Library Fee</td>
-                  <td style="text-align: right; font-weight: 600;">Rs. ${(c.library_fee || 0).toLocaleString()}</td>
-                </tr>
-                ${c.other_fee > 0 ? `
-                <tr>
-                  <td>Miscellaneous Charges</td>
-                  <td style="text-align: right; font-weight: 600;">Rs. ${(c.other_fee || 0).toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                ${c.discount_amount > 0 ? `
-                <tr style="color: #10b981; font-weight: 600;">
-                  <td>Scholarship Discount</td>
-                  <td style="text-align: right;">- Rs. ${(c.discount_amount || 0).toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                ${c.accrued_late_fee > 0 ? `
-                <tr style="color: #ef4444; font-weight: 600;">
-                  <td>Accrued Late Surcharge</td>
-                  <td style="text-align: right;">+ Rs. ${(c.accrued_late_fee || 0).toLocaleString()}</td>
-                </tr>
-                ` : ''}
-                <tr class="total-row">
-                  <td>Total Amount Payable</td>
-                  <td style="text-align: right; font-size: 16px;">Rs. ${(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div style="font-size: 12px; color: #64748b; line-height: 1.5; margin-bottom: 30px;">
-              <strong>Important Notes:</strong><br/>
-              1. Please deposit the fee in any designated bank branch before the due date: <strong>${new Date(c.due_date).toLocaleDateString()}</strong>.<br/>
-              2. Late fee surcharge of Rs. ${c.late_fee_per_day || 100}/day will be applicable after the due date.<br/>
-              3. This is a computer-generated voucher and does not require manual signature unless stamped by the cashier.
-            </div>
-
-            <div class="footer">
-              <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Student Signature</div>
-              </div>
-              <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Cashier / Stamp</div>
-              </div>
-              <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Authorized Officer</div>
-              </div>
-            </div>
+          <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" style="padding: 10px 24px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">🖨️ Print 3-Copy Voucher</button>
           </div>
-          
-          <div id="action-buttons" style="text-align: center; margin-top: 30px;">
-            <button onclick="window.print()" style="background: var(--primary-color, #4f46e5); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-right: 10px; font-size: 14px;">Print Challan</button>
-            <button onclick="downloadPDF()" style="background: #10b981; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">Download PDF</button>
+
+          <div class="copies-grid">
+            ${['BANK COPY', 'COLLEGE ACCOUNTS COPY', 'PARENT / STUDENT COPY'].map(title => `
+              <div class="copy-box">
+                <div>
+                  <div class="header">
+                    <div class="school-name">LANCERS TECH COLLEGE</div>
+                    <div style="font-size: 10px; color: #64748b; font-weight: 700;">MONTHLY FEE VOUCHER</div>
+                    <div class="copy-tag">${title}</div>
+                  </div>
+
+                  <div class="meta-grid">
+                    <div class="meta-row"><span class="meta-label">Challan No:</span><span class="meta-val">${c.challan_no || 'SCH-' + c.id}</span></div>
+                    <div class="meta-row"><span class="meta-label">Fee Month:</span><span class="meta-val">${monthName} ${c.fee_year || new Date().getFullYear()}</span></div>
+                    <div class="meta-row"><span class="meta-label">Due Date:</span><span class="meta-val" style="color: #b91c1c;">${c.due_date ? new Date(c.due_date).toLocaleDateString() : '10th of Month'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Student:</span><span class="meta-val">${c.student_name || 'Enrolled Student'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Roll No:</span><span class="meta-val">${c.roll_number || '—'}</span></div>
+                    <div class="meta-row"><span class="meta-label">Class:</span><span class="meta-val" style="color: #4f46e5;">${c.class_name || c.program_name || 'Class Grade'}</span></div>
+                  </div>
+
+                  <table class="fees-table">
+                    <tr><td>Tuition Fee:</td><td style="text-align: right; font-weight: 700;">Rs. ${(parseFloat(c.tuition_fee) || 0).toLocaleString()}</td></tr>
+                    ${c.transport_fee > 0 ? `<tr><td>Transport Fee:</td><td style="text-align: right; font-weight: 700;">Rs. ${(parseFloat(c.transport_fee)).toLocaleString()}</td></tr>` : ''}
+                    ${c.computer_fee > 0 ? `<tr><td>Computer / Lab:</td><td style="text-align: right; font-weight: 700;">Rs. ${(parseFloat(c.computer_fee)).toLocaleString()}</td></tr>` : ''}
+                    ${c.activity_fee > 0 ? `<tr><td>Activity / Exam:</td><td style="text-align: right; font-weight: 700;">Rs. ${(parseFloat(c.activity_fee)).toLocaleString()}</td></tr>` : ''}
+                    ${c.accrued_late_fee > 0 ? `<tr><td style="color: #b91c1c;">Late Fine:</td><td style="text-align: right; font-weight: 700; color: #b91c1c;">+ Rs. ${(parseFloat(c.accrued_late_fee)).toLocaleString()}</td></tr>` : ''}
+                    <tr class="total-row"><td>TOTAL PAYABLE:</td><td style="text-align: right;">Rs. ${(parseFloat(c.total_amount) || 0).toLocaleString()}</td></tr>
+                  </table>
+                </div>
+
+                <div class="footer">
+                  <div style="text-align: center;"><div style="border-top: 1px solid #94a3b8; width: 80px; margin-top: 20px;"></div>Cashier / Bank</div>
+                  <div style="text-align: center;"><div style="border-top: 1px solid #94a3b8; width: 80px; margin-top: 20px;"></div>Authorized Officer</div>
+                </div>
+              </div>
+            `).join('')}
           </div>
-          
-          <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-          <script>
-            function downloadPDF() {
-              const element = document.querySelector('.voucher-container');
-              const opt = {
-                margin:       10,
-                filename:     'Challan_${c.challan_no}.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-              };
-              // Hide buttons during generation
-              document.getElementById('action-buttons').style.display = 'none';
-              html2pdf().set(opt).from(element).save().then(() => {
-                 document.getElementById('action-buttons').style.display = 'block';
-              });
-            }
-          </script>
         </body>
       </html>
     `);
     printWindow.document.close();
   };
 
+  const filteredChallans = challans.filter(c => {
+    const matchesSearch = 
+      (c.student_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.roll_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.challan_no || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || (c.status || '').toLowerCase() === filterStatus.toLowerCase();
+    const matchesClass = filterClass === 'all' || (c.class_name || '').toLowerCase() === filterClass.toLowerCase();
+    return matchesSearch && matchesStatus && matchesClass;
+  });
+
+  const uniqueClasses = Array.from(new Set(challans.map(c => c.class_name).filter(Boolean)));
+
   return (
     <div className="fin-animate">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
-          {isSchool ? '🏫 Monthly Fee Register' : 'Fee Challan Management'}
-        </h2>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+      
+      {/* Top Header & Sub-Tabs */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+            🏫 College Monthly Fee Register
+          </h2>
+          
+          <div style={{ display: 'inline-flex', background: '#e2e8f0', borderRadius: '12px', padding: '4px', gap: '4px' }}>
+            <button
+              onClick={() => setFeeSubTab('challans')}
+              style={{
+                padding: '6px 14px', borderRadius: '8px', border: 'none',
+                background: feeSubTab === 'challans' ? '#ffffff' : 'transparent',
+                color: feeSubTab === 'challans' ? '#0f172a' : '#64748b',
+                fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer',
+                boxShadow: feeSubTab === 'challans' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+              }}
+            >
+              📄 Monthly Fee Register ({challans.length})
+            </button>
+            <button
+              onClick={() => { setFeeSubTab('admissions'); fetchAdmissionInquiries(); }}
+              style={{
+                padding: '6px 14px', borderRadius: '8px', border: 'none',
+                background: feeSubTab === 'admissions' ? 'var(--primary-color, #4f46e5)' : 'transparent',
+                color: feeSubTab === 'admissions' ? '#ffffff' : '#64748b',
+                fontWeight: '700', fontSize: '0.82rem', cursor: 'pointer',
+                boxShadow: feeSubTab === 'admissions' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                display: 'flex', alignItems: 'center', gap: '6px'
+              }}
+            >
+              🎓 New Admission Fee Clearance
+              {admissionInquiries.filter(a => a.fee_status !== 'paid').length > 0 && (
+                <span style={{ padding: '2px 6px', borderRadius: '6px', background: '#ef4444', color: '#fff', fontSize: '10px', fontWeight: '900' }}>
+                  {admissionInquiries.filter(a => a.fee_status !== 'paid').length}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={async () => {
-              if (window.confirm('Calculate and apply late fines to all overdue challans?')) {
+              if (window.confirm('Calculate and apply late fee fines to all overdue school challans?')) {
                 await onAction('POST', '/challans/apply-late-fines');
               }
             }}
@@ -263,155 +269,374 @@ const FinFees = ({ challans, onAction, onEdit, isSchool }) => {
             }}
             title="Auto-calculate late fees for overdue challans"
           >
-            <Warning size={18} weight="bold" /> 
-            Calculate Fines
+            <Warning size={18} weight="bold" /> Calculate Fines
           </button>
 
           <button 
-            onClick={() => setShowGenModal(true)} 
+            onClick={() => setShowGenModal(true)}
             style={{ 
-              padding: '10px 16px', 
-              background: isSchool ? 'linear-gradient(135deg, #059669, #10b981)' : 'var(--fin-primary, #4f46e5)', 
+              padding: '10px 18px', 
+              background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)', 
               color: 'white', 
               border: 'none', 
               borderRadius: '10px', 
               fontSize: '0.85rem', 
-              fontWeight: 700, 
+              fontWeight: 800, 
               cursor: 'pointer', 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '6px',
-              boxShadow: isSchool ? '0 4px 12px rgba(16,185,129,0.25)' : '0 4px 12px rgba(79, 70, 229, 0.25)'
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(var(--primary-rgb, 79, 70, 229), 0.3)'
             }}
           >
-            <CalendarBlank size={18} weight="bold" /> 
-            {isSchool ? 'View Monthly Fees' : 'Auto-Generate Dues'}
+            <Plus size={18} weight="bold" /> Generate Monthly Dues
           </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '0 12px', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
-            <MagnifyingGlass size={18} color="#94a3b8" />
-            <input 
-              type="text" 
-              placeholder="Search student or challan..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ border: 'none', background: 'transparent', padding: '10px', outline: 'none', width: '220px', fontSize: '0.85rem' }}
-            />
-          </div>
-          <select 
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            style={{ padding: '10px 16px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '0.85rem', color: '#475569', fontWeight: 600, outline: 'none', cursor: 'pointer', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="paid">Paid</option>
-            <option value="overdue">Overdue</option>
-            <option value="waived">Waived</option>
-          </select>
         </div>
       </div>
 
-      <div className="fin-table-wrap">
-        <table className="fin-table">
-          <thead>
-            <tr>
-              <th>Student</th>
-              <th>Roll No</th>
-              <th>Challan ID</th>
-              <th>{isSchool ? 'Month / Year' : 'Amount'}</th>
-              <th>Amount</th>
-              <th>Due Date</th>
-              <th>Status</th>
-              <th style={{textAlign: 'right'}}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredChallans.map(c => (
-              <tr key={c.id}>
-                <td>
-                  <div className="fin-cell">
-                    <div className="fin-avatar">{c.student_name?.charAt(0)}</div>
-                    <div className="fin-name">{c.student_name}</div>
-                  </div>
-                </td>
-                <td>{c.roll_number}</td>
-                <td style={{fontWeight: '600', color: 'var(--fin-primary)'}}>{c.challan_no}</td>
-                {isSchool && (
-                  <td style={{ fontWeight: 700, color: '#6366f1' }}>
-                    {c.fee_month ? `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][c.fee_month]} ${c.fee_year}` : 'N/A'}
-                  </td>
-                )}
-                <td className="fin-net">
-                  <div>Rs. {(c.total_amount + (c.accrued_late_fee || 0)).toLocaleString()}</div>
-                  {c.discount_amount > 0 && (
-                    <div style={{ color: '#10b981', fontSize: '0.75rem', fontWeight: 600 }}>
-                      - Rs. {parseFloat(c.discount_amount).toLocaleString()} (Scholarship)
-                    </div>
-                  )}
-                  {c.accrued_late_fee > 0 && (
-                    <div style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 600 }}>
-                      + Rs. {parseFloat(c.accrued_late_fee).toLocaleString()} (Late fee)
-                    </div>
-                  )}
-                </td>
-                <td>{new Date(c.due_date).toLocaleDateString()}</td>
-                <td><StatusBadge status={c.status} /></td>
-                <td>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-                    {c.status !== 'paid' && (
-                      <button style={{ background: '#ecfdf5', color: '#10b981', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Mark as Paid" onClick={() => handleUpdateStatus(c.id, 'paid')}>
-                        <CheckCircle size={18} weight="bold" />
-                      </button>
-                    )}
-                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Print Challan" onClick={() => handlePrintChallan(c)}>
-                      <Printer size={18} weight="duotone" />
-                    </button>
-                    <button style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Send Reminder" onClick={() => handleSendReminder(c.id)}>
-                      <Envelope size={18} weight="duotone" />
-                    </button>
-                    <button style={{ background: '#fef2f2', color: '#ef4444', border: 'none', padding: '6px', borderRadius: '8px', cursor: 'pointer', display: 'flex' }} title="Delete" onClick={() => handleDelete(c.id)}>
-                      <Trash size={18} weight="duotone" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {filteredChallans.length === 0 && (
-              <tr className="fin-empty-row">
-                <td colSpan="7">No fee records found matching your filters</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* ======================================================== */}
+      {/* 1. ADMISSION INQUIRIES CLEARANCE TAB                     */}
+      {/* ======================================================== */}
+      {feeSubTab === 'admissions' && (
+        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', marginBottom: '24px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: '#0f172a' }}>
+                New Admission Fee Inquiries & Clearance Desk
+              </h3>
+              <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Verify admission fee payment and forward applicant directly to Principal for Section & Roll No allotment.
+              </p>
+            </div>
+            <button
+              onClick={fetchAdmissionInquiries}
+              style={{ padding: '6px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700' }}
+            >
+              🔄 Refresh List
+            </button>
+          </div>
 
-      {showGenModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(4px)' }} onClick={() => setShowGenModal(false)}>
-          <div style={{ background: 'white', borderRadius: 24, padding: '2.5rem', width: '90%', maxWidth: '450px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative' }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 1.5rem 0' }}>Auto-Generate Semester Dues</h3>
-            <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem' }}>Select a semester term to automatically calculate and generate tuition and registration fee challans for all enrolled students based on their registered credit hours.</p>
-            
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 600, color: '#475569' }}>Select Semester Term</label>
-              <select 
-                value={selectedSem} 
-                onChange={(e) => setSelectedSem(e.target.value)} 
-                style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#0f172a', outline: 'none' }}
-              >
-                {semesters.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+          {admissionsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>Loading inquiries...</div>
+          ) : admissionInquiries.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>
+              No admission inquiries found.
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', textAlign: 'left' }}>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>STUDENT NAME</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>FATHER NAME</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>GRADE / CLASS</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>CAMPUS</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>FEE AMOUNT</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem' }}>STATUS</th>
+                    <th style={{ padding: '12px 14px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textAlign: 'right' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {admissionInquiries.map(inq => (
+                    <tr key={inq.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '12px 14px', fontWeight: '700', color: '#0f172a' }}>{inq.full_name}</td>
+                      <td style={{ padding: '12px 14px', color: '#334155' }}>{inq.father_name || '—'}</td>
+                      <td style={{ padding: '12px 14px' }}>
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', background: '#f1f5f9', fontWeight: '700', color: '#334155' }}>
+                          {inq.target_class || inq.program}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 14px', color: '#64748b' }}>{inq.campus_name || 'Main Campus'}</td>
+                      <td style={{ padding: '12px 14px', fontWeight: '800', color: '#0f172a' }}>
+                        Rs. {(inq.admission_fee || 5000).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '12px 14px' }}>
+                        {inq.fee_status === 'paid' ? (
+                          <span style={{ padding: '3px 8px', borderRadius: '6px', background: '#dcfce7', color: '#166534', fontWeight: '800', fontSize: '0.75rem' }}>
+                            ✓ Fee Paid
+                          </span>
+                        ) : (
+                          <span style={{ padding: '3px 8px', borderRadius: '6px', background: '#fef3c7', color: '#92400e', fontWeight: '800', fontSize: '0.75rem' }}>
+                            ● Pending Payment
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                        {inq.fee_status !== 'paid' ? (
+                          <button
+                            onClick={() => handleClearAdmissionFee(inq.id)}
+                            style={{
+                              padding: '6px 14px', borderRadius: '8px', border: 'none',
+                              background: '#10b981', color: '#fff', fontWeight: '800', fontSize: '0.78rem', cursor: 'pointer',
+                              boxShadow: '0 2px 6px rgba(16,185,129,0.3)'
+                            }}
+                          >
+                            ✓ Clear Fee & Forward
+                          </button>
+                        ) : (
+                          <span style={{ color: '#0284c7', fontWeight: '700', fontSize: '0.78rem' }}>
+                            In Principal Review
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* 2. MONTHLY FEE REGISTER & TABLE                          */}
+      {/* ======================================================== */}
+      {feeSubTab === 'challans' && (
+        <>
+          {/* Filters Bar */}
+          <div className="fin-filters-card" style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div className="fin-search-box" style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
+              <MagnifyingGlass size={18} className="fin-search-icon" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input 
+                type="text" 
+                placeholder="Search by student, roll number, or challan #..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px 10px 38px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '0.85rem', outline: 'none', boxSizing: 'border-box' }}
+              />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button onClick={() => setShowGenModal(false)} style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-              <button onClick={handleGenerateSemesterChallans} disabled={genLoading} style={{ padding: '10px 20px', background: 'var(--fin-primary, #4f46e5)', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
-                {genLoading ? 'Calculating...' : 'Generate Now'}
+            <select 
+              value={filterStatus} 
+              onChange={(e) => setFilterStatus(e.target.value)}
+              style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', background: 'white', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
+            >
+              <option value="all">All Payment Statuses</option>
+              <option value="paid">✓ Paid Challans</option>
+              <option value="pending">⏳ Pending Challans</option>
+              <option value="overdue">⚠️ Overdue Defaulters</option>
+            </select>
+
+            {uniqueClasses.length > 0 && (
+              <select 
+                value={filterClass} 
+                onChange={(e) => setFilterClass(e.target.value)}
+                style={{ padding: '10px 16px', borderRadius: '10px', border: '1px solid #cbd5e1', background: 'white', fontSize: '0.85rem', fontWeight: 600, color: '#334155', outline: 'none' }}
+              >
+                <option value="all">All Classes & Grades</option>
+                {uniqueClasses.map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Challans Table */}
+          <div className="fin-table-wrap">
+            <table className="fin-table">
+              <thead>
+                <tr>
+                  <th>Challan No</th>
+                  <th>Student Info</th>
+                  <th>Class / Grade</th>
+                  <th>Fee Month</th>
+                  <th>Tuition Fee</th>
+                  <th>Add-ons & Fines</th>
+                  <th>Total Payable</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredChallans.length > 0 ? (
+                  filteredChallans.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ fontWeight: 700, color: '#0f172a' }}>
+                        {c.challan_no || `SCH-${c.id}`}
+                      </td>
+                      <td>
+                        <div className="fin-name">{c.student_name || 'Enrolled Student'}</div>
+                        <div className="fin-sub">Roll: {c.roll_number || '—'}</div>
+                      </td>
+                      <td>
+                        <span style={{ padding: '3px 8px', borderRadius: '6px', background: '#f1f5f9', fontWeight: '700', color: '#334155', fontSize: '0.78rem' }}>
+                          {c.class_name || c.program_name || 'Class Grade'}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 600 }}>
+                        {MONTHS[(c.fee_month || 1) - 1] || 'Monthly'} {c.fee_year || new Date().getFullYear()}
+                      </td>
+                      <td>Rs. {(parseFloat(c.tuition_fee) || 0).toLocaleString()}</td>
+                      <td>
+                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                          + Rs. {((parseFloat(c.transport_fee) || 0) + (parseFloat(c.computer_fee) || 0) + (parseFloat(c.activity_fee) || 0) + (parseFloat(c.accrued_late_fee) || 0)).toLocaleString()}
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.95rem' }}>
+                        Rs. {(parseFloat(c.total_amount) || 0).toLocaleString()}
+                      </td>
+                      <td style={{ color: c.status === 'overdue' ? '#b91c1c' : '#64748b', fontWeight: c.status === 'overdue' ? 800 : 500 }}>
+                        {c.due_date ? new Date(c.due_date).toLocaleDateString() : '—'}
+                      </td>
+                      <td>
+                        <StatusBadge status={c.status} />
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                          {c.status !== 'paid' && (
+                            <button 
+                              className="fin-btn-pay" 
+                              onClick={() => handleOpenPayModal(c)}
+                              style={{ padding: '6px 12px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', fontWeight: 700 }}
+                              title="Collect Fee Payment"
+                            >
+                              <CurrencyDollar size={16} weight="bold" /> Collect
+                            </button>
+                          )}
+                          <button 
+                            className="fin-btn-icon" 
+                            onClick={() => handlePrint3CopyChallan(c)}
+                            style={{ padding: '6px 10px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.75rem', fontWeight: 600 }}
+                            title="Print 3-Copy Fee Voucher"
+                          >
+                            <Printer size={15} weight="duotone" /> Print
+                          </button>
+                          <button 
+                            className="fin-btn-icon" 
+                            onClick={() => onAction('POST', `/challans/${c.id}/remind`)}
+                            style={{ padding: '6px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', display: 'flex' }}
+                            title="Send SMS / Email Fee Reminder"
+                          >
+                            <Envelope size={15} weight="duotone" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr className="fin-empty-row">
+                    <td colSpan="10" style={{ textAlign: 'center', padding: '3.5rem', color: '#94a3b8' }}>
+                      <Receipt size={48} weight="duotone" style={{ color: '#cbd5e1', marginBottom: '12px' }} />
+                      <div style={{ fontWeight: 800, fontSize: '1rem', color: '#0f172a', marginBottom: '4px' }}>No Fee Challans Found</div>
+                      <div style={{ fontSize: '0.85rem' }}>
+                        Click <strong>"+ Generate Monthly Dues"</strong> above to generate monthly fee challans for all school classes.
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* ======================================================== */}
+      {/* 3. GENERATE MONTHLY DUES MODAL (COLLEGE)                  */}
+      {/* ======================================================== */}
+      {showGenModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', padding: '20px' }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: '28px', width: '100%', maxWidth: '480px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Auto-Generate Monthly College Dues</h3>
+              <button onClick={() => setShowGenModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
+            </div>
+            
+            <p style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: '20px', lineHeight: '1.4' }}>
+              Calculates Tuition, Transport, Computer & Activity fees based on each grade's fee structure and generates printable 3-copy challans for all enrolled students.
+            </p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Billing Month</label>
+                <select 
+                  value={genMonth} 
+                  onChange={(e) => setGenMonth(parseInt(e.target.value))} 
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '0.9rem', color: '#0f172a', outline: 'none' }}
+                >
+                  {MONTHS.map((m, idx) => <option key={m} value={idx + 1}>{m}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Billing Year</label>
+                <select 
+                  value={genYear} 
+                  onChange={(e) => setGenYear(parseInt(e.target.value))} 
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '0.9rem', color: '#0f172a', outline: 'none' }}
+                >
+                  {[2025, 2026, 2027, 2028].map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setShowGenModal(false)} style={{ padding: '10px 18px', background: 'white', border: '1px solid #cbd5e1', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button 
+                onClick={handleGenerateMonthlyChallans} 
+                disabled={genLoading} 
+                style={{ padding: '10px 22px', background: 'var(--primary-color, #4f46e5)', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Check size={16} weight="bold" /> {genLoading ? 'Generating...' : 'Generate Monthly Dues'}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ======================================================== */}
+      {/* 4. FAST CASH COLLECT MODAL                               */}
+      {/* ======================================================== */}
+      {showPayModal && selectedPayChallan && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)', padding: '20px' }}>
+          <div style={{ background: 'white', borderRadius: 20, padding: '28px', width: '100%', maxWidth: '440px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>Fee Payment Collection</h3>
+              <button onClick={() => setShowPayModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
+            </div>
+
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Student:</span>
+                <strong style={{ color: '#0f172a' }}>{selectedPayChallan.student_name}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ color: '#64748b' }}>Class & Roll:</span>
+                <strong>{selectedPayChallan.class_name || 'Class'} (Roll: {selectedPayChallan.roll_number || '—'})</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '4px', fontSize: '1rem', fontWeight: 800 }}>
+                <span>Total Amount Due:</span>
+                <span style={{ color: '#166534' }}>Rs. {(parseFloat(selectedPayChallan.total_amount) || 0).toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#475569' }}>Payment Mode</label>
+              <select
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value)}
+                style={{ width: '100%', padding: '10px 14px', borderRadius: '12px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.85rem', outline: 'none' }}
+              >
+                <option value="Cash Counter">Cash at Counter</option>
+                <option value="Bank Deposit Slip">Bank Deposit Challan</option>
+                <option value="Online / Mobile Banking">Online Banking Transfer</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setShowPayModal(false)} style={{ padding: '10px 16px', background: 'white', border: '1px solid #cbd5e1', color: '#64748b', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
+              <button 
+                onClick={handleConfirmPayment}
+                disabled={payingLoading}
+                style={{ padding: '10px 22px', background: '#10b981', border: 'none', color: 'white', borderRadius: '12px', fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <CheckCircle size={18} weight="bold" /> {payingLoading ? 'Processing...' : 'Mark Fee as PAID'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

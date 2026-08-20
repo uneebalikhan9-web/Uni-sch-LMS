@@ -22,11 +22,12 @@ router.get('/overview', async (req, res) => {
     // Note: To count courses exactly, we join campuses
     const [[{ totalCourses }]] = await pool.query('SELECT COUNT(cr.id) as totalCourses FROM courses cr JOIN campuses c ON cr.campus_id = c.id WHERE c.client_id = ?', [clientId]);
 
-    // Per-campus breakdown
+    // Per-campus breakdown (includes location)
     const [campusStats] = await pool.query(`
       SELECT 
         c.id,
         c.name as campus_name,
+        c.location,
         c.is_active,
         COUNT(DISTINCT CASE WHEN u.role = 'student' THEN u.id END) as students,
         COUNT(DISTINCT CASE WHEN u.role = 'teacher' THEN u.id END) as teachers,
@@ -83,6 +84,13 @@ router.post('/campuses', async (req, res) => {
     }
 
     const clientId = req.user.client_id;
+    const [[clientInfo]] = await pool.query('SELECT institution_type FROM lancers_clients WHERE id = ?', [clientId]);
+    if (clientInfo && clientInfo.institution_type === 'school') {
+      return res.status(403).json({
+        success: false,
+        message: 'School branches are managed directly by Master Administrator (Lancers Tech).'
+      });
+    }
     const [result] = await pool.query(
       'INSERT INTO campuses (name, location, subscription_plan, dept_code, client_id) VALUES (?, ?, ?, ?, ?)',
       [name, location || '', subscription_plan || 'basic', dept_code || null, clientId]
@@ -106,6 +114,13 @@ router.put('/campuses/:id', async (req, res) => {
     const { name, location, subscription_plan, is_active, dept_code } = req.body;
 
     const clientId = req.user.client_id;
+    const [[clientInfoPut]] = await pool.query('SELECT institution_type FROM lancers_clients WHERE id = ?', [clientId]);
+    if (clientInfoPut && clientInfoPut.institution_type === 'school') {
+      return res.status(403).json({
+        success: false,
+        message: 'School branches are managed directly by Master Administrator (Lancers Tech).'
+      });
+    }
     const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ? AND client_id = ?', [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Department not found' });
@@ -129,6 +144,13 @@ router.delete('/campuses/:id', async (req, res) => {
     const { id } = req.params;
 
     const clientId = req.user.client_id;
+    const [[clientInfoDel]] = await pool.query('SELECT institution_type FROM lancers_clients WHERE id = ?', [clientId]);
+    if (clientInfoDel && clientInfoDel.institution_type === 'school') {
+      return res.status(403).json({
+        success: false,
+        message: 'School branches are managed directly by Master Administrator (Lancers Tech).'
+      });
+    }
     const [existing] = await pool.query('SELECT id FROM campuses WHERE id = ? AND client_id = ?', [id, clientId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Department not found' });
@@ -571,6 +593,91 @@ router.delete('/staff/:id', async (req, res) => {
   } catch (error) {
     console.error('Delete staff error:', error);
     res.status(500).json({ success: false, message: 'Error deleting staff member' });
+  }
+});
+
+// ==========================================
+// CAMPUS / BRANCH DRILL-DOWN DETAILS
+// ==========================================
+router.get('/campuses/:id/details', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const clientId = req.user.client_id;
+
+    // 1. Get Branch info
+    const [branchData] = await pool.query(
+      'SELECT id, name, location, dept_code, subscription_plan, is_active, created_at, client_id FROM campuses WHERE id = ? AND client_id = ?',
+      [id, clientId]
+    );
+
+    if (branchData.length === 0) {
+      return res.status(404).json({ success: false, message: 'Branch not found' });
+    }
+
+    const branch = branchData[0];
+
+    // 2. Get Assigned Principal / Head
+    const [principals] = await pool.query(
+      'SELECT id, name, email, phone, status, created_at FROM users WHERE campus_id = ? AND role = "principal"',
+      [id]
+    );
+    const principal = principals.length > 0 ? principals[0] : null;
+
+    // 3. Get Teachers in this branch
+    const [teachers] = await pool.query(
+      'SELECT id, name, email, phone, status, created_at FROM users WHERE campus_id = ? AND role = "teacher" ORDER BY name ASC',
+      [id]
+    );
+
+    // 4. Get Students in this branch
+    const [students] = await pool.query(`
+      SELECT u.id, u.name, u.email, u.phone, s.roll_number, s.father_name, s.academic_status,
+             p.name as program_name, cl.name as class_name
+      FROM users u
+      LEFT JOIN students s ON s.user_id = u.id
+      LEFT JOIN programs p ON s.program_id = p.id
+      LEFT JOIN student_classes sc ON sc.student_id = s.id
+      LEFT JOIN classes cl ON sc.class_id = cl.id
+      WHERE u.campus_id = ? AND u.role = "student"
+      ORDER BY u.name ASC
+    `, [id]);
+
+    // 5. Get Classes in this branch (joined with rooms for room_number)
+    const [classes] = await pool.query(`
+      SELECT cl.id, cl.name, cl.section, cl.academic_year, r.room_number, cl.created_at
+      FROM classes cl
+      LEFT JOIN rooms r ON cl.room_id = r.id
+      WHERE cl.campus_id = ?
+      ORDER BY cl.name ASC
+    `, [id]);
+
+    // 6. Get Courses in this branch
+    const [courses] = await pool.query(
+      'SELECT id, title, code, credit_hours FROM courses WHERE campus_id = ? ORDER BY title ASC',
+      [id]
+    );
+
+    res.json({
+      success: true,
+      details: {
+        branch,
+        principal,
+        teachers,
+        students,
+        classes,
+        courses,
+        stats: {
+          total_students: students.length,
+          total_teachers: teachers.length,
+          total_classes: classes.length,
+          total_courses: courses.length,
+          has_principal: !!principal
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Get Branch details error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching branch details' });
   }
 });
 

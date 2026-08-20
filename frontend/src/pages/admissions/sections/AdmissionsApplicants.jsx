@@ -1,225 +1,278 @@
 import React, { useState } from 'react';
-import { MagnifyingGlass, Funnel, Pencil, Trash } from '@phosphor-icons/react';
+import { 
+  MagnifyingGlass, Funnel, Receipt, Eye, CheckCircle, 
+  Clock, GraduationCap, Buildings, Phone, User
+} from '@phosphor-icons/react';
 
-const AdmissionsApplicants = ({ stages, onUpdateStage, onEditCandidate, onDeleteCandidate }) => {
+export default function AdmissionsApplicants({ applicants, onPrintChallan, onClearFee }) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [stageFilter, setStageFilter] = useState('All');
+  const [gradeFilter, setGradeFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
 
-  // Flatten the pipeline stages object into a single array of candidates
-  const allApplicants = Object.entries(stages || {}).flatMap(([stageName, list]) =>
-    (list || []).map(app => ({ ...app, stage: stageName }))
-  );
-
-  // Filter candidates based on search term and stage filter
-  const filteredApplicants = allApplicants.filter(app => {
+  const filteredApplicants = (applicants || []).filter(app => {
     const matchesSearch = 
-      app.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      app.id.toString().includes(searchTerm);
-    
-    const matchesStage = stageFilter === 'All' || app.stage === stageFilter;
+      (app.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app.father_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (app.phone || '').includes(searchTerm) ||
+      (app.bform_number || '').includes(searchTerm) ||
+      (app.cnic || '').includes(searchTerm);
 
-    return matchesSearch && matchesStage;
+    const matchesGrade = gradeFilter === 'All' || app.target_class === gradeFilter;
+
+    let matchesStatus = true;
+    if (statusFilter === 'pending_fee') {
+      matchesStatus = (app.status === 'pending_fee' || app.status === 'pending' || app.fee_status === 'pending') && app.status !== 'admitted' && app.status !== 'approved';
+    } else if (statusFilter === 'fee_verified') {
+      matchesStatus = (app.status === 'fee_verified' || app.fee_status === 'paid') && app.status !== 'admitted' && app.status !== 'approved';
+    } else if (statusFilter === 'admitted') {
+      matchesStatus = app.status === 'admitted' || app.status === 'approved';
+    }
+
+    return matchesSearch && matchesGrade && matchesStatus;
   });
 
-  const stageColors = {
-    'Lead': { bg: '#f1f5f9', text: '#475569' },
-    'Applied': { bg: '#eff6ff', text: '#1d4ed8' },
-    'Interview': { bg: '#f5f3ff', text: '#6d28d9' },
-    'Merit List': { bg: '#fffbeb', text: '#b45309' },
-    'Admitted': { bg: '#ecfdf5', text: '#047857' }
-  };
+  const gradesList = [
+    'All', 'Playgroup', 'Nursery', 'Prep', 'Class 1', 'Class 2', 'Class 3',
+    'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
+    'O-Levels', 'A-Levels'
+  ];
 
   return (
     <div className="animate-fadeIn">
-      {/* Search and Filters bar */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          marginBottom: '24px',
-          gap: '16px',
-          flexWrap: 'wrap'
-        }}
-      >
-        <div style={{ position: 'relative', flex: 1, minWidth: '260px', maxWidth: '400px' }}>
-          <MagnifyingGlass 
-            size={18} 
-            color="#94a3b8" 
-            style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} 
-          />
-          <input 
-            type="text" 
-            placeholder="Search by name, email or ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ 
-              width: '100%', 
-              padding: '12px 16px 12px 48px', 
-              borderRadius: '14px', 
-              border: '1px solid #e2e8f0', 
-              fontSize: '0.9rem', 
-              outline: 'none',
-              boxSizing: 'border-box',
-              background: '#fff'
-            }}
-          />
+      {/* Header & Filter Bar */}
+      <div style={{
+        background: '#ffffff',
+        padding: '20px',
+        borderRadius: '18px',
+        border: '1px solid #e2e8f0',
+        marginBottom: '20px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+              Student Applicants Directory
+            </h3>
+            <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Showing {filteredApplicants.length} registered applicant(s)
+            </p>
+          </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748b', fontSize: '0.9rem', fontWeight: 600 }}>
-            <Funnel size={18} />
-            <span>Filter Stage:</span>
+        {/* Filters Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: '12px'
+        }}>
+          {/* Search Box */}
+          <div style={{ position: 'relative' }}>
+            <MagnifyingGlass 
+              size={16} 
+              color="#94a3b8" 
+              style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)' }} 
+            />
+            <input 
+              type="text" 
+              placeholder="Search by student, father, B-Form..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '10px 14px 10px 40px', 
+                borderRadius: '12px', 
+                border: '1px solid #e2e8f0', 
+                fontSize: '0.85rem', 
+                outline: 'none',
+                boxSizing: 'border-box',
+                background: '#f8fafc'
+              }}
+            />
           </div>
-          <select 
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            style={{ 
-              padding: '10px 16px', 
-              borderRadius: '12px', 
-              border: '1px solid #e2e8f0', 
-              fontSize: '0.9rem', 
-              background: '#fff', 
-              outline: 'none',
-              fontWeight: 600,
-              color: '#334155',
-              cursor: 'pointer'
-            }}
-          >
-            <option value="All">All Stages</option>
-            <option value="Lead">Lead</option>
-            <option value="Applied">Applied</option>
-            <option value="Interview">Interview</option>
-            <option value="Merit List">Merit List</option>
-            <option value="Admitted">Admitted</option>
-          </select>
+
+          {/* Grade Filter */}
+          <div>
+            <select
+              value={gradeFilter}
+              onChange={(e) => setGradeFilter(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                fontSize: '0.85rem',
+                outline: 'none',
+                background: '#f8fafc',
+                color: '#334155',
+                fontWeight: '600'
+              }}
+            >
+              {gradesList.map(g => (
+                <option key={g} value={g}>{g === 'All' ? 'All Target Grades' : `Grade: ${g}`}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                fontSize: '0.85rem',
+                outline: 'none',
+                background: '#f8fafc',
+                color: '#334155',
+                fontWeight: '600'
+              }}
+            >
+              <option value="All">All Admission Statuses</option>
+              <option value="pending_fee">🟡 Pending Fee Clearance</option>
+              <option value="fee_verified">🔵 Fee Verified (In Review)</option>
+              <option value="admitted">🟢 Officially Admitted</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Directory Table */}
-      <div className="adm-card" style={{ padding: '24px', overflowX: 'auto' }}>
-        <table className="adm-data-table" style={{ width: '100%' }}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Candidate Name</th>
-              <th>Program</th>
-              <th>Merit Score</th>
-              <th>Applied Date</th>
-              <th>Current Stage</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredApplicants.map(applicant => {
-              const badge = stageColors[applicant.stage] || { bg: '#f1f5f9', text: '#475569' };
-              return (
-                <tr key={applicant.id}>
-                  <td style={{ fontWeight: 700, color: '#64748b' }}>
-                    #{applicant.id.toString().padStart(4, '0')}
+      {/* Applicants Table */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '18px',
+        border: '1px solid #e2e8f0',
+        overflow: 'hidden',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+      }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Student Name</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Father / Guardian</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Target Grade</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Branch</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Fee Status</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase' }}>Stage</th>
+                <th style={{ padding: '14px 18px', color: '#64748b', fontWeight: '700', fontSize: '0.75rem', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredApplicants.length === 0 ? (
+                <tr>
+                  <td colSpan="7" style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>
+                    No applicants match your search filters.
                   </td>
-                  <td>
-                    <div style={{ fontWeight: 800, color: '#0f172a' }}>{applicant.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>{applicant.email}</div>
-                  </td>
-                  <td style={{ fontWeight: 700, color: '#334155' }}>
-                    {applicant.program}
-                  </td>
-                  <td>
-                    {applicant.score && applicant.score !== 'N/A' ? (
-                      <span style={{ fontWeight: 800, color: '#059669', background: '#ecfdf5', padding: '4px 8px', borderRadius: '6px', fontSize: '0.8rem' }}>
-                        {applicant.score}
+                </tr>
+              ) : (
+                filteredApplicants.map((app) => (
+                  <tr key={app.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.2s' }}>
+                    {/* Student Name */}
+                    <td style={{ padding: '14px 18px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '36px', height: '36px', borderRadius: '10px',
+                          background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)',
+                          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontWeight: '800', fontSize: '0.9rem'
+                        }}>
+                          {app.full_name?.charAt(0) || 'S'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: '800', color: '#0f172a' }}>{app.full_name}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>B-Form: {app.bform_number || app.cnic || '—'}</div>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Father Info */}
+                    <td style={{ padding: '14px 18px' }}>
+                      <div style={{ fontWeight: '600', color: '#334155' }}>{app.father_name || '—'}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{app.phone || app.father_phone || '—'}</div>
+                    </td>
+
+                    {/* Target Grade */}
+                    <td style={{ padding: '14px 18px' }}>
+                      <span style={{
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        background: '#f1f5f9',
+                        color: '#334155',
+                        fontWeight: '700',
+                        fontSize: '0.78rem'
+                      }}>
+                        {app.target_class || 'General'}
                       </span>
-                    ) : (
-                      <span style={{ color: '#94a3b8' }}>N/A</span>
-                    )}
-                  </td>
-                  <td style={{ color: '#64748b', fontWeight: 600, fontSize: '0.85rem' }}>
-                    {applicant.date}
-                  </td>
-                  <td>
-                    <span 
-                      style={{ 
-                        background: badge.bg, 
-                        color: badge.text,
-                        padding: '6px 12px',
-                        borderRadius: '10px',
-                        fontWeight: 800,
-                        fontSize: '0.75rem',
-                        textTransform: 'uppercase',
-                        display: 'inline-block'
-                      }}
-                    >
-                      {applicant.stage}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      {onUpdateStage && (
-                        <select 
-                          value={applicant.stage}
-                          onChange={(e) => onUpdateStage(applicant.id, e.target.value)}
+                    </td>
+
+                    {/* Branch */}
+                    <td style={{ padding: '14px 18px', color: '#64748b' }}>
+                      {app.campus_name || 'Main Campus'}
+                    </td>
+
+                    {/* Fee Status */}
+                    <td style={{ padding: '14px 18px' }}>
+                      {app.fee_status === 'paid' ? (
+                        <span style={{ padding: '4px 10px', borderRadius: '8px', background: '#dcfce7', color: '#166534', fontWeight: '800', fontSize: '0.75rem' }}>
+                          ● Paid
+                        </span>
+                      ) : (
+                        <span style={{ padding: '4px 10px', borderRadius: '8px', background: '#fef3c7', color: '#92400e', fontWeight: '800', fontSize: '0.75rem' }}>
+                          ● Pending
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Stage */}
+                    <td style={{ padding: '14px 18px' }}>
+                      {app.status === 'admitted' || app.status === 'approved' ? (
+                        <span style={{ padding: '4px 10px', borderRadius: '8px', background: '#dcfce7', color: '#166534', fontWeight: '800', fontSize: '0.75rem' }}>
+                          Admitted in Class
+                        </span>
+                      ) : app.status === 'fee_verified' || app.fee_status === 'paid' ? (
+                        <span style={{ padding: '4px 10px', borderRadius: '8px', background: '#e0f2fe', color: '#0369a1', fontWeight: '800', fontSize: '0.75rem' }}>
+                          In Principal Review
+                        </span>
+                      ) : (
+                        <span style={{ padding: '4px 10px', borderRadius: '8px', background: '#fffbeb', color: '#b45309', fontWeight: '800', fontSize: '0.75rem' }}>
+                          Inquiry Desk
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Actions */}
+                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                      <div style={{ display: 'inline-flex', gap: '6px' }}>
+                        <button
+                          onClick={() => onPrintChallan(app)}
                           style={{
                             padding: '6px 12px',
                             borderRadius: '8px',
                             border: '1px solid #cbd5e1',
-                            background: '#f8fafc',
+                            background: '#ffffff',
                             color: '#334155',
-                            fontWeight: 700,
-                            fontSize: '0.8rem',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
                             cursor: 'pointer',
-                            outline: 'none'
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
                           }}
                         >
-                          <option value="Lead">Move to Lead</option>
-                          <option value="Applied">Move to Applied</option>
-                          <option value="Interview">Move to Interview</option>
-                          <option value="Merit List">Move to Merit List</option>
-                          <option value="Admitted">Move to Admitted</option>
-                        </select>
-                      )}
-                      
-                      {onEditCandidate && (
-                        <button 
-                          onClick={() => onEditCandidate(applicant)} 
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#3b82f6'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#64748b'}
-                          title="Edit Details"
-                        >
-                          <Pencil size={16} weight="bold" />
+                          <Receipt size={14} weight="bold" /> Challan
                         </button>
-                      )}
-                      
-                      {onDeleteCandidate && (
-                        <button 
-                          onClick={() => onDeleteCandidate(applicant.id)} 
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
-                          onMouseOver={(e) => e.currentTarget.style.color = '#ef4444'}
-                          onMouseOut={(e) => e.currentTarget.style.color = '#64748b'}
-                          title="Delete Candidate"
-                        >
-                          <Trash size={16} weight="bold" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-            {filteredApplicants.length === 0 && (
-              <tr>
-                <td colSpan="7" style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', fontWeight: 600 }}>
-                  No candidates found matching the criteria.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
-};
-
-export default AdmissionsApplicants;
+}

@@ -835,4 +835,72 @@ router.post('/challans/generate-semester', async (req, res) => {
   }
 });
 
+
+// ==========================================
+// ADMISSION FEE INQUIRIES & CLEARANCE (SCHOOL)
+// ==========================================
+
+// Get all admission inquiries for fee verification
+router.get('/admission-inquiries', async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    const clientId = req.user.client_id;
+    let query = `
+      SELECT ar.*, c.name as campus_name
+      FROM admission_requests ar
+      LEFT JOIN campuses c ON ar.campus_id = c.id
+      WHERE 1=1
+    `;
+    let params = [];
+
+    if (clientId && req.user.role !== 'master_admin') {
+      query += ' AND (ar.campus_id IN (SELECT id FROM campuses WHERE client_id = ?) OR ar.campus_id IS NULL)';
+      params.push(clientId);
+    }
+    if (campusId && req.user.role !== 'super_admin' && req.user.role !== 'master_admin') {
+      query += ' AND ar.campus_id = ?';
+      params.push(campusId);
+    }
+
+    query += ' ORDER BY ar.created_at DESC LIMIT 100';
+
+    const [inquiries] = await pool.query(query, params);
+    res.json({ success: true, inquiries });
+  } catch (error) {
+    console.error('Finance get admission inquiries error:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching admission inquiries' });
+  }
+});
+
+// Clear admission fee
+router.put('/admission-clearance/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { payment_method } = req.body;
+    const verifiedBy = req.user.id;
+
+    const [result] = await pool.query(`
+      UPDATE admission_requests
+      SET fee_status = 'paid',
+          fee_paid_at = NOW(),
+          fee_verified_by = ?,
+          payment_method = ?,
+          status = 'fee_verified'
+      WHERE id = ?
+    `, [verifiedBy, payment_method || 'Cash Counter', id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Inquiry not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Admission fee verified and marked as Paid. Forwarded to Principal for Section & Roll No assignment!'
+    });
+  } catch (error) {
+    console.error('Finance admission clearance error:', error);
+    res.status(500).json({ success: false, message: 'Server error processing fee clearance' });
+  }
+});
+
 module.exports = router;

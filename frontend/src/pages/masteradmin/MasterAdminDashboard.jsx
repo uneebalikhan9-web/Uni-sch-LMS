@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import "../../responsive.css";
-import { CheckCircle, MagnifyingGlass, WarningCircle, UserCirclePlus, CalendarBlank, ChartLineUp, Buildings, CurrencyDollar, ShieldCheck, SignOut, Globe, Plus, Receipt, UploadSimple } from "@phosphor-icons/react";
+import { CheckCircle, MagnifyingGlass, WarningCircle, UserCirclePlus, CalendarBlank, ChartLineUp, Buildings, CurrencyDollar, ShieldCheck, SignOut, Globe, Plus, Receipt, UploadSimple, PencilSimple, Trash, Spinner } from "@phosphor-icons/react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 import API_BASE_URL from "../../config/api";
@@ -51,6 +51,109 @@ export default function MasterAdminDashboard({ user, onLogout }) {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen]   = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // ── Branches Modal State ──
+  const [selectedClientForBranches, setSelectedClientForBranches] = useState(null);
+  const [branchesModalOpen, setBranchesModalOpen] = useState(false);
+  const [clientBranches, setClientBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [newBranch, setNewBranch] = useState({ name: '', location: '', dept_code: '' });
+  const [editingBranch, setEditingBranch] = useState(null);
+  const [branchSubmitting, setBranchSubmitting] = useState(false);
+
+  const fetchClientBranches = async (clientId) => {
+    setLoadingBranches(true);
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/masteradmin/clients/${clientId}/branches`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setClientBranches(data.branches || []);
+      } else {
+        showToast(data.message || 'Failed to load branches', 'error');
+      }
+    } catch (err) {
+      showToast('Network error loading branches', 'error');
+    }
+    setLoadingBranches(false);
+  };
+
+  const handleOpenBranchesModal = (client) => {
+    setSelectedClientForBranches(client);
+    setNewBranch({ name: '', location: '', dept_code: '' });
+    setEditingBranch(null);
+    setBranchesModalOpen(true);
+    fetchClientBranches(client.id);
+  };
+
+  const handleAddOrUpdateBranch = async (e) => {
+    e.preventDefault();
+    if (!newBranch.name.trim()) {
+      showToast('Branch name is required', 'error');
+      return;
+    }
+    setBranchSubmitting(true);
+    try {
+      const token = sessionStorage.getItem('token');
+      if (editingBranch) {
+        // Update
+        const res = await fetch(`${API_BASE_URL}/api/masteradmin/branches/${editingBranch.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(newBranch)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Branch updated successfully!', 'success');
+          setEditingBranch(null);
+          setNewBranch({ name: '', location: '', dept_code: '' });
+          fetchClientBranches(selectedClientForBranches.id);
+        } else {
+          showToast(data.message || 'Failed to update branch', 'error');
+        }
+      } else {
+        // Create
+        const res = await fetch(`${API_BASE_URL}/api/masteradmin/clients/${selectedClientForBranches.id}/branches`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(newBranch)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Branch created successfully!', 'success');
+          setNewBranch({ name: '', location: '', dept_code: '' });
+          fetchClientBranches(selectedClientForBranches.id);
+        } else {
+          showToast(data.message || 'Failed to create branch', 'error');
+        }
+      }
+    } catch (err) {
+      showToast('Network error saving branch', 'error');
+    }
+    setBranchSubmitting(false);
+  };
+
+  const handleDeleteBranch = async (branchId, branchName) => {
+    if (!window.confirm(`Are you sure you want to delete branch "${branchName}"?`)) return;
+    try {
+      const token = sessionStorage.getItem('token');
+      const res = await fetch(`${API_BASE_URL}/api/masteradmin/branches/${branchId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Branch deleted successfully!', 'success');
+        fetchClientBranches(selectedClientForBranches.id);
+      } else {
+        showToast(data.message || 'Failed to delete branch', 'error');
+      }
+    } catch (err) {
+      showToast('Network error deleting branch', 'error');
+    }
+  };
+
 
   // Add Client state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -446,7 +549,7 @@ export default function MasterAdminDashboard({ user, onLogout }) {
             <div style={S.tableCard}>
               <div style={S.tableHeader}>
                 <h3 style={S.tableTitle}>Tenant Directory</h3>
-                <button style={S.addBtn} className="add-btn" onClick={() => { setEditingClientId(null); setNewClient({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules, institution_type: 'university' }); setShowAddModal(true); }}>
+                <button style={S.addBtn} className="add-btn" onClick={() => { setEditingClientId(null); setNewClient({ university_name: '', domain: '', admin_name: '', admin_email: '', password: '', package_type: 'Premium', monthly_fee: '', logo_url: '', primary_color: 'var(--primary-color, #4f46e5)', allowed_modules: defaultModules, institution_type: 'university', initial_branch_name: '', initial_branch_location: '' }); setShowAddModal(true); }}>
                   <UserCirclePlus size={20} weight="bold" /> Onboard Institution
                 </button>
               </div>
@@ -488,12 +591,29 @@ export default function MasterAdminDashboard({ user, onLogout }) {
                           </span>
                         </td>
                         <td style={S.td}>
-                          <div style={{ ...S.actionButtons, gap: '8px' }}>
-                            <button onClick={() => toggleStatus(c)} style={{...S.editBtn, padding: '6px 12px', background: '#f1f5f9', fontWeight: '700'}}>
+                          <div style={{ ...S.actionButtons, gap: '6px', flexWrap: 'wrap' }}>
+                            <button 
+                              onClick={() => handleOpenBranchesModal(c)} 
+                              style={{
+                                ...S.editBtn, 
+                                padding: '6px 12px', 
+                                background: '#eff6ff', 
+                                color: '#1d4ed8', 
+                                border: '1px solid #bfdbfe',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontWeight: '700'
+                              }}
+                              title="Manage Branches"
+                            >
+                              <Buildings size={15} weight="bold" /> {c.institution_type === 'school' ? 'Branches' : 'Campuses'}
+                            </button>
+                            <button onClick={() => toggleStatus(c)} style={{...S.editBtn, padding: '6px 10px', background: '#f1f5f9', fontWeight: '700'}}>
                               {c.subscription_status === 'Active' ? 'Suspend' : 'Activate'}
                             </button>
-                            <button onClick={() => handleEditClick(c)} style={{...S.editBtn, padding: '6px 12px'}}>Edit</button>
-                            <button onClick={() => handleDeleteClient(c.id, c.university_name)} style={{...S.deleteBtn, padding: '6px 12px'}}>Delete</button>
+                            <button onClick={() => handleEditClick(c)} style={{...S.editBtn, padding: '6px 10px'}}>Edit</button>
+                            <button onClick={() => handleDeleteClient(c.id, c.university_name)} style={{...S.deleteBtn, padding: '6px 10px'}}>Delete</button>
                           </div>
                         </td>
                       </tr>
@@ -810,6 +930,31 @@ export default function MasterAdminDashboard({ user, onLogout }) {
                 />
               </div>
 
+              {!editingClientId && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>
+                      {newClient.institution_type === 'school' ? 'Initial Branch / Wing Name' : 'Initial Campus Name'}
+                    </label>
+                    <input 
+                      style={S.input} 
+                      value={newClient.initial_branch_name || ''} 
+                      onChange={e => setNewClient({...newClient, initial_branch_name: e.target.value})} 
+                      placeholder={newClient.institution_type === 'school' ? 'e.g. Main Branch / Gulberg Campus' : 'e.g. Main Campus'} 
+                    />
+                  </div>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Branch Location / City</label>
+                    <input 
+                      style={S.input} 
+                      value={newClient.initial_branch_location || ''} 
+                      onChange={e => setNewClient({...newClient, initial_branch_location: e.target.value})} 
+                      placeholder="e.g. Gulberg III, Lahore" 
+                    />
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div style={S.inputGroup}>
                   <label style={S.inputLabel}>
@@ -959,6 +1104,225 @@ export default function MasterAdminDashboard({ user, onLogout }) {
           </div>
         </div>
       )}
+    
+      {/* ── MANAGE BRANCHES & CAMPUSES MODAL ── */}
+      {branchesModalOpen && selectedClientForBranches && (
+        <div style={S.overlay} onClick={() => setBranchesModalOpen(false)}>
+          <div 
+            style={{
+              ...S.modal, 
+              maxWidth: '850px', 
+              width: '95%',
+              maxHeight: '90vh',
+              overflowY: 'auto'
+            }} 
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={S.modalHeader}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <h3 style={S.modalTitle}>
+                    {selectedClientForBranches.institution_type === 'school' ? 'School Branches & Wings' : 'Campuses & Faculties'}
+                  </h3>
+                  <span style={{
+                    fontSize: '11px',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    fontWeight: '700',
+                    background: selectedClientForBranches.institution_type === 'school' ? '#ecfdf5' : '#eff6ff',
+                    color: selectedClientForBranches.institution_type === 'school' ? '#065f46' : '#1d4ed8'
+                  }}>
+                    {selectedClientForBranches.university_name}
+                  </span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  Manage and assign operational wings, campuses, and physical branches for this institution.
+                </p>
+              </div>
+              <button onClick={() => setBranchesModalOpen(false)} style={S.modalClose}>×</button>
+            </div>
+
+            {/* Add / Edit Branch Form Card */}
+            <div style={{
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '16px',
+              padding: '20px',
+              marginBottom: '24px'
+            }}>
+              <h4 style={{ margin: '0 0 14px', fontSize: '0.95rem', fontWeight: '800', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Plus size={16} weight="bold" color="var(--primary-color, #4f46e5)" />
+                {editingBranch ? 'Edit Branch Details' : 'Add New Branch / Campus'}
+              </h4>
+
+              <form onSubmit={handleAddOrUpdateBranch}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '14px' }}>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>
+                      {selectedClientForBranches.institution_type === 'school' ? 'Branch / Wing Name *' : 'Campus / Department Name *'}
+                    </label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder={selectedClientForBranches.institution_type === 'school' ? 'e.g., Main Branch / Boys Wing' : 'e.g., Main Campus'} 
+                      style={S.input}
+                      value={newBranch.name}
+                      onChange={e => setNewBranch({ ...newBranch, name: e.target.value })}
+                    />
+                  </div>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Location / Address</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., Gulberg III, Lahore" 
+                      style={S.input}
+                      value={newBranch.location}
+                      onChange={e => setNewBranch({ ...newBranch, location: e.target.value })}
+                    />
+                  </div>
+                  <div style={S.inputGroup}>
+                    <label style={S.inputLabel}>Branch Code (Optional)</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g., MB-01" 
+                      style={S.input}
+                      value={newBranch.dept_code || ''}
+                      onChange={e => setNewBranch({ ...newBranch, dept_code: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                  {editingBranch && (
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setEditingBranch(null);
+                        setNewBranch({ name: '', location: '', dept_code: '' });
+                      }}
+                      style={S.cancelBtn}
+                    >
+                      Cancel Edit
+                    </button>
+                  )}
+                  <button 
+                    type="submit" 
+                    disabled={branchSubmitting}
+                    style={{
+                      ...S.saveBtn,
+                      padding: '10px 20px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {branchSubmitting ? <Spinner size={16} className="spin" /> : <Plus size={16} weight="bold" />}
+                    {editingBranch ? 'Update Branch' : 'Add Branch'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Existing Branches Table */}
+            <div>
+              <h4 style={{ margin: '0 0 12px', fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>
+                Active Branches ({clientBranches.length})
+              </h4>
+
+              {loadingBranches ? (
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <Spinner size={32} color="var(--primary-color, #4f46e5)" className="spin" />
+                </div>
+              ) : clientBranches.length === 0 ? (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px',
+                  background: '#f8fafc',
+                  borderRadius: '16px',
+                  color: '#94a3b8'
+                }}>
+                  <Buildings size={40} weight="duotone" color="#cbd5e1" style={{ marginBottom: '8px' }} />
+                  <p style={{ margin: 0, fontWeight: '600' }}>No branches configured for this institution yet.</p>
+                  <span style={{ fontSize: '0.8rem' }}>Use the form above to add the main branch.</span>
+                </div>
+              ) : (
+                <div style={S.tableContainer}>
+                  <table style={S.table}>
+                    <thead>
+                      <tr>
+                        <th style={S.th}>BRANCH NAME</th>
+                        <th style={S.th}>LOCATION</th>
+                        <th style={S.th}>CODE</th>
+                        <th style={S.th}>STUDENTS</th>
+                        <th style={S.th}>TEACHERS</th>
+                        <th style={{...S.th, textAlign: 'right'}}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clientBranches.map(b => (
+                        <tr key={b.id} style={S.tr}>
+                          <td style={S.tdName}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Buildings size={16} weight="duotone" color="var(--primary-color, #4f46e5)" />
+                              <span>{b.name}</span>
+                            </div>
+                          </td>
+                          <td style={S.td}>{b.location || '—'}</td>
+                          <td style={S.td}>
+                            {b.dept_code ? (
+                              <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#f1f5f9', fontWeight: '700', fontSize: '0.75rem' }}>
+                                {b.dept_code}
+                              </span>
+                            ) : '—'}
+                          </td>
+                          <td style={S.td}>
+                            <span style={{ fontWeight: '700', color: '#0f172a' }}>{b.student_count || 0}</span>
+                          </td>
+                          <td style={S.td}>
+                            <span style={{ fontWeight: '700', color: '#0f172a' }}>{b.teacher_count || 0}</span>
+                          </td>
+                          <td style={{...S.td, textAlign: 'right'}}>
+                            <div style={{ ...S.actionButtons, justifyContent: 'flex-end', gap: '6px' }}>
+                              <button 
+                                onClick={() => {
+                                  setEditingBranch(b);
+                                  setNewBranch({
+                                    name: b.name,
+                                    location: b.location || '',
+                                    dept_code: b.dept_code || ''
+                                  });
+                                }}
+                                style={{ ...S.editBtn, padding: '6px 10px' }}
+                                title="Edit Branch"
+                              >
+                                <PencilSimple size={15} />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteBranch(b.id, b.name)}
+                                style={{ ...S.deleteBtn, padding: '6px 10px' }}
+                                title="Delete Branch"
+                              >
+                                <Trash size={15} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            <div style={{ ...S.modalActions, marginTop: '24px' }}>
+              <button onClick={() => setBranchesModalOpen(false)} style={{ ...S.saveBtn, width: '100%' }}>
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

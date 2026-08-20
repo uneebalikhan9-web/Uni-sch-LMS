@@ -163,7 +163,7 @@ const isRegistrar = (req, res, next) => {
 
 // Middleware to check if user is an Admission Officer
 const isAdmissionOfficer = (req, res, next) => {
-  if (!['admission_officer', 'super_admin'].includes(req.user.role)) {
+  if (!['admission_officer', 'super_admin', 'master_admin', 'principal'].includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Access denied. Admission Officers only.' });
   }
   next();

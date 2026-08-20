@@ -1,395 +1,417 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
+const bcrypt = require('bcrypt');
 
-// Helper for multi-tenancy
-const getCampusFilter = (req) => {
-  const isSuperAdmin = req.user.role === 'super_admin';
-  return {
-    filter: isSuperAdmin ? '' : 'AND campus_id = ?',
-    params: isSuperAdmin ? [] : [req.user.campus_id]
-  };
+// Multi-tenant helper for admission requests (uses alias ar. to prevent SQL ambiguity)
+const getAdmissionFilter = (req) => {
+  const isSuperAdmin = req.user && (req.user.role === 'super_admin' || req.user.role === 'master_admin');
+  let filter = '';
+  let params = [];
+
+  if (req.user && req.user.client_id) {
+    filter += ' AND (ar.campus_id IN (SELECT id FROM campuses WHERE client_id = ?) OR ar.campus_id IS NULL)';
+    params.push(req.user.client_id);
+  }
+
+  if (!isSuperAdmin && req.user && req.user.campus_id) {
+    filter += ' AND ar.campus_id = ?';
+    params.push(req.user.campus_id);
+  }
+
+  return { filter, params };
 };
 
 // ==========================================
-// 1. DASHBOARD STATS
+// 1. SCHOOL ADMISSION DASHBOARD STATS
 // ==========================================
 router.get('/stats', async (req, res) => {
   try {
-    const { filter, params } = getCampusFilter(req);
-    
-    // Cumulative funnel logic
-    const [[{ totalLeads }]] = await pool.query(`SELECT COUNT(*) as totalLeads FROM admission_applications WHERE 1=1 ${filter}`, params);
-    const [[{ newApps }]] = await pool.query(`SELECT COUNT(*) as newApps FROM admission_applications WHERE stage IN ('Applied', 'Interview', 'Merit List', 'Admitted') ${filter}`, params);
-    const [[{ interviewed }]] = await pool.query(`SELECT COUNT(*) as interviewed FROM admission_applications WHERE stage IN ('Interview', 'Merit List', 'Admitted') ${filter}`, params);
-    const [[{ admitted }]] = await pool.query(`SELECT COUNT(*) as admitted FROM admission_applications WHERE stage = 'Admitted' ${filter}`, params);
+    const { filter, params } = getAdmissionFilter(req);
+
+    const [[{ totalInquiries }]] = await pool.query(
+      `SELECT COUNT(*) as totalInquiries FROM admission_requests ar WHERE 1=1 ${filter}`,
+      params
+    );
+
+    const [[{ pendingFee }]] = await pool.query(
+      `SELECT COUNT(*) as pendingFee FROM admission_requests ar WHERE (ar.status = 'pending_fee' OR ar.status = 'pending' OR ar.fee_status = 'pending') AND ar.status != 'admitted' AND ar.status != 'approved' AND ar.status != 'rejected' ${filter}`,
+      params
+    );
+
+    const [[{ feeVerified }]] = await pool.query(
+      `SELECT COUNT(*) as feeVerified FROM admission_requests ar WHERE (ar.status = 'fee_verified' OR ar.fee_status = 'paid') AND ar.status != 'admitted' AND ar.status != 'approved' AND ar.status != 'rejected' ${filter}`,
+      params
+    );
+
+    const [[{ admitted }]] = await pool.query(
+      `SELECT COUNT(*) as admitted FROM admission_requests ar WHERE (ar.status = 'admitted' OR ar.status = 'approved') ${filter}`,
+      params
+    );
+
+    const [[{ totalRevenue }]] = await pool.query(
+      `SELECT COALESCE(SUM(ar.admission_fee), 0) as totalRevenue FROM admission_requests ar WHERE ar.fee_status = 'paid' ${filter}`,
+      params
+    );
 
     res.json({
       success: true,
-      stats: { totalLeads, newApps, interviewed, admitted }
+      stats: {
+        totalInquiries: totalInquiries || 0,
+        pendingFee: pendingFee || 0,
+        feeVerified: feeVerified || 0,
+        admitted: admitted || 0,
+        totalRevenue: parseFloat(totalRevenue || 0)
+      }
     });
   } catch (error) {
+    console.error('Admissions Stats Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 // ==========================================
-// 2. PIPELINE DATA
+// 2. SCHOOL ADMISSION PIPELINE (3-STAGES)
 // ==========================================
 router.get('/pipeline', async (req, res) => {
   try {
-    const { filter, params } = getCampusFilter(req);
-    // Use alias a.campus_id in case programs also has campus_id later
-    const aliasFilter = filter.replace('campus_id', 'a.campus_id');
+    const { filter, params } = getAdmissionFilter(req);
 
     const [rows] = await pool.query(`
-      SELECT a.*, p.name as program 
-      FROM admission_applications a
-      LEFT JOIN programs p ON a.program_id = p.id
-      WHERE 1=1 ${aliasFilter}
-      ORDER BY a.created_at DESC
+      SELECT ar.*, c.name as campus_name
+      FROM admission_requests ar
+      LEFT JOIN campuses c ON ar.campus_id = c.id
+      WHERE 1=1 ${filter}
+      ORDER BY ar.created_at DESC
     `, params);
 
-    // Group by stage
     const pipeline = {
-      Lead: [],
-      Applied: [],
-      Interview: [],
-      'Merit List': [],
-      Admitted: []
+      pending_fee: [],
+      fee_verified: [],
+      admitted: [],
+      rejected: []
     };
 
-    rows.forEach(row => {
-      if (pipeline[row.stage]) {
-        pipeline[row.stage].push({
-          id: row.id,
-          name: row.name,
-          email: row.email,
-          phone: row.phone || '',
-          program_id: row.program_id,
-          program: row.program || 'N/A',
-          rawScore: row.score || '',
-          score: row.score ? `${parseFloat(row.score).toFixed(2)}%` : 'N/A',
-          date: row.created_at ? new Date(row.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'N/A'
-        });
+    rows.forEach(r => {
+      const item = {
+        id: r.id,
+        full_name: r.full_name,
+        father_name: r.father_name || '',
+        phone: r.phone || r.father_phone || '',
+        email: r.email || '',
+        bform_number: r.bform_number || r.cnic || '',
+        target_class: r.target_class || r.program || 'General',
+        admission_fee: r.admission_fee || 5000,
+        fee_status: r.fee_status || 'pending',
+        fee_paid_at: r.fee_paid_at,
+        payment_method: r.payment_method,
+        assigned_section: r.assigned_section,
+        assigned_roll_number: r.assigned_roll_number,
+        campus_id: r.campus_id,
+        campus_name: r.campus_name || 'Main Campus',
+        created_at: r.created_at,
+        status: r.status
+      };
+
+      if (r.status === 'admitted' || r.status === 'approved') {
+        pipeline.admitted.push(item);
+      } else if (r.status === 'fee_verified' || r.fee_status === 'paid') {
+        pipeline.fee_verified.push(item);
+      } else if (r.status === 'rejected') {
+        pipeline.rejected.push(item);
+      } else {
+        pipeline.pending_fee.push(item);
       }
     });
 
-
-    res.json({ success: true, pipeline });
+    res.json({
+      success: true,
+      pipeline
+    });
   } catch (error) {
+    console.error('Admissions Pipeline Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Helper to auto-create verification document tasks when a candidate applies or transitions past 'Lead' stage
-const createPendingDocuments = async (applicationId, campusId) => {
-  try {
-    const [existing] = await pool.query('SELECT id FROM admission_documents WHERE application_id = ?', [applicationId]);
-    if (existing.length === 0) {
-      await pool.query(`
-        INSERT INTO admission_documents (application_id, document_type, status, notes, campus_id)
-        VALUES 
-        (?, 'Intermediate Transcript', 'pending', 'Awaiting academic transcript verification', ?),
-        (?, 'Matric Certificate', 'pending', 'Awaiting secondary school certificate verification', ?)
-      `, [applicationId, campusId, applicationId, campusId]);
-      
-      await pool.query(
-        'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-        ['verification', 'Generated Matric and Intermediate certificate verification tasks.', campusId]
-      );
-    }
-  } catch (err) {
-    console.error('Error auto-creating verification documents:', err);
-  }
-};
-
 // ==========================================
-// 3. VERIFICATIONS
+// 3. ALL APPLICANTS DIRECTORY
 // ==========================================
-router.get('/verifications', async (req, res) => {
+router.get('/applicants', async (req, res) => {
   try {
-    const { filter, params } = getCampusFilter(req);
-    const aliasFilter = filter.replace('campus_id', 'v.campus_id');
+    const { filter, params } = getAdmissionFilter(req);
+    const { search, grade, status } = req.query;
 
-    const [rows] = await pool.query(`
-      SELECT v.id, v.application_id, v.document_type as type, v.status, v.notes, 
-             DATE_FORMAT(v.created_at, '%b %d, %Y') as date, a.name 
-      FROM admission_documents v
-      JOIN admission_applications a ON v.application_id = a.id
-      WHERE 1=1 ${aliasFilter}
-      ORDER BY v.created_at DESC
-    `, params);
-    res.json({ success: true, documents: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
+    let query = `
+      SELECT ar.*, c.name as campus_name, cl.name as class_name
+      FROM admission_requests ar
+      LEFT JOIN campuses c ON ar.campus_id = c.id
+      LEFT JOIN classes cl ON ar.assigned_class_id = cl.id
+      WHERE 1=1 ${filter}
+    `;
 
-router.post('/verifications/action', async (req, res) => {
-  try {
-    const { id, action } = req.body; // action: 'verified' or 'rejected'
-    const campus_id = req.user.campus_id;
+    const queryParams = [...params];
 
-    await pool.query('UPDATE admission_documents SET status = ? WHERE id = ?', [action, id]);
-
-    // Log the verification action
-    const [[doc]] = await pool.query(`
-      SELECT v.document_type, a.name 
-      FROM admission_documents v 
-      JOIN admission_applications a ON v.application_id = a.id 
-      WHERE v.id = ?
-    `, [id]);
-
-    if (doc) {
-      await pool.query(
-        'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-        ['verification', `Document "${doc.document_type}" for ${doc.name} was marked as ${action}.`, campus_id]
-      );
+    if (search) {
+      query += ' AND (ar.full_name LIKE ? OR ar.father_name LIKE ? OR ar.phone LIKE ? OR ar.bform_number LIKE ? OR ar.cnic LIKE ?)';
+      const s = `%${search}%`;
+      queryParams.push(s, s, s, s, s);
     }
 
-    res.json({ success: true, message: `Document ${action}` });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 4. INTERVIEWS
-// ==========================================
-router.get('/interviews', async (req, res) => {
-  try {
-    const { filter, params } = getCampusFilter(req);
-    const aliasFilter = filter.replace('campus_id', 'i.campus_id');
-
-    const [rows] = await pool.query(`
-      SELECT i.*, a.name, p.name as program
-      FROM admission_interviews i
-      JOIN admission_applications a ON i.application_id = a.id
-      LEFT JOIN programs p ON a.program_id = p.id
-      WHERE 1=1 ${aliasFilter}
-      ORDER BY i.interview_date ASC, i.interview_time ASC
-    `, params);
-    res.json({ success: true, interviews: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 5. MERIT LIST
-// ==========================================
-router.get('/merit-list', async (req, res) => {
-  try {
-    const { filter, params } = getCampusFilter(req);
-    const aliasFilter = filter.replace('campus_id', 'a.campus_id');
-
-    const [rows] = await pool.query(`
-      SELECT a.*, p.name as program 
-      FROM admission_applications a
-      LEFT JOIN programs p ON a.program_id = p.id
-      WHERE a.stage IN ('Merit List', 'Admitted') ${aliasFilter}
-      ORDER BY a.score DESC
-    `, params);
-    res.json({ success: true, meritList: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 6. ACTIVITIES (LOGS)
-// ==========================================
-router.get('/activities', async (req, res) => {
-  try {
-    const { filter, params } = getCampusFilter(req);
-    const [rows] = await pool.query(`SELECT * FROM admission_logs WHERE 1=1 ${filter} ORDER BY created_at DESC LIMIT 10`, params);
-    res.json({ success: true, activities: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 7. GET PROGRAMS (for dropdowns)
-// ==========================================
-router.get('/programs', async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT id, name, code FROM programs ORDER BY name ASC');
-    res.json({ success: true, programs: rows });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 8. ADD NEW CANDIDATE
-// ==========================================
-router.post('/applications', async (req, res) => {
-  try {
-    const { name, email, phone, program_id, stage, score } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ success: false, message: 'Name and Email are required' });
+    if (grade && grade !== 'All' && grade !== 'all') {
+      query += ' AND (ar.target_class = ? OR ar.program = ?)';
+      queryParams.push(grade, grade);
     }
 
-    const campus_id = req.user.campus_id;
-    
-    // Insert application
-    const [result] = await pool.query(
-      'INSERT INTO admission_applications (name, email, phone, program_id, stage, score, campus_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [name, email, phone || null, program_id || null, stage || 'Lead', score || null, campus_id]
-    );
-
-    // Log action
-    await pool.query(
-      'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-      ['application', `Added candidate ${name} in stage ${stage || 'Lead'}`, campus_id]
-    );
-
-    // Auto-create document verification tasks if the candidate starts past "Lead" stage
-    if (stage && stage !== 'Lead') {
-      await createPendingDocuments(result.insertId, campus_id);
+    if (status && status !== 'All' && status !== 'all') {
+      if (status === 'pending_fee') {
+        query += ' AND (ar.status = "pending_fee" OR ar.status = "pending" OR ar.fee_status = "pending") AND ar.status != "admitted" AND ar.status != "approved"';
+      } else if (status === 'fee_verified') {
+        query += ' AND (ar.status = "fee_verified" OR ar.fee_status = "paid") AND ar.status != "admitted" AND ar.status != "approved"';
+      } else if (status === 'admitted') {
+        query += ' AND (ar.status = "admitted" OR ar.status = "approved")';
+      } else if (status === 'rejected') {
+        query += ' AND ar.status = "rejected"';
+      }
     }
 
-    res.status(201).json({ success: true, message: 'Candidate added successfully', id: result.insertId });
+    query += ' ORDER BY ar.created_at DESC LIMIT 100';
+
+    const [applicants] = await pool.query(query, queryParams);
+    res.json({ success: true, applicants });
   } catch (error) {
+    console.error('Admissions Applicants Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 // ==========================================
-// 9. UPDATE CANDIDATE STAGE
+// 4. REGISTER NEW WALK-IN ADMISSION INQUIRY
 // ==========================================
-router.put('/applications/:id/stage', async (req, res) => {
+router.post('/inquiry', async (req, res) => {
+  try {
+    const {
+      full_name, father_name, dob, gender, bform_number, father_cnic,
+      phone, father_phone, email, address, city, target_class,
+      campus_id, admission_fee, last_qualification, notes
+    } = req.body;
+
+    if (!full_name || !father_name || !target_class) {
+      return res.status(400).json({
+        success: false,
+        message: 'Student Name, Father Name, and Target Grade/Class are required.'
+      });
+    }
+
+    const assignedCampusId = campus_id || req.user?.campus_id || 1;
+    const feeAmount = admission_fee ? parseFloat(admission_fee) : 5000.00;
+
+    const [result] = await pool.query(`
+      INSERT INTO admission_requests (
+        full_name, father_name, dob, gender, bform_number, cnic,
+        father_cnic, phone, father_phone, email, address, city,
+        target_class, program, campus_id, admission_fee, fee_status,
+        status, last_qualification, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'pending_fee', ?, ?)
+    `, [
+      full_name.trim(),
+      father_name.trim(),
+      dob || null,
+      gender || 'Male',
+      bform_number || '',
+      bform_number || '',
+      father_cnic || '',
+      phone || father_phone || '',
+      father_phone || phone || '',
+      email || '',
+      address || '',
+      city || 'Lahore',
+      target_class,
+      target_class,
+      assignedCampusId,
+      feeAmount,
+      last_qualification || '',
+      notes || ''
+    ]);
+
+    res.status(201).json({
+      success: true,
+      message: 'Admission registered successfully. Challan ready for fee payment.',
+      inquiryId: result.insertId
+    });
+  } catch (error) {
+    console.error('Create Admission Inquiry Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==========================================
+// 5. FINANCE FEE CLEARANCE & VERIFICATION
+// ==========================================
+router.put('/:id/fee-clearance', async (req, res) => {
   try {
     const { id } = req.params;
-    const { stage } = req.body;
-    const campus_id = req.user.campus_id;
+    const { payment_method } = req.body;
+    const verifiedBy = req.user ? req.user.id : null;
 
-    if (!stage) {
-      return res.status(400).json({ success: false, message: 'Stage is required' });
-    }
-
-    const validStages = ['Lead', 'Applied', 'Shortlisted', 'Interview', 'Merit List', 'Admitted'];
-    if (!validStages.includes(stage)) {
-      return res.status(400).json({ success: false, message: 'Invalid stage value' });
-    }
-
-    // Fetch candidate info for log before updating
-    const [candidates] = await pool.query('SELECT name FROM admission_applications WHERE id = ?', [id]);
-    if (candidates.length === 0) {
-      return res.status(404).json({ success: false, message: 'Candidate not found' });
-    }
-    const name = candidates[0].name;
-
-    // Update query with campus-isolation checks
-    const filterClause = req.user.role === 'super_admin' ? '' : 'AND campus_id = ?';
-    const filterParams = req.user.role === 'super_admin' ? [stage, id] : [stage, id, campus_id];
-
-    const [result] = await pool.query(
-      `UPDATE admission_applications SET stage = ? WHERE id = ? ${filterClause}`,
-      filterParams
-    );
+    const [result] = await pool.query(`
+      UPDATE admission_requests
+      SET fee_status = 'paid',
+          fee_paid_at = NOW(),
+          fee_verified_by = ?,
+          payment_method = ?,
+          status = 'fee_verified'
+      WHERE id = ?
+    `, [verifiedBy, payment_method || 'Cash Counter', id]);
 
     if (result.affectedRows === 0) {
-      return res.status(403).json({ success: false, message: 'Access denied or candidate not found' });
+      return res.status(404).json({ success: false, message: 'Applicant not found' });
     }
 
-    // Log action
-    await pool.query(
-      'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-      ['application', `Moved ${name} to ${stage}`, campus_id]
+    res.json({
+      success: true,
+      message: 'Admission fee verified and cleared successfully. Forwarded to Principal for Section & Roll No allotment!'
+    });
+  } catch (error) {
+    console.error('Fee Clearance Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ==========================================
+// 6. PRINCIPAL FINAL APPROVAL & ENROLLMENT
+// ==========================================
+router.put('/:id/principal-admit', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+    const { class_id, section, roll_number, review_note } = req.body;
+
+    const [[applicant]] = await connection.query(
+      'SELECT * FROM admission_requests WHERE id = ?',
+      [id]
     );
 
-    // Auto-create document verification tasks when candidate transitions beyond 'Lead' stage
-    if (stage !== 'Lead') {
-      await createPendingDocuments(id, campus_id);
+    if (!applicant) {
+      connection.release();
+      return res.status(404).json({ success: false, message: 'Applicant not found' });
     }
 
-    res.json({ success: true, message: 'Stage updated successfully' });
+    const assignedRollNo = roll_number || `STU-${Date.now().toString().slice(-4)}`;
+    const assignedSection = section || 'Section A';
+
+    // 1. Update admission_requests status to admitted
+    await connection.query(`
+      UPDATE admission_requests
+      SET status = 'admitted',
+          assigned_class_id = ?,
+          assigned_section = ?,
+          assigned_roll_number = ?,
+          reviewed_by = ?,
+          review_note = ?
+      WHERE id = ?
+    `, [class_id || null, assignedSection, assignedRollNo, req.user?.id || null, review_note || 'Approved by Principal', id]);
+
+    // 2. Create User account for student if not exists
+    const studentEmail = applicant.email || `student.${applicant.id}@school.edu`;
+    const hashedPassword = await bcrypt.hash('Student123', 10);
+
+    const [userRes] = await connection.query(`
+      INSERT INTO users (name, email, password, role, campus_id, is_approved, client_id)
+      VALUES (?, ?, ?, 'student', ?, 1, (SELECT client_id FROM campuses WHERE id = ? LIMIT 1))
+      ON DUPLICATE KEY UPDATE campus_id = VALUES(campus_id)
+    `, [applicant.full_name, studentEmail, hashedPassword, applicant.campus_id || 1, applicant.campus_id || 1]);
+
+    const studentUserId = userRes.insertId || userRes.id;
+
+    // 3. Create Student record
+    if (studentUserId) {
+      await connection.query(`
+        INSERT INTO students (user_id, roll_number, academic_status, father_name, father_cnic, father_number, bform_number)
+        VALUES (?, ?, 'active', ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE roll_number = VALUES(roll_number)
+      `, [
+        studentUserId,
+        assignedRollNo,
+        applicant.father_name || '',
+        applicant.father_cnic || '',
+        applicant.father_phone || applicant.phone || '',
+        applicant.bform_number || applicant.cnic || ''
+      ]);
+
+      // 4. Enroll in class if class_id provided
+      if (class_id) {
+        const [[studentRec]] = await connection.query('SELECT id FROM students WHERE user_id = ?', [studentUserId]);
+        if (studentRec) {
+          await connection.query(`
+            INSERT INTO student_classes (student_id, class_id)
+            VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE class_id = VALUES(class_id)
+          `, [studentRec.id, class_id]);
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({
+      success: true,
+      message: `Student ${applicant.full_name} officially admitted and enrolled in ${assignedSection} with Roll No: ${assignedRollNo}!`
+    });
+  } catch (error) {
+    await connection.rollback();
+    console.error('Principal Admit Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  } finally {
+    connection.release();
+  }
+});
+
+// ==========================================
+// 7. GET AVAILABLE CLASSES FOR A CAMPUS
+// ==========================================
+router.get('/classes/:campusId', async (req, res) => {
+  try {
+    const { campusId } = req.params;
+    const [classes] = await pool.query(`
+      SELECT cl.id, cl.name, cl.section, cl.academic_year, r.room_number
+      FROM classes cl
+      LEFT JOIN rooms r ON cl.room_id = r.id
+      WHERE cl.campus_id = ?
+      ORDER BY cl.name ASC
+    `, [campusId]);
+
+    res.json({ success: true, classes });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
 // ==========================================
-// 10. DELETE CANDIDATE
+// 8. GET CAMPUSES / BRANCHES FOR DROPDOWN
 // ==========================================
-router.delete('/applications/:id', async (req, res) => {
+router.get('/campuses', async (req, res) => {
   try {
-    const { id } = req.params;
-    const campus_id = req.user.campus_id;
-
-    // Check ownership/campus if not super_admin
-    const filterClause = req.user.role === 'super_admin' ? '' : 'AND campus_id = ?';
-    const filterParams = req.user.role === 'super_admin' ? [id] : [id, campus_id];
-
-    // Fetch candidate info for log before deleting
-    const [candidates] = await pool.query('SELECT name FROM admission_applications WHERE id = ?', [id]);
-    if (candidates.length === 0) {
-      return res.status(404).json({ success: false, message: 'Candidate not found' });
+    const clientId = req.user?.client_id;
+    let query = 'SELECT id, name, location FROM campuses WHERE 1=1';
+    let params = [];
+    if (clientId && req.user.role !== 'master_admin') {
+      query += ' AND client_id = ?';
+      params.push(clientId);
     }
-    const name = candidates[0].name;
+    query += ' ORDER BY name ASC';
+    const [campuses] = await pool.query(query, params);
 
-    const [result] = await pool.query(
-      `DELETE FROM admission_applications WHERE id = ? ${filterClause}`,
-      filterParams
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(403).json({ success: false, message: 'Access denied or candidate not found' });
+    // Fallback if tenant has no campus yet
+    if (!campuses || campuses.length === 0) {
+      const [allCampuses] = await pool.query('SELECT id, name, location FROM campuses ORDER BY id ASC LIMIT 5');
+      return res.json({ success: true, campuses: allCampuses });
     }
 
-    // Log action
-    await pool.query(
-      'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-      ['application', `Deleted candidate ${name}`, campus_id]
-    );
-
-    res.json({ success: true, message: 'Candidate deleted successfully' });
+    res.json({ success: true, campuses });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ==========================================
-// 11. EDIT/UPDATE CANDIDATE DETAILS
-// ==========================================
-router.put('/applications/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, phone, program_id, stage, score } = req.body;
-    const campus_id = req.user.campus_id;
-
-    if (!name || !email) {
-      return res.status(400).json({ success: false, message: 'Name and Email are required' });
-    }
-
-    // Check ownership/campus if not super_admin
-    const filterClause = req.user.role === 'super_admin' ? '' : 'AND campus_id = ?';
-    const filterParams = req.user.role === 'super_admin' 
-      ? [name, email, phone || null, program_id || null, stage || 'Lead', score || null, id] 
-      : [name, email, phone || null, program_id || null, stage || 'Lead', score || null, id, campus_id];
-
-    const [result] = await pool.query(
-      `UPDATE admission_applications 
-       SET name = ?, email = ?, phone = ?, program_id = ?, stage = ?, score = ? 
-       WHERE id = ? ${filterClause}`,
-      filterParams
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(403).json({ success: false, message: 'Access denied or candidate not found' });
-    }
-
-    // Log action
-    await pool.query(
-      'INSERT INTO admission_logs (action_type, action_text, campus_id) VALUES (?, ?, ?)',
-      ['application', `Updated candidate details for ${name}`, campus_id]
-    );
-
-    res.json({ success: true, message: 'Candidate updated successfully' });
-  } catch (error) {
+    console.error('Admissions campuses error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

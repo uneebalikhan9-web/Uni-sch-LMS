@@ -107,7 +107,17 @@ router.post('/clients', async (req, res) => {
 
     const newClientId = clientResult.insertId;
 
-    // 2. Create the VC (SuperAdmin for that university) in the users table
+    // 2. Create initial branch for this tenant
+    const branchName = req.body.initial_branch_name || (instType === 'school' ? 'Main Branch' : 'Main Campus');
+    const branchLocation = req.body.initial_branch_location || (instType === 'school' ? 'Main School Campus' : 'Main University Campus');
+
+    const [branchResult] = await connection.query(
+      `INSERT INTO campuses (name, location, subscription_plan, client_id, is_active) VALUES (?, ?, 'basic', ?, 1)`,
+      [branchName, branchLocation, newClientId]
+    );
+    const initialBranchId = branchResult.insertId;
+
+    // 3. Create the VC / Director (SuperAdmin for that university/school) in the users table
     const hashedPassword = await bcrypt.hash(password || 'Lancers123', 10);
     
     // Check if user already exists
@@ -117,8 +127,8 @@ router.post('/clients', async (req, res) => {
     }
 
     await connection.query(
-      `INSERT INTO users (name, email, password, role, campus_id, client_id) VALUES (?, ?, ?, 'super_admin', 1, ?)`,
-      [admin_name, admin_email, hashedPassword, newClientId]
+      `INSERT INTO users (name, email, password, role, campus_id, client_id) VALUES (?, ?, ?, 'super_admin', ?, ?)`,
+      [admin_name, admin_email, hashedPassword, initialBranchId, newClientId]
     );
 
     await connection.commit();
@@ -265,6 +275,121 @@ router.put('/settings', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error updating settings' });
   } finally {
     connection.release();
+  }
+});
+
+
+// ==========================================
+// BRANCH / CAMPUS MANAGEMENT FOR TENANTS
+// ==========================================
+
+// @route   GET /api/masteradmin/clients/:clientId/branches
+// @desc    Get all branches/campuses for a specific tenant
+router.get('/clients/:clientId/branches', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const [branches] = await pool.query(`
+      SELECT c.*,
+             (SELECT COUNT(*) FROM users u WHERE u.campus_id = c.id AND u.role = 'student') as student_count,
+             (SELECT COUNT(*) FROM users u WHERE u.campus_id = c.id AND u.role = 'teacher') as teacher_count
+      FROM campuses c
+      WHERE c.client_id = ?
+      ORDER BY c.name ASC
+    `, [clientId]);
+
+    res.json({ success: true, branches });
+  } catch (error) {
+    console.error('MasterAdmin Get Branches Error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching branches' });
+  }
+});
+
+// @route   POST /api/masteradmin/clients/:clientId/branches
+// @desc    Add a new branch/campus for a tenant
+router.post('/clients/:clientId/branches', async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    const { name, location, dept_code } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Branch name is required' });
+    }
+
+    const [result] = await pool.query(
+      'INSERT INTO campuses (name, location, dept_code, subscription_plan, client_id, is_active) VALUES (?, ?, ?, ?, ?, 1)',
+      [name.trim(), location ? location.trim() : '', dept_code || null, 'basic', clientId]
+    );
+
+    res.json({
+      success: true,
+      message: 'Branch created successfully',
+      branch: {
+        id: result.insertId,
+        name: name.trim(),
+        location: location ? location.trim() : '',
+        dept_code: dept_code || null,
+        client_id: parseInt(clientId),
+        student_count: 0,
+        teacher_count: 0
+      }
+    });
+  } catch (error) {
+    console.error('MasterAdmin Add Branch Error:', error);
+    res.status(500).json({ success: false, message: 'Error creating branch' });
+  }
+});
+
+// @route   PUT /api/masteradmin/branches/:id
+// @desc    Update branch details
+router.put('/branches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, location, dept_code } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Branch name is required' });
+    }
+
+    await pool.query(
+      'UPDATE campuses SET name = ?, location = ?, dept_code = ? WHERE id = ?',
+      [name.trim(), location ? location.trim() : '', dept_code || null, id]
+    );
+
+    res.json({ success: true, message: 'Branch updated successfully' });
+  } catch (error) {
+    console.error('MasterAdmin Update Branch Error:', error);
+    res.status(500).json({ success: false, message: 'Error updating branch' });
+  }
+});
+
+// @route   DELETE /api/masteradmin/branches/:id
+// @desc    Delete a branch
+router.delete('/branches/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if there are active students enrolled in this branch via users table
+    const [[{ studentCount }]] = await pool.query(
+      "SELECT COUNT(*) as studentCount FROM users WHERE campus_id = ? AND role = 'student'",
+      [id]
+    );
+    if (studentCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete branch. It currently has ${studentCount} enrolled student(s). Please reassign or remove students first.`
+      });
+    }
+
+    // Unassign users/classes/courses from this branch before deleting to prevent foreign key errors
+    await pool.query('UPDATE users SET campus_id = NULL WHERE campus_id = ?', [id]);
+    await pool.query('UPDATE classes SET campus_id = NULL WHERE campus_id = ?', [id]);
+    await pool.query('UPDATE courses SET campus_id = NULL WHERE campus_id = ?', [id]);
+    await pool.query('DELETE FROM campuses WHERE id = ?', [id]);
+
+    res.json({ success: true, message: 'Branch deleted successfully' });
+  } catch (error) {
+    console.error('MasterAdmin Delete Branch Error:', error);
+    res.status(500).json({ success: false, message: 'Error deleting branch' });
   }
 });
 

@@ -600,7 +600,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
     ['course_reports','Course Reports',                                       <FileText size={20}/>,             campusReports.length],
     ...(isSchool ? [['staff-attendance', 'Staff Attendance', <UserFocus size={20}/>, null]] : []),
     ['face-attendance','Face Attendance',                                     <UserFocus size={20}/>,            null],
-    ['timetable',     isSchool ? 'School Schedule' : 'Academic Schedule',    <Clock size={20}/>,                timetables.length],
+    ['timetable',     isSchool ? 'College Schedule' : 'Academic Schedule',    <Clock size={20}/>,                timetables.length],
     ['labs',          'Lab & Assets',                                        <SquaresFour size={20}/>,          labs.length],
     ['pending',       isSchool ? 'Admission Queue' : 'Enrollment Queue',     <UserPlus size={20}/>,             pendingStudents.length],
     ['my-payroll',    'My Payroll',                                          <Cardholder size={20}/>,           myPayroll.length],
@@ -741,7 +741,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
           }}>
             {isSchool ? <Buildings size={16} weight="duotone" color="#10b981" /> : <GraduationCap size={16} weight="duotone" color="#818cf8" />}
-            <span>{isSchool ? 'School Mode' : 'University Mode'}</span>
+            <span>{isSchool ? 'College Mode' : 'University Mode'}</span>
           </div>
           <nav style={S.nav}>
             <button type="button" onClick={()=>{navigate('/chat');setMobileMenuOpen(false);}} style={S.navBtn} className="nav-btn">
@@ -823,7 +823,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             onOpenClassCourses={(item)=>{setSelectedClassForCourses(item);setShowClassCoursesModal(true);}}
             onOpenStudentProfile={(item)=>{setSelectedStudentForProfile(item);setShowStudentProfileModal(true);}}
             onOpenBulkModal={(type) => { setBulkModalType(type); setShowBulkModal(true); }}
-            setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses} isSchool={isSchool}/>
+            setActiveTab={setActiveTab} setNewCourse={setNewCourse} courses={courses} isCollege={isCollege}/>
         )}
 
         {activeTab === 'my-payroll' && (

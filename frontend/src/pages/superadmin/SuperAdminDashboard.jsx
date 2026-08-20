@@ -325,6 +325,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
   // ─── Sidebar Nav Items ────────────────────────────────────────
   const isSchool = (user?.institution_type || 'university') === 'school';
+  const isCollege = isSchool;
 
   const isModuleAllowed = (moduleId) => {
     if (['overview', 'campuses', 'reports', 'trainings'].includes(moduleId)) return true;
@@ -333,9 +334,9 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
   };
 
   const navItems = [
-    ['overview',    isSchool ? 'School Overview' : 'VC Overview',            <ChartBar   size={20} />],
+    ['overview',    isSchool ? 'College Overview' : 'VC Overview',            <ChartBar   size={20} />],
     ['rector',      isSchool ? 'Executive Office' : 'Rectorate / Pro-VC',    <Buildings  size={20} />],
-    ['campuses',    isSchool ? 'School Branches' : 'Academic Depts',         <Buildings  size={20} />],
+    ['campuses',    isSchool ? 'College Campuses' : 'Academic Depts',         <Buildings  size={20} />],
     ['principals',  isSchool ? 'Principals & Heads' : 'Dean & HODs',         <UserCircle size={20} />],
     ['bd',          'BD Management',                                         <IdentificationCard size={20} />],
     ['hr',          isSchool ? 'HR & Staff' : 'HR & Faculty',                <IdentificationCard size={20} />],
@@ -462,7 +463,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
           <div style={S.globalBadge}>
             <ShieldCheck size={14} weight="fill" />
-            <span>{isSchool ? 'School Executive Portal' : 'VC Institutional Master'}</span>
+            <span>{isSchool ? 'Admin Executive Portal' : 'VC Institutional Master'}</span>
           </div>
 
           <nav style={S.nav}>
@@ -494,8 +495,8 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
       }} className="main-content">
         <header style={S.header}>
           <div>
-            <h1 style={S.title}>{isSchool ? 'School Executive Portal' : 'VC Institutional Master'}</h1>
-            <p style={S.subtitle}>{isSchool ? 'School-wide Operations & Branch Management' : 'University-wide Operations & KPI Monitoring'}</p>
+            <h1 style={S.title}>{isSchool ? 'Admin Executive Portal' : 'VC Institutional Master'}</h1>
+            <p style={S.subtitle}>{isSchool ? 'College-wide Operations & Campus Management' : 'University-wide Operations & KPI Monitoring'}</p>
           </div>
           <div style={S.campusCounter}>
             <Buildings size={16} color="#94a3b8" />
@@ -505,7 +506,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
 
         {/* ── Tab Sections ── */}
         {activeTab === "overview" && (
-          <SAOverview overview={overview} departmentStats={departmentStats} key={`${leftSidebarOpen}-${rightPanelOpen}`} />
+          <SAOverview overview={overview} departmentStats={departmentStats} setActiveTab={setActiveTab} isSchool={isSchool} key={`${leftSidebarOpen}-${rightPanelOpen}`} />
         )}
 
         {activeTab === "campuses" && (
@@ -739,7 +740,7 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
               {user.name.charAt(0)}
             </div>
             <h3 style={S.profileName}>{user.name}</h3>
-            <span style={S.roleBadge}>{isSchool ? 'School Director / Exec' : 'Vice Chancellor'}</span>
+            <span style={S.roleBadge}>{isSchool ? 'College Admin / Executive' : 'Vice Chancellor'}</span>
             <div style={S.profileStats}>
               <div style={S.profileStat}>
                 <span style={S.profileStatLabel}>Last Login</span>
@@ -755,10 +756,10 @@ function SuperAdminDashboard({ user = { name: "Main Department" }, onLogout }) {
           <div style={S.platformStats}>
             <h4 style={S.platformStatsTitle}>Platform Stats</h4>
             {[
-              ['Departments', overview.totalCampuses  || 0, 'var(--primary-color, #4f46e5)'],
-              ['HODs',        overview.totalPrincipals || 0, '#7c3aed'],
+              [isSchool ? 'Campuses' : 'Departments', overview.totalCampuses  || 0, 'var(--primary-color, #4f46e5)'],
+              [isSchool ? 'Principals' : 'HODs',        overview.totalPrincipals || 0, '#7c3aed'],
               ['BD Users',    overview.totalBds        || 0, '#ec4899'],
-              ['Teachers',    overview.totalTeachers   || 0, '#2563eb'],
+              [isSchool ? 'Faculty' : 'Teachers',    overview.totalTeachers   || 0, '#2563eb'],
               ['Students',    overview.totalStudents   || 0, '#0891b2'],
             ].map(([label, val, color]) => (
               <div key={label} style={S.platformStatItem}>
