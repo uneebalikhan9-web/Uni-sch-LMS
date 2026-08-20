@@ -654,7 +654,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           className="sidebar-toggle-btn left-open-btn"
           title="Open sidebar"
         >
-          â€º
+          >
         </button>
       )}
 
@@ -985,7 +985,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           className="sidebar-toggle-btn right-close-btn"
           title="Close sidebar"
         >
-          â€º
+          >
         </button>
 
         {/* Inner Scrollable Container */}
@@ -1286,4 +1286,5 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
 }
 
 export default PrincipalDashboard;
+
 
