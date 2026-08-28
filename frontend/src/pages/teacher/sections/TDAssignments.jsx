@@ -29,6 +29,7 @@ export default function TDAssignments({
   handleDeleteAssignment
 }) {
   const token = sessionStorage.getItem('token');
+  const [videoQuestions, setVideoQuestions] = React.useState(['', '', '', '', '']);
 
   if (assignmentViewMode === 'list') {
     return (
@@ -507,6 +508,10 @@ export default function TDAssignments({
                         const updated = [...videoQuestions];
                         updated[qNum - 1] = e.target.value;
                         setVideoQuestions(updated);
+                        setNewAssignment({
+                          ...newAssignment,
+                          video_questions: updated.filter(q => q && q.trim())
+                        });
                       }}
                     />
                   </div>
