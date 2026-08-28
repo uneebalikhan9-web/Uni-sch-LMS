@@ -59,7 +59,7 @@ export default function SDAssignments({
         alert(data.message || 'Error submitting quiz');
       }
     } catch (e) {
-      alert('Network error submitting quiz');
+      alert('Error submitting quiz: ' + (e.message || 'Network error'));
     } finally {
       setSubmittingQuizId(null);
     }

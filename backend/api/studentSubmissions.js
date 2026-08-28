@@ -7,7 +7,15 @@ const { uploadSubmission, handleUploadError } = require('../middleware/upload');
 const router = express.Router();
 
 // Student uploads submission file
-router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'), handleUploadError, async (req, res) => {
+const optionalUploadSubmission = (req, res, next) => {
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    return uploadSubmission.single('file')(req, res, (err) => handleUploadError(err, req, res, next));
+  }
+  next();
+};
+
+router.post('/:assignmentId/submit', verifyToken, optionalUploadSubmission, async (req, res) => {
   try {
     const { assignmentId } = req.params;
     let studentId = req.user.student_id;
