@@ -2,6 +2,7 @@ import React from 'react';
 import { ClipboardText, FileText, VideoCamera, Play, LockKey, Question, SpeakerHigh, CheckCircle, PaperPlaneRight, Sparkle, Clock } from "@phosphor-icons/react";
 import { S } from './SDStyles';
 import VideoPlayer from './VideoPlayer';
+import API_BASE_URL from '../../../config/api';
 
 export default function SDAssignments({ 
   assignments, 
