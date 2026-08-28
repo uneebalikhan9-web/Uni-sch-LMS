@@ -191,4 +191,29 @@ router.post('/watch-time', verifyToken, isStudent, async (req, res) => {
   }
 });
 
+
+// Student: Mark video as completed
+router.post('/video-completed', verifyToken, isStudent, async (req, res) => {
+  try {
+    const { assignment_id } = req.body;
+    const student_id = req.user.student_id;
+    
+    if (!assignment_id) {
+      return res.status(400).json({ success: false, message: 'Missing assignment_id' });
+    }
+
+    await pool.query(`
+      INSERT INTO submissions (assignment_id, student_id, is_video_completed, submitted_at)
+      VALUES (?, ?, 1, NOW())
+      ON DUPLICATE KEY UPDATE 
+        is_video_completed = 1
+    `, [assignment_id, student_id]);
+
+    res.status(200).json({ success: true, message: 'Video marked as completed' });
+  } catch (error) {
+    console.error('Video completion error:', error);
+    res.status(500).json({ success: false, message: 'Error marking video as completed' });
+  }
+});
+
 module.exports = router;

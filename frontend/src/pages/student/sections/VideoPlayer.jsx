@@ -3,7 +3,7 @@ import YouTube from 'react-youtube';
 import { Play, Pause, SpeakerHigh, SpeakerSlash, CornersOut } from '@phosphor-icons/react';
 import API_BASE_URL from '../../../config/api';
 
-export default function VideoPlayer({ videoId, assignmentId, onClose }) {
+export default function VideoPlayer({ videoId, assignmentId, onClose, onVideoEnd }) {
   const [isPlaying, setIsPlaying] = useState(true);
   const [player, setPlayer] = useState(null);
   const [duration, setDuration] = useState(0);
@@ -29,12 +29,13 @@ export default function VideoPlayer({ videoId, assignmentId, onClose }) {
   };
 
   const onStateChange = (event) => {
-    // We optionally keep this if we want to pause when video pauses
-    // event.data: 1 = playing, 2 = paused, 0 = ended
     if (event.data === 1) {
       setIsPlaying(true);
-    } else if (event.data === 2 || event.data === 0) {
+    } else if (event.data === 2) {
       setIsPlaying(false);
+    } else if (event.data === 0) {
+      setIsPlaying(false);
+      if (onVideoEnd) onVideoEnd();
     }
   };
 

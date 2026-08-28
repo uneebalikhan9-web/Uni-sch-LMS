@@ -7,10 +7,11 @@ const router = express.Router();
 // Teacher: Create Assignment
 router.post('/', verifyToken, isTeacher, async (req, res) => {
   try {
-    const { title, description, course_id, due_date, max_marks, status, assignment_type, academic_period, external_link } = req.body;
+    const { title, description, course_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions } = req.body;
+    const questionsJson = Array.isArray(video_questions) ? JSON.stringify(video_questions) : (video_questions || null);
     const [result] = await pool.query(
-      'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period, external_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027', external_link || null]
+      'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027', external_link || null, questionsJson]
     );
 
     res.status(201).json({
@@ -72,10 +73,11 @@ router.get('/course/:courseId', verifyToken, async (req, res) => {
 router.put('/:id', verifyToken, isTeacher, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, due_date, max_marks, status, assignment_type, academic_period, external_link } = req.body;
+    const { title, description, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions } = req.body;
+    const questionsJson = Array.isArray(video_questions) ? JSON.stringify(video_questions) : (video_questions || null);
     const [result] = await pool.query(
-      'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ?, status = ?, assignment_type = ?, academic_period = ?, external_link = ? WHERE id = ? AND teacher_id = ?',
-      [title, description, due_date, max_marks, status, assignment_type, academic_period, external_link || null, id, req.user.employee_id]
+      'UPDATE assignments SET title = ?, description = ?, due_date = ?, max_marks = ?, status = ?, assignment_type = ?, academic_period = ?, external_link = ?, video_questions = ? WHERE id = ? AND teacher_id = ?',
+      [title, description, due_date, max_marks, status, assignment_type, academic_period, external_link || null, questionsJson, id, req.user.employee_id]
     );
 
     if (result.affectedRows === 0) {

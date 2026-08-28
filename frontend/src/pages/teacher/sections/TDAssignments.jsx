@@ -484,11 +484,36 @@ export default function TDAssignments({
                 onChange={(e) => setNewAssignment({ ...newAssignment, external_link: e.target.value })}
                 required={newAssignment.assignment_type === 'Video Lecture'}
               />
-              {newAssignment.assignment_type === 'Video Lecture' && (
-                <span style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px', display: 'block', fontWeight: '600' }}>
-                  Video Lectures will automatically expire 24 hours after creation.
-                </span>
-              )}
+
+            {newAssignment.assignment_type === 'Video Lecture' && (
+              <div style={{ ...S.fullWidth, background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1.5px solid #cbd5e1', marginTop: '12px' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ❓ Add Video Quiz Questions (Up to 5 Questions)
+                </h4>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>
+                  These questions will unlock automatically for students after they watch the full video lecture.
+                </p>
+                {[1, 2, 3, 4, 5].map((qNum) => (
+                  <div key={qNum} style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>
+                      Question {qNum} {qNum === 1 ? '*' : '(Optional)'}
+                    </label>
+                    <input 
+                      type="text" 
+                      placeholder={`Enter Question ${qNum}...`}
+                      style={S.input}
+                      value={videoQuestions[qNum - 1] || ''}
+                      onChange={(e) => {
+                        const updated = [...videoQuestions];
+                        updated[qNum - 1] = e.target.value;
+                        setVideoQuestions(updated);
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+  
             </div>
 
             <div style={S.inputGroup}>

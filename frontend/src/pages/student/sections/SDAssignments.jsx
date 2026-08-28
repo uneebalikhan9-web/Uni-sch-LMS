@@ -10,6 +10,60 @@ export default function SDAssignments({
   setSubmissionText 
 }) {
   const [playingVideoId, setPlayingVideoId] = React.useState(null);
+  const [completedVideos, setCompletedVideos] = React.useState({});
+  const [quizAnswers, setQuizAnswers] = React.useState({});
+  const [submittingQuizId, setSubmittingQuizId] = React.useState(null);
+
+  const speakQuestion = (text) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('Speech synthesis is not supported in this browser.');
+    }
+  };
+
+  const handleVideoCompleted = async (assignmentId) => {
+    setCompletedVideos(prev => ({ ...prev, [assignmentId]: true }));
+    try {
+      const token = sessionStorage.getItem('token');
+      await fetch(`${API_BASE_URL}/api/submissions/video-completed`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ assignment_id: assignmentId })
+      });
+    } catch (e) {
+      console.error('Failed to mark video completed:', e);
+    }
+  };
+
+  const handleQuizSubmit = async (assignmentId) => {
+    setSubmittingQuizId(assignmentId);
+    try {
+      const token = sessionStorage.getItem('token');
+      const answersObj = quizAnswers[assignmentId] || {};
+      const formattedAnswers = Object.entries(answersObj).map(([idx, ans]) => `Q${parseInt(idx)+1}: ${ans}`).join('\n\n');
+
+      const res = await fetch(`${API_BASE_URL}/api/submissions/${assignmentId}/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ submission_text: formattedAnswers })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Quiz answers submitted successfully!');
+        window.location.reload();
+      } else {
+        alert(data.message || 'Error submitting quiz');
+      }
+    } catch (e) {
+      alert('Network error submitting quiz');
+    } finally {
+      setSubmittingQuizId(null);
+    }
+  };
 
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
@@ -92,29 +146,120 @@ export default function SDAssignments({
 
               {isVideoLecture && (
                 <div style={{ marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-                  <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '15px' }}>Lecture Video</h4>
-                  {isVideoExpired ? (
-                    <div style={{ padding: '16px', background: '#fee2e2', color: '#991b1b', borderRadius: '8px', textAlign: 'center', fontWeight: '600', fontSize: '14px' }}>
-                      This video lecture has expired (exceeded 24 hours).
+                  <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '15px', fontWeight: '800' }}>📹 Lecture Video</h4>
+                  {embedUrl ? (
+                    <div>
+                      {playingVideoId === a.id ? (
+                        <>
+                          <VideoPlayer 
+                            videoId={embedUrl} 
+                            assignmentId={a.id} 
+                            onClose={() => setPlayingVideoId(null)}
+                            onVideoEnd={() => handleVideoCompleted(a.id)}
+                          />
+                          {!a.is_video_completed && !completedVideos[a.id] && (
+                            <button
+                              onClick={() => handleVideoCompleted(a.id)}
+                              style={{ marginTop: '10px', padding: '8px 14px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                              ✓ I Have Completed Watching Video
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <button 
+                          onClick={() => setPlayingVideoId(a.id)}
+                          style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#4f46e5,#6366f1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(79,70,229,0.25)' }}
+                        >
+                          ▶ Watch Video Lecture
+                        </button>
+                      )}
+
+                      {/* Video Quiz Questions Section */}
+                      {(() => {
+                        const rawQs = a.video_questions;
+                        const questionsList = typeof rawQs === 'string' ? JSON.parse(rawQs || '[]') : (rawQs || []);
+                        const isUnlocked = a.is_video_completed || a.submitted_at || completedVideos[a.id] || questionsList.length === 0;
+
+                        if (questionsList.length === 0) return null;
+
+                        return (
+                          <div style={{ marginTop: '20px', background: isUnlocked ? '#f8fafc' : '#f1f5f9', borderRadius: '14px', padding: '18px', border: `1.5px solid ${isUnlocked ? '#cbd5e1' : '#e2e8f0'}` }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>
+                                ❓ Video Lecture Quiz Questions ({questionsList.length})
+                              </h4>
+                              {!isUnlocked && (
+                                <span style={{ padding: '4px 10px', background: '#fef3c7', color: '#92400e', borderRadius: '20px', fontSize: '11px', fontWeight: '800' }}>
+                                  🔒 Locked - Watch Full Video First
+                                </span>
+                              )}
+                            </div>
+
+                            {!isUnlocked ? (
+                              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                                Please watch the video lecture completely. Once finished, these questions will unlock automatically for you to answer.
+                              </p>
+                            ) : (
+                              <div>
+                                <p style={{ fontSize: '12px', color: '#059669', fontWeight: '700', marginBottom: '14px' }}>
+                                  ✅ Video Completed! Answer the questions below. Click 🔊 to listen to any question out loud.
+                                </p>
+
+                                {questionsList.map((qText, qIdx) => (
+                                  <div key={qIdx} style={{ background: '#ffffff', borderRadius: '10px', padding: '14px', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '10px' }}>
+                                      <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '13px' }}>
+                                        Question {qIdx + 1}: {qText}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => speakQuestion(qText)}
+                                        style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+                                        title="Listen to question"
+                                      >
+                                        🔊 Listen Question
+                                      </button>
+                                    </div>
+
+                                    {a.submission_text ? (
+                                      <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', color: '#334155', marginTop: '6px' }}>
+                                        <strong>Your Submitted Answers:</strong>
+                                        <pre style={{ whiteSpace: 'pre-wrap', margin: '4px 0 0', fontFamily: 'inherit' }}>{a.submission_text}</pre>
+                                      </div>
+                                    ) : (
+                                      <textarea
+                                        rows="2"
+                                        placeholder="Type your answer here..."
+                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                                        value={(quizAnswers[a.id] && quizAnswers[a.id][qIdx]) || ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setQuizAnswers(prev => ({
+                                            ...prev,
+                                            [a.id]: { ...(prev[a.id] || {}), [qIdx]: val }
+                                          }));
+                                        }}
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+
+                                {!a.submission_text && (
+                                  <button
+                                    onClick={() => handleQuizSubmit(a.id)}
+                                    disabled={submittingQuizId === a.id}
+                                    style={{ marginTop: '8px', padding: '10px 22px', background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}
+                                  >
+                                    {submittingQuizId === a.id ? 'Submitting...' : '🚀 Submit Quiz Answers'}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
-                  ) : embedUrl ? (
-                    playingVideoId === a.id ? (
-                      <>
-                        <div style={{ marginBottom: '8px', fontSize: '13px', color: '#ef4444', fontWeight: '600', display: 'flex', alignItems: 'center' }}>
-                          <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#ef4444', borderRadius: '50%', marginRight: '6px', animation: 'pulse 2s infinite' }}></span>
-                          Available for 24 hours
-                        </div>
-                        <VideoPlayer videoId={embedUrl} assignmentId={a.id} onClose={() => setPlayingVideoId(null)} />
-                      </>
-                    ) : (
-                      <button 
-                        onClick={() => setPlayingVideoId(a.id)}
-                        style={{ padding: '8px 16px', background: 'var(--primary-color, #4f46e5)', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                      >
-                        <span style={{ display: 'inline-block', width: '0', height: '0', borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: '8px solid #fff' }}></span>
-                        Watch Video
-                      </button>
-                    )
                   ) : (
                     <a 
                       href={a.external_link} 
