@@ -330,7 +330,7 @@ router.put('/:id/principal-admit', async (req, res) => {
     if (studentUserId) {
       await connection.query(`
         INSERT INTO students (user_id, roll_number, academic_status, father_name, father_cnic, father_number, bform_number)
-        VALUES (?, ?, 'active', ?, ?, ?, ?)
+        VALUES (?, ?, 'regular', ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE roll_number = VALUES(roll_number)
       `, [
         studentUserId,
