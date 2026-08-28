@@ -778,7 +778,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
             <p style={S.subtitle}>Academic Council Portal — {user.name}</p>
           </div>
           <div style={S.headerActions}>
-              <div style={{...S.dateBadge, cursor:"pointer", background: "#e0e7ff", color: "#4f46e5"}} onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/student-admission?campus=${user.campus_id}`); alert("Admission Link Copied: " + `${window.location.origin}/student-admission?campus=${user.campus_id}`); }}><span>??</span> <span>Copy Admission Link</span></div>
+              <div style={{...S.dateBadge, cursor:"pointer", background: "#e0e7ff", color: "#4f46e5"}} onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/student-admission?campus=${user.campus_id}`); alert("Admission Link Copied: " + `${window.location.origin}/student-admission?campus=${user.campus_id}`); }}><span>Link:</span> <span>Copy Admission Link</span></div>
             <div style={S.dateBadge}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
             <div style={S.refreshBadge} onClick={() => fetchData()}>
               <Clock size={14}/> <span>Refresh</span>
