@@ -167,7 +167,8 @@ export default function StudentAdmissionForm() {
     try {
       const formData = new FormData();
       Object.entries(form).forEach(([k, v]) => formData.append(k, v));
-      if (photo) formData.append('photo', photo);
+      const urlParams = new URLSearchParams(window.location.search); const campusId = urlParams.get('campus'); if (campusId) { formData.append('campus_id', campusId); }
+        if (photo) formData.append('photo', photo);
       const res = await fetch(`${API_BASE_URL}/api/public-admissions/apply`, { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success) { setSubmitted(true); }
