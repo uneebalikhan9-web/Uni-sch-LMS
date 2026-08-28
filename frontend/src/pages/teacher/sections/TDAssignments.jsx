@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, PlusCircle, PencilSimple, Circle, CalendarBlank, ArrowLeft, Flask, Download, List, Clock, Trash } from "@phosphor-icons/react";
+import { FileText, PlusCircle, PencilSimple, Question, Sparkle, Circle, CalendarBlank, ArrowLeft, Flask, Download, List, Clock, Trash } from "@phosphor-icons/react";
 import { S } from './TDStyles';
 import API_BASE_URL from '../../../config/api';
 
@@ -487,13 +487,18 @@ export default function TDAssignments({
               />
 
             {newAssignment.assignment_type === 'Video Lecture' && (
-              <div style={{ ...S.fullWidth, background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1.5px solid #cbd5e1', marginTop: '12px' }}>
-                <h4 style={{ margin: '0 0 8px 0', color: '#0f172a', fontSize: '14px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  ❓ Add Video Quiz Questions (Up to 5 Questions)
-                </h4>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>
-                  These questions will unlock automatically for students after they watch the full video lecture.
-                </p>
+              <div style={{ ...S.fullWidth, background: '#ffffff', padding: '18px', borderRadius: '14px', border: '1.5px solid #cbd5e1', marginTop: '14px', boxShadow: '0 4px 16px rgba(0,0,0,0.03)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#eef2ff', color: '#4f46e5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Question size={18} weight="bold" />
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, color: '#0f172a', fontSize: '14.5px', fontWeight: '800' }}>
+                      Add Video Quiz Assessment Questions (Up to 5)
+                    </h4>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>Questions auto-unlock for students after watching the full video lecture</span>
+                  </div>
+                </div>
                 {[1, 2, 3, 4, 5].map((qNum) => (
                   <div key={qNum} style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '4px' }}>

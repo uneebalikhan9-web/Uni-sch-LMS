@@ -1,5 +1,5 @@
 import React from 'react';
-import { ClipboardText, FileText } from "@phosphor-icons/react";
+import { ClipboardText, FileText, VideoCamera, Play, LockKey, Question, SpeakerHigh, CheckCircle, PaperPlaneRight, Sparkle, Clock } from "@phosphor-icons/react";
 import { S } from './SDStyles';
 import VideoPlayer from './VideoPlayer';
 
@@ -145,8 +145,25 @@ export default function SDAssignments({
               )}
 
               {isVideoLecture && (
-                <div style={{ marginTop: '16px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-                  <h4 style={{ margin: '0 0 8px 0', color: '#1e293b', fontSize: '15px', fontWeight: '800' }}>📹 Lecture Video</h4>
+                <div style={{ marginTop: '20px', borderTop: '1.5px dashed #e2e8f0', paddingTop: '18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 12px rgba(79,70,229,0.3)' }}>
+                        <VideoCamera size={20} weight="fill" />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, color: '#0f172a', fontSize: '15px', fontWeight: '800' }}>Interactive Video Lecture</h4>
+                        <span style={{ fontSize: '12px', color: '#64748b' }}>Watch full video lecture to unlock assessment quiz</span>
+                      </div>
+                    </div>
+
+                    {(a.is_video_completed || completedVideos[a.id]) && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', background: '#dcfce7', color: '#15803d', borderRadius: '20px', fontSize: '12px', fontWeight: '800' }}>
+                        <CheckCircle size={15} weight="fill" /> Video Completed
+                      </span>
+                    )}
+                  </div>
+
                   {embedUrl ? (
                     <div>
                       {playingVideoId === a.id ? (
@@ -160,22 +177,22 @@ export default function SDAssignments({
                           {!a.is_video_completed && !completedVideos[a.id] && (
                             <button
                               onClick={() => handleVideoCompleted(a.id)}
-                              style={{ marginTop: '10px', padding: '8px 14px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                              style={{ marginTop: '12px', padding: '9px 16px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                             >
-                              ✓ I Have Completed Watching Video
+                              <CheckCircle size={16} weight="fill" /> I Have Completed Watching Video
                             </button>
                           )}
                         </>
                       ) : (
                         <button 
                           onClick={() => setPlayingVideoId(a.id)}
-                          style={{ padding: '10px 20px', background: 'linear-gradient(135deg,#4f46e5,#6366f1)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '700', fontSize: '14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(79,70,229,0.25)' }}
+                          style={{ padding: '11px 22px', background: 'linear-gradient(135deg, #4f46e5, #6366f1)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 6px 18px rgba(79,70,229,0.3)', transition: 'all 0.2s' }}
                         >
-                          ▶ Watch Video Lecture
+                          <Play size={18} weight="fill" /> Watch Video Lecture
                         </button>
                       )}
 
-                      {/* Video Quiz Questions Section */}
+                      {/* Video Quiz Section */}
                       {(() => {
                         const rawQs = a.video_questions;
                         const questionsList = typeof rawQs === 'string' ? JSON.parse(rawQs || '[]') : (rawQs || []);
@@ -184,54 +201,71 @@ export default function SDAssignments({
                         if (questionsList.length === 0) return null;
 
                         return (
-                          <div style={{ marginTop: '20px', background: isUnlocked ? '#f8fafc' : '#f1f5f9', borderRadius: '14px', padding: '18px', border: `1.5px solid ${isUnlocked ? '#cbd5e1' : '#e2e8f0'}` }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                              <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>
-                                ❓ Video Lecture Quiz Questions ({questionsList.length})
-                              </h4>
-                              {!isUnlocked && (
-                                <span style={{ padding: '4px 10px', background: '#fef3c7', color: '#92400e', borderRadius: '20px', fontSize: '11px', fontWeight: '800' }}>
-                                  🔒 Locked - Watch Full Video First
+                          <div style={{ marginTop: '20px', background: isUnlocked ? '#ffffff' : '#f8fafc', borderRadius: '16px', padding: '20px', border: `1.5px solid ${isUnlocked ? '#cbd5e1' : '#e2e8f0'}`, boxShadow: isUnlocked ? '0 8px 24px rgba(0,0,0,0.04)' : 'none' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: isUnlocked ? '#eef2ff' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isUnlocked ? '#4f46e5' : '#94a3b8' }}>
+                                  <Question size={20} weight="bold" />
+                                </div>
+                                <div>
+                                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>
+                                    Post-Lecture Assessment Quiz ({questionsList.length} Questions)
+                                  </h4>
+                                  <span style={{ fontSize: '12px', color: '#64748b' }}>Evaluate your learning after finishing the video</span>
+                                </div>
+                              </div>
+
+                              {!isUnlocked ? (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#fef3c7', color: '#92400e', borderRadius: '20px', fontSize: '12px', fontWeight: '800', border: '1px solid #fde68a' }}>
+                                  <LockKey size={16} weight="fill" /> Locked – Watch Full Video First
+                                </span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#dcfce7', color: '#15803d', borderRadius: '20px', fontSize: '12px', fontWeight: '800' }}>
+                                  <CheckCircle size={16} weight="fill" /> Questions Unlocked
                                 </span>
                               )}
                             </div>
 
                             {!isUnlocked ? (
-                              <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                                Please watch the video lecture completely. Once finished, these questions will unlock automatically for you to answer.
-                              </p>
+                              <div style={{ padding: '14px 16px', background: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <Clock size={22} color="#94a3b8" weight="duotone" />
+                                <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: '1.5' }}>
+                                  Please watch the video lecture completely. Once finished, all assessment questions will automatically unlock for you to answer.
+                                </p>
+                              </div>
                             ) : (
                               <div>
-                                <p style={{ fontSize: '12px', color: '#059669', fontWeight: '700', marginBottom: '14px' }}>
-                                  ✅ Video Completed! Answer the questions below. Click 🔊 to listen to any question out loud.
-                                </p>
+                                <div style={{ padding: '12px 16px', background: '#f0fdf4', borderRadius: '10px', border: '1px solid #bbf7d0', marginBottom: '16px', fontSize: '13px', color: '#15803d', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Sparkle size={18} weight="fill" />
+                                  <span>Video completed! Click 🔊 Listen Question to hear audio and type your answers below.</span>
+                                </div>
 
                                 {questionsList.map((qText, qIdx) => (
-                                  <div key={qIdx} style={{ background: '#ffffff', borderRadius: '10px', padding: '14px', marginBottom: '12px', border: '1px solid #e2e8f0' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', gap: '10px' }}>
-                                      <div style={{ fontWeight: '800', color: '#1e293b', fontSize: '13px' }}>
-                                        Question {qIdx + 1}: {qText}
-                                      </div>
+                                  <div key={qIdx} style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', marginBottom: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '12px' }}>
+                                      <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '13.5px' }}>
+                                        Question {qIdx + 1}: <span style={{ fontWeight: '600', color: '#334155' }}>{qText}</span>
+                                      </span>
                                       <button
                                         type="button"
                                         onClick={() => speakQuestion(qText)}
-                                        style={{ padding: '4px 10px', background: '#eef2ff', color: '#4f46e5', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '700', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
-                                        title="Listen to question"
+                                        style={{ padding: '6px 12px', background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, transition: 'all 0.2s' }}
+                                        title="Listen to question audio"
                                       >
-                                        🔊 Listen Question
+                                        <SpeakerHigh size={16} weight="fill" /> Listen Question
                                       </button>
                                     </div>
 
                                     {a.submission_text ? (
-                                      <div style={{ background: '#f8fafc', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', color: '#334155', marginTop: '6px' }}>
-                                        <strong>Your Submitted Answers:</strong>
-                                        <pre style={{ whiteSpace: 'pre-wrap', margin: '4px 0 0', fontFamily: 'inherit' }}>{a.submission_text}</pre>
+                                      <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', color: '#334155', border: '1px solid #f1f5f9' }}>
+                                        <strong style={{ color: '#475569', display: 'block', marginBottom: '4px' }}>Your Submitted Response:</strong>
+                                        <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', color: '#0f172a', fontWeight: '600' }}>{a.submission_text}</pre>
                                       </div>
                                     ) : (
                                       <textarea
-                                        rows="2"
-                                        placeholder="Type your answer here..."
-                                        style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }}
+                                        rows="3"
+                                        placeholder="Type your answer clearly..."
+                                        style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
                                         value={(quizAnswers[a.id] && quizAnswers[a.id][qIdx]) || ''}
                                         onChange={(e) => {
                                           const val = e.target.value;
@@ -249,9 +283,9 @@ export default function SDAssignments({
                                   <button
                                     onClick={() => handleQuizSubmit(a.id)}
                                     disabled={submittingQuizId === a.id}
-                                    style={{ marginTop: '8px', padding: '10px 22px', background: 'linear-gradient(135deg,#10b981,#059669)', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}
+                                    style={{ marginTop: '10px', padding: '12px 24px', background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: '800', fontSize: '14px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 14px rgba(16,185,129,0.3)' }}
                                   >
-                                    {submittingQuizId === a.id ? 'Submitting...' : '🚀 Submit Quiz Answers'}
+                                    <PaperPlaneRight size={18} weight="bold" /> {submittingQuizId === a.id ? 'Submitting Responses...' : 'Submit Quiz Answers'}
                                   </button>
                                 )}
                               </div>
