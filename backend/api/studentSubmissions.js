@@ -113,14 +113,23 @@ router.get('/course/:courseId', verifyToken, async (req, res) => {
     const { courseId } = req.params;
     const studentId = req.user.student_id;
     
+    let studentId = req.user.student_id;
+    if (!studentId) {
+      const [st] = await pool.query('SELECT id FROM students WHERE user_id = ?', [req.user.id]);
+      if (st.length > 0) studentId = st[0].id;
+    }
+
     const [assignments] = await pool.query(`
       SELECT 
         a.*,
         s.id as submission_id,
         s.submitted_at,
+        s.submission_text,
         s.file_path as submitted_file,
         s.marks_obtained,
-        s.feedback
+        s.feedback,
+        s.watch_time_seconds,
+        s.is_video_completed
       FROM assignments a
       LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = ?
       WHERE a.course_id = ?

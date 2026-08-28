@@ -14,6 +14,7 @@ export default function SDAssignments({
   const [completedVideos, setCompletedVideos] = React.useState({});
   const [quizAnswers, setQuizAnswers] = React.useState({});
   const [submittingQuizId, setSubmittingQuizId] = React.useState(null);
+  const [submittedQuizzes, setSubmittedQuizzes] = React.useState({});
 
   const speakQuestion = (text) => {
     if ('speechSynthesis' in window) {
@@ -59,6 +60,7 @@ export default function SDAssignments({
       });
       const data = await res.json();
       if (data.success) {
+        setSubmittedQuizzes(prev => ({ ...prev, [assignmentId]: formattedAnswers }));
         alert('Quiz answers submitted successfully!');
         window.location.reload();
       } else {
@@ -206,11 +208,14 @@ export default function SDAssignments({
 
                         if (questionsList.length === 0) return null;
 
+                        const isSubmitted = !!(a.submitted_at || a.submission_text || submittedQuizzes[a.id]);
+                        const activeSubmissionText = a.submission_text || submittedQuizzes[a.id] || '';
+
                         return (
-                          <div style={{ marginTop: '20px', background: isUnlocked ? '#ffffff' : '#f8fafc', borderRadius: '16px', padding: '20px', border: `1.5px solid ${isUnlocked ? '#cbd5e1' : '#e2e8f0'}`, boxShadow: isUnlocked ? '0 8px 24px rgba(0,0,0,0.04)' : 'none' }}>
+                          <div style={{ marginTop: '20px', background: isUnlocked ? '#ffffff' : '#f8fafc', borderRadius: '16px', padding: '20px', border: `1.5px solid ${isSubmitted ? '#bbf7d0' : isUnlocked ? '#cbd5e1' : '#e2e8f0'}`, boxShadow: isUnlocked ? '0 8px 24px rgba(0,0,0,0.04)' : 'none' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: isUnlocked ? '#eef2ff' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isUnlocked ? '#4f46e5' : '#94a3b8' }}>
+                                <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: isSubmitted ? '#dcfce7' : isUnlocked ? '#eef2ff' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isSubmitted ? '#15803d' : isUnlocked ? '#4f46e5' : '#94a3b8' }}>
                                   <Question size={20} weight="bold" />
                                 </div>
                                 <div>
@@ -225,8 +230,12 @@ export default function SDAssignments({
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#fef3c7', color: '#92400e', borderRadius: '20px', fontSize: '12px', fontWeight: '800', border: '1px solid #fde68a' }}>
                                   <LockKey size={16} weight="fill" /> Locked – Watch Full Video First
                                 </span>
-                              ) : (
+                              ) : isSubmitted ? (
                                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#dcfce7', color: '#15803d', borderRadius: '20px', fontSize: '12px', fontWeight: '800' }}>
+                                  <CheckCircle size={16} weight="fill" /> {a.marks_obtained ? `Graded: ${a.marks_obtained}/${a.max_marks}` : 'Quiz Submitted'}
+                                </span>
+                              ) : (
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', background: '#e0e7ff', color: '#4f46e5', borderRadius: '20px', fontSize: '12px', fontWeight: '800' }}>
                                   <CheckCircle size={16} weight="fill" /> Questions Unlocked
                                 </span>
                               )}
@@ -246,46 +255,60 @@ export default function SDAssignments({
                                   <span>Video completed! Click 🔊 Listen Question to hear audio and type your answers below.</span>
                                 </div>
 
-                                {questionsList.map((qText, qIdx) => (
-                                  <div key={qIdx} style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', marginBottom: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '12px' }}>
-                                      <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '13.5px' }}>
-                                        Question {qIdx + 1}: <span style={{ fontWeight: '600', color: '#334155' }}>{qText}</span>
-                                      </span>
-                                      <button
-                                        type="button"
-                                        onClick={() => speakQuestion(qText)}
-                                        style={{ padding: '6px 12px', background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, transition: 'all 0.2s' }}
-                                        title="Listen to question audio"
-                                      >
-                                        <SpeakerHigh size={16} weight="fill" /> Listen Question
-                                      </button>
-                                    </div>
+                                {questionsList.map((qText, qIdx) => {
+                                  let submittedAnswerText = '';
+                                  if (activeSubmissionText) {
+                                    const match = activeSubmissionText.match(new RegExp(`Q${qIdx + 1}:[\\s\\S]*?(?:Answer:\\s*)?([\\s\\S]*?)(?=(?:\\n\\n---|\\n\\nQ\\d+:|$))`, 'i'));
+                                    if (match && match[1]) {
+                                      submittedAnswerText = match[1].trim();
+                                    } else {
+                                      const lines = activeSubmissionText.split('\n');
+                                      const line = lines.find(l => l.trim().startsWith(`Q${qIdx + 1}:`));
+                                      if (line) submittedAnswerText = line.replace(`Q${qIdx + 1}:`, '').trim();
+                                    }
+                                  }
 
-                                    {a.submission_text ? (
-                                      <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', color: '#334155', border: '1px solid #f1f5f9' }}>
-                                        <strong style={{ color: '#475569', display: 'block', marginBottom: '4px' }}>Your Submitted Response:</strong>
-                                        <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit', color: '#0f172a', fontWeight: '600' }}>{a.submission_text}</pre>
+                                  return (
+                                    <div key={qIdx} style={{ background: '#ffffff', borderRadius: '12px', padding: '16px', marginBottom: '14px', border: `1px solid ${isSubmitted ? '#cbd5e1' : '#e2e8f0'}`, boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', gap: '12px' }}>
+                                        <span style={{ fontWeight: '800', color: '#0f172a', fontSize: '13.5px' }}>
+                                          Question {qIdx + 1}: <span style={{ fontWeight: '600', color: '#334155' }}>{qText}</span>
+                                        </span>
+                                        <button
+                                          type="button"
+                                          onClick={() => speakQuestion(qText)}
+                                          style={{ padding: '6px 12px', background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe', borderRadius: '8px', cursor: 'pointer', fontWeight: '700', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px', flexShrink: 0, transition: 'all 0.2s' }}
+                                          title="Listen to question audio"
+                                        >
+                                          <SpeakerHigh size={16} weight="fill" /> Listen Question
+                                        </button>
                                       </div>
-                                    ) : (
-                                      <textarea
-                                        rows="3"
-                                        placeholder="Type your answer clearly..."
-                                        style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
-                                        value={(quizAnswers[a.id] && quizAnswers[a.id][qIdx]) || ''}
-                                        onChange={(e) => {
-                                          const val = e.target.value;
-                                          setQuizAnswers(prev => ({
-                                            ...prev,
-                                            [a.id]: { ...(prev[a.id] || {}), [qIdx]: val }
-                                          }));
-                                        }}
-                                      />
-                                    )}
-                                  </div>
-                                ))}
 
-                                {!a.submission_text && (
+                                      {isSubmitted ? (
+                                        <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', color: '#0f172a', border: '1px solid #e2e8f0' }}>
+                                          <strong style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '3px' }}>Your Submitted Answer:</strong>
+                                          <span style={{ fontWeight: '700' }}>{submittedAnswerText || activeSubmissionText || 'Submitted'}</span>
+                                        </div>
+                                      ) : (
+                                        <textarea
+                                          rows="3"
+                                          placeholder="Type your answer clearly..."
+                                          style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #cbd5e1', fontSize: '13px', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }}
+                                          value={(quizAnswers[a.id] && quizAnswers[a.id][qIdx]) || ''}
+                                          onChange={(e) => {
+                                            const val = e.target.value;
+                                            setQuizAnswers(prev => ({
+                                              ...prev,
+                                              [a.id]: { ...(prev[a.id] || {}), [qIdx]: val }
+                                            }));
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                  );
+                                })}
+
+                                {!isSubmitted ? (
                                   <button
                                     onClick={() => handleQuizSubmit(a.id)}
                                     disabled={submittingQuizId === a.id}
@@ -293,6 +316,10 @@ export default function SDAssignments({
                                   >
                                     <PaperPlaneRight size={18} weight="bold" /> {submittingQuizId === a.id ? 'Submitting Responses...' : 'Submit Quiz Answers'}
                                   </button>
+                                ) : (
+                                  <div style={{ marginTop: '12px', padding: '12px 18px', background: '#f0fdf4', borderRadius: '10px', border: '1px solid #bbf7d0', color: '#15803d', fontWeight: '800', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                    <CheckCircle size={18} weight="fill" /> Quiz Answers Successfully Submitted!
+                                  </div>
                                 )}
                               </div>
                             )}
