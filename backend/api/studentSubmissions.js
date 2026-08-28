@@ -150,8 +150,6 @@ router.get('/:submissionId/download', verifyToken, async (req, res) => {
 router.get('/course/:courseId', verifyToken, async (req, res) => {
   try {
     const { courseId } = req.params;
-    const studentId = req.user.student_id;
-    
     let studentId = req.user.student_id;
     if (!studentId) {
       const [st] = await pool.query('SELECT id FROM students WHERE user_id = ?', [req.user.id]);
