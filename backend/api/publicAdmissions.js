@@ -62,7 +62,8 @@ router.post('/apply', upload.single('photo'), async (req, res) => {
   }
 });
 
-router.get('/pending', async (req, res) => {
+const { verifyToken } = require('../middleware/auth');
+router.get('/pending', verifyToken, async (req, res) => {
   try {
     const campusId = req.user.campus_id;
     let query = 'SELECT * FROM admission_requests WHERE (status = "fee_verified" OR status = "pending" OR status = "pending_fee") AND status != "admitted" AND status != "approved" AND status != "rejected"';
