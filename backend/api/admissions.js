@@ -66,7 +66,7 @@ router.get('/stats', async (req, res) => {
     });
   } catch (error) {
     console.error('Admissions Stats Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -130,7 +130,7 @@ router.get('/pipeline', async (req, res) => {
     });
   } catch (error) {
     console.error('Admissions Pipeline Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -181,7 +181,7 @@ router.get('/applicants', async (req, res) => {
     res.json({ success: true, applicants });
   } catch (error) {
     console.error('Admissions Applicants Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -241,7 +241,7 @@ router.post('/inquiry', async (req, res) => {
     });
   } catch (error) {
     console.error('Create Admission Inquiry Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -274,7 +274,7 @@ router.put('/:id/fee-clearance', async (req, res) => {
     });
   } catch (error) {
     console.error('Fee Clearance Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -362,7 +362,7 @@ router.put('/:id/principal-admit', async (req, res) => {
   } catch (error) {
     await connection.rollback();
     console.error('Principal Admit Error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   } finally {
     connection.release();
   }
@@ -384,7 +384,7 @@ router.get('/classes/:campusId', async (req, res) => {
 
     res.json({ success: true, classes });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
@@ -412,7 +412,7 @@ router.get('/campuses', async (req, res) => {
     res.json({ success: true, campuses });
   } catch (error) {
     console.error('Admissions campuses error:', error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: 'DB Error: ' + (error.sqlMessage || error.message) });
   }
 });
 
