@@ -45,7 +45,12 @@ export default function SDAssignments({
     try {
       const token = sessionStorage.getItem('token');
       const answersObj = quizAnswers[assignmentId] || {};
-      const formattedAnswers = Object.entries(answersObj).map(([idx, ans]) => `Q${parseInt(idx)+1}: ${ans}`).join('\n\n');
+      const rawQs = (assignments.find(x => x.id === assignmentId) || {}).video_questions;
+      const questionsList = typeof rawQs === 'string' ? JSON.parse(rawQs || '[]') : (rawQs || []);
+      const formattedAnswers = questionsList.map((qText, idx) => {
+        const ans = answersObj[idx] || answersObj[idx.toString()] || '';
+        return `Q${idx + 1}: ${qText}\nAnswer: ${ans}`;
+      }).join('\n\n---\n\n');
 
       const res = await fetch(`${API_BASE_URL}/api/submissions/${assignmentId}/submit`, {
         method: 'POST',

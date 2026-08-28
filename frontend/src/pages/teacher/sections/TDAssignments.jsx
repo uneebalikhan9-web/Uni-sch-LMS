@@ -306,13 +306,58 @@ export default function TDAssignments({
                 )}
 
                 {selectedSubmissionStudent.submission_text && (
-                  <div style={{ ...S.contentSection, background: '#f8fafc', padding: '16px', borderRadius: '14px', border: '1.5px solid #cbd5e1', marginBottom: '16px' }}>
-                    <label style={{ ...S.sectionLabel, color: '#4f46e5', fontWeight: '800', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ ...S.contentSection, background: '#f8fafc', padding: '18px', borderRadius: '16px', border: '1.5px solid #cbd5e1', marginBottom: '20px' }}>
+                    <label style={{ ...S.sectionLabel, color: '#4f46e5', fontWeight: '800', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                       <Question size={20} weight="bold" /> {selectedAssignment?.assignment_type === 'Video Lecture' ? 'Student Video Quiz Responses' : 'Student Submission Text'}
                     </label>
-                    <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#0f172a', fontWeight: '600', fontSize: '13.5px', background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '8px', lineHeight: '1.6' }}>
-                      {selectedSubmissionStudent.submission_text}
-                    </div>
+
+                    {selectedAssignment?.assignment_type === 'Video Lecture' ? (
+                      (() => {
+                        const rawQs = selectedAssignment?.video_questions;
+                        const questionsList = typeof rawQs === 'string' ? JSON.parse(rawQs || '[]') : (rawQs || []);
+                        const text = selectedSubmissionStudent.submission_text || '';
+
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+                            {questionsList.length > 0 ? (
+                              questionsList.map((qText, qIdx) => {
+                                let answerText = '';
+                                const match = text.match(new RegExp(`Q${qIdx + 1}:[\\s\\S]*?(?:Answer:\\s*)?([\\s\\S]*?)(?=(?:\\n\\n---|\\n\\nQ\\d+:|$))`, 'i'));
+                                if (match && match[1]) {
+                                  answerText = match[1].trim();
+                                } else {
+                                  const lines = text.split('\n');
+                                  const line = lines.find(l => l.trim().startsWith(`Q${qIdx + 1}:`));
+                                  if (line) {
+                                    answerText = line.replace(`Q${qIdx + 1}:`, '').trim();
+                                  }
+                                }
+
+                                return (
+                                  <div key={qIdx} style={{ background: '#ffffff', borderRadius: '12px', padding: '14px 16px', border: '1px solid #cbd5e1', boxShadow: '0 2px 6px rgba(0,0,0,0.02)' }}>
+                                    <div style={{ fontWeight: '800', color: '#0f172a', fontSize: '13.5px', marginBottom: '6px' }}>
+                                      Question {qIdx + 1}: <span style={{ color: '#4f46e5', fontWeight: '700' }}>{qText}</span>
+                                    </div>
+                                    <div style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '13px' }}>
+                                      <strong style={{ color: '#64748b', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '3px' }}>Student Answer:</strong>
+                                      <span style={{ color: '#0f172a', fontWeight: '700' }}>{answerText || 'No answer submitted'}</span>
+                                    </div>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#0f172a', fontWeight: '600', fontSize: '13.5px', background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                                {text}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()
+                    ) : (
+                      <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#0f172a', fontWeight: '600', fontSize: '13.5px', background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '8px', lineHeight: '1.6' }}>
+                        {selectedSubmissionStudent.submission_text}
+                      </div>
+                    )}
                   </div>
                 )}
 
