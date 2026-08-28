@@ -6,6 +6,45 @@ const { uploadSubmission, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
 
+// Get ALL assignments for the logged-in student
+router.get('/my-assignments', verifyToken, isStudent, async (req, res) => {
+  try {
+    let studentId = req.user.student_id;
+    if (!studentId) {
+      const [st] = await pool.query('SELECT id FROM students WHERE user_id = ?', [req.user.id]);
+      if (st.length > 0) studentId = st[0].id;
+    }
+
+    const [assignments] = await pool.query(`
+      SELECT DISTINCT
+        a.*,
+        c.title as course_title,
+        c.code as course_code,
+        u_t.name as teacher_name,
+        s.id as submission_id,
+        s.submitted_at,
+        s.submission_text,
+        s.file_path as submitted_file,
+        s.marks_obtained,
+        s.feedback,
+        s.watch_time_seconds,
+        s.is_video_completed
+      FROM assignments a
+      JOIN courses c ON a.course_id = c.id
+      LEFT JOIN users u_t ON c.teacher_id = u_t.id OR a.teacher_id = u_t.id
+      LEFT JOIN submissions s ON a.id = s.assignment_id AND s.student_id = ?
+      ORDER BY a.created_at DESC
+    `, [studentId]);
+
+    res.status(200).json({ success: true, assignments });
+  } catch (error) {
+    console.error('Error fetching my-assignments:', error);
+    res.status(500).json({ success: false, message: 'Error fetching assignments' });
+  }
+});
+
+
+
 // Student uploads submission file
 const optionalUploadSubmission = (req, res, next) => {
   const contentType = req.headers['content-type'] || '';

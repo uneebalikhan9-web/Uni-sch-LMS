@@ -422,23 +422,15 @@ function StudentDashboard({ user, onLogout }) {
   }
 
   const fetchStudentAssignments = async () => {
-    if (courses.length === 0) return;
-    let allAssignments = [];
-    for (const course of courses) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/submissions/course/${course.id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        })
-        const data = await response.json()
-        if (data.success) {
-          const courseAssignments = data.assignments.map(a => ({...a, course_title: course.title, teacher_name: course.teacher_name}));
-          allAssignments = [...allAssignments, ...courseAssignments];
-        }
-      } catch (e) { console.error(e) }
-    }
-    // Deduplicate by assignment id just in case a course is fetched twice
-    const uniqueAssignments = Array.from(new Map(allAssignments.map(a => [a.id, a])).values());
-    setAssignments(uniqueAssignments);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/submissions/my-assignments`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAssignments(data.assignments || []);
+      }
+    } catch (e) { console.error('Failed to fetch assignments:', e); }
   }
 
   const handleSubmitAssignment = async (e) => {
@@ -499,7 +491,7 @@ function StudentDashboard({ user, onLogout }) {
   };
 
   const totalAssignments = assignments.length;
-  const pendingAssignments = assignments.filter(a => !a.marks_obtained && !a.submitted_at).length;
+  const pendingAssignments = assignments.filter(a => !a.marks_obtained && !a.submitted_at && !a.submission_text).length;
   const completedAssignments = assignments.filter(a => a.marks_obtained).length;
   const unpaidCount = myChallans.filter(c => c.status !== 'paid').length;
 
@@ -700,7 +692,7 @@ function StudentDashboard({ user, onLogout }) {
             <p style={S.navLabel}>ACADEMIC</p>
             <SidebarBtn active={activePage === 'courses'} onClick={() => { setActivePage('courses'); setMobileMenuOpen(false); }} icon={<House size={20} />} label="Dashboard" count={null} />
             <SidebarBtn active={activePage === 'registration'} onClick={() => { setActivePage('registration'); setMobileMenuOpen(false); }} icon={<Buildings size={20} />} label="Registration" count={availableClasses.length} />
-            <SidebarBtn active={activePage === 'assignments'} onClick={() => { setActivePage('assignments'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Assignments" count={pendingAssignments} />
+            <SidebarBtn active={activePage === 'assignments'} onClick={() => { setActivePage('assignments'); setMobileMenuOpen(false); }} icon={<FileText size={20} />} label="Assignments" count={pendingAssignments > 0 ? pendingAssignments : (assignments.length > 0 ? assignments.length : null)} />
             <SidebarBtn active={activePage === 'timetable'} onClick={() => { setActivePage('timetable'); setMobileMenuOpen(false); }} icon={<Clock size={20} />} label="Schedule" count={timetable.length} />
             
             <p style={{...S.navLabel, marginTop:'20px'}}>RESOURCES</p>
