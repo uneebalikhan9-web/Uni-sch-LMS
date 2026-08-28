@@ -211,14 +211,14 @@ export default function StudentAdmissionForm() {
       {/* Header */}
       <div style={S.header}>
         <div style={S.logo}>🎓 Lancers Tech LMS</div>
-        <h1 style={S.headerTitle}>Student Admission Form</h1>
+        <h1 className="adm-title" style={{ textAlign: "center", fontWeight: 900, color: "#0f172a", margin: "0 0 8px" }}>Student Admission Form</h1>
         <p style={S.headerSub}>Fill in all the required information to apply for admission</p>
       </div>
 
       {/* Two-column layout: form + progress ring */}
-      <div style={S.outerWrap}>
+      <div className="adm-outer">
         {/* Main Card */}
-        <div style={S.card}>
+        <div className="adm-card">
           {/* Step Indicator */}
           <div style={S.stepRow}>
             {stepDefs.map((s, i) => {
@@ -297,15 +297,15 @@ export default function StudentAdmissionForm() {
                     <p style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px' }}>Optional · max 3MB</p>
                   </div>
                 </div>
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="Full Name *" id="full_name" value={form.full_name} onChange={set('full_name')} placeholder="e.g. Muhammad Ali Khan" />
                   <Field label="Father's Name *" id="father_name" value={form.father_name} onChange={set('father_name')} placeholder="e.g. Muhammad Usman Khan" />
                 </div>
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="Date of Birth *" id="dob" value={form.dob} onChange={set('dob')} type="date" />
                   <SelectField label="Gender *" id="gender" value={form.gender} onChange={set('gender')} options={GENDERS} placeholder="Select Gender" />
                 </div>
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="CNIC / B-Form No. *" id="cnic" value={form.cnic} onChange={set('cnic')} placeholder="e.g. 35202-1234567-1" />
                   <SelectField label="Religion" id="religion" value={form.religion} onChange={set('religion')} options={RELIGIONS} placeholder="Select Religion" />
                 </div>
@@ -317,14 +317,14 @@ export default function StudentAdmissionForm() {
             {step === 2 && (
               <div style={S.formSection}>
                 <h2 style={S.sectionTitle}>Contact Information</h2>
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="Phone Number *" id="phone" value={form.phone} onChange={set('phone')} placeholder="03XX-XXXXXXX" />
                   <Field label="Email Address *" id="email" value={form.email} onChange={set('email')} type="email" placeholder="your@email.com" />
                 </div>
                 <Field label="Home Address *" id="address" value={form.address} onChange={set('address')} placeholder="House #, Street, Area" textarea />
                 <Field label="City *" id="city" value={form.city} onChange={set('city')} placeholder="e.g. Lahore" />
                 <div style={S.dividerLabel}>Emergency Contact</div>
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="Name *" id="emergency_name" value={form.emergency_name} onChange={set('emergency_name')} placeholder="Full Name" />
                   <Field label="Phone *" id="emergency_phone" value={form.emergency_phone} onChange={set('emergency_phone')} placeholder="03XX-XXXXXXX" />
                 </div>
@@ -337,7 +337,7 @@ export default function StudentAdmissionForm() {
               <div style={S.formSection}>
                 <h2 style={S.sectionTitle}>Academic Background</h2>
                 <SelectField label="Last Qualification *" id="last_qualification" value={form.last_qualification} onChange={set('last_qualification')} options={QUALIFICATIONS} placeholder="Select Qualification" />
-                <div style={S.grid2}>
+                <div className="adm-grid2">
                   <Field label="Board / University *" id="board_university" value={form.board_university} onChange={set('board_university')} placeholder="e.g. BISE Lahore" />
                   <Field label="Year of Passing *" id="passing_year" value={form.passing_year} onChange={set('passing_year')} type="number" placeholder="e.g. 2024" min="1990" max="2026" />
                 </div>
@@ -380,7 +380,7 @@ export default function StudentAdmissionForm() {
         </div>
 
         {/* Sticky Progress Ring sidebar */}
-        <div style={S.ringSidebar}>
+        <div className="adm-ring-sidebar" style={S.ringSidebar}>
           <ProgressRing percent={fillPercent} />
           <p style={{ fontSize: '12px', fontWeight: '700', color: '#64748b', marginTop: '10px', textAlign: 'center' }}>
             Overall Progress
@@ -474,8 +474,17 @@ const cssReset = `
   .adm-btn-secondary:hover { background: #e0e7ff !important; color: #4f46e5 !important; }
   .adm-photo-btn:hover { border-color: #4f46e5 !important; background: #eef2ff !important; }
   @keyframes adm-spin { to { transform: rotate(360deg); } }
-  @media (max-width: 768px) {
-    .adm-outer { flex-direction: column !important; }
+      @media (max-width: 768px) {
+      .adm-outer { flex-direction: column !important; }
+      .adm-ring-sidebar { flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 12px 16px !important; position: static !important; width: 100% !important; margin-bottom: 20px !important; }
+      .adm-card { padding: 24px 20px !important; }
+      .adm-grid2 { grid-template-columns: 1fr !important; }
+      .adm-title { font-size: 26px !important; }
+      .step-text { display: none !important; }
+    }
+    .adm-outer { display: flex; align-items: flex-start; gap: 20px; max-width: 900px; margin: 0 auto; padding: 0 20px; }
+    .adm-card { flex: 1; min-width: 0; background: #fff; border-radius: 24px; padding: 36px 40px; box-shadow: 0 8px 48px rgba(79,70,229,0.09); border: 1px solid #e0e7ff; }
+    .adm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .adm-ring-sidebar { flex-direction: row !important; align-items: center !important; padding: 16px 20px !important; position: static !important; }
   }
 `;
