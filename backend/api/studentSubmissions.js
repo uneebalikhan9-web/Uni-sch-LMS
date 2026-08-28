@@ -202,14 +202,31 @@ router.post('/video-completed', verifyToken, isStudent, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing assignment_id' });
     }
 
-    await pool.query(`
-      INSERT INTO submissions (assignment_id, student_id, is_video_completed, submitted_at)
-      VALUES (?, ?, 1, NOW())
-      ON DUPLICATE KEY UPDATE 
-        is_video_completed = 1
-    `, [assignment_id, student_id]);
-
-    res.status(200).json({ success: true, message: 'Video marked as completed' });
+    try {
+      await pool.query(`
+        INSERT INTO submissions (assignment_id, student_id, is_video_completed, submitted_at)
+        VALUES (?, ?, 1, NOW())
+        ON DUPLICATE KEY UPDATE 
+          is_video_completed = 1
+      `, [assignment_id, student_id]);
+      return res.status(200).json({ success: true, message: 'Video marked as completed' });
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
+        console.log('Adding missing is_video_completed column to submissions table...');
+        try {
+          await pool.query('ALTER TABLE submissions ADD COLUMN is_video_completed TINYINT(1) DEFAULT 0');
+        } catch (alterErr) { console.warn('Alter table note:', alterErr.message); }
+        
+        await pool.query(`
+          INSERT INTO submissions (assignment_id, student_id, is_video_completed, submitted_at)
+          VALUES (?, ?, 1, NOW())
+          ON DUPLICATE KEY UPDATE 
+            is_video_completed = 1
+        `, [assignment_id, student_id]);
+        return res.status(200).json({ success: true, message: 'Video marked as completed' });
+      }
+      throw dbErr;
+    }
   } catch (error) {
     console.error('Video completion error:', error);
     res.status(500).json({ success: false, message: 'Error marking video as completed' });

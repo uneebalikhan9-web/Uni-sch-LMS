@@ -9,15 +9,28 @@ router.post('/', verifyToken, isTeacher, async (req, res) => {
   try {
     const { title, description, course_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions } = req.body;
     const questionsJson = Array.isArray(video_questions) ? JSON.stringify(video_questions) : (video_questions || null);
-    const [result] = await pool.query(
-      'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027', external_link || null, questionsJson]
-    );
 
-    res.status(201).json({
-      success: true,
-      message: 'Assignment created successfully',
-    });
+    try {
+      await pool.query(
+        'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027', external_link || null, questionsJson]
+      );
+      return res.status(201).json({ success: true, message: 'Assignment created successfully' });
+    } catch (dbErr) {
+      if (dbErr.code === 'ER_BAD_FIELD_ERROR' || dbErr.errno === 1054) {
+        console.log('Adding missing video_questions column to assignments table...');
+        try {
+          await pool.query('ALTER TABLE assignments ADD COLUMN video_questions TEXT NULL');
+        } catch (alterErr) { console.warn('Alter table note:', alterErr.message); }
+        
+        await pool.query(
+          'INSERT INTO assignments (title, description, course_id, teacher_id, due_date, max_marks, status, assignment_type, academic_period, external_link, video_questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [title, description, course_id, req.user.employee_id, due_date, max_marks || 100, status || 'published', assignment_type || 'Homework', academic_period || '2026-2027', external_link || null, questionsJson]
+        );
+        return res.status(201).json({ success: true, message: 'Assignment created successfully' });
+      }
+      throw dbErr;
+    }
   } catch (error) {
     console.error('Create assignment error:', error);
     try {
