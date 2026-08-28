@@ -2,12 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { CheckCircle, User, Phone, BookOpen, GraduationCap, UploadSimple, X, Spinner } from '@phosphor-icons/react';
 import API_BASE_URL from '../config/api';
 
-const PROGRAMS = [
-  'Playgroup', 'Nursery', 'Prep', 'Class 1', 'Class 2', 'Class 3',
-  'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-  'O-Levels', 'A-Levels',
-  'Computer Science', 'Business Administration', 'Pre-Medical', 'Pre-Engineering', 'Commerce', 'Other',
-];
+const PROGRAMS = ['AI Class', 'Other'];
 const QUALIFICATIONS = [
   'Matric (10th Grade)', 'Intermediate / FA / FSc / ICS / ICom',
   "Bachelor's (BA / BSc / BBA / BS)", "Master's (MA / MSc / MBA / MS)", 'Other',

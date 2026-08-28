@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "../../responsive.css";
 import { Chart } from "chart.js/auto";
 import {
@@ -626,7 +626,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         <div className="sidebar-backdrop" onClick={() => setMobileMenuOpen(false)} />
       )}
 
-      {/* Floating open button for LEFT sidebar â€” only visible when left sidebar is CLOSED */}
+      {/* Floating open button for LEFT sidebar — only visible when left sidebar is CLOSED */}
       {!leftSidebarOpen && (
         <button
           onClick={() => setLeftSidebarOpen(true)}
@@ -667,7 +667,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         padding: 0,
       }} className={`sidebar ${mobileMenuOpen ? 'mobile-open' : (leftSidebarOpen ? '' : 'collapsed')}`}>
         
-        {/* â† Close arrow centered on RIGHT edge of the left sidebar */}
+        {/* ← Close arrow centered on RIGHT edge of the left sidebar */}
         {leftSidebarOpen && (
           <button
             onClick={() => setLeftSidebarOpen(false)}
@@ -775,7 +775,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         <header style={S.header}>
           <div>
             <h1 style={S.title}>{user.department_name||'Deanery Office'}</h1>
-            <p style={S.subtitle}>Academic Council Portal â€” {user.name}</p>
+            <p style={S.subtitle}>Academic Council Portal — {user.name}</p>
           </div>
           <div style={S.headerActions}>
             <div style={S.dateBadge}>{new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</div>
@@ -816,7 +816,11 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
           <PDFaceAttendance token={token} />
         )}
 
-        {!['overview','timetable','feedback','course_reports', 'my-leaves', 'my-payroll', 'campus-expenses', 'face-attendance'].includes(activeTab) && (
+        {activeTab === 'pending' && (
+            <PDAdmissionRequests />
+          )}
+
+        {!['overview','timetable','feedback','course_reports', 'my-leaves', 'my-payroll', 'campus-expenses', 'face-attendance', 'pending'].includes(activeTab) && (
           <PDDataTable activeTab={activeTab} tableData={getTableData()}
             setShowAddModal={setShowAddModal} setEditingItem={setEditingItem}
             onDelete={handleDelete} onApprove={handleApprove} onReject={handleReject}
@@ -918,7 +922,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         )}
       </main>
 
-      {/* Floating open button â€” only visible when right panel is CLOSED */}
+      {/* Floating open button — only visible when right panel is CLOSED */}
       {!rightPanelOpen && (
         <button
           onClick={() => setRightPanelOpen(true)}
@@ -958,7 +962,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
         padding: 0,
       }} className={`right-panel ${rightPanelOpen ? '' : 'collapsed'}`}>
 
-        {/* â† Close arrow centered on LEFT edge of the panel */}
+        {/* ← Close arrow centered on LEFT edge of the panel */}
         <button
           onClick={() => setRightPanelOpen(false)}
           style={{
@@ -1014,7 +1018,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
                 <div key={i} style={S.performerItem}>
                   <div style={S.performerAvatar}>{t.name.charAt(0)}</div>
                   <div style={S.performerInfo}><p style={S.performerName}>{t.name}</p><span style={S.performerRole}>Teacher</span></div>
-                  <div style={S.performerBadge}>â­</div>
+                  <div style={S.performerBadge}>⭐</div>
                 </div>
               ))}
             </div>
@@ -1142,7 +1146,7 @@ function PrincipalDashboard({ user = { name: "Principal" }, onLogout }) {
                   justifyContent: 'center',
                 }}
               >
-                Ã—
+                ×
               </button>
             </div>
 
