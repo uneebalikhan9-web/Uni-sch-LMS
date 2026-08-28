@@ -306,9 +306,13 @@ export default function TDAssignments({
                 )}
 
                 {selectedSubmissionStudent.submission_text && (
-                  <div style={S.contentSection}>
-                    <label style={S.sectionLabel}><FileText size={18} /> Student Submission</label>
-                    <div style={S.textSubmission}>{selectedSubmissionStudent.submission_text}</div>
+                  <div style={{ ...S.contentSection, background: '#f8fafc', padding: '16px', borderRadius: '14px', border: '1.5px solid #cbd5e1', marginBottom: '16px' }}>
+                    <label style={{ ...S.sectionLabel, color: '#4f46e5', fontWeight: '800', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Question size={20} weight="bold" /> {selectedAssignment?.assignment_type === 'Video Lecture' ? 'Student Video Quiz Responses' : 'Student Submission Text'}
+                    </label>
+                    <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#0f172a', fontWeight: '600', fontSize: '13.5px', background: '#ffffff', padding: '14px', borderRadius: '10px', border: '1px solid #e2e8f0', marginTop: '8px', lineHeight: '1.6' }}>
+                      {selectedSubmissionStudent.submission_text}
+                    </div>
                   </div>
                 )}
 

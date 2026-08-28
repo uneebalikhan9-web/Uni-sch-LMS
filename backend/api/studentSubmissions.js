@@ -10,8 +10,18 @@ const router = express.Router();
 router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'), handleUploadError, async (req, res) => {
   try {
     const { assignmentId } = req.params;
-    const studentId = req.user.student_id;
+    let studentId = req.user.student_id;
     const { submission_text } = req.body;
+
+    if (!studentId) {
+      const [st] = await pool.query('SELECT id FROM students WHERE user_id = ?', [req.user.id]);
+      if (st.length > 0) {
+        studentId = st[0].id;
+      } else {
+        const [newSt] = await pool.query('INSERT INTO students (user_id, roll_number, academic_status) VALUES (?, ?, ?)', [req.user.id, 'STU-' + req.user.id, 'active']);
+        studentId = newSt.insertId;
+      }
+    }
     
     // Check if already submitted
     const [existing] = await pool.query(
@@ -22,8 +32,8 @@ router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'
     if (existing.length > 0) {
       // Update existing submission
       await pool.query(
-        'UPDATE submissions SET submission_text = ?, file_path = ?, submitted_file_name = ?, submitted_at = NOW() WHERE id = ?',
-        [submission_text, req.file?.path, req.file?.originalname, existing[0].id]
+        'UPDATE submissions SET submission_text = ?, file_path = IFNULL(?, file_path), submitted_file_name = IFNULL(?, submitted_file_name), submitted_at = NOW() WHERE id = ?',
+        [submission_text, req.file?.path || null, req.file?.originalname || null, existing[0].id]
       );
       
       return res.status(200).json({
@@ -34,8 +44,8 @@ router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'
     
     // Create new submission
     await pool.query(
-      'INSERT INTO submissions (assignment_id, student_id, submission_text, file_path, submitted_file_name) VALUES (?, ?, ?, ?, ?)',
-      [assignmentId, studentId, submission_text, req.file?.path, req.file?.originalname]
+      'INSERT INTO submissions (assignment_id, student_id, submission_text, file_path, submitted_file_name, submitted_at) VALUES (?, ?, ?, ?, ?, NOW())',
+      [assignmentId, studentId, submission_text, req.file?.path || null, req.file?.originalname || null]
     );
     
     res.status(201).json({
@@ -46,7 +56,7 @@ router.post('/:assignmentId/submit', verifyToken, uploadSubmission.single('file'
     console.error('Submission error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error uploading submission'
+      message: 'Error uploading submission: ' + error.message
     });
   }
 });
