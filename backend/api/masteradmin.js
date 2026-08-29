@@ -177,9 +177,25 @@ router.put('/clients/:id', async (req, res) => {
 // @route   DELETE /api/masteradmin/clients/:id
 // @desc    Delete a client completely
 router.delete('/clients/:id', async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-    await pool.query('DELETE FROM lancers_clients WHERE id = ?', [req.params.id]);
-    res.json({ success: true, message: 'Client deleted successfully.' });
+    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+    await connection.query('DELETE FROM client_invoices WHERE client_id = ?', [req.params.id]);
+    await connection.query('DELETE FROM users WHERE client_id = ?', [req.params.id]);
+    await connection.query('DELETE FROM campuses WHERE client_id = ?', [req.params.id]);
+    await connection.query('DELETE FROM lancers_clients WHERE id = ?', [req.params.id]);
+    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+    connection.release();
+    res.json({ success: true, message: 'Client and associated core data deleted successfully.' });
+  } catch (error) {
+    if (connection) {
+      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      connection.release();
+    }
+    console.error('Delete client error:', error);
+    res.status(500).json({ success: false, message: 'Server error deleting client: ' + (error.sqlMessage || error.message) });
+  }
+});
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error deleting client' });
   }
