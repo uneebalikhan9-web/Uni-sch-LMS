@@ -196,10 +196,7 @@ router.delete('/clients/:id', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error deleting client: ' + (error.sqlMessage || error.message) });
   }
 });
-  } catch (error) {
-    res.status(500).json({ success: false, message: 'Server error deleting client' });
-  }
-});
+
 
 // @route   GET /api/masteradmin/invoices
 // @desc    Get all invoices
