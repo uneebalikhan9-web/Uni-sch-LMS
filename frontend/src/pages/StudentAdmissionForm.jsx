@@ -101,26 +101,6 @@ export default function StudentAdmissionForm() {
     return Math.min(100, Math.round(((filled + photoBonus) / (ALL_REQUIRED.length + 1)) * 100));
   }, [form, photo]);
 
-  // Current step fill percentage
-  const stepStats = useMemo(() => {
-    const step1Fields = ['full_name', 'father_name', 'dob', 'gender', 'cnic'];
-    const step2Fields = ['phone', 'email', 'address', 'city', 'emergency_name', 'emergency_phone', 'emergency_relation'];
-    const step3Fields = ['last_qualification', 'board_university', 'passing_year', 'marks_gpa'];
-    const step4Fields = ['program'];
-
-    const getPct = (fields) => {
-      const filled = fields.filter(k => form[k]?.toString().trim()).length;
-      return Math.round((filled / fields.length) * 100);
-    };
-
-    return {
-      1: { percent: getPct(step1Fields), isDone: step1Fields.every(k => form[k]?.toString().trim()) },
-      2: { percent: getPct(step2Fields), isDone: step2Fields.every(k => form[k]?.toString().trim()) },
-      3: { percent: getPct(step3Fields), isDone: step3Fields.every(k => form[k]?.toString().trim()) },
-      4: { percent: getPct(step4Fields), isDone: step4Fields.every(k => form[k]?.toString().trim()) },
-    };
-  }, [form]);
-
   const handlePhoto = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -143,22 +123,22 @@ export default function StudentAdmissionForm() {
     setError('');
     if (currentStep === 1) {
       if (!form.full_name.trim()) return setError('Please enter your Full Name') || false;
-      if (!form.father_name.trim()) return setError("Please enter your Father's Name") || false;
-      if (!form.dob) return setError('Please select your Date of Birth') || false;
-      if (!form.gender) return setError('Please select your Gender') || false;
-      if (!form.cnic.trim()) return setError('Please enter your CNIC / B-Form Number') || false;
+      if (!form.father_name.trim()) return setError("Please enter Father / Guardian Name") || false;
+      if (!form.dob) return setError('Please select Date of Birth') || false;
+      if (!form.gender) return setError('Please select Gender') || false;
+      if (!form.cnic.trim()) return setError('Please enter CNIC / B-Form Number') || false;
     }
     if (currentStep === 2) {
-      if (!form.phone.trim()) return setError('Please enter your primary Phone Number') || false;
+      if (!form.phone.trim()) return setError('Please enter primary Phone Number') || false;
       if (!form.email.trim()) return setError('Please enter a valid Email Address') || false;
-      if (!form.address.trim()) return setError('Please enter your Residential Address') || false;
-      if (!form.city.trim()) return setError('Please enter your City') || false;
+      if (!form.address.trim()) return setError('Please enter complete Address') || false;
+      if (!form.city.trim()) return setError('Please enter City') || false;
       if (!form.emergency_name.trim()) return setError('Please enter Emergency Contact Name') || false;
       if (!form.emergency_phone.trim()) return setError('Please enter Emergency Contact Phone') || false;
       if (!form.emergency_relation.trim()) return setError('Please specify Emergency Contact Relation') || false;
     }
     if (currentStep === 3) {
-      if (!form.last_qualification) return setError('Please select your Last Qualification') || false;
+      if (!form.last_qualification) return setError('Please select Last Qualification') || false;
       if (!form.board_university.trim()) return setError('Please enter Board / University Name') || false;
       if (!form.passing_year) return setError('Please enter Year of Passing') || false;
       if (!form.marks_gpa.trim()) return setError('Please enter Marks, GPA or Percentage') || false;
@@ -241,45 +221,43 @@ export default function StudentAdmissionForm() {
   };
 
   const stepDefs = [
-    { num: 1, label: 'Personal Details', shortLabel: 'Personal', icon: <User size={18} weight="bold" /> },
-    { num: 2, label: 'Contact & Address', shortLabel: 'Contact', icon: <Phone size={18} weight="bold" /> },
-    { num: 3, label: 'Academic Records', shortLabel: 'Academic', icon: <BookOpen size={18} weight="bold" /> },
-    { num: 4, label: 'Program & Shift', shortLabel: 'Program', icon: <GraduationCap size={18} weight="bold" /> },
+    { num: 1, label: 'Personal Details', icon: <User size={18} weight="bold" /> },
+    { num: 2, label: 'Contact & Address', icon: <Phone size={18} weight="bold" /> },
+    { num: 3, label: 'Academic Records', icon: <BookOpen size={18} weight="bold" /> },
+    { num: 4, label: 'Program & Shift', icon: <GraduationCap size={18} weight="bold" /> },
   ];
 
   if (submitted) {
     return (
       <div className="adm-page">
         <style>{admissionStyles}</style>
-        <div className="adm-success-container">
+        <div className="adm-success-wrap">
           <div className="adm-success-card">
             <div className="adm-success-icon-wrap">
-              <div className="adm-success-ring-bg">
-                <CheckCircle size={64} weight="fill" color="#10b981" />
-              </div>
+              <CheckCircle size={68} weight="fill" color="#10b981" />
             </div>
 
-            <span className="adm-badge-success">Application Received Successfully</span>
-            <h1 className="adm-success-title">Submission Confirmed!</h1>
+            <span className="adm-success-badge">Application Received</span>
+            <h1 className="adm-success-title">Application Submitted!</h1>
             <p className="adm-success-desc">
-              Thank you, <strong>{form.full_name}</strong>. Your admission application has been registered in the system.
+              Thank you <strong>{form.full_name}</strong>. Your online application has been received successfully.
             </p>
 
             <div className="adm-summary-box">
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Application ID</span>
+                <span className="adm-summary-label">Application Reference ID</span>
                 <span className="adm-summary-val adm-app-id">#{submissionId}</span>
               </div>
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Applied Program</span>
+                <span className="adm-summary-label">Selected Program</span>
                 <span className="adm-summary-val">{form.program || 'N/A'}</span>
               </div>
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Applicant Email</span>
+                <span className="adm-summary-label">Registered Email</span>
                 <span className="adm-summary-val">{form.email}</span>
               </div>
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Contact Phone</span>
+                <span className="adm-summary-label">Phone Number</span>
                 <span className="adm-summary-val">{form.phone}</span>
               </div>
             </div>
@@ -290,8 +268,8 @@ export default function StudentAdmissionForm() {
                 <span>Next Steps</span>
               </div>
               <ul className="adm-next-step-list">
-                <li>Your application will be reviewed by the admissions team.</li>
-                <li>You will receive updates on your registered phone number and email.</li>
+                <li>Admissions committee will review your provided credentials.</li>
+                <li>You will receive SMS and Email updates regarding fee challan and orientation schedule.</li>
               </ul>
             </div>
 
@@ -301,7 +279,7 @@ export default function StudentAdmissionForm() {
                 onClick={() => window.print()} 
                 className="adm-btn-outline"
               >
-                🖨️ Print Application
+                🖨️ Print Application Copy
               </button>
               <button 
                 type="button" 
@@ -324,64 +302,65 @@ export default function StudentAdmissionForm() {
       {/* Main Header */}
       <header className="adm-header">
         <div className="adm-brand-badge">
-          <GraduationCap size={18} weight="fill" />
+          <GraduationCap size={16} weight="fill" />
           <span>Lancers Tech LMS Admissions</span>
         </div>
         <h1 className="adm-title">Student Admission Form</h1>
-        <p className="adm-subtitle">Fill in the required information to apply for admission.</p>
+        <p className="adm-subtitle">Fill in all required fields to submit your admission application.</p>
       </header>
 
       {/* Centered Master Card */}
-      <div className="adm-wrapper">
+      <div className="adm-card-wrap">
         <main className="adm-card">
 
-          {/* Stepper Navigation */}
+          {/* Stepper Navigation Grid (Equally Spaced 4 Columns) */}
           <div className="adm-stepper-container">
-            <nav className="adm-stepper" aria-label="Form Steps">
-              {stepDefs.map((s, index) => {
+            <div className="adm-stepper-grid">
+              {stepDefs.map((s, idx) => {
                 const isActive = step === s.num;
-                const isDone = step > s.num || stepStats[s.num].isDone;
+                const isDone = step > s.num;
                 return (
-                  <div key={s.num} className="adm-stepper-col">
-                    <button
-                      type="button"
-                      onClick={() => jumpToStep(s.num)}
-                      className={`adm-step-tab ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''}`}
-                    >
-                      <div className="adm-step-bubble">
-                        {isDone && !isActive ? (
-                          <Check size={16} weight="bold" />
-                        ) : (
-                          <span>{s.num}</span>
-                        )}
-                      </div>
-                      <div className="adm-step-info">
-                        <span className="adm-step-name-full">{s.label}</span>
-                        <span className="adm-step-name-short">{s.shortLabel}</span>
-                      </div>
-                    </button>
+                  <div 
+                    key={s.num} 
+                    className={`adm-step-node ${isActive ? 'active' : ''} ${isDone ? 'done' : ''}`}
+                    onClick={() => jumpToStep(s.num)}
+                  >
+                    <div className="adm-step-node-header">
+                      {/* Left Connector */}
+                      <div className={`adm-step-line-left ${idx === 0 ? 'hidden' : ''} ${step >= s.num ? 'done' : ''}`} />
+                      
+                      {/* Circle Bubble */}
+                      <button 
+                        type="button" 
+                        className="adm-step-bubble"
+                        aria-label={`Step ${s.num}: ${s.label}`}
+                      >
+                        {isDone ? <Check size={16} weight="bold" /> : s.num}
+                      </button>
 
-                    {index < stepDefs.length - 1 && (
-                      <div className={`adm-step-line ${step > s.num ? 'completed' : ''}`} />
-                    )}
+                      {/* Right Connector */}
+                      <div className={`adm-step-line-right ${idx === stepDefs.length - 1 ? 'hidden' : ''} ${step > s.num ? 'done' : ''}`} />
+                    </div>
+
+                    <span className="adm-step-label">{s.label}</span>
                   </div>
                 );
               })}
-            </nav>
+            </div>
 
-            {/* Integrated Live Progress Meter */}
-            <div className="adm-progress-meter">
-              <div className="adm-meter-text-row">
-                <span className="adm-meter-title">
+            {/* Live Progress Bar Indicator */}
+            <div className="adm-progress-bar-wrap">
+              <div className="adm-progress-info">
+                <span className="adm-step-indicator-text">
                   Step {step} of 4: <strong>{stepDefs[step - 1].label}</strong>
                 </span>
-                <span className="adm-meter-pct">
-                  <strong>{fillPercent}%</strong> Completed ({ALL_REQUIRED.filter(k => form[k]?.toString().trim()).length + (photo ? 1 : 0)}/{ALL_REQUIRED.length + 1})
+                <span className="adm-progress-pct-badge">
+                  {fillPercent}% Completed
                 </span>
               </div>
-              <div className="adm-meter-track">
+              <div className="adm-progress-track">
                 <div 
-                  className="adm-meter-bar" 
+                  className="adm-progress-fill" 
                   style={{ width: `${fillPercent}%` }} 
                 />
               </div>
@@ -389,13 +368,13 @@ export default function StudentAdmissionForm() {
           </div>
 
           {/* Form Content */}
-          <form onSubmit={handleSubmit} noValidate className="adm-form-body">
+          <form onSubmit={handleSubmit} noValidate className="adm-form">
             
             {/* STEP 1: Personal Details */}
             {step === 1 && (
               <div className="adm-step-pane">
                 {/* Photo Upload Zone */}
-                <div className="adm-photo-wrapper">
+                <div className="adm-photo-row">
                   <div className="adm-photo-box">
                     {photoPreview ? (
                       <div className="adm-photo-preview-wrap">
@@ -403,7 +382,7 @@ export default function StudentAdmissionForm() {
                         <button 
                           type="button" 
                           onClick={removePhoto} 
-                          className="adm-photo-del"
+                          className="adm-photo-del-btn"
                           title="Remove Photo"
                           aria-label="Remove Photo"
                         >
@@ -413,12 +392,12 @@ export default function StudentAdmissionForm() {
                     ) : (
                       <button
                         type="button"
-                        className="adm-photo-btn"
+                        className="adm-photo-upload-btn"
                         onClick={() => photoRef.current?.click()}
                       >
                         <Camera size={26} weight="duotone" color="#4f46e5" />
-                        <span className="adm-photo-text">Upload Photo</span>
-                        <span className="adm-photo-hint">Max 4MB</span>
+                        <span className="adm-photo-lbl">Upload Photo</span>
+                        <span className="adm-photo-sub">Max 4MB</span>
                       </button>
                     )}
                     <input 
@@ -431,7 +410,7 @@ export default function StudentAdmissionForm() {
                   </div>
                 </div>
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
                     label="Full Name *" 
                     id="full_name" 
@@ -452,7 +431,7 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
                     label="Date of Birth *" 
                     id="dob" 
@@ -472,7 +451,7 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
                     label="CNIC / B-Form Number *" 
                     id="cnic" 
@@ -505,9 +484,9 @@ export default function StudentAdmissionForm() {
             {/* STEP 2: Contact Details */}
             {step === 2 && (
               <div className="adm-step-pane">
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
-                    label="Phone Number *" 
+                    label="Applicant Phone Number *" 
                     id="phone" 
                     value={form.phone} 
                     onChange={set('phone')} 
@@ -539,7 +518,7 @@ export default function StudentAdmissionForm() {
                   required
                 />
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
                     label="City / District *" 
                     id="city" 
@@ -551,17 +530,17 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-divider">
-                  <span className="adm-divider-text">Emergency Contact Information</span>
+                <div className="adm-section-divider">
+                  <span className="adm-section-divider-title">Emergency Contact Details</span>
                 </div>
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
-                    label="Emergency Contact Name *" 
+                    label="Emergency Contact Person Name *" 
                     id="emergency_name" 
                     value={form.emergency_name} 
                     onChange={set('emergency_name')} 
-                    placeholder="Guardian Name" 
+                    placeholder="Guardian / Emergency Contact Name" 
                     required
                   />
                   <Field 
@@ -580,7 +559,7 @@ export default function StudentAdmissionForm() {
                   id="emergency_relation" 
                   value={form.emergency_relation} 
                   onChange={set('emergency_relation')} 
-                  placeholder="e.g. Father, Mother, Brother" 
+                  placeholder="e.g. Father, Mother, Brother, Uncle" 
                   required
                 />
               </div>
@@ -599,7 +578,7 @@ export default function StudentAdmissionForm() {
                   required
                 />
 
-                <div className="adm-grid-row">
+                <div className="adm-grid-2">
                   <Field 
                     label="Board / University / Institute *" 
                     id="board_university" 
@@ -656,40 +635,40 @@ export default function StudentAdmissionForm() {
                 />
 
                 <Field 
-                  label="Any Medical Condition / Disability?" 
+                  label="Any Medical Condition / Special Assistance?" 
                   id="medical_condition" 
                   value={form.medical_condition} 
                   onChange={set('medical_condition')} 
-                  placeholder="Leave blank if none" 
+                  placeholder="Mention if any (or leave blank if none)" 
                   textarea 
                 />
 
                 <Field 
-                  label="Additional Notes / Comments" 
+                  label="Additional Notes / Remarks" 
                   id="notes" 
                   value={form.notes} 
                   onChange={set('notes')} 
-                  placeholder="Anything else you'd like us to know..." 
+                  placeholder="Any other comments or details..." 
                   textarea 
                 />
               </div>
             )}
 
-            {/* Error Message Alert */}
+            {/* Error Message Box */}
             {error && (
-              <div className="adm-error-alert" role="alert">
+              <div className="adm-error-box" role="alert">
                 <WarningCircle size={20} weight="fill" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Navigation Action Buttons */}
-            <div className="adm-action-row">
+            {/* Bottom Actions */}
+            <div className="adm-action-bar">
               {step > 1 ? (
                 <button 
                   type="button" 
                   onClick={prevStep} 
-                  className="adm-btn-back"
+                  className="adm-btn-prev"
                 >
                   <ArrowLeft size={16} weight="bold" />
                   <span>Previous Step</span>
@@ -711,12 +690,12 @@ export default function StudentAdmissionForm() {
                 <button 
                   type="submit" 
                   disabled={submitting} 
-                  className="adm-btn-next adm-btn-submit-glow"
+                  className="adm-btn-next adm-btn-submit"
                 >
                   {submitting ? (
                     <>
-                      <Spinner size={18} className="adm-spin-anim" />
-                      <span>Submitting Application...</span>
+                      <Spinner size={18} className="adm-spin" />
+                      <span>Submitting...</span>
                     </>
                   ) : (
                     <>
@@ -729,15 +708,15 @@ export default function StudentAdmissionForm() {
             </div>
           </form>
 
-          {/* Quick Help Footer */}
-          <div className="adm-card-footer">
+          {/* Help Line */}
+          <div className="adm-help-footer">
             <Info size={16} weight="bold" color="#6366f1" />
             <span>Need assistance? Contact admissions support at <strong>admissions@lancerstech.com</strong></span>
           </div>
         </main>
       </div>
 
-      <footer className="adm-page-footer">
+      <footer className="adm-footer">
         <p>© {new Date().getFullYear()} Lancers Tech LMS · All Rights Reserved</p>
       </footer>
     </div>
@@ -747,13 +726,13 @@ export default function StudentAdmissionForm() {
 function Field({ label, id, value, onChange, type = 'text', placeholder, textarea, icon, required, min, max }) {
   const isFilled = Boolean(value?.toString().trim());
   return (
-    <div className="adm-form-field">
-      <label htmlFor={id} className="adm-field-lbl">
+    <div className="adm-field-group">
+      <label htmlFor={id} className="adm-field-label">
         <span>{label}</span>
-        {isFilled && <Check size={14} weight="bold" className="adm-check-icon" />}
+        {isFilled && <Check size={14} weight="bold" className="adm-check-mark" />}
       </label>
-      <div className="adm-field-input-box">
-        {icon && <span className="adm-field-icon">{icon}</span>}
+      <div className="adm-input-container">
+        {icon && <span className="adm-input-icon">{icon}</span>}
         {textarea ? (
           <textarea
             id={id}
@@ -761,7 +740,7 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
             onChange={onChange}
             placeholder={placeholder}
             rows={3}
-            className={`adm-input-elem adm-textarea-elem ${icon ? 'with-icon' : ''} ${isFilled ? 'filled' : ''}`}
+            className={`adm-input adm-textarea ${icon ? 'has-icon' : ''} ${isFilled ? 'filled' : ''}`}
           />
         ) : (
           <input
@@ -772,7 +751,7 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
             placeholder={placeholder}
             min={min}
             max={max}
-            className={`adm-input-elem ${icon ? 'with-icon' : ''} ${isFilled ? 'filled' : ''}`}
+            className={`adm-input ${icon ? 'has-icon' : ''} ${isFilled ? 'filled' : ''}`}
           />
         )}
       </div>
@@ -783,17 +762,17 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
 function SelectField({ label, id, value, onChange, options, placeholder, required }) {
   const isFilled = Boolean(value?.toString().trim());
   return (
-    <div className="adm-form-field">
-      <label htmlFor={id} className="adm-field-lbl">
+    <div className="adm-field-group">
+      <label htmlFor={id} className="adm-field-label">
         <span>{label}</span>
-        {isFilled && <Check size={14} weight="bold" className="adm-check-icon" />}
+        {isFilled && <Check size={14} weight="bold" className="adm-check-mark" />}
       </label>
-      <div className="adm-field-select-box">
+      <div className="adm-select-container">
         <select
           id={id}
           value={value}
           onChange={onChange}
-          className={`adm-select-elem ${isFilled ? 'filled' : 'placeholder'}`}
+          className={`adm-select ${isFilled ? 'filled' : 'placeholder'}`}
         >
           <option value="">{placeholder}</option>
           {options.map((opt) => (
@@ -815,14 +794,14 @@ const admissionStyles = `
     background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 40%, #edf2f7 100%);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #1e293b;
-    padding: 40px 20px 60px;
+    padding: 36px 16px 56px;
     box-sizing: border-box;
   }
 
   .adm-header {
     text-align: center;
-    max-width: 680px;
-    margin: 0 auto 32px;
+    max-width: 640px;
+    margin: 0 auto 28px;
   }
 
   .adm-brand-badge {
@@ -840,7 +819,7 @@ const admissionStyles = `
   }
 
   .adm-title {
-    font-size: 34px;
+    font-size: 32px;
     font-weight: 900;
     color: #0f172a;
     letter-spacing: -0.02em;
@@ -856,8 +835,9 @@ const admissionStyles = `
   }
 
   /* Centered Wrapper */
-  .adm-wrapper {
-    max-width: 820px;
+  .adm-card-wrap {
+    max-width: 860px;
+    width: 100%;
     margin: 0 auto;
   }
 
@@ -866,45 +846,60 @@ const admissionStyles = `
     background: #ffffff;
     border-radius: 24px;
     border: 1px solid #e2e8f0;
-    padding: 36px 44px 40px;
+    padding: 36px 40px 36px;
     box-shadow: 0 12px 40px rgba(79, 70, 229, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
+    box-sizing: border-box;
+    width: 100%;
   }
 
   /* Stepper Header Block */
   .adm-stepper-container {
-    margin-bottom: 32px;
-    padding-bottom: 24px;
+    margin-bottom: 28px;
+    padding-bottom: 22px;
     border-bottom: 1px solid #f1f5f9;
   }
 
-  .adm-stepper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  /* 4-Column Stepper Grid */
+  .adm-stepper-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
     margin-bottom: 20px;
   }
 
-  .adm-stepper-col {
+  .adm-step-node {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    flex: 1;
-  }
-
-  .adm-stepper-col:last-child {
-    flex: 0 0 auto;
-  }
-
-  .adm-step-tab {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: none;
-    border: none;
-    padding: 0;
     cursor: pointer;
-    text-align: left;
-    outline: none;
-    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+  }
+
+  .adm-step-node-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .adm-step-line-left,
+  .adm-step-line-right {
+    flex: 1;
+    height: 2px;
+    background: #e2e8f0;
+    transition: background 0.3s ease;
+  }
+
+  .adm-step-line-left.done,
+  .adm-step-line-right.done {
+    background: #10b981;
+  }
+
+  .adm-step-line-left.hidden,
+  .adm-step-line-right.hidden {
+    visibility: hidden;
   }
 
   .adm-step-bubble {
@@ -913,79 +908,58 @@ const admissionStyles = `
     border-radius: 50%;
     background: #f1f5f9;
     color: #64748b;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 800;
     transition: all 0.25s ease;
     flex-shrink: 0;
+    cursor: pointer;
+    z-index: 2;
   }
 
-  .adm-step-tab.active .adm-step-bubble {
+  .adm-step-node.active .adm-step-bubble {
     background: #4f46e5;
     color: #ffffff;
     box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    transform: scale(1.06);
   }
 
-  .adm-step-tab.completed .adm-step-bubble {
+  .adm-step-node.done .adm-step-bubble {
     background: #10b981;
     color: #ffffff;
   }
 
-  .adm-step-info {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .adm-step-name-full {
-    font-size: 13px;
-    font-weight: 700;
-    color: #64748b;
-    transition: color 0.2s ease;
-    white-space: nowrap;
-  }
-
-  .adm-step-name-short {
-    display: none;
+  .adm-step-label {
     font-size: 12px;
     font-weight: 700;
     color: #64748b;
-    white-space: nowrap;
+    transition: color 0.2s ease;
+    text-align: center;
+    padding: 0 4px;
+    line-height: 1.3;
   }
 
-  .adm-step-tab.active .adm-step-name-full,
-  .adm-step-tab.active .adm-step-name-short {
+  .adm-step-node.active .adm-step-label {
     color: #4f46e5;
     font-weight: 800;
   }
 
-  .adm-step-tab.completed .adm-step-name-full,
-  .adm-step-tab.completed .adm-step-name-short {
+  .adm-step-node.done .adm-step-label {
     color: #0f172a;
   }
 
-  .adm-step-line {
-    flex: 1;
-    height: 2px;
-    background: #e2e8f0;
-    margin: 0 14px;
-    transition: background 0.3s ease;
-  }
-
-  .adm-step-line.completed {
-    background: #10b981;
-  }
-
-  /* Live Progress Meter */
-  .adm-progress-meter {
+  /* Progress Bar Inside Card */
+  .adm-progress-bar-wrap {
     background: #f8fafc;
     border-radius: 12px;
     padding: 10px 16px;
     border: 1px solid #f1f5f9;
   }
 
-  .adm-meter-text-row {
+  .adm-progress-info {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -994,26 +968,27 @@ const admissionStyles = `
     color: #64748b;
   }
 
-  .adm-meter-title strong {
+  .adm-step-indicator-text strong {
     color: #0f172a;
   }
 
-  .adm-meter-pct {
-    color: #4f46e5;
-  }
-
-  .adm-meter-pct strong {
+  .adm-progress-pct-badge {
+    font-size: 11px;
+    font-weight: 800;
     color: #10b981;
+    background: #ecfdf5;
+    padding: 2px 8px;
+    border-radius: 6px;
   }
 
-  .adm-meter-track {
+  .adm-progress-track {
     height: 6px;
     background: #e2e8f0;
     border-radius: 9999px;
     overflow: hidden;
   }
 
-  .adm-meter-bar {
+  .adm-progress-fill {
     height: 100%;
     background: linear-gradient(90deg, #4f46e5 0%, #10b981 100%);
     border-radius: 9999px;
@@ -1021,7 +996,7 @@ const admissionStyles = `
   }
 
   /* Form Body & Panes */
-  .adm-form-body {
+  .adm-form {
     display: flex;
     flex-direction: column;
   }
@@ -1033,10 +1008,10 @@ const admissionStyles = `
   }
 
   /* Photo Upload */
-  .adm-photo-wrapper {
+  .adm-photo-row {
     display: flex;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: 22px;
   }
 
   .adm-photo-box {
@@ -1057,7 +1032,7 @@ const admissionStyles = `
     box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
   }
 
-  .adm-photo-del {
+  .adm-photo-del-btn {
     position: absolute;
     top: 0;
     right: 0;
@@ -1075,13 +1050,13 @@ const admissionStyles = `
     transition: transform 0.15s ease;
   }
 
-  .adm-photo-del:hover {
+  .adm-photo-del-btn:hover {
     transform: scale(1.1);
   }
 
-  .adm-photo-btn {
-    width: 104px;
-    height: 104px;
+  .adm-photo-upload-btn {
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     border: 2px dashed #cbd5e1;
     background: #f8fafc;
@@ -1094,39 +1069,39 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-photo-btn:hover {
+  .adm-photo-upload-btn:hover {
     border-color: #6366f1;
     background: #eef2ff;
   }
 
-  .adm-photo-text {
+  .adm-photo-lbl {
     font-size: 11px;
     font-weight: 700;
     color: #334155;
   }
 
-  .adm-photo-hint {
+  .adm-photo-sub {
     font-size: 9px;
     color: #94a3b8;
   }
 
-  /* Grid System */
-  .adm-grid-row {
+  /* Grid 2 Column */
+  .adm-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
   /* Form Fields */
-  .adm-form-field {
+  .adm-field-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
-  .adm-field-lbl {
+  .adm-field-label {
     font-size: 13px;
     font-weight: 700;
     color: #334155;
@@ -1135,17 +1110,17 @@ const admissionStyles = `
     gap: 6px;
   }
 
-  .adm-check-icon {
+  .adm-check-mark {
     color: #10b981;
   }
 
-  .adm-field-input-box {
+  .adm-input-container {
     position: relative;
     display: flex;
     align-items: center;
   }
 
-  .adm-field-icon {
+  .adm-input-icon {
     position: absolute;
     left: 14px;
     color: #94a3b8;
@@ -1154,7 +1129,7 @@ const admissionStyles = `
     align-items: center;
   }
 
-  .adm-input-elem {
+  .adm-input {
     width: 100%;
     font-family: inherit;
     font-size: 14px;
@@ -1167,33 +1142,33 @@ const admissionStyles = `
     box-sizing: border-box;
   }
 
-  .adm-input-elem.with-icon {
+  .adm-input.has-icon {
     padding-left: 42px;
   }
 
-  .adm-input-elem:focus {
+  .adm-input:focus {
     outline: none;
     border-color: #4f46e5;
     background: #ffffff;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
   }
 
-  .adm-input-elem.filled {
+  .adm-input.filled {
     border-color: #cbd5e1;
     background: #ffffff;
   }
 
-  .adm-textarea-elem {
+  .adm-textarea {
     resize: vertical;
     min-height: 80px;
   }
 
-  /* Select Elements */
-  .adm-field-select-box {
+  /* Select */
+  .adm-select-container {
     position: relative;
   }
 
-  .adm-select-elem {
+  .adm-select {
     width: 100%;
     font-family: inherit;
     font-size: 14px;
@@ -1213,25 +1188,25 @@ const admissionStyles = `
     box-sizing: border-box;
   }
 
-  .adm-select-elem:focus {
+  .adm-select:focus {
     outline: none;
     border-color: #4f46e5;
     background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
   }
 
-  .adm-select-elem.placeholder {
+  .adm-select.placeholder {
     color: #94a3b8;
   }
 
-  /* Divider */
-  .adm-divider {
-    margin: 16px 0 14px;
+  /* Section Divider */
+  .adm-section-divider {
+    margin: 14px 0 12px;
     padding-top: 14px;
     border-top: 1px solid #f1f5f9;
   }
 
-  .adm-divider-text {
+  .adm-section-divider-title {
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
@@ -1239,8 +1214,8 @@ const admissionStyles = `
     color: #4f46e5;
   }
 
-  /* Error Alert */
-  .adm-error-alert {
+  /* Error Box */
+  .adm-error-box {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1251,7 +1226,7 @@ const admissionStyles = `
     font-weight: 700;
     padding: 12px 16px;
     border-radius: 12px;
-    margin: 18px 0 6px;
+    margin: 16px 0 6px;
     animation: admShake 0.3s ease;
   }
 
@@ -1262,11 +1237,11 @@ const admissionStyles = `
   }
 
   /* Action Buttons */
-  .adm-action-row {
+  .adm-action-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 28px;
+    margin-top: 26px;
     padding-top: 20px;
     border-top: 1px solid #f1f5f9;
     gap: 12px;
@@ -1295,7 +1270,7 @@ const admissionStyles = `
     box-shadow: 0 8px 24px rgba(79, 70, 229, 0.38);
   }
 
-  .adm-btn-back {
+  .adm-btn-prev {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1312,21 +1287,21 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-btn-back:hover {
+  .adm-btn-prev:hover {
     background: #e2e8f0;
     color: #1e293b;
   }
 
-  .adm-btn-submit-glow {
+  .adm-btn-submit {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     box-shadow: 0 6px 18px rgba(16, 185, 129, 0.28);
   }
 
-  .adm-btn-submit-glow:hover:not(:disabled) {
+  .adm-btn-submit:hover:not(:disabled) {
     box-shadow: 0 8px 24px rgba(16, 185, 129, 0.38);
   }
 
-  .adm-spin-anim {
+  .adm-spin {
     animation: admSpin 1s linear infinite;
   }
 
@@ -1334,9 +1309,9 @@ const admissionStyles = `
     to { transform: rotate(360deg); }
   }
 
-  /* Card Footer Notice */
-  .adm-card-footer {
-    margin-top: 24px;
+  /* Help Footer */
+  .adm-help-footer {
+    margin-top: 22px;
     padding-top: 14px;
     border-top: 1px solid #f8fafc;
     display: flex;
@@ -1348,13 +1323,13 @@ const admissionStyles = `
     text-align: center;
   }
 
-  .adm-card-footer strong {
+  .adm-help-footer strong {
     color: #4f46e5;
   }
 
   /* Success Screen */
-  .adm-success-container {
-    max-width: 540px;
+  .adm-success-wrap {
+    max-width: 520px;
     margin: 40px auto;
   }
 
@@ -1373,7 +1348,7 @@ const admissionStyles = `
     margin-bottom: 16px;
   }
 
-  .adm-badge-success {
+  .adm-success-badge {
     display: inline-block;
     background: #ecfdf5;
     color: #059669;
@@ -1504,34 +1479,32 @@ const admissionStyles = `
     box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
   }
 
-  .adm-page-footer {
+  .adm-footer {
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
     margin-top: 36px;
   }
 
-  /* Responsive Media Queries */
-  @media (max-width: 820px) {
+  /* Responsive Breakpoints */
+  @media (max-width: 768px) {
     .adm-card {
-      padding: 28px 24px;
+      padding: 26px 20px 28px;
       border-radius: 20px;
     }
 
-    .adm-step-name-full {
-      display: none;
+    .adm-step-label {
+      font-size: 11px;
     }
 
-    .adm-step-name-short {
-      display: block;
-    }
-
-    .adm-step-line {
-      margin: 0 8px;
+    .adm-step-bubble {
+      width: 32px;
+      height: 32px;
+      font-size: 12px;
     }
   }
 
-  @media (max-width: 640px) {
+  @media (max-width: 600px) {
     .adm-page {
       padding: 20px 12px 36px;
     }
@@ -1544,53 +1517,42 @@ const admissionStyles = `
       font-size: 13px;
     }
 
-    .adm-grid-row {
+    .adm-grid-2 {
       grid-template-columns: 1fr;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .adm-card {
-      padding: 22px 16px;
+      padding: 20px 14px;
     }
 
-    .adm-stepper-container {
-      margin-bottom: 20px;
-      padding-bottom: 16px;
+    .adm-step-label {
+      font-size: 10px;
     }
 
-    .adm-step-bubble {
-      width: 32px;
-      height: 32px;
-      font-size: 12px;
-    }
-
-    .adm-step-line {
-      margin: 0 4px;
-    }
-
-    .adm-input-elem {
-      font-size: 16px; /* Prevents auto-zoom on iOS */
+    .adm-input {
+      font-size: 16px;
       padding: 11px 12px;
     }
 
-    .adm-select-elem {
+    .adm-select {
       font-size: 16px;
       padding: 11px 34px 11px 12px;
     }
 
-    .adm-action-row {
-      margin-top: 20px;
-      padding-top: 16px;
+    .adm-action-bar {
+      margin-top: 18px;
+      padding-top: 14px;
     }
 
-    .adm-btn-next, .adm-btn-back {
-      padding: 12px 18px;
+    .adm-btn-next, .adm-btn-prev {
+      padding: 11px 16px;
       font-size: 13px;
     }
 
     .adm-success-card {
-      padding: 32px 20px;
+      padding: 28px 18px;
     }
 
     .adm-success-title {
