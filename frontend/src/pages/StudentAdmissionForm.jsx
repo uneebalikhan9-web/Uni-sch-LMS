@@ -311,7 +311,7 @@ export default function StudentAdmissionForm() {
         </header>
 
         {/* Centered Master Card */}
-        <main className="adm-card">
+        <div className="adm-card">
 
           {/* Stepper Navigation Grid */}
           <div className="adm-stepper-container">
@@ -713,7 +713,7 @@ export default function StudentAdmissionForm() {
             <Info size={16} weight="bold" color="#6366f1" />
             <span>Need assistance? Contact admissions support at <strong>admissions@lancerstech.com</strong></span>
           </div>
-        </main>
+        </div>
 
         <footer className="adm-footer">
           <p>© {new Date().getFullYear()} Lancers Tech LMS · All Rights Reserved</p>
@@ -800,12 +800,13 @@ const admissionStyles = `
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    margin: 0 !important;
   }
 
   .adm-layout-container {
     width: 100%;
     max-width: 860px;
-    margin: 0 auto;
+    margin: 0 auto !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -815,7 +816,7 @@ const admissionStyles = `
     text-align: center;
     width: 100%;
     max-width: 680px;
-    margin: 0 auto 28px;
+    margin: 0 auto 28px !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -862,6 +863,7 @@ const admissionStyles = `
     box-shadow: 0 12px 40px rgba(79, 70, 229, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
     box-sizing: border-box;
     width: 100%;
+    margin: 0 auto !important;
   }
 
   /* Stepper Header Block */

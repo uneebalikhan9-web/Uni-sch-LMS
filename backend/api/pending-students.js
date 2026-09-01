@@ -143,22 +143,26 @@ router.delete('/:id/reject', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
-    // Delete student records safely, bypassing potential corrupted/orphaned constraints
+    // Delete student records safely in ordered transaction
     const connection = await pool.getConnection();
     try {
-      await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+      await connection.beginTransaction();
+      await connection.query('DELETE FROM student_submissions WHERE student_id = ?', [id]);
+      await connection.query('DELETE FROM attendance WHERE student_id = ?', [id]);
+      await connection.query('DELETE FROM enrollments WHERE student_id = ?', [id]);
       await connection.query('DELETE FROM students WHERE user_id = ?', [id]);
       await connection.query('DELETE FROM users WHERE id = ?', [id]);
-      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      await connection.commit();
     } catch (err) {
-      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      await connection.rollback();
       throw err;
     } finally {
       connection.release();
     }
     res.status(200).json({ success: true, message: 'Student rejected successfully' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Error rejecting student' });
+    console.error('Error rejecting student:', error);
+    res.status(500).json({ success: false, message: 'Error rejecting student: ' + (error.sqlMessage || error.message) });
   }
 });
 

@@ -175,21 +175,27 @@ router.put('/clients/:id', async (req, res) => {
 });
 
 // @route   DELETE /api/masteradmin/clients/:id
-// @desc    Delete a client completely
+// @desc    Delete a client completely with safe transaction
 router.delete('/clients/:id', async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
-    await connection.query('DELETE FROM client_invoices WHERE client_id = ?', [req.params.id]);
-    await connection.query('DELETE FROM users WHERE client_id = ?', [req.params.id]);
-    await connection.query('DELETE FROM campuses WHERE client_id = ?', [req.params.id]);
-    await connection.query('DELETE FROM lancers_clients WHERE id = ?', [req.params.id]);
-    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+    await connection.beginTransaction();
+    const clientId = req.params.id;
+
+    // Ordered cleanup of child dependencies
+    await connection.query('DELETE FROM client_invoices WHERE client_id = ?', [clientId]);
+    await connection.query('DELETE FROM employees WHERE user_id IN (SELECT id FROM users WHERE client_id = ?)', [clientId]);
+    await connection.query('DELETE FROM students WHERE user_id IN (SELECT id FROM users WHERE client_id = ?)', [clientId]);
+    await connection.query('DELETE FROM users WHERE client_id = ?', [clientId]);
+    await connection.query('DELETE FROM campuses WHERE client_id = ?', [clientId]);
+    await connection.query('DELETE FROM lancers_clients WHERE id = ?', [clientId]);
+
+    await connection.commit();
     connection.release();
-    res.json({ success: true, message: 'Client and associated core data deleted successfully.' });
+    res.json({ success: true, message: 'Client and associated data deleted cleanly.' });
   } catch (error) {
     if (connection) {
-      await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+      await connection.rollback();
       connection.release();
     }
     console.error('Delete client error:', error);

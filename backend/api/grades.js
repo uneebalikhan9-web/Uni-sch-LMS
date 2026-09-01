@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { verifyToken, isTeacher, isStudent, isRegistrar } = require('../middleware/auth');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
 

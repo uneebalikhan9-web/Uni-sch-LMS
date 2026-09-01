@@ -1,19 +1,21 @@
 const express = require('express');
 const { pool } = require('../config/database');
 const { verifyToken, isStudent } = require('../middleware/auth');
+const { logAudit } = require('../utils/auditLogger');
 
 const router = express.Router();
 
-// Middleware to check if user is admin
-const isAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Admin access required' });
+// Middleware to check if user has admin/finance privileges
+const isAdminOrFinance = (req, res, next) => {
+  const allowed = ['admin', 'principal', 'super_admin', 'master_admin', 'finance_manager'];
+  if (!allowed.includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Admin / Finance access required' });
   }
   next();
 };
 
 // Admin: Create Challan
-router.post('/', verifyToken, isAdmin, async (req, res) => {
+router.post('/', verifyToken, isAdminOrFinance, async (req, res) => {
   try {
     const { student_id, title, amount, due_date, semester, academic_year, description } = req.body;
     const created_by = req.user.id;
@@ -30,6 +32,15 @@ router.post('/', verifyToken, isAdmin, async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [student_id, challan_number, title, amount, due_date, semester, academic_year, description, created_by]
     );
+
+    // Audit log
+    await logAudit({
+      req,
+      action: 'CHALLAN_CREATED',
+      targetEntity: 'challans',
+      targetId: result.insertId,
+      details: { student_id, challan_number, amount }
+    });
 
     res.status(201).json({
       success: true,
@@ -51,7 +62,7 @@ router.get('/student/:studentId', verifyToken, async (req, res) => {
     const { studentId } = req.params;
 
     // Only admin or the student themselves can view
-    if (req.user.role !== 'admin' && req.user.id !== parseInt(studentId)) {
+    if (!['admin', 'principal', 'super_admin', 'master_admin', 'finance_manager'].includes(req.user.role) && req.user.id !== parseInt(studentId)) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
 
@@ -91,7 +102,7 @@ router.get('/my-challans', verifyToken, isStudent, async (req, res) => {
 });
 
 // Admin: Update Challan Payment Status
-router.put('/:id/status', verifyToken, isAdmin, async (req, res) => {
+router.put('/:id/status', verifyToken, isAdminOrFinance, async (req, res) => {
   try {
     const { id } = req.params;
     const { payment_status, payment_method } = req.body;
@@ -109,6 +120,15 @@ router.put('/:id/status', verifyToken, isAdmin, async (req, res) => {
       [payment_status, payment_date, payment_method, id]
     );
 
+    // Audit log
+    await logAudit({
+      req,
+      action: 'CHALLAN_STATUS_UPDATED',
+      targetEntity: 'challans',
+      targetId: id,
+      details: { payment_status, payment_method }
+    });
+
     res.status(200).json({ success: true, message: 'Challan status updated successfully' });
   } catch (error) {
     console.error('Update challan status error:', error);
@@ -116,17 +136,34 @@ router.put('/:id/status', verifyToken, isAdmin, async (req, res) => {
   }
 });
 
-// Admin: Get All Challans
-router.get('/', verifyToken, isAdmin, async (req, res) => {
+// Admin/Finance: Get All Challans with Pagination
+router.get('/', verifyToken, isAdminOrFinance, async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+
+    const [[{ total }]] = await pool.query('SELECT COUNT(*) as total FROM challans');
+
     const [challans] = await pool.query(
       `SELECT ch.*, u.name as student_name, u.email as student_email
        FROM challans ch
        JOIN users u ON ch.student_id = u.id
-       ORDER BY ch.created_at DESC`
+       ORDER BY ch.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [limit, offset]
     );
 
-    res.status(200).json({ success: true, challans });
+    res.status(200).json({ 
+      success: true, 
+      challans,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     console.error('Get all challans error:', error);
     res.status(500).json({ success: false, message: 'Error fetching challans' });

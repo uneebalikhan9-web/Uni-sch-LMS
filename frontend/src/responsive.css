@@ -179,7 +179,9 @@
 }
 
 @media (min-width: 1101px) {
-  main, .main-content {
+  body:has(.portal-sidebar, .sidebar) main,
+  body:has(.portal-sidebar, .sidebar) .main-content,
+  .portal-main {
       margin-left: 280px !important;
       margin-right: 0 !important; /* Default to 0 */
   }

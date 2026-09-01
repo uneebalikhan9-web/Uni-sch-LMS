@@ -332,9 +332,16 @@ try {
   app.post('/api/signup', signupLimiter);           // Rate limit: 5 req / 1 hr
   app.use('/api', require('./api/auth'));
 
-  app.post('/api/forgot-password', forgotPasswordLimiter); // Rate limit: 5 req / 15 min
-  app.post('/api/verify-otp', forgotPasswordLimiter);
-  app.use('/api', require('./api/forgotPassword'));
+  // Public Admission Form: max 10 submissions per 15 minutes per IP
+  const applyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: { success: false, message: 'Too many admission requests from this IP. Please try again after 15 minutes.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  app.post('/api/public-admissions/apply', applyLimiter);
   app.use('/api/public-admissions', require('./api/publicAdmissions'));
 
   app.use('/api/users', require('./api/users'));
