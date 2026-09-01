@@ -5,7 +5,6 @@ import {
   Phone, 
   BookOpen, 
   GraduationCap, 
-  UploadSimple, 
   X, 
   Spinner, 
   ArrowRight, 
@@ -18,8 +17,7 @@ import {
   Sparkle,
   Check,
   Camera,
-  Info,
-  Question
+  Info
 } from '@phosphor-icons/react';
 import API_BASE_URL from '../config/api';
 
@@ -79,66 +77,6 @@ const ALL_REQUIRED = [
   'last_qualification', 'board_university', 'passing_year', 'marks_gpa',
   'program',
 ];
-
-// Circular SVG Progress Ring
-function ProgressRing({ percent, size = 110, strokeWidth = 9 }) {
-  const r = (size - strokeWidth) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (percent / 100) * circ;
-  const isComplete = percent >= 100;
-  const color = isComplete ? '#10b981' : percent > 60 ? '#6366f1' : percent > 30 ? '#818cf8' : '#a5b4fc';
-
-  return (
-    <div style={{ position: 'relative', width: `${size}px`, height: `${size}px`, flexShrink: 0 }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track background */}
-        <circle 
-          cx={size / 2} 
-          cy={size / 2} 
-          r={r} 
-          fill="none" 
-          stroke="#f1f5f9" 
-          strokeWidth={strokeWidth} 
-        />
-        {/* Animated fill */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease' }}
-        />
-      </svg>
-      {/* Center content */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        {isComplete ? (
-          <CheckCircle size={size > 100 ? 36 : 28} weight="fill" color="#10b981" />
-        ) : (
-          <>
-            <span style={{ fontSize: size > 100 ? '24px' : '18px', fontWeight: '900', color: '#0f172a', lineHeight: 1 }}>
-              {percent}%
-            </span>
-            <span style={{ fontSize: '10px', fontWeight: '700', color: '#94a3b8', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Done
-            </span>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 export default function StudentAdmissionForm() {
   const [form, setForm] = useState(INIT_FORM);
@@ -248,8 +186,8 @@ export default function StudentAdmissionForm() {
     if (targetStep < step) {
       setError('');
       setStep(targetStep);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (targetStep > step) {
-      // Validate up to target
       let valid = true;
       for (let i = step; i < targetStep; i++) {
         if (!validateStep(i)) {
@@ -257,7 +195,10 @@ export default function StudentAdmissionForm() {
           break;
         }
       }
-      if (valid) setStep(targetStep);
+      if (valid) {
+        setStep(targetStep);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 
@@ -292,7 +233,6 @@ export default function StudentAdmissionForm() {
         setError(data.message || 'Submission failed. Please check your data and try again.'); 
       }
     } catch (err) { 
-      // Graceful fallback for offline/demo
       setSubmissionId(Math.floor(100000 + Math.random() * 900000));
       setSubmitted(true); 
     } finally {
@@ -301,10 +241,10 @@ export default function StudentAdmissionForm() {
   };
 
   const stepDefs = [
-    { num: 1, label: 'Personal', subtitle: 'Basic Profile', icon: <User size={18} weight="bold" /> },
-    { num: 2, label: 'Contact', subtitle: 'Contact & Emergency', icon: <Phone size={18} weight="bold" /> },
-    { num: 3, label: 'Academic', subtitle: 'Education Records', icon: <BookOpen size={18} weight="bold" /> },
-    { num: 4, label: 'Program', subtitle: 'Choices & Shift', icon: <GraduationCap size={18} weight="bold" /> },
+    { num: 1, label: 'Personal Details', shortLabel: 'Personal', icon: <User size={18} weight="bold" /> },
+    { num: 2, label: 'Contact & Address', shortLabel: 'Contact', icon: <Phone size={18} weight="bold" /> },
+    { num: 3, label: 'Academic Records', shortLabel: 'Academic', icon: <BookOpen size={18} weight="bold" /> },
+    { num: 4, label: 'Program & Shift', shortLabel: 'Program', icon: <GraduationCap size={18} weight="bold" /> },
   ];
 
   if (submitted) {
@@ -319,10 +259,10 @@ export default function StudentAdmissionForm() {
               </div>
             </div>
 
-            <span className="adm-badge-success">Official Application Received</span>
-            <h1 className="adm-success-title">Application Submitted!</h1>
+            <span className="adm-badge-success">Application Received Successfully</span>
+            <h1 className="adm-success-title">Submission Confirmed!</h1>
             <p className="adm-success-desc">
-              Thank you, <strong>{form.full_name}</strong>. Your online admission application has been registered in the LMS portal.
+              Thank you, <strong>{form.full_name}</strong>. Your admission application has been registered in the system.
             </p>
 
             <div className="adm-summary-box">
@@ -331,15 +271,15 @@ export default function StudentAdmissionForm() {
                 <span className="adm-summary-val adm-app-id">#{submissionId}</span>
               </div>
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Selected Program</span>
-                <span className="adm-summary-val">{form.program || 'Applied Program'}</span>
+                <span className="adm-summary-label">Applied Program</span>
+                <span className="adm-summary-val">{form.program || 'N/A'}</span>
               </div>
               <div className="adm-summary-row">
                 <span className="adm-summary-label">Applicant Email</span>
                 <span className="adm-summary-val">{form.email}</span>
               </div>
               <div className="adm-summary-row">
-                <span className="adm-summary-label">Phone Number</span>
+                <span className="adm-summary-label">Contact Phone</span>
                 <span className="adm-summary-val">{form.phone}</span>
               </div>
             </div>
@@ -347,11 +287,11 @@ export default function StudentAdmissionForm() {
             <div className="adm-next-steps">
               <div className="adm-next-step-title">
                 <Sparkle size={18} weight="fill" color="#4f46e5" />
-                <span>What happens next?</span>
+                <span>Next Steps</span>
               </div>
               <ul className="adm-next-step-list">
-                <li>Admissions committee will review your uploaded credentials.</li>
-                <li>You will receive an SMS and email notification regarding fee voucher & interview schedule.</li>
+                <li>Your application will be reviewed by the admissions team.</li>
+                <li>You will receive updates on your registered phone number and email.</li>
               </ul>
             </div>
 
@@ -361,7 +301,7 @@ export default function StudentAdmissionForm() {
                 onClick={() => window.print()} 
                 className="adm-btn-outline"
               >
-                🖨️ Print Application Copy
+                🖨️ Print Application
               </button>
               <button 
                 type="button" 
@@ -388,96 +328,82 @@ export default function StudentAdmissionForm() {
           <span>Lancers Tech LMS Admissions</span>
         </div>
         <h1 className="adm-title">Student Admission Form</h1>
-        <p className="adm-subtitle">Fill in the official details below to apply for upcoming academic sessions.</p>
+        <p className="adm-subtitle">Fill in the required information to apply for admission.</p>
       </header>
 
-      {/* Mobile Sticky / Top Progress Bar */}
-      <div className="adm-mobile-progress-card">
-        <div className="adm-mobile-progress-header">
-          <div className="adm-mobile-step-info">
-            <span className="adm-mobile-step-pill">Step {step} of 4</span>
-            <span className="adm-mobile-step-name">{stepDefs[step - 1].label} Details</span>
-          </div>
-          <div className="adm-mobile-percent-badge">{fillPercent}% Completed</div>
-        </div>
-        <div className="adm-progress-bar-track">
-          <div 
-            className="adm-progress-bar-fill" 
-            style={{ width: `${fillPercent}%` }}
-          />
-        </div>
-      </div>
+      {/* Centered Master Card */}
+      <div className="adm-wrapper">
+        <main className="adm-card">
 
-      {/* Responsive Content Container */}
-      <div className="adm-container">
-        {/* Left Column: Multi-step Form Card */}
-        <main className="adm-main-card">
-          
           {/* Stepper Navigation */}
-          <nav className="adm-stepper" aria-label="Form Steps">
-            {stepDefs.map((s, index) => {
-              const isActive = step === s.num;
-              const isDone = step > s.num || stepStats[s.num].isDone;
-              return (
-                <div key={s.num} className="adm-stepper-item">
-                  <button
-                    type="button"
-                    onClick={() => jumpToStep(s.num)}
-                    className={`adm-step-btn ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''}`}
-                  >
-                    <div className="adm-step-circle">
-                      {isDone && !isActive ? (
-                        <Check size={16} weight="bold" />
-                      ) : (
-                        <span>{s.num}</span>
-                      )}
-                    </div>
-                    <div className="adm-step-text-wrap">
-                      <span className="adm-step-label">{s.label}</span>
-                      <span className="adm-step-sub">{s.subtitle}</span>
-                    </div>
-                  </button>
+          <div className="adm-stepper-container">
+            <nav className="adm-stepper" aria-label="Form Steps">
+              {stepDefs.map((s, index) => {
+                const isActive = step === s.num;
+                const isDone = step > s.num || stepStats[s.num].isDone;
+                return (
+                  <div key={s.num} className="adm-stepper-col">
+                    <button
+                      type="button"
+                      onClick={() => jumpToStep(s.num)}
+                      className={`adm-step-tab ${isActive ? 'active' : ''} ${isDone ? 'completed' : ''}`}
+                    >
+                      <div className="adm-step-bubble">
+                        {isDone && !isActive ? (
+                          <Check size={16} weight="bold" />
+                        ) : (
+                          <span>{s.num}</span>
+                        )}
+                      </div>
+                      <div className="adm-step-info">
+                        <span className="adm-step-name-full">{s.label}</span>
+                        <span className="adm-step-name-short">{s.shortLabel}</span>
+                      </div>
+                    </button>
 
-                  {index < stepDefs.length - 1 && (
-                    <div className={`adm-step-connector ${step > s.num ? 'completed' : ''}`} />
-                  )}
-                </div>
-              );
-            })}
-          </nav>
+                    {index < stepDefs.length - 1 && (
+                      <div className={`adm-step-line ${step > s.num ? 'completed' : ''}`} />
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
 
-          {/* Current Step Section Title */}
-          <div className="adm-section-header">
-            <div className="adm-section-title-wrap">
-              <div className="adm-section-badge">Step {step} of 4</div>
-              <h2 className="adm-section-heading">
-                {step === 1 && 'Personal Information'}
-                {step === 2 && 'Contact & Address Information'}
-                {step === 3 && 'Academic Background & Records'}
-                {step === 4 && 'Program Selection & Shift'}
-              </h2>
-            </div>
-            <div className="adm-step-completion-pill">
-              {stepStats[step].percent}% filled
+            {/* Integrated Live Progress Meter */}
+            <div className="adm-progress-meter">
+              <div className="adm-meter-text-row">
+                <span className="adm-meter-title">
+                  Step {step} of 4: <strong>{stepDefs[step - 1].label}</strong>
+                </span>
+                <span className="adm-meter-pct">
+                  <strong>{fillPercent}%</strong> Completed ({ALL_REQUIRED.filter(k => form[k]?.toString().trim()).length + (photo ? 1 : 0)}/{ALL_REQUIRED.length + 1})
+                </span>
+              </div>
+              <div className="adm-meter-track">
+                <div 
+                  className="adm-meter-bar" 
+                  style={{ width: `${fillPercent}%` }} 
+                />
+              </div>
             </div>
           </div>
 
           {/* Form Content */}
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate className="adm-form-body">
             
             {/* STEP 1: Personal Details */}
             {step === 1 && (
               <div className="adm-step-pane">
                 {/* Photo Upload Zone */}
-                <div className="adm-photo-section">
-                  <div className="adm-photo-container">
+                <div className="adm-photo-wrapper">
+                  <div className="adm-photo-box">
                     {photoPreview ? (
                       <div className="adm-photo-preview-wrap">
-                        <img src={photoPreview} alt="Applicant" className="adm-photo-preview-img" />
+                        <img src={photoPreview} alt="Applicant" className="adm-photo-img" />
                         <button 
                           type="button" 
                           onClick={removePhoto} 
-                          className="adm-photo-remove-btn"
+                          className="adm-photo-del"
                           title="Remove Photo"
                           aria-label="Remove Photo"
                         >
@@ -487,14 +413,12 @@ export default function StudentAdmissionForm() {
                     ) : (
                       <button
                         type="button"
-                        className="adm-photo-dropzone"
+                        className="adm-photo-btn"
                         onClick={() => photoRef.current?.click()}
                       >
-                        <div className="adm-photo-icon-circle">
-                          <Camera size={24} weight="duotone" />
-                        </div>
-                        <span className="adm-photo-dropzone-label">Upload Photo</span>
-                        <span className="adm-photo-dropzone-hint">PNG, JPG up to 4MB</span>
+                        <Camera size={26} weight="duotone" color="#4f46e5" />
+                        <span className="adm-photo-text">Upload Photo</span>
+                        <span className="adm-photo-hint">Max 4MB</span>
                       </button>
                     )}
                     <input 
@@ -507,7 +431,7 @@ export default function StudentAdmissionForm() {
                   </div>
                 </div>
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="Full Name *" 
                     id="full_name" 
@@ -528,7 +452,7 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="Date of Birth *" 
                     id="dob" 
@@ -548,7 +472,7 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="CNIC / B-Form Number *" 
                     id="cnic" 
@@ -581,9 +505,9 @@ export default function StudentAdmissionForm() {
             {/* STEP 2: Contact Details */}
             {step === 2 && (
               <div className="adm-step-pane">
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
-                    label="Applicant Phone Number *" 
+                    label="Phone Number *" 
                     id="phone" 
                     value={form.phone} 
                     onChange={set('phone')} 
@@ -598,7 +522,7 @@ export default function StudentAdmissionForm() {
                     value={form.email} 
                     onChange={set('email')} 
                     type="email" 
-                    placeholder="name@example.com" 
+                    placeholder="student@example.com" 
                     icon={<EnvelopeSimple size={18} />}
                     required
                   />
@@ -615,7 +539,7 @@ export default function StudentAdmissionForm() {
                   required
                 />
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="City / District *" 
                     id="city" 
@@ -627,20 +551,17 @@ export default function StudentAdmissionForm() {
                   />
                 </div>
 
-                <div className="adm-subgroup-divider">
-                  <div className="adm-subgroup-title">
-                    <Phone size={16} weight="fill" />
-                    <span>Emergency Contact Details</span>
-                  </div>
+                <div className="adm-divider">
+                  <span className="adm-divider-text">Emergency Contact Information</span>
                 </div>
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="Emergency Contact Name *" 
                     id="emergency_name" 
                     value={form.emergency_name} 
                     onChange={set('emergency_name')} 
-                    placeholder="Guardian / Contact Person Name" 
+                    placeholder="Guardian Name" 
                     required
                   />
                   <Field 
@@ -659,7 +580,7 @@ export default function StudentAdmissionForm() {
                   id="emergency_relation" 
                   value={form.emergency_relation} 
                   onChange={set('emergency_relation')} 
-                  placeholder="e.g. Father, Mother, Elder Brother, Uncle" 
+                  placeholder="e.g. Father, Mother, Brother" 
                   required
                 />
               </div>
@@ -678,13 +599,13 @@ export default function StudentAdmissionForm() {
                   required
                 />
 
-                <div className="adm-grid-2">
+                <div className="adm-grid-row">
                   <Field 
                     label="Board / University / Institute *" 
                     id="board_university" 
                     value={form.board_university} 
                     onChange={set('board_university')} 
-                    placeholder="e.g. BISE Lahore / Federal Board" 
+                    placeholder="e.g. BISE Lahore / Punjab University" 
                     icon={<Buildings size={18} />}
                     required
                   />
@@ -735,43 +656,43 @@ export default function StudentAdmissionForm() {
                 />
 
                 <Field 
-                  label="Any Medical Condition / Special Assistance Required?" 
+                  label="Any Medical Condition / Disability?" 
                   id="medical_condition" 
                   value={form.medical_condition} 
                   onChange={set('medical_condition')} 
-                  placeholder="Mention if any (or leave blank if none)" 
+                  placeholder="Leave blank if none" 
                   textarea 
                 />
 
                 <Field 
-                  label="Additional Notes / Remarks" 
+                  label="Additional Notes / Comments" 
                   id="notes" 
                   value={form.notes} 
                   onChange={set('notes')} 
-                  placeholder="Any other comments or details..." 
+                  placeholder="Anything else you'd like us to know..." 
                   textarea 
                 />
               </div>
             )}
 
-            {/* Error Message Box */}
+            {/* Error Message Alert */}
             {error && (
-              <div className="adm-error-banner" role="alert">
+              <div className="adm-error-alert" role="alert">
                 <WarningCircle size={20} weight="fill" />
                 <span>{error}</span>
               </div>
             )}
 
-            {/* Navigation Actions */}
-            <div className="adm-action-bar">
+            {/* Navigation Action Buttons */}
+            <div className="adm-action-row">
               {step > 1 ? (
                 <button 
                   type="button" 
                   onClick={prevStep} 
-                  className="adm-btn-secondary"
+                  className="adm-btn-back"
                 >
                   <ArrowLeft size={16} weight="bold" />
-                  <span>Previous</span>
+                  <span>Previous Step</span>
                 </button>
               ) : (
                 <div />
@@ -781,7 +702,7 @@ export default function StudentAdmissionForm() {
                 <button 
                   type="button" 
                   onClick={nextStep} 
-                  className="adm-btn-primary"
+                  className="adm-btn-next"
                 >
                   <span>Continue</span>
                   <ArrowRight size={16} weight="bold" />
@@ -790,11 +711,11 @@ export default function StudentAdmissionForm() {
                 <button 
                   type="submit" 
                   disabled={submitting} 
-                  className="adm-btn-primary adm-btn-submit"
+                  className="adm-btn-next adm-btn-submit-glow"
                 >
                   {submitting ? (
                     <>
-                      <Spinner size={18} className="adm-spin" />
+                      <Spinner size={18} className="adm-spin-anim" />
                       <span>Submitting Application...</span>
                     </>
                   ) : (
@@ -807,59 +728,16 @@ export default function StudentAdmissionForm() {
               )}
             </div>
           </form>
+
+          {/* Quick Help Footer */}
+          <div className="adm-card-footer">
+            <Info size={16} weight="bold" color="#6366f1" />
+            <span>Need assistance? Contact admissions support at <strong>admissions@lancerstech.com</strong></span>
+          </div>
         </main>
-
-        {/* Right Column: Desktop Sidebar */}
-        <aside className="adm-sidebar">
-          {/* Progress Circular Widget */}
-          <div className="adm-sidebar-card">
-            <h3 className="adm-sidebar-title">Completion Status</h3>
-            <div className="adm-ring-center">
-              <ProgressRing percent={fillPercent} size={120} strokeWidth={10} />
-            </div>
-            <p className="adm-ring-caption">
-              <strong>{ALL_REQUIRED.filter(k => form[k]?.toString().trim()).length + (photo ? 1 : 0)}</strong> of <strong>{ALL_REQUIRED.length + 1}</strong> fields completed
-            </p>
-
-            {/* Checklist of Steps */}
-            <div className="adm-sidebar-step-list">
-              {stepDefs.map(s => {
-                const isCurrent = step === s.num;
-                const isDone = stepStats[s.num].isDone;
-                return (
-                  <button
-                    key={s.num}
-                    type="button"
-                    onClick={() => jumpToStep(s.num)}
-                    className={`adm-sidebar-step-item ${isCurrent ? 'active' : ''} ${isDone ? 'done' : ''}`}
-                  >
-                    <div className="adm-sidebar-step-badge">
-                      {isDone ? <Check size={12} weight="bold" /> : s.num}
-                    </div>
-                    <span className="adm-sidebar-step-name">{s.label} Details</span>
-                    <span className="adm-sidebar-step-status">
-                      {isDone ? '✓' : isCurrent ? 'Active' : `${stepStats[s.num].percent}%`}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Quick Help Box */}
-          <div className="adm-sidebar-help-card">
-            <div className="adm-help-header">
-              <Info size={18} weight="fill" color="#4f46e5" />
-              <span className="adm-help-title">Need Guidance?</span>
-            </div>
-            <p className="adm-help-text">
-              Ensure CNIC and email are correct. For admission queries, contact the admissions office at <strong>admissions@lancerstech.com</strong>.
-            </p>
-          </div>
-        </aside>
       </div>
 
-      <footer className="adm-footer">
+      <footer className="adm-page-footer">
         <p>© {new Date().getFullYear()} Lancers Tech LMS · All Rights Reserved</p>
       </footer>
     </div>
@@ -869,13 +747,13 @@ export default function StudentAdmissionForm() {
 function Field({ label, id, value, onChange, type = 'text', placeholder, textarea, icon, required, min, max }) {
   const isFilled = Boolean(value?.toString().trim());
   return (
-    <div className="adm-field-group">
-      <label htmlFor={id} className="adm-field-label">
+    <div className="adm-form-field">
+      <label htmlFor={id} className="adm-field-lbl">
         <span>{label}</span>
-        {isFilled && <Check size={14} weight="bold" className="adm-valid-check" />}
+        {isFilled && <Check size={14} weight="bold" className="adm-check-icon" />}
       </label>
-      <div className="adm-input-wrap">
-        {icon && <span className="adm-input-icon">{icon}</span>}
+      <div className="adm-field-input-box">
+        {icon && <span className="adm-field-icon">{icon}</span>}
         {textarea ? (
           <textarea
             id={id}
@@ -883,7 +761,7 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
             onChange={onChange}
             placeholder={placeholder}
             rows={3}
-            className={`adm-input adm-textarea ${icon ? 'has-icon' : ''} ${isFilled ? 'filled' : ''}`}
+            className={`adm-input-elem adm-textarea-elem ${icon ? 'with-icon' : ''} ${isFilled ? 'filled' : ''}`}
           />
         ) : (
           <input
@@ -894,7 +772,7 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
             placeholder={placeholder}
             min={min}
             max={max}
-            className={`adm-input ${icon ? 'has-icon' : ''} ${isFilled ? 'filled' : ''}`}
+            className={`adm-input-elem ${icon ? 'with-icon' : ''} ${isFilled ? 'filled' : ''}`}
           />
         )}
       </div>
@@ -905,17 +783,17 @@ function Field({ label, id, value, onChange, type = 'text', placeholder, textare
 function SelectField({ label, id, value, onChange, options, placeholder, required }) {
   const isFilled = Boolean(value?.toString().trim());
   return (
-    <div className="adm-field-group">
-      <label htmlFor={id} className="adm-field-label">
+    <div className="adm-form-field">
+      <label htmlFor={id} className="adm-field-lbl">
         <span>{label}</span>
-        {isFilled && <Check size={14} weight="bold" className="adm-valid-check" />}
+        {isFilled && <Check size={14} weight="bold" className="adm-check-icon" />}
       </label>
-      <div className="adm-select-wrap">
+      <div className="adm-field-select-box">
         <select
           id={id}
           value={value}
           onChange={onChange}
-          className={`adm-select ${isFilled ? 'filled' : 'placeholder'}`}
+          className={`adm-select-elem ${isFilled ? 'filled' : 'placeholder'}`}
         >
           <option value="">{placeholder}</option>
           {options.map((opt) => (
@@ -937,14 +815,14 @@ const admissionStyles = `
     background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 40%, #edf2f7 100%);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #1e293b;
-    padding: 32px 16px 48px;
+    padding: 40px 20px 60px;
     box-sizing: border-box;
   }
 
   .adm-header {
     text-align: center;
     max-width: 680px;
-    margin: 0 auto 28px;
+    margin: 0 auto 32px;
   }
 
   .adm-brand-badge {
@@ -955,14 +833,14 @@ const admissionStyles = `
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
-    padding: 6px 16px;
+    padding: 6px 18px;
     border-radius: 9999px;
     box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
     margin-bottom: 12px;
   }
 
   .adm-title {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 900;
     color: #0f172a;
     letter-spacing: -0.02em;
@@ -977,46 +855,49 @@ const admissionStyles = `
     line-height: 1.5;
   }
 
-  /* Two column container */
-  .adm-container {
-    max-width: 1040px;
+  /* Centered Wrapper */
+  .adm-wrapper {
+    max-width: 820px;
     margin: 0 auto;
-    display: flex;
-    align-items: flex-start;
-    gap: 24px;
   }
 
-  /* Main Form Card */
-  .adm-main-card {
-    flex: 1;
-    min-width: 0;
+  /* Master Card */
+  .adm-card {
     background: #ffffff;
-    border-radius: 20px;
+    border-radius: 24px;
     border: 1px solid #e2e8f0;
-    padding: 36px 36px 40px;
-    box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+    padding: 36px 44px 40px;
+    box-shadow: 0 12px 40px rgba(79, 70, 229, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
   }
 
-  /* Stepper Navigation */
-  .adm-stepper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  /* Stepper Header Block */
+  .adm-stepper-container {
     margin-bottom: 32px;
     padding-bottom: 24px;
     border-bottom: 1px solid #f1f5f9;
   }
 
-  .adm-stepper-item {
+  .adm-stepper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .adm-stepper-col {
     display: flex;
     align-items: center;
     flex: 1;
   }
 
-  .adm-step-btn {
+  .adm-stepper-col:last-child {
+    flex: 0 0 auto;
+  }
+
+  .adm-step-tab {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     background: none;
     border: none;
     padding: 0;
@@ -1026,7 +907,7 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-step-circle {
+  .adm-step-bubble {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -1035,105 +916,130 @@ const admissionStyles = `
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     transition: all 0.25s ease;
     flex-shrink: 0;
   }
 
-  .adm-step-btn.active .adm-step-circle {
+  .adm-step-tab.active .adm-step-bubble {
     background: #4f46e5;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
   }
 
-  .adm-step-btn.completed .adm-step-circle {
+  .adm-step-tab.completed .adm-step-bubble {
     background: #10b981;
     color: #ffffff;
   }
 
-  .adm-step-text-wrap {
+  .adm-step-info {
     display: flex;
     flex-direction: column;
   }
 
-  .adm-step-label {
+  .adm-step-name-full {
     font-size: 13px;
     font-weight: 700;
     color: #64748b;
     transition: color 0.2s ease;
+    white-space: nowrap;
   }
 
-  .adm-step-btn.active .adm-step-label {
+  .adm-step-name-short {
+    display: none;
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+  }
+
+  .adm-step-tab.active .adm-step-name-full,
+  .adm-step-tab.active .adm-step-name-short {
     color: #4f46e5;
     font-weight: 800;
   }
 
-  .adm-step-btn.completed .adm-step-label {
+  .adm-step-tab.completed .adm-step-name-full,
+  .adm-step-tab.completed .adm-step-name-short {
     color: #0f172a;
   }
 
-  .adm-step-sub {
-    font-size: 11px;
-    color: #94a3b8;
-    font-weight: 500;
-  }
-
-  .adm-step-connector {
+  .adm-step-line {
     flex: 1;
     height: 2px;
     background: #e2e8f0;
-    margin: 0 12px;
+    margin: 0 14px;
     transition: background 0.3s ease;
   }
 
-  .adm-step-connector.completed {
+  .adm-step-line.completed {
     background: #10b981;
   }
 
-  /* Section Header */
-  .adm-section-header {
+  /* Live Progress Meter */
+  .adm-progress-meter {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 10px 16px;
+    border: 1px solid #f1f5f9;
+  }
+
+  .adm-meter-text-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f1f5f9;
-  }
-
-  .adm-section-badge {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #4f46e5;
-    margin-bottom: 2px;
-  }
-
-  .adm-section-heading {
-    font-size: 20px;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0;
-  }
-
-  .adm-step-completion-pill {
     font-size: 12px;
-    font-weight: 700;
-    color: #4f46e5;
-    background: #eef2ff;
-    padding: 4px 12px;
-    border-radius: 9999px;
+    margin-bottom: 6px;
+    color: #64748b;
   }
 
-  /* Photo Section */
-  .adm-photo-section {
+  .adm-meter-title strong {
+    color: #0f172a;
+  }
+
+  .adm-meter-pct {
+    color: #4f46e5;
+  }
+
+  .adm-meter-pct strong {
+    color: #10b981;
+  }
+
+  .adm-meter-track {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .adm-meter-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4f46e5 0%, #10b981 100%);
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+  }
+
+  /* Form Body & Panes */
+  .adm-form-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .adm-step-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  /* Photo Upload */
+  .adm-photo-wrapper {
     display: flex;
     justify-content: center;
     margin-bottom: 24px;
   }
 
-  .adm-photo-container {
+  .adm-photo-box {
     text-align: center;
   }
 
@@ -1142,7 +1048,7 @@ const admissionStyles = `
     display: inline-block;
   }
 
-  .adm-photo-preview-img {
+  .adm-photo-img {
     width: 96px;
     height: 96px;
     border-radius: 50%;
@@ -1151,7 +1057,7 @@ const admissionStyles = `
     box-shadow: 0 6px 18px rgba(79, 70, 229, 0.25);
   }
 
-  .adm-photo-remove-btn {
+  .adm-photo-del {
     position: absolute;
     top: 0;
     right: 0;
@@ -1169,11 +1075,11 @@ const admissionStyles = `
     transition: transform 0.15s ease;
   }
 
-  .adm-photo-remove-btn:hover {
+  .adm-photo-del:hover {
     transform: scale(1.1);
   }
 
-  .adm-photo-dropzone {
+  .adm-photo-btn {
     width: 104px;
     height: 104px;
     border-radius: 50%;
@@ -1188,49 +1094,39 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-photo-dropzone:hover {
+  .adm-photo-btn:hover {
     border-color: #6366f1;
     background: #eef2ff;
   }
 
-  .adm-photo-icon-circle {
-    color: #4f46e5;
-  }
-
-  .adm-photo-dropzone-label {
+  .adm-photo-text {
     font-size: 11px;
     font-weight: 700;
     color: #334155;
   }
 
-  .adm-photo-dropzone-hint {
+  .adm-photo-hint {
     font-size: 9px;
     color: #94a3b8;
   }
 
-  /* Grid Layouts */
-  .adm-grid-2 {
+  /* Grid System */
+  .adm-grid-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
-  .adm-step-pane {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  /* Field Groups */
-  .adm-field-group {
+  /* Form Fields */
+  .adm-form-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-bottom: 14px;
   }
 
-  .adm-field-label {
+  .adm-field-lbl {
     font-size: 13px;
     font-weight: 700;
     color: #334155;
@@ -1239,17 +1135,17 @@ const admissionStyles = `
     gap: 6px;
   }
 
-  .adm-valid-check {
+  .adm-check-icon {
     color: #10b981;
   }
 
-  .adm-input-wrap {
+  .adm-field-input-box {
     position: relative;
     display: flex;
     align-items: center;
   }
 
-  .adm-input-icon {
+  .adm-field-icon {
     position: absolute;
     left: 14px;
     color: #94a3b8;
@@ -1258,7 +1154,7 @@ const admissionStyles = `
     align-items: center;
   }
 
-  .adm-input {
+  .adm-input-elem {
     width: 100%;
     font-family: inherit;
     font-size: 14px;
@@ -1271,33 +1167,33 @@ const admissionStyles = `
     box-sizing: border-box;
   }
 
-  .adm-input.has-icon {
+  .adm-input-elem.with-icon {
     padding-left: 42px;
   }
 
-  .adm-input:focus {
+  .adm-input-elem:focus {
     outline: none;
     border-color: #4f46e5;
     background: #ffffff;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
   }
 
-  .adm-input.filled {
+  .adm-input-elem.filled {
     border-color: #cbd5e1;
     background: #ffffff;
   }
 
-  .adm-textarea {
+  .adm-textarea-elem {
     resize: vertical;
     min-height: 80px;
   }
 
-  /* Custom Select */
-  .adm-select-wrap {
+  /* Select Elements */
+  .adm-field-select-box {
     position: relative;
   }
 
-  .adm-select {
+  .adm-select-elem {
     width: 100%;
     font-family: inherit;
     font-size: 14px;
@@ -1317,28 +1213,25 @@ const admissionStyles = `
     box-sizing: border-box;
   }
 
-  .adm-select:focus {
+  .adm-select-elem:focus {
     outline: none;
     border-color: #4f46e5;
     background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
   }
 
-  .adm-select.placeholder {
+  .adm-select-elem.placeholder {
     color: #94a3b8;
   }
 
-  /* Subgroup Divider */
-  .adm-subgroup-divider {
+  /* Divider */
+  .adm-divider {
     margin: 16px 0 14px;
     padding-top: 14px;
     border-top: 1px solid #f1f5f9;
   }
 
-  .adm-subgroup-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+  .adm-divider-text {
     font-size: 12px;
     font-weight: 800;
     text-transform: uppercase;
@@ -1346,8 +1239,8 @@ const admissionStyles = `
     color: #4f46e5;
   }
 
-  /* Error Banner */
-  .adm-error-banner {
+  /* Error Alert */
+  .adm-error-alert {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1368,8 +1261,8 @@ const admissionStyles = `
     40%, 80% { transform: translateX(4px); }
   }
 
-  /* Action Bar */
-  .adm-action-bar {
+  /* Action Buttons */
+  .adm-action-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1379,7 +1272,7 @@ const admissionStyles = `
     gap: 12px;
   }
 
-  .adm-btn-primary {
+  .adm-btn-next {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1389,7 +1282,7 @@ const admissionStyles = `
     font-family: inherit;
     font-size: 14px;
     font-weight: 800;
-    padding: 13px 26px;
+    padding: 13px 28px;
     border-radius: 12px;
     border: none;
     cursor: pointer;
@@ -1397,16 +1290,12 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-btn-primary:hover:not(:disabled) {
+  .adm-btn-next:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 8px 24px rgba(79, 70, 229, 0.38);
   }
 
-  .adm-btn-primary:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .adm-btn-secondary {
+  .adm-btn-back {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1423,21 +1312,21 @@ const admissionStyles = `
     transition: all 0.2s ease;
   }
 
-  .adm-btn-secondary:hover {
+  .adm-btn-back:hover {
     background: #e2e8f0;
     color: #1e293b;
   }
 
-  .adm-btn-submit {
+  .adm-btn-submit-glow {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     box-shadow: 0 6px 18px rgba(16, 185, 129, 0.28);
   }
 
-  .adm-btn-submit:hover:not(:disabled) {
+  .adm-btn-submit-glow:hover:not(:disabled) {
     box-shadow: 0 8px 24px rgba(16, 185, 129, 0.38);
   }
 
-  .adm-spin {
+  .adm-spin-anim {
     animation: admSpin 1s linear infinite;
   }
 
@@ -1445,209 +1334,22 @@ const admissionStyles = `
     to { transform: rotate(360deg); }
   }
 
-  /* Right Sidebar */
-  .adm-sidebar {
-    width: 280px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .adm-sidebar-card {
-    background: #ffffff;
-    border-radius: 20px;
-    border: 1px solid #e2e8f0;
-    padding: 24px 20px;
-    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.04);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .adm-sidebar-title {
-    font-size: 14px;
-    font-weight: 800;
-    color: #0f172a;
-    margin: 0 0 16px;
-    text-align: center;
-  }
-
-  .adm-ring-center {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 12px;
-  }
-
-  .adm-ring-caption {
-    font-size: 12px;
-    color: #64748b;
-    margin: 0 0 20px;
-    text-align: center;
-  }
-
-  .adm-sidebar-step-list {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .adm-sidebar-step-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 12px;
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 700;
-    color: #64748b;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .adm-sidebar-step-item:hover {
-    background: #f1f5f9;
-  }
-
-  .adm-sidebar-step-item.active {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-    color: #4f46e5;
-  }
-
-  .adm-sidebar-step-item.done {
-    background: #f0fdf4;
-    border-color: #bbf7d0;
-    color: #065f46;
-  }
-
-  .adm-sidebar-step-badge {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #e2e8f0;
-    color: #64748b;
+  /* Card Footer Notice */
+  .adm-card-footer {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px solid #f8fafc;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
-    flex-shrink: 0;
-  }
-
-  .adm-sidebar-step-item.active .adm-sidebar-step-badge {
-    background: #4f46e5;
-    color: #ffffff;
-  }
-
-  .adm-sidebar-step-item.done .adm-sidebar-step-badge {
-    background: #10b981;
-    color: #ffffff;
-  }
-
-  .adm-sidebar-step-name {
-    flex: 1;
-  }
-
-  .adm-sidebar-step-status {
-    font-size: 11px;
-    font-weight: 800;
-  }
-
-  .adm-sidebar-help-card {
-    background: #f8fafc;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    padding: 16px;
-  }
-
-  .adm-help-header {
-    display: flex;
-    align-items: center;
     gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .adm-help-title {
-    font-size: 13px;
-    font-weight: 800;
-    color: #0f172a;
-  }
-
-  .adm-help-text {
     font-size: 12px;
     color: #64748b;
-    line-height: 1.5;
-    margin: 0;
+    text-align: center;
   }
 
-  /* Mobile Top Progress Bar (Hidden on desktop) */
-  .adm-mobile-progress-card {
-    display: none;
-    max-width: 1040px;
-    margin: 0 auto 16px;
-    background: #ffffff;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    padding: 12px 16px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-  }
-
-  .adm-mobile-progress-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-
-  .adm-mobile-step-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .adm-mobile-step-pill {
-    background: #eef2ff;
+  .adm-card-footer strong {
     color: #4f46e5;
-    font-size: 11px;
-    font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
-
-  .adm-mobile-step-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  .adm-mobile-percent-badge {
-    font-size: 12px;
-    font-weight: 800;
-    color: #10b981;
-  }
-
-  .adm-progress-bar-track {
-    height: 6px;
-    background: #f1f5f9;
-    border-radius: 9999px;
-    overflow: hidden;
-  }
-
-  .adm-progress-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4f46e5, #10b981);
-    border-radius: 9999px;
-    transition: width 0.4s ease;
   }
 
   /* Success Screen */
@@ -1802,7 +1504,7 @@ const admissionStyles = `
     box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35);
   }
 
-  .adm-footer {
+  .adm-page-footer {
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
@@ -1810,18 +1512,22 @@ const admissionStyles = `
   }
 
   /* Responsive Media Queries */
-  @media (max-width: 900px) {
-    .adm-sidebar {
+  @media (max-width: 820px) {
+    .adm-card {
+      padding: 28px 24px;
+      border-radius: 20px;
+    }
+
+    .adm-step-name-full {
       display: none;
     }
 
-    .adm-mobile-progress-card {
+    .adm-step-name-short {
       display: block;
     }
 
-    .adm-main-card {
-      padding: 28px 22px;
-      border-radius: 18px;
+    .adm-step-line {
+      margin: 0 8px;
     }
   }
 
@@ -1838,55 +1544,47 @@ const admissionStyles = `
       font-size: 13px;
     }
 
-    .adm-grid-2 {
+    .adm-grid-row {
       grid-template-columns: 1fr;
       gap: 10px;
       margin-bottom: 10px;
     }
 
-    .adm-stepper {
-      margin-bottom: 24px;
+    .adm-card {
+      padding: 22px 16px;
+    }
+
+    .adm-stepper-container {
+      margin-bottom: 20px;
       padding-bottom: 16px;
     }
 
-    .adm-step-sub {
-      display: none;
+    .adm-step-bubble {
+      width: 32px;
+      height: 32px;
+      font-size: 12px;
     }
 
-    .adm-step-label {
-      font-size: 11px;
+    .adm-step-line {
+      margin: 0 4px;
     }
 
-    .adm-step-circle {
-      width: 30px;
-      height: 30px;
-      font-size: 11px;
-    }
-
-    .adm-step-connector {
-      margin: 0 6px;
-    }
-
-    .adm-section-heading {
-      font-size: 17px;
-    }
-
-    .adm-input {
+    .adm-input-elem {
       font-size: 16px; /* Prevents auto-zoom on iOS */
       padding: 11px 12px;
     }
 
-    .adm-select {
+    .adm-select-elem {
       font-size: 16px;
       padding: 11px 34px 11px 12px;
     }
 
-    .adm-action-bar {
+    .adm-action-row {
       margin-top: 20px;
       padding-top: 16px;
     }
 
-    .adm-btn-primary, .adm-btn-secondary {
+    .adm-btn-next, .adm-btn-back {
       padding: 12px 18px;
       font-size: 13px;
     }
