@@ -231,64 +231,62 @@ export default function StudentAdmissionForm() {
     return (
       <div className="adm-page">
         <style>{admissionStyles}</style>
-        <div className="adm-success-wrap">
-          <div className="adm-success-card">
-            <div className="adm-success-icon-wrap">
-              <CheckCircle size={68} weight="fill" color="#10b981" />
-            </div>
+        <div className="adm-success-card">
+          <div className="adm-success-icon-wrap">
+            <CheckCircle size={68} weight="fill" color="#10b981" />
+          </div>
 
-            <span className="adm-success-badge">Application Received</span>
-            <h1 className="adm-success-title">Application Submitted!</h1>
-            <p className="adm-success-desc">
-              Thank you <strong>{form.full_name}</strong>. Your online application has been received successfully.
-            </p>
+          <span className="adm-success-badge">Application Received</span>
+          <h1 className="adm-success-title">Application Submitted!</h1>
+          <p className="adm-success-desc">
+            Thank you <strong>{form.full_name}</strong>. Your online application has been received successfully.
+          </p>
 
-            <div className="adm-summary-box">
-              <div className="adm-summary-row">
-                <span className="adm-summary-label">Application Reference ID</span>
-                <span className="adm-summary-val adm-app-id">#{submissionId}</span>
-              </div>
-              <div className="adm-summary-row">
-                <span className="adm-summary-label">Selected Program</span>
-                <span className="adm-summary-val">{form.program || 'N/A'}</span>
-              </div>
-              <div className="adm-summary-row">
-                <span className="adm-summary-label">Registered Email</span>
-                <span className="adm-summary-val">{form.email}</span>
-              </div>
-              <div className="adm-summary-row">
-                <span className="adm-summary-label">Phone Number</span>
-                <span className="adm-summary-val">{form.phone}</span>
-              </div>
+          <div className="adm-summary-box">
+            <div className="adm-summary-row">
+              <span className="adm-summary-label">Application Reference ID</span>
+              <span className="adm-summary-val adm-app-id">#{submissionId}</span>
             </div>
+            <div className="adm-summary-row">
+              <span className="adm-summary-label">Selected Program</span>
+              <span className="adm-summary-val">{form.program || 'N/A'}</span>
+            </div>
+            <div className="adm-summary-row">
+              <span className="adm-summary-label">Registered Email</span>
+              <span className="adm-summary-val">{form.email}</span>
+            </div>
+            <div className="adm-summary-row">
+              <span className="adm-summary-label">Phone Number</span>
+              <span className="adm-summary-val">{form.phone}</span>
+            </div>
+          </div>
 
-            <div className="adm-next-steps">
-              <div className="adm-next-step-title">
-                <Sparkle size={18} weight="fill" color="#4f46e5" />
-                <span>Next Steps</span>
-              </div>
-              <ul className="adm-next-step-list">
-                <li>Admissions committee will review your provided credentials.</li>
-                <li>You will receive SMS and Email updates regarding fee challan and orientation schedule.</li>
-              </ul>
+          <div className="adm-next-steps">
+            <div className="adm-next-step-title">
+              <Sparkle size={18} weight="fill" color="#4f46e5" />
+              <span>Next Steps</span>
             </div>
+            <ul className="adm-next-step-list">
+              <li>Admissions committee will review your provided credentials.</li>
+              <li>You will receive SMS and Email updates regarding fee challan and orientation schedule.</li>
+            </ul>
+          </div>
 
-            <div className="adm-success-actions">
-              <button 
-                type="button" 
-                onClick={() => window.print()} 
-                className="adm-btn-outline"
-              >
-                🖨️ Print Application Copy
-              </button>
-              <button 
-                type="button" 
-                onClick={() => { setForm(INIT_FORM); setPhoto(null); setPhotoPreview(null); setStep(1); setSubmitted(false); }} 
-                className="adm-btn-primary-block"
-              >
-                Submit Another Application
-              </button>
-            </div>
+          <div className="adm-success-actions">
+            <button 
+              type="button" 
+              onClick={() => window.print()} 
+              className="adm-btn-outline"
+            >
+              🖨️ Print Application Copy
+            </button>
+            <button 
+              type="button" 
+              onClick={() => { setForm(INIT_FORM); setPhoto(null); setPhotoPreview(null); setStep(1); setSubmitted(false); }} 
+              className="adm-btn-primary-block"
+            >
+              Submit Another Application
+            </button>
           </div>
         </div>
       </div>
@@ -299,21 +297,23 @@ export default function StudentAdmissionForm() {
     <div className="adm-page">
       <style>{admissionStyles}</style>
 
-      {/* Main Header */}
-      <header className="adm-header">
-        <div className="adm-brand-badge">
-          <GraduationCap size={16} weight="fill" />
-          <span>Lancers Tech LMS Admissions</span>
-        </div>
-        <h1 className="adm-title">Student Admission Form</h1>
-        <p className="adm-subtitle">Fill in all required fields to submit your admission application.</p>
-      </header>
+      {/* Main Centered Wrapper */}
+      <div className="adm-layout-container">
+        
+        {/* Main Header */}
+        <header className="adm-header">
+          <div className="adm-brand-badge">
+            <GraduationCap size={16} weight="fill" />
+            <span>Lancers Tech LMS Admissions</span>
+          </div>
+          <h1 className="adm-title">Student Admission Form</h1>
+          <p className="adm-subtitle">Fill in all required fields to submit your admission application.</p>
+        </header>
 
-      {/* Centered Master Card */}
-      <div className="adm-card-wrap">
+        {/* Centered Master Card */}
         <main className="adm-card">
 
-          {/* Stepper Navigation Grid (Equally Spaced 4 Columns) */}
+          {/* Stepper Navigation Grid */}
           <div className="adm-stepper-container">
             <div className="adm-stepper-grid">
               {stepDefs.map((s, idx) => {
@@ -648,7 +648,7 @@ export default function StudentAdmissionForm() {
                   id="notes" 
                   value={form.notes} 
                   onChange={set('notes')} 
-                  placeholder="Any other comments or details..." 
+                  placeholder="Anything else you'd like us to know..." 
                   textarea 
                 />
               </div>
@@ -714,11 +714,11 @@ export default function StudentAdmissionForm() {
             <span>Need assistance? Contact admissions support at <strong>admissions@lancerstech.com</strong></span>
           </div>
         </main>
-      </div>
 
-      <footer className="adm-footer">
-        <p>© {new Date().getFullYear()} Lancers Tech LMS · All Rights Reserved</p>
-      </footer>
+        <footer className="adm-footer">
+          <p>© {new Date().getFullYear()} Lancers Tech LMS · All Rights Reserved</p>
+        </footer>
+      </div>
     </div>
   );
 }
@@ -791,17 +791,34 @@ const admissionStyles = `
 
   .adm-page {
     min-height: 100vh;
+    width: 100%;
     background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 40%, #edf2f7 100%);
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     color: #1e293b;
     padding: 36px 16px 56px;
     box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .adm-layout-container {
+    width: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .adm-header {
     text-align: center;
-    max-width: 640px;
+    width: 100%;
+    max-width: 680px;
     margin: 0 auto 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .adm-brand-badge {
@@ -825,6 +842,7 @@ const admissionStyles = `
     letter-spacing: -0.02em;
     margin: 0 0 8px;
     line-height: 1.2;
+    text-align: center;
   }
 
   .adm-subtitle {
@@ -832,13 +850,7 @@ const admissionStyles = `
     color: #64748b;
     margin: 0;
     line-height: 1.5;
-  }
-
-  /* Centered Wrapper */
-  .adm-card-wrap {
-    max-width: 860px;
-    width: 100%;
-    margin: 0 auto;
+    text-align: center;
   }
 
   /* Master Card */
@@ -865,6 +877,7 @@ const admissionStyles = `
     grid-template-columns: repeat(4, 1fr);
     gap: 0;
     margin-bottom: 20px;
+    width: 100%;
   }
 
   .adm-step-node {
@@ -874,6 +887,7 @@ const admissionStyles = `
     cursor: pointer;
     text-align: center;
     position: relative;
+    width: 100%;
   }
 
   .adm-step-node-header {
@@ -957,6 +971,8 @@ const admissionStyles = `
     border-radius: 12px;
     padding: 10px 16px;
     border: 1px solid #f1f5f9;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .adm-progress-info {
@@ -999,12 +1015,14 @@ const admissionStyles = `
   .adm-form {
     display: flex;
     flex-direction: column;
+    width: 100%;
   }
 
   .adm-step-pane {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    width: 100%;
   }
 
   /* Photo Upload */
@@ -1012,6 +1030,7 @@ const admissionStyles = `
     display: flex;
     justify-content: center;
     margin-bottom: 22px;
+    width: 100%;
   }
 
   .adm-photo-box {
@@ -1091,6 +1110,7 @@ const admissionStyles = `
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 12px;
+    width: 100%;
   }
 
   /* Form Fields */
@@ -1099,6 +1119,7 @@ const admissionStyles = `
     flex-direction: column;
     gap: 6px;
     margin-bottom: 12px;
+    width: 100%;
   }
 
   .adm-field-label {
@@ -1118,6 +1139,7 @@ const admissionStyles = `
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
   }
 
   .adm-input-icon {
@@ -1166,6 +1188,7 @@ const admissionStyles = `
   /* Select */
   .adm-select-container {
     position: relative;
+    width: 100%;
   }
 
   .adm-select {
@@ -1204,6 +1227,7 @@ const admissionStyles = `
     margin: 14px 0 12px;
     padding-top: 14px;
     border-top: 1px solid #f1f5f9;
+    width: 100%;
   }
 
   .adm-section-divider-title {
@@ -1228,6 +1252,8 @@ const admissionStyles = `
     border-radius: 12px;
     margin: 16px 0 6px;
     animation: admShake 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   @keyframes admShake {
@@ -1245,6 +1271,7 @@ const admissionStyles = `
     padding-top: 20px;
     border-top: 1px solid #f1f5f9;
     gap: 12px;
+    width: 100%;
   }
 
   .adm-btn-next {
@@ -1321,6 +1348,7 @@ const admissionStyles = `
     font-size: 12px;
     color: #64748b;
     text-align: center;
+    width: 100%;
   }
 
   .adm-help-footer strong {
@@ -1328,11 +1356,6 @@ const admissionStyles = `
   }
 
   /* Success Screen */
-  .adm-success-wrap {
-    max-width: 520px;
-    margin: 40px auto;
-  }
-
   .adm-success-card {
     background: #ffffff;
     border-radius: 24px;
@@ -1340,6 +1363,9 @@ const admissionStyles = `
     padding: 44px 36px;
     text-align: center;
     box-shadow: 0 12px 40px rgba(79, 70, 229, 0.08);
+    width: 100%;
+    max-width: 520px;
+    margin: 40px auto;
   }
 
   .adm-success-icon-wrap {
@@ -1483,7 +1509,8 @@ const admissionStyles = `
     text-align: center;
     color: #94a3b8;
     font-size: 12px;
-    margin-top: 36px;
+    margin-top: 32px;
+    width: 100%;
   }
 
   /* Responsive Breakpoints */
