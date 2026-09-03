@@ -383,6 +383,8 @@ try {
 
   // Phase 5: Reporting & Graduation Audit
   app.use('/api/graduation',           require('./api/graduation'));
+  app.use('/api/obe',                  require('./api/obe'));
+  app.use('/api/fyp',                  require('./api/fyp'));
 
   // ─── Strictly Protected Institutional Routes ─────────────────────────────────
   // FIX (CRIT-02): Removed duplicate unprotected registrations.

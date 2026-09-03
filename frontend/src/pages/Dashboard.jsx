@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { io } from 'socket.io-client'
 import { Wrench } from "@phosphor-icons/react";
 import PrincipalDashboard from './principal/PrincipalDashboard'
+import HODDashboard from './university/hod/HODDashboard'
 import SuperAdminDashboard from './superadmin/SuperAdminDashboard'
 import BDDashboard from './bd/BDDashboard'
 import MasterAdminDashboard from './masteradmin/MasterAdminDashboard'
@@ -25,8 +26,10 @@ import './Dashboard.css'
 const ROLE_COMPONENTS = {
   master_admin:     MasterAdminDashboard,
   super_admin:      SuperAdminDashboard,
-  principal:        PrincipalDashboard,
-  admin:            PrincipalDashboard,   // admin falls back to principal dashboard
+  principal:        HODDashboard,
+  admin:            HODDashboard,
+  dean:             HODDashboard,
+  hod:              HODDashboard,
   rector:           RectorDashboard,
   bd_agent:         BDDashboard,
   finance_manager:  FinanceDashboard,
