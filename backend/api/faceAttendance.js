@@ -93,8 +93,8 @@ router.get('/descriptors', async (req, res) => {
       query += ` AND u.client_id = ?`;
       params.push(clientId);
     }
-    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
-      query += ` AND s.campus_id = ?`;
+    if (campusId && ['principal', 'admin', 'dean', 'hod'].includes(req.user.role)) {
+      query += ` AND u.campus_id = ?`;
       params.push(campusId);
     }
 
@@ -241,8 +241,8 @@ router.get('/today', async (req, res) => {
       query += ` AND u.client_id = ?`;
       params.push(clientId);
     }
-    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
-      query += ` AND s.campus_id = ?`;
+    if (campusId && ['principal', 'admin', 'dean', 'hod'].includes(req.user.role)) {
+      query += ` AND u.campus_id = ?`;
       params.push(campusId);
     }
 
@@ -295,8 +295,8 @@ router.get('/students', async (req, res) => {
       query += ` AND u.client_id = ?`;
       params.push(clientId);
     }
-    if (campusId && ['principal', 'admin'].includes(req.user.role)) {
-      query += ` AND s.campus_id = ?`;
+    if (campusId && ['principal', 'admin', 'dean', 'hod'].includes(req.user.role)) {
+      query += ` AND u.campus_id = ?`;
       params.push(campusId);
     }
 

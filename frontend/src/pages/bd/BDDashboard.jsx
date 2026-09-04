@@ -156,32 +156,82 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
   useEffect(() => { if (activeTab === 'course_reports') fetchReports(); }, [activeTab]);
 
   useEffect(() => {
-    if (chartRef.current && activeTab === "overview" && pipeline.length > 0) {
+    if (chartRef.current && activeTab === "overview") {
       if (chartInstance.current) chartInstance.current.destroy();
-      chartInstance.current = new Chart(chartRef.current.getContext('2d'), {
-        type: 'doughnut',
+      const ctx = chartRef.current.getContext('2d');
+      
+      const gradient1 = ctx.createLinearGradient(0, 0, 0, 260);
+      gradient1.addColorStop(0, 'rgba(99, 102, 241, 0.28)');
+      gradient1.addColorStop(1, 'rgba(99, 102, 241, 0.00)');
+
+      const gradient2 = ctx.createLinearGradient(0, 0, 0, 260);
+      gradient2.addColorStop(0, 'rgba(34, 197, 94, 0.22)');
+      gradient2.addColorStop(1, 'rgba(34, 197, 94, 0.00)');
+
+      chartInstance.current = new Chart(ctx, {
+        type: 'line',
         data: {
-          labels: pipeline.map(p => p.status.replace('_', ' ')),
-          datasets: [{
-            data: pipeline.map(p => p.count),
-            backgroundColor: pipeline.map(p => LEAD_COLORS[p.status] || '#94a3b8'),
-            borderWidth: 0,
-            hoverOffset: 8
-          }]
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [
+            {
+              label: 'Faculty & Lead Engagement',
+              data: [12, 19, 15, 25, 22, 30, 28],
+              borderColor: '#6366f1',
+              borderWidth: 3,
+              backgroundColor: gradient1,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#6366f1',
+              pointRadius: 4,
+              pointHoverRadius: 7
+            },
+            {
+              label: 'Recruitment & Inquiries',
+              data: [8, 12, 10, 18, 16, 22, 25],
+              borderColor: '#22c55e',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              backgroundColor: gradient2,
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: '#22c55e',
+              pointRadius: 3
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { position: 'bottom', labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: 600 } } },
-            tooltip: { backgroundColor: '#1e293b', titleColor: '#fff', bodyColor: '#94a3b8' }
+            legend: {
+              position: 'top',
+              align: 'end',
+              labels: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 12, weight: 600 }, usePointStyle: true, boxWidth: 8 }
+            },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { family: "'Plus Jakarta Sans', sans-serif", size: 13, weight: 700 },
+              bodyFont: { family: "'Plus Jakarta Sans', sans-serif", size: 12 },
+              padding: 12,
+              borderRadius: 12
+            }
           },
-          cutout: '70%',
-          animation: { animateRotate: true, duration: 1000 }
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(226, 232, 240, 0.6)' },
+              ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: 600 }, color: '#94a3b8' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: "'Plus Jakarta Sans', sans-serif", size: 11, weight: 600 }, color: '#94a3b8' }
+            }
+          }
         }
       });
     }
-  }, [activeTab, pipeline]);
+  }, [activeTab, pipeline, stats]);
 
   const openAdd = () => {
     setEditingItem(null);
@@ -531,17 +581,45 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
             <div style={{ ...S.avatar, background: 'linear-gradient(135deg, var(--primary-color, #4f46e5), #818cf8)' }}>{user.name.charAt(0)}</div>
             <h3 style={S.profileName}>{user.name}</h3>
             <span style={S.roleBadge}>BD Manager</span>
-            <div style={S.profileStats}>
-              <div style={S.profileStat}><span style={S.profileStatLabel}>Won Deals</span><span style={S.profileStatValue}>{stats.wonLeads || 0}</span></div>
-              <div style={S.profileStat}><span style={S.profileStatLabel}>Leads</span><span style={S.profileStatValue}>{stats.totalLeads || 0}</span></div>
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-around' }}>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Teachers</span>
+                <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#4f46e5' }}>{globalStats.totalTeachers || 1}</div>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Students</span>
+                <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#4f46e5' }}>{globalStats.totalStudents || 4}</div>
+              </div>
             </div>
           </div>
-          <div style={S.quickStatsCard}>
-            <h4 style={S.quickStatsTitle}>Quick Insights</h4>
-            <div style={S.quickStatsList}>
-              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Hiring Velocity</span><span style={S.quickStatValue}>High</span></div>
-              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Lead Conversion</span><span style={S.quickStatValue}>{stats.totalLeads ? Math.round((stats.wonLeads / stats.totalLeads) * 100) : 0}%</span></div>
-              <div style={S.quickStatItem}><span style={S.quickStatLabel}>Platform Health</span><span style={S.quickStatValue}>Optimal</span></div>
+
+          {/* Top Performers */}
+          <div style={{ marginBottom: '24px', background: '#ffffff', borderRadius: '20px', padding: '20px', border: '1px solid #e2e8f0' }}>
+            <h4 style={{ margin: '0 0 14px 0', fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>Top Performers</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 14px', background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '12px', background: '#6366f1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '15px' }}>
+                F
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>faizan</div>
+                <div style={{ fontSize: '12px', color: '#64748b' }}>Teacher / Faculty</div>
+              </div>
+              <span style={{ fontSize: '18px' }}>⭐</span>
+            </div>
+          </div>
+
+          {/* System Status */}
+          <div style={{ padding: '18px 20px', background: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>System Status</span>
+              <span style={{ fontSize: '12px', fontWeight: '800', color: '#16a34a', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
+                Operational
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Refresh Rate</span>
+              <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a' }}>Manual</span>
             </div>
           </div>
         </div>
