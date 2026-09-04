@@ -6,7 +6,32 @@ const { generateRollNumber } = require('../utils/rollNumber');
 
 const router = express.Router();
 
-// All routes require teacher authentication
+// Get list of all teachers / faculty (accessible by authenticated staff like Admin, HOD, Dean, Rector, Registrar, Teacher)
+router.get('/', verifyToken, async (req, res) => {
+  try {
+    const campusId = req.user.campus_id;
+    let query = `
+      SELECT t.id, t.user_id, t.employee_id, t.department, t.designation, t.specialization, t.phone,
+             u.name, u.email, u.status
+      FROM teachers t
+      JOIN users u ON t.user_id = u.id
+      WHERE u.status = 'active'
+    `;
+    const params = [];
+    if (campusId) {
+      query += ' AND t.campus_id = ?';
+      params.push(campusId);
+    }
+    query += ' ORDER BY u.name ASC';
+    const [teachers] = await pool.query(query, params);
+    res.json({ success: true, teachers, data: teachers });
+  } catch (error) {
+    console.error('Error fetching teachers list:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch teachers', error: error.message });
+  }
+});
+
+// All subsequent teacher-action routes require teacher authentication
 router.use(verifyToken);
 router.use(isTeacher);
 

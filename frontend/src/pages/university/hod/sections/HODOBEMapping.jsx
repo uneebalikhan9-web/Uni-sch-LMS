@@ -1,19 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { HOD_STYLES as S } from './HODStyles';
 import API_BASE_URL from '../../../../config/api';
-import { Plus, Target, CheckCircle, Brain, BookOpen, X, ShieldCheck } from '@phosphor-icons/react';
-
-const DEFAULT_CLOS = [
-  { id: 1, clo_code: 'CLO-1', title: 'Algorithmic Complexity & Asymptotic Analysis', bloom_level: 'Cognitive-C4 (Analyze)', plo_code: 'PLO-1 (Engineering Knowledge)', description: 'Analyze runtime and space complexity of sorting, searching, and graph traversal algorithms.' },
-  { id: 2, clo_code: 'CLO-2', title: 'Data Structure Implementation', bloom_level: 'Cognitive-C3 (Apply)', plo_code: 'PLO-3 (Design/Development)', description: 'Implement dynamic trees, heaps, hash maps, and graphs to solve real-world engineering bottlenecks.' },
-  { id: 3, clo_code: 'CLO-3', title: 'Optimization & Dynamic Programming', bloom_level: 'Cognitive-C5 (Evaluate)', plo_code: 'PLO-2 (Problem Analysis)', description: 'Evaluate algorithmic efficiency tradeoffs using greedy algorithms and dynamic programming paradigms.' },
-  { id: 4, clo_code: 'CLO-4', title: 'Ethical Software Practices & Team Collaboration', bloom_level: 'Affective-A3 (Value)', plo_code: 'PLO-8 (Ethics)', description: 'Demonstrate code integrity, adherence to academic and engineering ethics in team assignments.' }
-];
+import { Plus, Target, CheckCircle, Brain, BookOpen } from '@phosphor-icons/react';
 
 const HODOBEMapping = () => {
   const [courses, setCourses] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState('1');
-  const [clos, setClos] = useState(DEFAULT_CLOS);
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [clos, setClos] = useState([]);
+  const [mappings, setMappings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showCLOModal, setShowCLOModal] = useState(false);
   const [newCLO, setNewCLO] = useState({
@@ -31,23 +25,13 @@ const HODOBEMapping = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
-        if (data.success && (data.courses || data.data || []).length > 0) {
-          const list = data.courses || data.data;
+        if (data.success) {
+          const list = data.courses || data.data || [];
           setCourses(list);
-          setSelectedCourse(list[0].id);
-        } else {
-          setCourses([
-            { id: 1, code: 'CS-301', title: 'Data Structures & Algorithms' },
-            { id: 2, code: 'CS-302', title: 'Database Systems & SQL' },
-            { id: 3, code: 'SE-401', title: 'Software Engineering' },
-            { id: 4, code: 'CS-408', title: 'Artificial Intelligence' }
-          ]);
+          if (list.length > 0) setSelectedCourse(list[0].id);
         }
       } catch (err) {
-        setCourses([
-          { id: 1, code: 'CS-301', title: 'Data Structures & Algorithms' },
-          { id: 2, code: 'CS-302', title: 'Database Systems & SQL' }
-        ]);
+        console.error(err);
       }
     };
     fetchCourses();
@@ -58,17 +42,17 @@ const HODOBEMapping = () => {
     try {
       setLoading(true);
       const token = sessionStorage.getItem('token');
-      const res = await fetch(`${API_BASE_URL}/api/obe/clos/${courseId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success && data.data && data.data.length > 0) {
-        setClos(data.data);
-      } else {
-        setClos(DEFAULT_CLOS);
-      }
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [cloRes, mapRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/obe/clos/${courseId}`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/obe/mappings/${courseId}`, { headers }).then(r => r.json())
+      ]);
+
+      if (cloRes.success) setClos(cloRes.data || []);
+      if (mapRes.success) setMappings(mapRes.data || []);
     } catch (err) {
-      setClos(DEFAULT_CLOS);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -90,99 +74,44 @@ const HODOBEMapping = () => {
       const data = await res.json();
       if (data.success) {
         setShowCLOModal(false);
+        setNewCLO({ clo_code: `CLO-${clos.length + 2}`, title: '', bloom_level: 'Cognitive-C3 (Apply)', description: '' });
         fetchOBEData(selectedCourse);
-      } else {
-        // Fallback optimistic
-        const created = {
-          id: Date.now(),
-          clo_code: newCLO.clo_code,
-          title: newCLO.title,
-          bloom_level: newCLO.bloom_level,
-          plo_code: 'PLO-1 (Engineering Knowledge)',
-          description: newCLO.description || 'Able to synthesize computing principles.'
-        };
-        setClos([...clos, created]);
-        setShowCLOModal(false);
       }
     } catch (err) {
-      setShowCLOModal(false);
+      console.error(err);
     }
   };
 
   return (
     <div>
-      {/* Top Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', margin: 0, color: '#09090B' }}>
-            Outcome-Based Education (OBE) & CLO-PLO Mapping
-          </h2>
-          <p style={{ color: '#71717A', fontSize: '12px', margin: '4px 0 0 0' }}>
-            HEC / PEC compliant Course Learning Outcomes mapped to Program Learning Outcomes
-          </p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Outcome-Based Education (OBE) & CLO-PLO Mapping</h2>
+          <p style={{ color: '#64748b', fontSize: '0.9rem', margin: '4px 0 0 0' }}>HEC / PEC compliant Course Learning Outcomes mapped to Program Learning Outcomes</p>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <select
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            style={S.select}
+            style={{ padding: '10px 16px', borderRadius: '12px', background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', fontWeight: '700', outline: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
           >
             {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title || c.name}</option>)}
           </select>
           <button style={S.btnPrimary} onClick={() => setShowCLOModal(true)}>
-            <Plus size={16} weight="bold" /> Define CLO
+            <Plus size={18} weight="bold" /> Define CLO
           </button>
         </div>
       </div>
 
-      {/* 3 Metric Cards */}
-      <div style={S.grid4}>
-        <div style={S.statCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', color: '#71717A', fontWeight: '600', textTransform: 'uppercase' }}>Defined CLOs</span>
-            <span style={{ background: '#F4F4F5', padding: '6px', borderRadius: '6px' }}><Target size={18} color="#09090B" /></span>
-          </div>
-          <div style={{ margin: '12px 0 4px 0', fontSize: '26px', fontWeight: '800', color: '#09090B' }}>
-            {clos.length} Outcomes
-          </div>
-          <span style={{ fontSize: '11px', color: '#71717A' }}>Active for selected course</span>
-        </div>
-
-        <div style={S.statCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', color: '#71717A', fontWeight: '600', textTransform: 'uppercase' }}>Mapped PLOs</span>
-            <span style={{ background: '#F4F4F5', padding: '6px', borderRadius: '6px' }}><Brain size={18} color="#09090B" /></span>
-          </div>
-          <div style={{ margin: '12px 0 4px 0', fontSize: '26px', fontWeight: '800', color: '#09090B' }}>
-            12 PLOs
-          </div>
-          <span style={{ fontSize: '11px', color: '#71717A' }}>HEC / PEC Washington Accord</span>
-        </div>
-
-        <div style={S.statCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '12px', color: '#71717A', fontWeight: '600', textTransform: 'uppercase' }}>Bloom Taxonomy</span>
-            <span style={{ background: '#F4F4F5', padding: '6px', borderRadius: '6px' }}><ShieldCheck size={18} color="#09090B" /></span>
-          </div>
-          <div style={{ margin: '12px 0 4px 0', fontSize: '26px', fontWeight: '800', color: '#09090B' }}>
-            Level C3 - C5
-          </div>
-          <span style={{ fontSize: '11px', color: '#71717A' }}>High cognitive application</span>
-        </div>
-      </div>
-
-      {/* CLO Table */}
       <div style={S.card}>
-        <div style={S.cardHeader}>
-          <div>
-            <h3 style={{ fontSize: '15px', fontWeight: '700', margin: 0, color: '#09090B' }}>
-              Course Learning Outcomes Matrix
-            </h3>
-            <p style={{ fontSize: '12px', color: '#71717A', margin: '3px 0 0 0' }}>
-              Direct evaluation mapped with assignments, quizzes, and final exams
-            </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
+            <Target size={22} weight="bold" />
           </div>
-          <span style={S.badge('#F4F4F5', '#09090B', '#E4E4E7')}>HEC Compliant</span>
+          <div>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Active Course Learning Outcomes (CLOs)</h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Bloom's Taxonomy taxonomy mapping for chosen syllabus</p>
+          </div>
         </div>
 
         <div style={{ overflowX: 'auto' }}>
@@ -190,106 +119,95 @@ const HODOBEMapping = () => {
             <thead>
               <tr>
                 <th style={S.th}>CLO Code</th>
-                <th style={S.th}>Outcome Statement</th>
+                <th style={S.th}>Title / Outcome Statement</th>
                 <th style={S.th}>Bloom's Domain & Level</th>
+                <th style={S.th}>Target Attainment</th>
                 <th style={S.th}>Mapped PLO</th>
-                <th style={S.th}>Status</th>
               </tr>
             </thead>
             <tbody>
-              {clos.map((c, i) => (
-                <tr key={c.id || i}>
-                  <td style={S.td}>
-                    <span style={S.badge('#09090B', '#FFFFFF', '#09090B')}>{c.clo_code}</span>
-                  </td>
-                  <td style={S.td}>
-                    <div style={{ fontWeight: '700', color: '#09090B' }}>{c.title}</div>
-                    <div style={{ fontSize: '11px', color: '#71717A', marginTop: '3px' }}>{c.description}</div>
-                  </td>
-                  <td style={S.td}>
-                    <span style={S.badge('#F4F4F5', '#18181B', '#E4E4E7')}>{c.bloom_level}</span>
-                  </td>
-                  <td style={S.td}>
-                    <span style={{ fontWeight: '600', color: '#09090B' }}>{c.plo_code || `PLO-${(i % 4) + 1} (Engineering Knowledge)`}</span>
-                  </td>
-                  <td style={S.td}>
-                    <span style={S.badge('#F4F4F5', '#09090B', '#E4E4E7')}>
-                      <CheckCircle size={13} weight="fill" /> Verified
-                    </span>
+              {clos.length === 0 ? (
+                <tr>
+                  <td colSpan="5" style={{ ...S.td, textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                    No CLOs configured for this course yet. Click "+ Define CLO" above to add.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                clos.map((clo) => (
+                  <tr key={clo.id}>
+                    <td style={S.td}>
+                      <span style={{ fontWeight: '800', color: '#4f46e5' }}>{clo.clo_code}</span>
+                    </td>
+                    <td style={S.td}>
+                      <div style={{ fontWeight: '600', color: '#0f172a' }}>{clo.title}</div>
+                      {clo.description && <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{clo.description}</div>}
+                    </td>
+                    <td style={S.td}>
+                      <span style={S.badge('#eff6ff', '#2563eb')}>{clo.bloom_level || 'Cognitive-C3'}</span>
+                    </td>
+                    <td style={S.td}>
+                      <span style={{ fontWeight: '700', color: '#16a34a' }}>{clo.target_percentage || 65}%</span> passing
+                    </td>
+                    <td style={S.td}>
+                      <span style={S.badge('#f5f3ff', '#7c3aed')}>PLO-1 (Engineering Knowledge)</span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal for adding CLO */}
+      {/* CLO Modal */}
       {showCLOModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
-          <div style={{ background: '#FFFFFF', border: '1px solid #E4E4E7', borderRadius: '14px', padding: '24px 28px', width: '100%', maxWidth: '480px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '12px', borderBottom: '1px solid #F4F4F5' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#09090B' }}>
-                Define Course Learning Outcome (CLO)
-              </h3>
-              <button onClick={() => setShowCLOModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#71717A' }}>
-                <X size={18} />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddCLO} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#ffffff', borderRadius: '24px', padding: '32px', width: '100%', maxWidth: '520px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0' }}>
+            <h3 style={{ margin: '0 0 20px 0', fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>Define Course Learning Outcome (CLO)</h3>
+            <form onSubmit={handleAddCLO} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#09090B', marginBottom: '6px' }}>CLO Identifier</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>CLO Identifier</label>
                 <input
                   type="text"
                   required
                   value={newCLO.clo_code}
                   onChange={(e) => setNewCLO({ ...newCLO, clo_code: e.target.value })}
-                  style={S.input}
-                  placeholder="e.g. CLO-5"
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#09090B', marginBottom: '6px' }}>Outcome Statement</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Learning Outcome Title</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Formulate and solve graph partition problems"
+                  placeholder="e.g. Design object-oriented software architectures..."
                   value={newCLO.title}
                   onChange={(e) => setNewCLO({ ...newCLO, title: e.target.value })}
-                  style={S.input}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#09090B', marginBottom: '6px' }}>Bloom's Taxonomy Level</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Bloom's Taxonomy Level</label>
                 <select
                   value={newCLO.bloom_level}
                   onChange={(e) => setNewCLO({ ...newCLO, bloom_level: e.target.value })}
-                  style={S.select}
+                  style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', fontWeight: '600', outline: 'none' }}
                 >
-                  <option value="Cognitive-C1 (Remember)">Cognitive-C1 (Remember)</option>
-                  <option value="Cognitive-C2 (Understand)">Cognitive-C2 (Understand)</option>
-                  <option value="Cognitive-C3 (Apply)">Cognitive-C3 (Apply)</option>
-                  <option value="Cognitive-C4 (Analyze)">Cognitive-C4 (Analyze)</option>
-                  <option value="Cognitive-C5 (Evaluate)">Cognitive-C5 (Evaluate)</option>
-                  <option value="Cognitive-C6 (Create)">Cognitive-C6 (Create)</option>
+                  <option value="Cognitive-C1 (Remember)">Cognitive - C1 (Remember)</option>
+                  <option value="Cognitive-C2 (Understand)">Cognitive - C2 (Understand)</option>
+                  <option value="Cognitive-C3 (Apply)">Cognitive - C3 (Apply)</option>
+                  <option value="Cognitive-C4 (Analyze)">Cognitive - C4 (Analyze)</option>
+                  <option value="Cognitive-C5 (Evaluate)">Cognitive - C5 (Evaluate)</option>
+                  <option value="Cognitive-C6 (Create)">Cognitive - C6 (Create)</option>
+                  <option value="Psychomotor-P3 (Precision)">Psychomotor - P3 (Precision Lab)</option>
+                  <option value="Affective-A3 (Valuing)">Affective - A3 (Valuing & Ethics)</option>
                 </select>
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#09090B', marginBottom: '6px' }}>Detailed Description</label>
-                <textarea
-                  rows="3"
-                  value={newCLO.description}
-                  onChange={(e) => setNewCLO({ ...newCLO, description: e.target.value })}
-                  style={{ ...S.input, height: '70px', resize: 'none' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #F4F4F5' }}>
-                <button type="button" onClick={() => setShowCLOModal(false)} style={S.btnSecondary}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '16px' }}>
+                <button type="button" onClick={() => setShowCLOModal(false)} style={{ padding: '12px 20px', borderRadius: '12px', background: '#f1f5f9', color: '#475569', border: 'none', cursor: 'pointer', fontWeight: '600' }}>
                   Cancel
                 </button>
                 <button type="submit" style={S.btnPrimary}>
