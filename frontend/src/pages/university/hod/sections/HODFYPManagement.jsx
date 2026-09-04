@@ -25,14 +25,14 @@ const HODFYPManagement = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [fypRes, tchRes, prgRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/fyp`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/degree-plans`, { headers }).then(r => r.json())
+        fetch(`${API_BASE_URL}/api/fyp`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] })),
+        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()).catch(() => ({ success: true, teachers: [] })),
+        fetch(`${API_BASE_URL}/api/degree-plans`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] }))
       ]);
 
-      if (fypRes.success) setProjects(fypRes.data || []);
-      if (tchRes.success) setTeachers(tchRes.teachers || tchRes.data || []);
-      if (prgRes.success) setPrograms(prgRes.data || prgRes.plans || []);
+      if (fypRes?.success) setProjects(fypRes.data || []);
+      if (tchRes?.success) setTeachers(tchRes.teachers || tchRes.data || []);
+      if (prgRes?.success) setPrograms(prgRes.data || prgRes.plans || []);
     } catch (err) {
       console.error(err);
     } finally {

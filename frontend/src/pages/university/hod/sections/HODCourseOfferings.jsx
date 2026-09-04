@@ -26,16 +26,16 @@ const HODCourseOfferings = () => {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [secRes, crsRes, tchRes, semRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/course-sections`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/courses`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/semesters`, { headers }).then(r => r.json()),
+        fetch(`${API_BASE_URL}/api/course-sections`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] })),
+        fetch(`${API_BASE_URL}/api/courses`, { headers }).then(r => r.json()).catch(() => ({ success: true, courses: [] })),
+        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()).catch(() => ({ success: true, teachers: [] })),
+        fetch(`${API_BASE_URL}/api/semesters`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] })),
       ]);
 
-      if (secRes.success) setSections(secRes.data || []);
-      if (crsRes.success) setCourses(crsRes.courses || crsRes.data || []);
-      if (tchRes.success) setTeachers(tchRes.teachers || tchRes.data || []);
-      if (semRes.success) setSemesters(semRes.data || []);
+      if (secRes?.success) setSections(secRes.data || []);
+      if (crsRes?.success) setCourses(crsRes.courses || crsRes.data || []);
+      if (tchRes?.success) setTeachers(tchRes.teachers || tchRes.data || []);
+      if (semRes?.success) setSemesters(semRes.data || []);
     } catch (err) {
       console.error('Error fetching HOD offerings:', err);
     } finally {

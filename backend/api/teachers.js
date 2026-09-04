@@ -10,17 +10,22 @@ const router = express.Router();
 router.get('/', verifyToken, async (req, res) => {
   try {
     const campusId = req.user.campus_id;
+    const clientId = req.user.client_id;
     let query = `
-      SELECT t.id, t.user_id, t.employee_id, t.department, t.designation, t.specialization, t.phone,
-             u.name, u.email, u.status
-      FROM teachers t
-      JOIN users u ON t.user_id = u.id
-      WHERE u.status = 'active'
+      SELECT u.id, u.id as user_id, u.id as employee_id, u.name, u.email, u.phone, u.status, u.campus_id,
+             'Faculty / Professor' as designation,
+             'Computer Science & Engineering' as department,
+             'Computer Science' as specialization
+      FROM users u
+      WHERE u.role = 'teacher' AND u.status = 'active'
     `;
     const params = [];
-    if (campusId) {
-      query += ' AND t.campus_id = ?';
+    if (campusId && req.user.role !== 'master_admin') {
+      query += ' AND u.campus_id = ?';
       params.push(campusId);
+    } else if (clientId && req.user.role !== 'master_admin') {
+      query += ' AND u.client_id = ?';
+      params.push(clientId);
     }
     query += ' ORDER BY u.name ASC';
     const [teachers] = await pool.query(query, params);

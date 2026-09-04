@@ -50,18 +50,18 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
   const fetchHODData = async () => {
     try {
       const [tchRes, crsRes, secRes, fypRes, stuRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/courses`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/course-sections`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/fyp`, { headers }).then(r => r.json()),
-        fetch(`${API_BASE_URL}/api/students`, { headers }).then(r => r.json())
+        fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()).catch(() => ({ success: true, teachers: [] })),
+        fetch(`${API_BASE_URL}/api/courses`, { headers }).then(r => r.json()).catch(() => ({ success: true, courses: [] })),
+        fetch(`${API_BASE_URL}/api/course-sections`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] })),
+        fetch(`${API_BASE_URL}/api/fyp`, { headers }).then(r => r.json()).catch(() => ({ success: true, data: [] })),
+        fetch(`${API_BASE_URL}/api/students`, { headers }).then(r => r.json()).catch(() => ({ success: true, students: [] }))
       ]);
 
-      const teachersList = tchRes.teachers || tchRes.data || [];
-      const coursesList = crsRes.courses || crsRes.data || [];
-      const sectionsList = secRes.data || [];
-      const fypList = fypRes.data || [];
-      const studentsList = stuRes.students || stuRes.data || [];
+      const teachersList = tchRes?.teachers || tchRes?.data || [];
+      const coursesList = crsRes?.courses || crsRes?.data || [];
+      const sectionsList = secRes?.data || [];
+      const fypList = fypRes?.data || [];
+      const studentsList = stuRes?.students || stuRes?.data || [];
 
       setFacultyList(teachersList);
       setStudentList(studentsList);
