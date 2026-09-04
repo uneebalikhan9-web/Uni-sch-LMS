@@ -26,8 +26,8 @@ import './Dashboard.css'
 const ROLE_COMPONENTS = {
   master_admin:     MasterAdminDashboard,
   super_admin:      SuperAdminDashboard,
-  principal:        PrincipalDashboard,
-  admin:            PrincipalDashboard,
+  principal:        HODDashboard,
+  admin:            HODDashboard,
   dean:             HODDashboard,
   hod:              HODDashboard,
   rector:           RectorDashboard,

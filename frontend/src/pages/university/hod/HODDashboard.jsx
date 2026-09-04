@@ -6,6 +6,7 @@ import HODCourseOfferings from './sections/HODCourseOfferings';
 import HODOBEMapping from './sections/HODOBEMapping';
 import HODFYPManagement from './sections/HODFYPManagement';
 import RegistrarTeacherWorkload from '../registrar/sections/RegistrarTeacherWorkload';
+import PDFaceAttendance from '../../principal/sections/PDFaceAttendance';
 import { 
   House, 
   BookOpen, 
@@ -20,7 +21,10 @@ import {
   Users,
   ShieldCheck,
   Buildings,
-  ChartLine
+  ChartLine,
+  UserFocus,
+  MagnifyingGlass,
+  Plus
 } from '@phosphor-icons/react';
 
 const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) => {
@@ -28,6 +32,9 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
   const [activeTab, setActiveTab] = useState('overview');
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [facultyList, setFacultyList] = useState([]);
+  const [studentList, setStudentList] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     facultyCount: 0,
     enrolledStudents: 0,
@@ -37,11 +44,11 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
     obeCount: 0
   });
 
-  const fetchHODStats = async () => {
-    try {
-      const token = sessionStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+  const token = sessionStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}` };
 
+  const fetchHODData = async () => {
+    try {
       const [tchRes, crsRes, secRes, fypRes, stuRes] = await Promise.all([
         fetch(`${API_BASE_URL}/api/teachers`, { headers }).then(r => r.json()),
         fetch(`${API_BASE_URL}/api/courses`, { headers }).then(r => r.json()),
@@ -56,6 +63,9 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
       const fypList = fypRes.data || [];
       const studentsList = stuRes.students || stuRes.data || [];
 
+      setFacultyList(teachersList);
+      setStudentList(studentsList);
+
       setStats({
         facultyCount: teachersList.length || 1,
         activeCourses: coursesList.length || 0,
@@ -65,20 +75,23 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
         obeCount: coursesList.length > 0 ? coursesList.length * 3 : 0
       });
     } catch (err) {
-      console.error('Error fetching HOD stats:', err);
+      console.error('Error fetching HOD data:', err);
     }
   };
 
   useEffect(() => {
-    fetchHODStats();
+    fetchHODData();
   }, []);
 
   const navItems = [
-    { id: 'overview', label: 'Department Overview', icon: House },
-    { id: 'offerings', label: 'Course Offerings & Sections', icon: BookOpen },
-    { id: 'workload', label: 'Faculty Workload', icon: ChalkboardTeacher },
-    { id: 'obe', label: 'OBE / CLO-PLO Mapping', icon: Target },
-    { id: 'fyp', label: 'FYP & Thesis Projects', icon: GraduationCap }
+    { id: 'overview', label: 'Academic Analytics', icon: House, count: null },
+    { id: 'offerings', label: 'Course Offerings & Sections', icon: BookOpen, count: stats.activeSections },
+    { id: 'workload', label: 'Faculty Workload', icon: ChalkboardTeacher, count: stats.facultyCount },
+    { id: 'obe', label: 'OBE / CLO-PLO Matrix', icon: Target, count: stats.obeCount },
+    { id: 'fyp', label: 'FYP & Capstone Projects', icon: GraduationCap, count: stats.fypCount },
+    { id: 'faculty', label: 'Department Faculty', icon: ChalkboardTeacher, count: stats.facultyCount },
+    { id: 'students', label: 'Student Lifecycle & Roster', icon: Users, count: stats.enrolledStudents },
+    { id: 'face-attendance', label: 'Face Attendance', icon: UserFocus, count: null }
   ];
 
   const handleSignOut = () => {
@@ -89,6 +102,18 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
   const storedUser = JSON.parse(sessionStorage.getItem('user') || '{}');
   const userName = user?.name || storedUser?.name || 'Department Head';
   const userRole = storedUser?.role ? storedUser.role.replace('_', ' ').toUpperCase() : 'DEAN / HOD';
+
+  const filteredFaculty = facultyList.filter(f => 
+    (f.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (f.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (f.specialization || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredStudents = studentList.filter(s =>
+    (s.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.roll_number || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (s.email || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div style={S.container}>
@@ -160,7 +185,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
 
         <div style={S.roleBadge}>
           <Buildings size={16} color="#818cf8" />
-          <span>CS & Engineering Dept</span>
+          <span>Academic Council / HOD</span>
           <span style={S.liveIndicator} />
         </div>
 
@@ -171,7 +196,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => { setActiveTab(item.id); setSearchQuery(''); }}
                 style={{
                   ...S.navBtn,
                   ...(active ? S.navBtnActive : {})
@@ -179,7 +204,19 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
               >
                 {active && <span style={S.activeIndicator} />}
                 <Icon size={20} weight={active ? 'bold' : 'regular'} color={active ? '#ffffff' : '#818cf8'} />
-                <span>{item.label}</span>
+                <span style={{ flex: 1, textAlign: 'left' }}>{item.label}</span>
+                {item.count !== null && item.count !== undefined && item.count > 0 && (
+                  <span style={{
+                    background: active ? '#ffffff' : 'rgba(99, 102, 241, 0.25)',
+                    color: active ? '#4f46e5' : '#c7d2fe',
+                    padding: '2px 8px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: '800'
+                  }}>
+                    {item.count}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -201,7 +238,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
         <div style={S.header}>
           <div>
             <h1 style={S.title}>Dean & HOD Departmental Hub</h1>
-            <p style={S.subtitle}>Department Operations, OBE & FYP Monitoring</p>
+            <p style={S.subtitle}>Department Operations, Course Offerings, OBE & FYP Monitoring</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <span style={S.badgePill}>
@@ -214,7 +251,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
         <div style={S.grid4}>
           <div style={S.statCard('#eff6ff', '#2563eb')}>
             <div style={S.metricIconWrapper('#2563eb', '#eff6ff')}>
-              <Buildings size={26} weight="duotone" />
+              <ChalkboardTeacher size={26} weight="duotone" />
             </div>
             <div>
               <div style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>Active Faculty</div>
@@ -263,7 +300,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
                 </div>
                 <div>
                   <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Departmental Academic Command</h3>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Manage semester offerings, faculty workload allocations, OBE mapping, and FYPs</p>
+                  <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Supervise course offerings, faculty workloads, OBE matrix, and capstone project defenses</p>
                 </div>
               </div>
 
@@ -308,6 +345,131 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
         {activeTab === 'workload' && <RegistrarTeacherWorkload />}
         {activeTab === 'obe' && <HODOBEMapping />}
         {activeTab === 'fyp' && <HODFYPManagement />}
+
+        {/* Faculty Roster Tab */}
+        {activeTab === 'faculty' && (
+          <div style={S.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Department Faculty Roster</h3>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Active professors, associate professors, and lecturers</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <MagnifyingGlass size={18} color="#64748b" />
+                <input
+                  type="text"
+                  placeholder="Search faculty..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Faculty Name & Email</th>
+                    <th style={S.th}>Employee ID</th>
+                    <th style={S.th}>Designation</th>
+                    <th style={S.th}>Department / Domain</th>
+                    <th style={S.th}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFaculty.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ ...S.td, textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                        No faculty members found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredFaculty.map(f => (
+                      <tr key={f.id}>
+                        <td style={S.td}>
+                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{f.name}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>{f.email}</div>
+                        </td>
+                        <td style={S.td}><span style={{ fontWeight: '600', color: '#475569' }}>{f.employee_id || 'FAC-001'}</span></td>
+                        <td style={S.td}><span style={S.badge('#eff6ff', '#2563eb')}>{f.designation || 'Professor'}</span></td>
+                        <td style={S.td}><span style={{ color: '#475569' }}>{f.department || 'Computer Science'}</span></td>
+                        <td style={S.td}><span style={S.badge('#dcfce7', '#16a34a')}>Active</span></td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Student Lifecycle Tab */}
+        {activeTab === 'students' && (
+          <div style={S.card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Enrolled Student Roster</h3>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Undergraduate & Graduate enrolled cohorts</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <MagnifyingGlass size={18} color="#64748b" />
+                <input
+                  type="text"
+                  placeholder="Search students..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={S.table}>
+                <thead>
+                  <tr>
+                    <th style={S.th}>Student Name & Email</th>
+                    <th style={S.th}>Roll Number</th>
+                    <th style={S.th}>Semester</th>
+                    <th style={S.th}>Standing / GPA</th>
+                    <th style={S.th}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStudents.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" style={{ ...S.td, textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                        No enrolled students found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStudents.map(s => (
+                      <tr key={s.id}>
+                        <td style={S.td}>
+                          <div style={{ fontWeight: '700', color: '#0f172a' }}>{s.name}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>{s.email}</div>
+                        </td>
+                        <td style={S.td}><span style={{ fontWeight: '700', color: '#4f46e5' }}>{s.roll_number || 'FA26-BCS-001'}</span></td>
+                        <td style={S.td}><span style={S.badge('#f1f5f9', '#475569')}>Semester {s.semester || 1}</span></td>
+                        <td style={S.td}>
+                          <span style={{ fontWeight: '700', color: '#16a34a' }}>{s.current_gpa ? `${s.current_gpa} GPA` : 'Good Standing'}</span>
+                        </td>
+                        <td style={S.td}><span style={S.badge('#dcfce7', '#16a34a')}>Enrolled</span></td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Face Attendance Tab */}
+        {activeTab === 'face-attendance' && (
+          <div style={S.card}>
+            <PDFaceAttendance token={token} />
+          </div>
+        )}
       </main>
 
       {/* Floating Toggle Button for Right Sidebar */}
@@ -384,14 +546,14 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
             {userRole}
           </span>
 
-          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', fontSize: '13px', color: '#64748b' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span>Last Login</span>
-              <span style={{ fontWeight: '700', color: '#0f172a' }}>Today 09:24</span>
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-around' }}>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Faculty</span>
+              <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#2563eb' }}>{stats.facultyCount}</div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Role Scope</span>
-              <span style={{ fontWeight: '700', color: '#0f172a' }}>Main Department</span>
+            <div style={{ textAlign: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Students</span>
+              <div style={{ fontSize: '1.2rem', fontWeight: '800', color: '#db2777' }}>{stats.enrolledStudents}</div>
             </div>
           </div>
         </div>
@@ -402,23 +564,18 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Departments</span>
-              <span style={{ fontSize: '14px', fontWeight: '800', color: '#2563eb' }}>1</span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Faculty & Teachers</span>
-              <span style={{ fontSize: '14px', fontWeight: '800', color: '#2563eb' }}>{stats.facultyCount}</span>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
-              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Enrolled Students</span>
-              <span style={{ fontSize: '14px', fontWeight: '800', color: '#db2777' }}>{stats.enrolledStudents}</span>
+              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Active Sections</span>
+              <span style={{ fontSize: '14px', fontWeight: '800', color: '#2563eb' }}>{stats.activeSections}</span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
               <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Active Courses</span>
               <span style={{ fontSize: '14px', fontWeight: '800', color: '#3b82f6' }}>{stats.activeCourses}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
+              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>OBE PLO Matrix</span>
+              <span style={{ fontSize: '14px', fontWeight: '800', color: '#16a34a' }}>100%</span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '12px', border: '1px solid #f1f5f9' }}>
