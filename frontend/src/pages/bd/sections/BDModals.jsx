@@ -1,23 +1,28 @@
 import React from 'react';
-import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar } from "@phosphor-icons/react";
+import { X, ChartLine, UserCircle, GraduationCap, CheckCircle, WarningCircle, ChartBar, CaretDown } from "@phosphor-icons/react";
 import { S } from './BDStyles';
 
 export default function BDModals({ 
-  showModal, setShowModal, activeTab, editingItem, form, setForm, handleSubmit, LEAD_STATUSES, BATCH_STATUSES, campuses, jobs,
+  showModal, setShowModal, activeTab, editingItem, form, setForm, handleSubmit, LEAD_STATUSES, BATCH_STATUSES, campuses = [], jobs = [],
   showReportModal, setShowReportModal, selectedReport, reportDetails, isReportDetailsLoading, onRefreshReport
 }) {
   return (
     <>
       {showModal && (
         <div style={S.modalOverlay} onClick={() => setShowModal(false)}>
-          <div style={S.modal} onClick={e => e.stopPropagation()}>
+          <div style={{ ...S.modal, maxWidth: '560px', width: '92%' }} onClick={e => e.stopPropagation()}>
             <div style={S.modalHeader}>
-              <h3 style={S.modalTitle}>
-                {editingItem ? 'Edit ' : 'Add New '}
-                {activeTab === 'leads' ? 'Lead' : 
-                 activeTab === 'jobs' ? 'Job Posting' : 
-                 activeTab === 'applicants' ? 'Applicant' : 'Bulk Hire Batch'}
-              </h3>
+              <div>
+                <h3 style={{ ...S.modalTitle, fontSize: '1.3rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>
+                  {editingItem ? 'Edit ' : 'Add New '}
+                  {activeTab === 'leads' ? 'Institutional Lead' : 
+                   activeTab === 'jobs' ? 'Faculty Job Posting' : 
+                   activeTab === 'applicants' ? 'Candidate Applicant' : 'Bulk Hire Batch'}
+                </h3>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#64748b' }}>
+                  {editingItem ? 'Modify existing record details' : 'Fill in the fields below to create a new record'}
+                </p>
+              </div>
               <button onClick={() => setShowModal(false)} style={S.modalClose}><X size={20} /></button>
             </div>
             
@@ -25,32 +30,68 @@ export default function BDModals({
               {activeTab === 'leads' && (
                 <>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Institution Name</label>
-                    <input required style={S.input} value={form.institution_name || ''} onChange={e => setForm({...form, institution_name: e.target.value})} />
+                    <label style={S.inputLabel}>Institution / Client Name *</label>
+                    <input 
+                      required 
+                      placeholder="e.g. National University of Sciences & Technology" 
+                      style={S.input} 
+                      value={form.institution_name || ''} 
+                      onChange={e => setForm({...form, institution_name: e.target.value})} 
+                    />
                   </div>
                   <div style={S.row}>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>City</label>
-                      <input style={S.input} value={form.city || ''} onChange={e => setForm({...form, city: e.target.value})} />
+                      <input 
+                        placeholder="e.g. Islamabad / Lahore" 
+                        style={S.input} 
+                        value={form.city || ''} 
+                        onChange={e => setForm({...form, city: e.target.value})} 
+                      />
                     </div>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>Deal Value (PKR)</label>
-                      <input type="number" style={S.input} value={form.deal_value || ''} onChange={e => setForm({...form, deal_value: e.target.value})} />
+                      <input 
+                        type="number" 
+                        placeholder="e.g. 500,000" 
+                        style={S.input} 
+                        value={form.deal_value || ''} 
+                        onChange={e => setForm({...form, deal_value: e.target.value})} 
+                      />
                     </div>
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Status</label>
-                    <select style={S.input} value={form.status || 'prospect'} onChange={e => setForm({...form, status: e.target.value})}>
-                      {LEAD_STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+                    <label style={S.inputLabel}>Pipeline Status</label>
+                    <select 
+                      style={S.input} 
+                      value={form.status || 'prospect'} 
+                      onChange={e => setForm({...form, status: e.target.value})}
+                    >
+                      {LEAD_STATUSES.map(s => (
+                        <option key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div style={S.inputGroup}>
                     <label style={S.inputLabel}>Contact Person</label>
-                    <input style={S.input} value={form.contact_person || ''} onChange={e => setForm({...form, contact_person: e.target.value})} />
+                    <input 
+                      placeholder="e.g. Dr. Salman Tariq (Dean)" 
+                      style={S.input} 
+                      value={form.contact_person || ''} 
+                      onChange={e => setForm({...form, contact_person: e.target.value})} 
+                    />
                   </div>
                   <div style={S.inputGroup}>
                     <label style={S.inputLabel}>Contact Email</label>
-                    <input type="email" style={S.input} value={form.contact_email || ''} onChange={e => setForm({...form, contact_email: e.target.value})} />
+                    <input 
+                      type="email" 
+                      placeholder="e.g. dean.cs@nust.edu.pk" 
+                      style={S.input} 
+                      value={form.contact_email || ''} 
+                      onChange={e => setForm({...form, contact_email: e.target.value})} 
+                    />
                   </div>
                 </>
               )}
@@ -58,31 +99,57 @@ export default function BDModals({
               {activeTab === 'jobs' && (
                 <>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Job Title</label>
-                    <input required style={S.input} value={form.title || ''} onChange={e => setForm({...form, title: e.target.value})} />
+                    <label style={S.inputLabel}>Job Title *</label>
+                    <input 
+                      required 
+                      placeholder="e.g. Assistant Professor of Artificial Intelligence" 
+                      style={S.input} 
+                      value={form.title || ''} 
+                      onChange={e => setForm({...form, title: e.target.value})} 
+                    />
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Subject Area</label>
-                    <input style={S.input} value={form.subject || ''} onChange={e => setForm({...form, subject: e.target.value})} />
+                    <label style={S.inputLabel}>Subject Area / Domain</label>
+                    <input 
+                      placeholder="e.g. Computer Science, Machine Learning, Cloud" 
+                      style={S.input} 
+                      value={form.subject || ''} 
+                      onChange={e => setForm({...form, subject: e.target.value})} 
+                    />
                   </div>
                   <div style={S.row}>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>Slots Available</label>
-                      <input type="number" style={S.input} value={form.slots_available || ''} onChange={e => setForm({...form, slots_available: e.target.value})} />
+                      <input 
+                        type="number" 
+                        min="1"
+                        placeholder="e.g. 2" 
+                        style={S.input} 
+                        value={form.slots_available || ''} 
+                        onChange={e => setForm({...form, slots_available: e.target.value})} 
+                      />
                     </div>
                     <div style={{flex:1}}>
-                      <label style={S.inputLabel}>Status</label>
-                      <select style={S.input} value={form.status || 'open'} onChange={e => setForm({...form, status: e.target.value})}>
-                        <option value="open">Open</option>
+                      <label style={S.inputLabel}>Posting Status</label>
+                      <select 
+                        style={S.input} 
+                        value={form.status || 'open'} 
+                        onChange={e => setForm({...form, status: e.target.value})}
+                      >
+                        <option value="open">Open (Accepting Candidates)</option>
                         <option value="closed">Closed</option>
                       </select>
                     </div>
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Target Department</label>
-                    <select style={S.input} value={form.campus_id || ''} onChange={e => setForm({...form, campus_id: e.target.value})}>
-                      <option value="">Any / Global</option>
-                      {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <label style={S.inputLabel}>Target Department / Campus</label>
+                    <select 
+                      style={S.input} 
+                      value={form.campus_id || ''} 
+                      onChange={e => setForm({...form, campus_id: e.target.value})}
+                    >
+                      <option value="">Any / Global Department</option>
+                      {campuses.map(c => <option key={c.id} value={c.id}>{c.name || c.campus_name}</option>)}
                     </select>
                   </div>
                 </>
@@ -91,34 +158,69 @@ export default function BDModals({
               {activeTab === 'bulkhires' && (
                 <>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Batch Name</label>
-                    <input required style={S.input} value={form.batch_name || ''} onChange={e => setForm({...form, batch_name: e.target.value})} />
+                    <label style={S.inputLabel}>Batch Name *</label>
+                    <input 
+                      required 
+                      placeholder="e.g. Fall 2026 Faculty Mass Recruitment" 
+                      style={S.input} 
+                      value={form.batch_name || ''} 
+                      onChange={e => setForm({...form, batch_name: e.target.value})} 
+                    />
                   </div>
                   <div style={S.row}>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>Teachers Needed</label>
-                      <input type="number" style={S.input} value={form.teacher_count || ''} onChange={e => setForm({...form, teacher_count: e.target.value})} />
+                      <input 
+                        type="number" 
+                        min="1"
+                        placeholder="e.g. 10" 
+                        style={S.input} 
+                        value={form.teacher_count || ''} 
+                        onChange={e => setForm({...form, teacher_count: e.target.value})} 
+                      />
                     </div>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>Target Date</label>
-                      <input type="date" style={S.input} value={form.target_date || ''} onChange={e => setForm({...form, target_date: e.target.value})} />
+                      <input 
+                        type="date" 
+                        style={S.input} 
+                        value={form.target_date || ''} 
+                        onChange={e => setForm({...form, target_date: e.target.value})} 
+                      />
                     </div>
                   </div>
                   <div style={S.inputGroup}>
                     <label style={S.inputLabel}>Subject Areas</label>
-                    <input placeholder="e.g. Computer Science, Math" style={S.input} value={form.subject_areas || ''} onChange={e => setForm({...form, subject_areas: e.target.value})} />
+                    <input 
+                      placeholder="e.g. Computer Science, Mathematics, Physics" 
+                      style={S.input} 
+                      value={form.subject_areas || ''} 
+                      onChange={e => setForm({...form, subject_areas: e.target.value})} 
+                    />
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Status</label>
-                    <select style={S.input} value={form.status || 'planning'} onChange={e => setForm({...form, status: e.target.value})}>
-                      {BATCH_STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                    <label style={S.inputLabel}>Batch Status</label>
+                    <select 
+                      style={S.input} 
+                      value={form.status || 'planning'} 
+                      onChange={e => setForm({...form, status: e.target.value})}
+                    >
+                      {BATCH_STATUSES.map(s => (
+                        <option key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Department</label>
-                    <select style={S.input} value={form.campus_id || ''} onChange={e => setForm({...form, campus_id: e.target.value})}>
-                      <option value="">Any / Global</option>
-                      {campuses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    <label style={S.inputLabel}>Target Department</label>
+                    <select 
+                      style={S.input} 
+                      value={form.campus_id || ''} 
+                      onChange={e => setForm({...form, campus_id: e.target.value})}
+                    >
+                      <option value="">Any / Global Department</option>
+                      {campuses.map(c => <option key={c.id} value={c.id}>{c.name || c.campus_name}</option>)}
                     </select>
                   </div>
                 </>
@@ -127,46 +229,92 @@ export default function BDModals({
               {activeTab === 'applicants' && (
                 <>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Applicant Name</label>
-                    <input required style={S.input} value={form.name || ''} onChange={e => setForm({...form, name: e.target.value})} />
+                    <label style={S.inputLabel}>Applicant Full Name *</label>
+                    <input 
+                      required 
+                      placeholder="e.g. Dr. Ayesha Siddiqui" 
+                      style={S.input} 
+                      value={form.name || ''} 
+                      onChange={e => setForm({...form, name: e.target.value})} 
+                    />
                   </div>
                   <div style={S.row}>
                     <div style={{flex:1}}>
-                      <label style={S.inputLabel}>Email</label>
-                      <input required type="email" style={S.input} value={form.email || ''} onChange={e => setForm({...form, email: e.target.value})} />
+                      <label style={S.inputLabel}>Email Address *</label>
+                      <input 
+                        required 
+                        type="email" 
+                        placeholder="e.g. ayesha.siddiqui@gmail.com" 
+                        style={S.input} 
+                        value={form.email || ''} 
+                        onChange={e => setForm({...form, email: e.target.value})} 
+                      />
                     </div>
                     <div style={{flex:1}}>
-                      <label style={S.inputLabel}>Phone</label>
-                      <input type="text" style={S.input} value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} />
+                      <label style={S.inputLabel}>Phone Number</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. +92 300 1234567" 
+                        style={S.input} 
+                        value={form.phone || ''} 
+                        onChange={e => setForm({...form, phone: e.target.value})} 
+                      />
                     </div>
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Job Posting</label>
-                    <select required style={S.input} value={form.job_id || ''} onChange={e => setForm({...form, job_id: e.target.value})}>
-                      <option value="">Select a Job...</option>
-                      {jobs && jobs.map(j => <option key={j.id} value={j.id}>{j.title}</option>)}
+                    <label style={S.inputLabel}>Target Job Position *</label>
+                    <select 
+                      required 
+                      style={S.input} 
+                      value={form.job_id || ''} 
+                      onChange={e => setForm({...form, job_id: e.target.value})}
+                    >
+                      <option value="">-- Select a Job Position --</option>
+                      {jobs && jobs.map(j => (
+                        <option key={j.id} value={j.id}>
+                          {j.title} ({j.subject || 'Faculty'})
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div style={S.row}>
                     <div style={{flex:1}}>
                       <label style={S.inputLabel}>Years of Experience</label>
-                      <input type="number" style={S.input} value={form.experience_years || ''} onChange={e => setForm({...form, experience_years: e.target.value})} />
+                      <input 
+                        type="number" 
+                        min="0"
+                        placeholder="e.g. 5" 
+                        style={S.input} 
+                        value={form.experience_years || ''} 
+                        onChange={e => setForm({...form, experience_years: e.target.value})} 
+                      />
                     </div>
                     <div style={{flex:1}}>
-                      <label style={S.inputLabel}>Subjects / Expertise</label>
-                      <input type="text" style={S.input} value={form.subjects || ''} onChange={e => setForm({...form, subjects: e.target.value})} />
+                      <label style={S.inputLabel}>Expertise / Specialization</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Distributed Systems, ML" 
+                        style={S.input} 
+                        value={form.subjects || ''} 
+                        onChange={e => setForm({...form, subjects: e.target.value})} 
+                      />
                     </div>
                   </div>
                   <div style={S.inputGroup}>
-                    <label style={S.inputLabel}>Notes</label>
-                    <textarea style={{...S.input, minHeight: '80px', resize: 'vertical'}} value={form.notes || ''} onChange={e => setForm({...form, notes: e.target.value})}></textarea>
+                    <label style={S.inputLabel}>Interview Notes & Comments</label>
+                    <textarea 
+                      placeholder="Enter qualifications, screening remarks, interview notes..." 
+                      style={{...S.input, minHeight: '80px', resize: 'vertical'}} 
+                      value={form.notes || ''} 
+                      onChange={e => setForm({...form, notes: e.target.value})}
+                    />
                   </div>
                 </>
               )}
 
               <div style={S.modalActions}>
                 <button type="button" onClick={() => setShowModal(false)} style={S.cancelBtn}>Cancel</button>
-                <button type="submit" style={S.saveBtn}>{editingItem ? 'Update' : 'Create'}</button>
+                <button type="submit" style={S.saveBtn}>{editingItem ? 'Update Record' : 'Create Record'}</button>
               </div>
             </form>
           </div>
@@ -255,14 +403,14 @@ export default function BDModals({
                               </td>
                               <td style={{padding:'12px 20px', textAlign:'right'}}>
                                 {s.status === 'Pass' ? (
-                                  <span style={{display:'inline-flex', alignItems:'center', gap:'4px', color:'#166534', fontWeight:700, fontSize:'13px'}}>
-                                    <CheckCircle weight="fill" /> PASS
-                                  </span>
-                                ) : (
-                                  <span style={{display:'inline-flex', alignItems:'center', gap:'4px', color:'#ef4444', fontWeight:700, fontSize:'13px'}}>
-                                    <WarningCircle weight="fill" /> FAIL
-                                  </span>
-                                )}
+                                   <span style={{display:'inline-flex', alignItems:'center', gap:'4px', color:'#166534', fontWeight:700, fontSize:'13px'}}>
+                                     <CheckCircle weight="fill" /> PASS
+                                   </span>
+                                 ) : (
+                                   <span style={{display:'inline-flex', alignItems:'center', gap:'4px', color:'#ef4444', fontWeight:700, fontSize:'13px'}}>
+                                     <WarningCircle weight="fill" /> FAIL
+                                   </span>
+                                 )}
                               </td>
                             </tr>
                           ))}

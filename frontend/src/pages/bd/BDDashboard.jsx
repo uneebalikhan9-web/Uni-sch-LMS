@@ -183,7 +183,21 @@ function BDDashboard({ user = { name: "BD Manager" }, onLogout }) {
     }
   }, [activeTab, pipeline]);
 
-  const openAdd = () => { setEditingItem(null); setForm({}); setShowModal(true); };
+  const openAdd = () => {
+    setEditingItem(null);
+    if (activeTab === 'leads') {
+      setForm({ status: 'prospect', deal_value: '', institution_name: '', city: '', contact_person: '', contact_email: '' });
+    } else if (activeTab === 'jobs') {
+      setForm({ status: 'open', slots_available: 1, title: '', subject: '', campus_id: '' });
+    } else if (activeTab === 'bulkhires') {
+      setForm({ status: 'planning', teacher_count: 5, batch_name: '', subject_areas: '', target_date: '', campus_id: '' });
+    } else if (activeTab === 'applicants') {
+      setForm({ status: 'applied', job_id: jobs && jobs[0] ? jobs[0].id : '', name: '', email: '', phone: '', experience_years: 0, subjects: '', notes: '' });
+    } else {
+      setForm({});
+    }
+    setShowModal(true);
+  };
   const openEdit = (item) => { setEditingItem(item); setForm({ ...item }); setShowModal(true); };
 
   const handleSubmit = async (e) => {

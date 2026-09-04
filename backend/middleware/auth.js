@@ -109,9 +109,9 @@ const isStudent = (req, res, next) => {
   next();
 };
 
-// Middleware to check if user is a BD Agent
+// Middleware to check if user is a BD Agent or Authorized Administrator
 const isBDAgent = (req, res, next) => {
-  if (!['bd_agent', 'super_admin'].includes(req.user.role)) {
+  if (!['bd_agent', 'super_admin', 'master_admin', 'admin', 'principal', 'rector', 'dean', 'hod'].includes(req.user.role)) {
     return res.status(403).json({
       success: false,
       message: 'Access denied. BD Agents only.'

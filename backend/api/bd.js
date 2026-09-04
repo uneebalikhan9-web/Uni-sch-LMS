@@ -84,9 +84,9 @@ router.post('/public/apply', async (req, res) => {
 
 // ==================== PROTECTED ROUTES (BD Agent / Super Admin only) ====================
 
-// BD Agent or Super Admin can access
+// BD Agent or Authorized Admin can access
 const isBDOrAdmin = (req, res, next) => {
-  if (!['bd_agent', 'super_admin'].includes(req.user.role)) {
+  if (!['bd_agent', 'super_admin', 'master_admin', 'admin', 'principal', 'rector', 'dean', 'hod'].includes(req.user.role)) {
     return res.status(403).json({ success: false, message: 'Access denied. BD Agents only.' });
   }
   next();
