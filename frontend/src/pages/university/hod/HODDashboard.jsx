@@ -35,13 +35,24 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
   const [facultyList, setFacultyList] = useState([]);
   const [studentList, setStudentList] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Faculty Creation State
+  const [showFacultyModal, setShowFacultyModal] = useState(false);
+  const [facultyForm, setFacultyForm] = useState({ name: '', email: '', password: '', designation: 'Assistant Professor', phone: '' });
+  const [facultySubmitting, setFacultySubmitting] = useState(false);
+
+  // Student Creation State
+  const [showStudentModal, setShowStudentModal] = useState(false);
+  const [studentForm, setStudentForm] = useState({ name: '', email: '', password: '', roll_number: '', semester: '1', program: 'BS Computer Science' });
+  const [studentSubmitting, setStudentSubmitting] = useState(false);
+
   const [stats, setStats] = useState({
     facultyCount: 0,
     enrolledStudents: 0,
     activeCourses: 0,
     activeSections: 0,
-    fypCount: 0,
-    obeCount: 0
+    obeCount: 0,
+    fypCount: 0
   });
 
   const token = sessionStorage.getItem('token');
@@ -82,6 +93,71 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
   useEffect(() => {
     fetchHODData();
   }, []);
+
+  const handleCreateFaculty = async (e) => {
+    e.preventDefault();
+    if (!facultyForm.name || !facultyForm.email || !facultyForm.password) {
+      alert('Please fill Name, Email, and Password');
+      return;
+    }
+    try {
+      setFacultySubmitting(true);
+      const res = await fetch(`${API_BASE_URL}/api/teachers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(facultyForm)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Faculty member added successfully!');
+        setShowFacultyModal(false);
+        setFacultyForm({ name: '', email: '', password: '', designation: 'Assistant Professor', phone: '' });
+        fetchHODData();
+      } else {
+        alert(data.message || 'Failed to add faculty');
+      }
+    } catch (err) {
+      alert('Error creating faculty: ' + err.message);
+    } finally {
+      setFacultySubmitting(false);
+    }
+  };
+
+  const handleCreateStudent = async (e) => {
+    e.preventDefault();
+    if (!studentForm.name || !studentForm.email || !studentForm.password) {
+      alert('Please fill Name, Email, and Password');
+      return;
+    }
+    try {
+      setStudentSubmitting(true);
+      const res = await fetch(`${API_BASE_URL}/api/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          name: studentForm.name,
+          email: studentForm.email,
+          password: studentForm.password,
+          roll_number: studentForm.roll_number || `FA26-${Date.now().toString().slice(-4)}`,
+          semester: studentForm.semester,
+          program: studentForm.program
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Student registered successfully!');
+        setShowStudentModal(false);
+        setStudentForm({ name: '', email: '', password: '', roll_number: '', semester: '1', program: 'BS Computer Science' });
+        fetchHODData();
+      } else {
+        alert(data.message || 'Failed to register student');
+      }
+    } catch (err) {
+      alert('Error creating student: ' + err.message);
+    } finally {
+      setStudentSubmitting(false);
+    }
+  };
 
   const navItems = [
     { id: 'overview', label: 'Academic Analytics', icon: House, count: null },
@@ -354,15 +430,23 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Department Faculty Roster</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Active professors, associate professors, and lecturers</p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <MagnifyingGlass size={18} color="#64748b" />
-                <input
-                  type="text"
-                  placeholder="Search faculty..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
-                />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <MagnifyingGlass size={18} color="#64748b" />
+                  <input
+                    type="text"
+                    placeholder="Search faculty..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+                  />
+                </div>
+                <button 
+                  style={{ ...S.btnPrimary, background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' }} 
+                  onClick={() => setShowFacultyModal(true)}
+                >
+                  <Plus size={18} weight="bold" /> Add Faculty
+                </button>
               </div>
             </div>
 
@@ -381,7 +465,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
                   {filteredFaculty.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ ...S.td, textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
-                        No faculty members found.
+                        No faculty members found. Click "+ Add Faculty" to create one.
                       </td>
                     </tr>
                   ) : (
@@ -412,15 +496,23 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
                 <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: '#0f172a', margin: 0 }}>Enrolled Student Roster</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', margin: '2px 0 0 0' }}>Undergraduate & Graduate enrolled cohorts</p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-                <MagnifyingGlass size={18} color="#64748b" />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
-                />
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: '#f8fafc', padding: '8px 16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                  <MagnifyingGlass size={18} color="#64748b" />
+                  <input
+                    type="text"
+                    placeholder="Search students..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    style={{ border: 'none', background: 'transparent', outline: 'none', fontSize: '13px', color: '#0f172a' }}
+                  />
+                </div>
+                <button 
+                  style={{ ...S.btnPrimary, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }} 
+                  onClick={() => setShowStudentModal(true)}
+                >
+                  <Plus size={18} weight="bold" /> Add Student
+                </button>
               </div>
             </div>
 
@@ -439,7 +531,7 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
                   {filteredStudents.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ ...S.td, textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
-                        No enrolled students found.
+                        No enrolled students found. Click "+ Add Student" to register one.
                       </td>
                     </tr>
                   ) : (
@@ -468,6 +560,164 @@ const HODDashboard = ({ user = { name: "Dean / Department Head" }, onLogout }) =
         {activeTab === 'face-attendance' && (
           <div style={S.card}>
             <PDFaceAttendance token={token} />
+          </div>
+        )}
+
+        {/* ─── ADD FACULTY MODAL ────────────────────────────────────────── */}
+        {showFacultyModal && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+          }}>
+            <div style={{
+              background: '#ffffff', borderRadius: '24px', width: '100%', maxWidth: '520px',
+              padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: '0 0 6px 0' }}>Add Faculty / Professor</h3>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 20px 0' }}>Create a new university teacher profile with credentials</p>
+
+              <form onSubmit={handleCreateFaculty} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Full Name *</label>
+                  <input
+                    type="text" required placeholder="e.g. Dr. Salman Khan"
+                    value={facultyForm.name} onChange={e => setFacultyForm({ ...facultyForm, name: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Official Email Address *</label>
+                  <input
+                    type="email" required placeholder="e.g. salman.khan@univ.edu"
+                    value={facultyForm.email} onChange={e => setFacultyForm({ ...facultyForm, email: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Password *</label>
+                    <input
+                      type="password" required placeholder="••••••••"
+                      value={facultyForm.password} onChange={e => setFacultyForm({ ...facultyForm, password: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Designation / Rank</label>
+                    <select
+                      value={facultyForm.designation} onChange={e => setFacultyForm({ ...facultyForm, designation: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', background: '#fff' }}
+                    >
+                      <option value="Lecturer">Lecturer</option>
+                      <option value="Assistant Professor">Assistant Professor</option>
+                      <option value="Associate Professor">Associate Professor</option>
+                      <option value="Professor">Professor / Chair</option>
+                      <option value="Visiting Faculty">Visiting Faculty</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Phone / Mobile (Optional)</label>
+                  <input
+                    type="text" placeholder="+92 300 1234567"
+                    value={facultyForm.phone} onChange={e => setFacultyForm({ ...facultyForm, phone: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                  <button type="button" onClick={() => setShowFacultyModal(false)} style={S.btnSecondary}>Cancel</button>
+                  <button type="submit" disabled={facultySubmitting} style={S.btnPrimary}>
+                    {facultySubmitting ? 'Creating...' : 'Save Faculty Member'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ─── ADD STUDENT MODAL ────────────────────────────────────────── */}
+        {showStudentModal && (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
+          }}>
+            <div style={{
+              background: '#ffffff', borderRadius: '24px', width: '100%', maxWidth: '520px',
+              padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0'
+            }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: '#0f172a', margin: '0 0 6px 0' }}>Register New Student</h3>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 20px 0' }}>Direct enrollment for department undergraduate cohort</p>
+
+              <form onSubmit={handleCreateStudent} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Student Name *</label>
+                  <input
+                    type="text" required placeholder="e.g. Ali Ahmed"
+                    value={studentForm.name} onChange={e => setStudentForm({ ...studentForm, name: e.target.value })}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Email Address *</label>
+                    <input
+                      type="email" required placeholder="ali@student.edu"
+                      value={studentForm.email} onChange={e => setStudentForm({ ...studentForm, email: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Password *</label>
+                    <input
+                      type="password" required placeholder="••••••••"
+                      value={studentForm.password} onChange={e => setStudentForm({ ...studentForm, password: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Roll / Reg Number</label>
+                    <input
+                      type="text" placeholder="e.g. 2024-BSCS-042"
+                      value={studentForm.roll_number} onChange={e => setStudentForm({ ...studentForm, roll_number: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '6px' }}>Semester</label>
+                    <select
+                      value={studentForm.semester} onChange={e => setStudentForm({ ...studentForm, semester: e.target.value })}
+                      style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1px solid #cbd5e1', fontSize: '14px', outline: 'none', background: '#fff' }}
+                    >
+                      <option value="1">Semester 1</option>
+                      <option value="2">Semester 2</option>
+                      <option value="3">Semester 3</option>
+                      <option value="4">Semester 4</option>
+                      <option value="5">Semester 5</option>
+                      <option value="6">Semester 6</option>
+                      <option value="7">Semester 7</option>
+                      <option value="8">Semester 8</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                  <button type="button" onClick={() => setShowStudentModal(false)} style={S.btnSecondary}>Cancel</button>
+                  <button type="submit" disabled={studentSubmitting} style={{ ...S.btnPrimary, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                    {studentSubmitting ? 'Registering...' : 'Register Student'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </main>

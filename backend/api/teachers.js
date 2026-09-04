@@ -36,6 +36,51 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
+// Create a new teacher / faculty member
+router.post('/', verifyToken, async (req, res) => {
+  try {
+    const campusId = req.user.campus_id || null;
+    const clientId = req.user.client_id || null;
+    const { name, email, password, designation, phone } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
+    if (existing.length > 0) {
+      return res.status(400).json({ success: false, message: 'User with this email already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      'INSERT INTO users (name, email, password, role, phone, campus_id, client_id, is_approved, status) VALUES (?, ?, ?, ?, ?, ?, ?, 1, "active")',
+      [name, email, hashedPassword, 'teacher', phone || null, campusId, clientId]
+    );
+
+    const userId = result.insertId;
+    const tempEmpCode = `FAC-${Date.now().toString().slice(-4)}`;
+
+    try {
+      await pool.query(
+        'INSERT INTO employees (user_id, employee_code, designation, joining_date, status) VALUES (?, ?, ?, ?, "active")',
+        [userId, tempEmpCode, designation || 'Assistant Professor', new Date()]
+      );
+    } catch (empErr) {
+      console.warn('Optional employees table insert note:', empErr.message);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Faculty member created successfully',
+      teacher: { id: userId, name, email, role: 'teacher', designation: designation || 'Assistant Professor', employee_id: tempEmpCode }
+    });
+  } catch (error) {
+    console.error('Create teacher error:', error);
+    res.status(500).json({ success: false, message: 'Failed to create teacher: ' + error.message });
+  }
+});
+
 // All subsequent teacher-action routes require teacher authentication
 router.use(verifyToken);
 router.use(isTeacher);

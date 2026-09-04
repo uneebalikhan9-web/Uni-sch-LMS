@@ -153,7 +153,7 @@ const HODCourseOfferings = () => {
                   style={{ width: '100%', padding: '12px', borderRadius: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', fontWeight: '600', outline: 'none' }}
                 >
                   <option value="">-- Select Course --</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title || c.name}</option>)}
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.code ? `${c.code} - ` : ''}{c.title || c.name || 'Course'}</option>)}
                 </select>
               </div>
 

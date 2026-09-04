@@ -95,7 +95,7 @@ const HODOBEMapping = () => {
             onChange={(e) => setSelectedCourse(e.target.value)}
             style={{ padding: '10px 16px', borderRadius: '12px', background: '#ffffff', color: '#0f172a', border: '1px solid #cbd5e1', fontWeight: '700', outline: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}
           >
-            {courses.map(c => <option key={c.id} value={c.id}>{c.code} - {c.title || c.name}</option>)}
+            {courses.map(c => <option key={c.id} value={c.id}>{c.code ? `${c.code} - ` : ''}{c.title || c.name || 'Course'}</option>)}
           </select>
           <button style={S.btnPrimary} onClick={() => setShowCLOModal(true)}>
             <Plus size={18} weight="bold" /> Define CLO
