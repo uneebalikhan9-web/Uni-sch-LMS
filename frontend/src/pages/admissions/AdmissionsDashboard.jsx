@@ -3,7 +3,8 @@ import {
   House, Funnel, Users, Checks, Scroll, Calendar, Bell, 
   UserCircle, List, X, SignOut, ChatCircle, GraduationCap, 
   ShieldCheck, UserPlus, Receipt, Printer, CurrencyDollar,
-  CheckCircle, Buildings, IdentificationCard, Phone, MapPin
+  CheckCircle, Buildings, IdentificationCard, Phone, MapPin,
+  Copy, ArrowSquareOut, Link
 } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../components/Toast';
@@ -24,6 +25,7 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [activeNav, setActiveNav] = useState('overview');
+  const [copiedLink, setCopiedLink] = useState(false);
   const { showToast } = useToast();
   
   // Data States
@@ -159,6 +161,20 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
     } catch (err) {
       showToast(err.response?.data?.message || 'Error verifying fee', 'error');
     }
+  };
+
+  // Copy public student admission form link
+  const handleCopyAdmissionLink = () => {
+    const campusId = user?.campus_id || 1;
+    const admissionUrl = `${window.location.origin}/student-admission?campus=${campusId}`;
+    navigator.clipboard.writeText(admissionUrl);
+    setCopiedLink(true);
+    if (showToast) {
+      showToast('Public Admission Form link copied to clipboard!', 'success');
+    } else {
+      alert('Admission Link Copied: ' + admissionUrl);
+    }
+    setTimeout(() => setCopiedLink(false), 3000);
   };
 
   const handlePrintChallan = (student) => {
@@ -334,17 +350,61 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
             </h1>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <button
+              onClick={handleCopyAdmissionLink}
+              style={{
+                padding: '9px 16px',
+                borderRadius: '12px',
+                border: '1px solid #cbd5e1',
+                background: copiedLink ? '#dcfce7' : '#ffffff',
+                color: copiedLink ? '#166534' : '#334155',
+                fontWeight: '800',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s ease'
+              }}
+              title="Copy Public Admission Application Form Link"
+            >
+              <Copy size={18} weight="bold" color={copiedLink ? '#16a34a' : '#4f46e5'} />
+              <span>{copiedLink ? '✓ Link Copied!' : 'Copy Admission Link'}</span>
+            </button>
+
+            <button
+              onClick={() => window.open(`${window.location.origin}/student-admission?campus=${user?.campus_id || 1}`, '_blank')}
+              style={{
+                padding: '9px 14px',
+                borderRadius: '12px',
+                border: '1px solid #e0e7ff',
+                background: '#eef2ff',
+                color: '#4338ca',
+                fontWeight: '800',
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Open Public Admission Form in New Tab"
+            >
+              <ArrowSquareOut size={18} weight="bold" />
+              <span>Open Form</span>
+            </button>
+
             <button
               onClick={() => setShowWalkinModal(true)}
               style={{
-                padding: '10px 18px',
+                padding: '9px 18px',
                 borderRadius: '12px',
                 border: 'none',
                 background: 'var(--primary-color, #4f46e5)',
                 color: '#ffffff',
                 fontWeight: '800',
-                fontSize: '0.85rem',
+                fontSize: '0.82rem',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -352,7 +412,7 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
                 boxShadow: '0 4px 12px rgba(var(--primary-rgb, 79, 70, 229), 0.3)'
               }}
             >
-              <UserPlus size={18} weight="bold" /> + New Walk-in Admission
+              <UserPlus size={18} weight="bold" /> + Walk-in Admission
             </button>
           </div>
         </div>
