@@ -52,7 +52,7 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
     email: '',
     address: '',
     city: 'Lahore',
-    target_class: 'Class 1',
+    target_class: 'BS Computer Science (BSCS)',
     campus_id: user?.campus_id || 1,
     admission_fee: 5000,
     last_qualification: '',
@@ -183,11 +183,16 @@ const AdmissionsDashboard = ({ user, onLogout }) => {
   };
 
   const gradesList = [
-    'Playgroup', 'Nursery', 'Prep', 'Class 1', 'Class 2', 'Class 3',
-    'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'Matric (Science)', 'Matric (Arts)',
-    'FSc (Pre-Medical)', 'FSc (Pre-Engineering)', 'ICS (Computer Science)', 'I.Com (Commerce)', 'FA (Humanities)',
-    'O-Levels', 'A-Levels'
+    'BS Computer Science (BSCS)',
+    'BS Software Engineering (BSSE)',
+    'BS Artificial Intelligence (BSAI)',
+    'BS Data Science',
+    'BS Information Technology',
+    'Bachelor of Business Administration (BBA)',
+    'AI Class & Executive Certification',
+    'Intermediate / ICS / FSc',
+    'Matric / O-Levels',
+    'Other'
   ];
 
   return (

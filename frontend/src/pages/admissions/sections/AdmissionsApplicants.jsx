@@ -19,7 +19,7 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
       (app.bform_number || '').includes(searchTerm) ||
       (app.cnic || '').includes(searchTerm);
 
-    const matchesGrade = gradeFilter === 'All' || app.target_class === gradeFilter;
+    const matchesGrade = gradeFilter === 'All' || app.target_class === gradeFilter || app.program === gradeFilter;
 
     let matchesStatus = true;
     if (statusFilter === 'pending_fee') {
@@ -33,11 +33,17 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
     return matchesSearch && matchesGrade && matchesStatus;
   });
 
-  const gradesList = [
-    'All', 'Playgroup', 'Nursery', 'Prep', 'Class 1', 'Class 2', 'Class 3',
-    'Class 4', 'Class 5', 'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10',
-    'O-Levels', 'A-Levels'
-  ];
+  const availablePrograms = ['All', ...new Set([
+    'BS Computer Science (BSCS)',
+    'BS Software Engineering (BSSE)',
+    'BS Artificial Intelligence (BSAI)',
+    'BS Data Science',
+    'BS Information Technology',
+    'Bachelor of Business Administration (BBA)',
+    'AI Class & Executive Certification',
+    'Intermediate / ICS / FSc',
+    ...(applicants || []).map(a => a.target_class || a.program).filter(Boolean)
+  ])];
 
   return (
     <div className="animate-fadeIn">
@@ -92,7 +98,7 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
             />
           </div>
 
-          {/* Grade Filter */}
+          {/* Program Filter */}
           <div>
             <select
               value={gradeFilter}
@@ -109,8 +115,8 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
                 fontWeight: '600'
               }}
             >
-              {gradesList.map(g => (
-                <option key={g} value={g}>{g === 'All' ? 'All Target Grades' : `Grade: ${g}`}</option>
+              {availablePrograms.map(g => (
+                <option key={g} value={g}>{g === 'All' ? 'All Degree Programs / Classes' : g}</option>
               ))}
             </select>
           </div>
