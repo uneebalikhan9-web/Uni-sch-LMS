@@ -77,20 +77,45 @@ router.get('/student-timetable', verifyToken, isStudent, async (req, res) => {
     fs.appendFileSync(logFile, `${timestamp} - Fetching for student_id: ${student_id}\n`);
 
     const [timetable] = await pool.query(
-      `SELECT t.*, c.title as course_title, u.name as teacher_name, cl.name as class_name, cl.section, r.room_number
-       FROM timetables t
-       JOIN courses c ON t.course_id = c.id
-       LEFT JOIN employees e ON t.teacher_id = e.id
-       LEFT JOIN users u ON e.user_id = u.id
-       LEFT JOIN classes cl ON t.class_id = cl.id
-       LEFT JOIN rooms r ON t.room_id = r.id
-       WHERE t.course_id IN (
-         SELECT course_id FROM enrollments WHERE student_id = ?
-       ) OR t.class_id IN (
-         SELECT class_id FROM student_classes WHERE student_id = ?
-       )
-       ORDER BY FIELD(t.day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), t.start_time`,
-      [student_id, student_id]
+      `SELECT 
+        t.id, t.course_id, t.class_id, t.teacher_id, t.day_of_week, t.start_time, t.end_time, t.room_id, t.academic_year, t.semester,
+        c.title as course_title, c.code as course_code,
+        u.name as teacher_name,
+        cl.name as class_name, cl.section,
+        r.room_number
+      FROM timetables t
+      JOIN courses c ON t.course_id = c.id
+      LEFT JOIN employees e ON t.teacher_id = e.id
+      LEFT JOIN users u ON e.user_id = u.id
+      LEFT JOIN classes cl ON t.class_id = cl.id
+      LEFT JOIN rooms r ON t.room_id = r.id
+      WHERE t.course_id IN (
+        SELECT course_id FROM enrollments WHERE student_id = ? AND status IN ('approved', 'enrolled')
+        UNION
+        SELECT course_id FROM enrollment_registrations WHERE student_id = ? AND status = 'enrolled'
+      ) OR t.class_id IN (
+        SELECT class_id FROM student_classes WHERE student_id = ?
+      )
+
+      UNION
+
+      SELECT 
+        ss.id, cs.course_id, NULL as class_id, cs.teacher_id, ss.day_of_week, ss.start_time, ss.end_time, ss.room_id, NULL as academic_year, sem.name as semester,
+        c.title as course_title, c.code as course_code,
+        u.name as teacher_name,
+        cs.section_label as class_name, cs.section_label as section,
+        r.room_number
+      FROM section_schedules ss
+      JOIN course_sections cs ON ss.section_id = cs.id
+      JOIN courses c ON cs.course_id = c.id
+      JOIN semesters sem ON ss.semester_id = sem.id
+      JOIN enrollment_registrations er ON er.section_id = cs.id AND er.student_id = ? AND er.status = 'enrolled'
+      LEFT JOIN employees e ON cs.teacher_id = e.id
+      LEFT JOIN users u ON e.user_id = u.id
+      LEFT JOIN rooms r ON ss.room_id = r.id
+
+      ORDER BY FIELD(day_of_week, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), start_time`,
+      [student_id, student_id, student_id, student_id]
     );
 
     fs.appendFileSync(logFile, `${timestamp} - Found ${timetable.length} entries\n`);
