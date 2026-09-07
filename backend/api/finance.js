@@ -100,70 +100,99 @@ router.get('/overview', async (req, res) => {
     const campusId = req.user.campus_id;
     const isSuperAdmin = req.user.role === 'super_admin';
     const filter = isSuperAdmin ? '' : 'WHERE campus_id = ?';
+    const filterAnd = isSuperAdmin ? '' : 'AND campus_id = ?';
     const params = isSuperAdmin ? [] : [campusId];
 
-    const challanFilter = isSuperAdmin ? '' : 'WHERE fc.campus_id = ?';
+    const [[{ challanRev }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount),0) as challanRev FROM finance_student_challans WHERE status = 'paid' ${filterAnd}`,
+      params
+    );
+    const [[{ admissionRev }]] = await pool.query(
+      `SELECT COALESCE(SUM(admission_fee),0) as admissionRev FROM admission_requests WHERE fee_status = 'paid' ${filterAnd}`,
+      params
+    );
+    const totalRevenue = parseFloat(challanRev || 0) + parseFloat(admissionRev || 0);
 
-    const [[{ totalRevenue }]] = await pool.query(
-      `SELECT COALESCE(SUM(total_amount),0) as totalRevenue FROM finance_student_challans ${!isSuperAdmin ? 'WHERE campus_id = ? AND status = \'paid\'' : 'WHERE status = \'paid\''}`,
+    const [[{ challanPending }]] = await pool.query(
+      `SELECT COALESCE(SUM(total_amount),0) as challanPending FROM finance_student_challans WHERE status IN ('pending','unpaid','overdue') ${filterAnd}`,
+      params
+    );
+    const [[{ admissionPending }]] = await pool.query(
+      `SELECT COALESCE(SUM(admission_fee),0) as admissionPending FROM admission_requests WHERE fee_status = 'pending' AND status != 'rejected' ${filterAnd}`,
+      params
+    );
+    const pendingFees = parseFloat(challanPending || 0) + parseFloat(admissionPending || 0);
+
+    const [[{ overdueCount }]] = await pool.query(
+      `SELECT COUNT(*) as overdueCount FROM finance_student_challans WHERE status = 'overdue' ${filterAnd}`,
       params
     );
 
-    const [[{ pendingFees }]] = await pool.query(
-      `SELECT COALESCE(SUM(total_amount),0) as pendingFees FROM finance_student_challans WHERE status IN ('pending','unpaid','overdue') ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
-      isSuperAdmin ? [] : [campusId]
-    );
-
-    const [[{ overdueCount }]] = await pool.query(
-      `SELECT COUNT(*) as overdueCount FROM finance_student_challans WHERE status = 'overdue' ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
-      isSuperAdmin ? [] : [campusId]
-    );
-
     const [[{ payrollDisbursed }]] = await pool.query(
-      `SELECT COALESCE(SUM(net_payable),0) as payrollDisbursed FROM finance_payroll WHERE status = 'disbursed' ${!isSuperAdmin ? 'AND campus_id = ?' : ''}`,
-      isSuperAdmin ? [] : [campusId]
+      `SELECT COALESCE(SUM(net_payable),0) as payrollDisbursed FROM finance_payroll WHERE status = 'disbursed' ${filterAnd}`,
+      params
     );
 
     const [[{ totalExpenses }]] = await pool.query(
-      `SELECT COALESCE(SUM(amount),0) as totalExpenses FROM finance_expenses ${!isSuperAdmin ? 'WHERE campus_id = ?' : ''}`,
-      isSuperAdmin ? [] : [campusId]
+      `SELECT COALESCE(SUM(amount),0) as totalExpenses FROM finance_expenses ${filter}`,
+      params
     );
 
     const operatingMargin = totalRevenue > 0
       ? (((totalRevenue - totalExpenses) / totalRevenue) * 100).toFixed(1)
-      : 0;
+      : totalExpenses > 0 ? -100.0 : 0;
 
     // Fetch Last 6 Months Trend Data
     const [revTrend] = await pool.query(
-      `SELECT DATE_FORMAT(COALESCE(paid_date, created_at), '%Y-%m') as month, COALESCE(SUM(total_amount),0) as revenue 
-       FROM finance_student_challans 
-       WHERE status = 'paid' AND COALESCE(paid_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
-       GROUP BY month ORDER BY month ASC`,
-      isSuperAdmin ? [] : [campusId]
+      `SELECT month, SUM(amount) as revenue FROM (
+          SELECT DATE_FORMAT(COALESCE(paid_date, created_at), '%Y-%m') as month, total_amount as amount
+          FROM finance_student_challans
+          WHERE status = 'paid' AND COALESCE(paid_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${filterAnd}
+          UNION ALL
+          SELECT DATE_FORMAT(COALESCE(fee_paid_at, created_at), '%Y-%m') as month, admission_fee as amount
+          FROM admission_requests
+          WHERE fee_status = 'paid' AND COALESCE(fee_paid_at, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${filterAnd}
+       ) t GROUP BY month ORDER BY month ASC`,
+      [...params, ...params]
     );
 
     const [expTrend] = await pool.query(
-      `SELECT DATE_FORMAT(COALESCE(expense_date, created_at), '%Y-%m') as month, COALESCE(SUM(amount),0) as expenses 
+      `SELECT DATE_FORMAT(COALESCE(expense_date, created_at), '%Y-%m') as month, COALESCE(SUM(amount), 0) as expenses 
        FROM finance_expenses 
-       WHERE COALESCE(expense_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${!isSuperAdmin ? 'AND campus_id = ?' : ''}
+       WHERE COALESCE(expense_date, created_at) >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH) ${filterAnd}
        GROUP BY month ORDER BY month ASC`,
-      isSuperAdmin ? [] : [campusId]
+      params
+    );
+
+    // Recent Admissions for overview feed
+    const [recentAdmissions] = await pool.query(
+      `SELECT id, full_name, admission_fee as total_amount, COALESCE(fee_paid_at, created_at) as created_at,
+              fee_status as status, program, payment_method, 'admission' as fee_type
+       FROM admission_requests
+       ${filter}
+       ORDER BY created_at DESC LIMIT 5`,
+      params
     );
 
     res.json({
       success: true,
       stats: {
-        totalRevenue, pendingFees, overdueCount,
-        payrollDisbursed, totalExpenses, operatingMargin
+        totalRevenue,
+        pendingFees,
+        overdueCount: overdueCount || 0,
+        payrollDisbursed: parseFloat(payrollDisbursed || 0),
+        totalExpenses: parseFloat(totalExpenses || 0),
+        operatingMargin
       },
       trend: {
         revenue: revTrend,
         expenses: expTrend
-      }
+      },
+      recentAdmissions
     });
   } catch (error) {
     console.error('Finance overview error:', error);
-    res.status(500).json({ success: false, message: 'Error fetching finance overview' });
+    res.status(500).json({ success: false, message: 'Error fetching finance overview: ' + error.message });
   }
 });
 

@@ -76,6 +76,8 @@ const FinanceDashboard = ({ user, onLogout }) => {
     };
   }, []);
 
+  const [recentAdmissions, setRecentAdmissions] = useState([]);
+
   const fetchAllData = async () => {
     setLoading(true);
     try {
@@ -91,12 +93,13 @@ const FinanceDashboard = ({ user, onLogout }) => {
       if (sRes.success) {
         setStats(sRes.stats);
         if (sRes.trend) setTrend(sRes.trend);
+        if (sRes.recentAdmissions) setRecentAdmissions(sRes.recentAdmissions);
       }
-      if (cRes.success) setChallans(cRes.challans);
-      if (pRes.success) setPayroll(pRes.payroll);
-      if (eRes.success) setExpenses(eRes.expenses);
-      if (stdRes.success) setStudents(stdRes.students);
-      if (empRes.success) setEmployees(empRes.employees);
+      if (cRes.success) setChallans(cRes.challans || []);
+      if (pRes.success) setPayroll(pRes.payroll || []);
+      if (eRes.success) setExpenses(eRes.expenses || []);
+      if (stdRes.success) setStudents(stdRes.students || []);
+      if (empRes.success) setEmployees(empRes.employees || []);
       
     } catch (error) {
       showToast('Error fetching finance data', 'error');
@@ -131,7 +134,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} setActiveTab={setActiveTab} />;
+      case 'overview': return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} recentAdmissions={recentAdmissions} setActiveTab={setActiveTab} />;
       case 'fees': return <FinFees challans={challans} onAction={handleAction} isCollege={isSchool} onEdit={(item) => { setEditingItem(item); setModalType('challan'); setShowModal(true); }} />;
       case 'school-fees': return <FinCollegeFees isCollege={isSchool} />;
       case 'payroll': return <FinPayroll payroll={payroll} onAction={handleAction} onEdit={(item) => { setEditingItem(item); setModalType('payroll'); setShowModal(true); }} />;
@@ -139,7 +142,7 @@ const FinanceDashboard = ({ user, onLogout }) => {
       case 'fee-structures': return <FinFeeStructures />;
       case 'scholarships': return <FinScholarships students={students} />;
       case 'reports': return <FinReports stats={stats} challans={challans} payroll={payroll} expenses={expenses} />;
-      default: return <FinOverview stats={stats} trend={trend} setActiveTab={setActiveTab} />;
+      default: return <FinOverview stats={stats} challans={challans} expenses={expenses} trend={trend} recentAdmissions={recentAdmissions} setActiveTab={setActiveTab} />;
     }
   };
 

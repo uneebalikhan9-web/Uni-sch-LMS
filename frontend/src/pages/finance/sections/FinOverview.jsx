@@ -28,7 +28,7 @@ const MetricCard = ({ title, value, change, icon: Icon, trend, isCurrency = true
   </div>
 );
 
-const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
+const FinOverview = ({ stats = {}, challans = [], expenses = [], trend = {}, recentAdmissions = [], setActiveTab }) => {
   // Generate last 6 months list dynamically
   const months = [];
   const d = new Date();
@@ -49,8 +49,8 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
   tempDate.setMonth(tempDate.getMonth() - 5);
   for (let i = 0; i < 6; i++) {
     const mStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}`;
-    revenueData.push((revMap[mStr] || 0) / 1000); // Scale to 'k'
-    expenseData.push((expMap[mStr] || 0) / 1000);
+    revenueData.push((parseFloat(revMap[mStr] || 0)) / 1000); // Scale to 'k'
+    expenseData.push((parseFloat(expMap[mStr] || 0)) / 1000);
     tempDate.setMonth(tempDate.getMonth() + 1);
   }
 
@@ -93,9 +93,9 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
         <MetricCard 
           title="Op. Margin" 
           value={`${stats.operatingMargin || 0}%`} 
-          change="+2.1%" 
+          change={parseFloat(stats.operatingMargin || 0) >= 0 ? "+2.1%" : "-5.0%"} 
           icon={<ChartPie size={24} weight="duotone" />}
-          trend="up"
+          trend={parseFloat(stats.operatingMargin || 0) >= 0 ? "up" : "down"}
           isCurrency={false}
           tab="reports"
           setActiveTab={setActiveTab}
@@ -140,7 +140,7 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
           </thead>
           <tbody>
             {challans.slice(0, 3).map(c => (
-              <tr key={c.id}>
+              <tr key={`challan-${c.id}`}>
                 <td>
                   <div className="fin-cell">
                     <div className="fin-avatar"><CurrencyCircleDollar size={18} /></div>
@@ -150,14 +150,31 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
                     </div>
                   </div>
                 </td>
-                <td>Student Fee</td>
-                <td className="fin-bonus">Rs. {c.total_amount.toLocaleString()}</td>
+                <td>Semester Fee</td>
+                <td className="fin-bonus">Rs. {parseFloat(c.total_amount || 0).toLocaleString()}</td>
                 <td>{new Date(c.created_at).toLocaleDateString()}</td>
                 <td><span className={`fin-badge fin-badge-${c.status}`}>{c.status}</span></td>
               </tr>
             ))}
+            {recentAdmissions.slice(0, 3).map(a => (
+              <tr key={`adm-${a.id}`}>
+                <td>
+                  <div className="fin-cell">
+                    <div className="fin-avatar" style={{background:'#10b981'}}><Receipt size={18} /></div>
+                    <div>
+                      <div className="fin-name">Admission: {a.full_name}</div>
+                      <div className="fin-sub">{a.program || 'New Admission'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>Admission Fee</td>
+                <td className="fin-bonus">Rs. {parseFloat(a.total_amount || 0).toLocaleString()}</td>
+                <td>{new Date(a.created_at).toLocaleDateString()}</td>
+                <td><span className={`fin-badge fin-badge-${a.status === 'paid' ? 'paid' : 'pending'}`}>{a.status}</span></td>
+              </tr>
+            ))}
             {expenses.slice(0, 3).map(e => (
-              <tr key={e.id}>
+              <tr key={`exp-${e.id}`}>
                 <td>
                   <div className="fin-cell">
                     <div className="fin-avatar" style={{background:'#f97316'}}><Wallet size={18} /></div>
@@ -168,12 +185,12 @@ const FinOverview = ({ stats, challans, expenses, trend, setActiveTab }) => {
                   </div>
                 </td>
                 <td>Expense</td>
-                <td className="fin-deduct">Rs. {e.amount.toLocaleString()}</td>
+                <td className="fin-deduct">Rs. {parseFloat(e.amount || 0).toLocaleString()}</td>
                 <td>{new Date(e.expense_date || e.created_at).toLocaleDateString()}</td>
                 <td><span className="fin-badge fin-badge-paid">Paid</span></td>
               </tr>
             ))}
-            {challans.length === 0 && expenses.length === 0 && (
+            {challans.length === 0 && recentAdmissions.length === 0 && expenses.length === 0 && (
               <tr className="fin-empty-row">
                 <td colSpan="5">No recent transactions found</td>
               </tr>
