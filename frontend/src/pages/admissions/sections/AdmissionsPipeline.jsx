@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   User, CheckCircle, GraduationCap, Clock, Receipt, 
-  Phone, IdentificationCard, Buildings, CurrencyDollar, ArrowRight
+  Phone, IdentificationCard, Buildings, CurrencyDollar, ArrowRight, Eye
 } from '@phosphor-icons/react';
+import ApplicantDetailsModal from './ApplicantDetailsModal';
 
 export default function AdmissionsPipeline({ pipeline, onPrintChallan, onClearFee, onInspectApplicant }) {
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
   const stages = [
     {
       key: 'pending_fee',
@@ -214,26 +216,47 @@ export default function AdmissionsPipeline({ pipeline, onPrintChallan, onClearFe
                       display: 'flex',
                       gap: '8px',
                       justifyContent: 'space-between',
-                      alignItems: 'center'
+                      alignItems: 'center',
+                      flexWrap: 'wrap'
                     }}>
-                      <button 
-                        onClick={() => onPrintChallan(student)}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid #cbd5e1',
-                          background: '#ffffff',
-                          color: '#334155',
-                          fontSize: '0.75rem',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                      >
-                        <Receipt size={14} weight="bold" /> Challan
-                      </button>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button 
+                          onClick={() => setSelectedApplicant(student)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#f8fafc',
+                            color: '#1e293b',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Eye size={14} weight="bold" color="#4f46e5" /> Details
+                        </button>
+                        <button 
+                          onClick={() => onPrintChallan(student)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#ffffff',
+                            color: '#334155',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Receipt size={14} weight="bold" /> Challan
+                        </button>
+                      </div>
 
                       {stage.key === 'pending_fee' && onClearFee && (
                         <button 
@@ -275,6 +298,16 @@ export default function AdmissionsPipeline({ pipeline, onPrintChallan, onClearFe
           </div>
         ))}
       </div>
+
+      {/* FULL APPLICANT PROFILE MODAL */}
+      {selectedApplicant && (
+        <ApplicantDetailsModal
+          applicant={selectedApplicant}
+          onClose={() => setSelectedApplicant(null)}
+          onPrintChallan={onPrintChallan}
+          onClearFee={onClearFee}
+        />
+      )}
     </div>
   );
 }

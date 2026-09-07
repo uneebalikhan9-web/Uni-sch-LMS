@@ -217,13 +217,27 @@ export default function PDAdmissionRequests() {
             <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '18px' }}>
               
               {/* Student Overview Card */}
-              <div style={{ padding: '14px 18px', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '0.85rem' }}>
-                <div><span style={{ color: '#64748b' }}>Father Name:</span> <strong>{selectedRequest.father_name || '—'}</strong></div>
-                <div><span style={{ color: '#64748b' }}>B-Form / CNIC:</span> <strong>{selectedRequest.bform_number || selectedRequest.cnic || '—'}</strong></div>
-                <div><span style={{ color: '#64748b' }}>Contact:</span> <strong>{selectedRequest.phone || '—'}</strong></div>
-                <div>
-                  <span style={{ color: '#64748b' }}>Finance Status:</span> 
-                  <strong style={{ color: '#166534', marginLeft: '6px' }}>✓ Fee Verified</strong>
+              <div style={{ padding: '16px 20px', borderRadius: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.85rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div><span style={{ color: '#64748b' }}>Father Name:</span> <strong>{selectedRequest.father_name || '—'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>B-Form / CNIC:</span> <strong>{selectedRequest.bform_number || selectedRequest.cnic || '—'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Contact Phone:</span> <strong>{selectedRequest.phone || selectedRequest.father_phone || '—'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Email:</span> <strong style={{ color: '#4f46e5' }}>{selectedRequest.email || '—'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Gender & DOB:</span> <strong>{selectedRequest.gender || 'Male'} • {selectedRequest.dob ? new Date(selectedRequest.dob).toLocaleDateString('en-GB') : '—'}</strong></div>
+                  <div><span style={{ color: '#64748b' }}>City & Address:</span> <strong>{selectedRequest.city || 'Lahore'} {selectedRequest.address ? `(${selectedRequest.address})` : ''}</strong></div>
+                </div>
+
+                {/* Prior Education */}
+                <div style={{ paddingTop: '10px', borderTop: '1px solid #e2e8f0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div><span style={{ color: '#64748b' }}>Prior Education:</span> <strong>{selectedRequest.last_qualification || 'Matric / O-Levels'} ({selectedRequest.board_university || 'BISE'})</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Marks / GPA:</span> <strong style={{ color: '#16a34a' }}>{selectedRequest.marks_gpa || 'Grade A'} (Passing: {selectedRequest.passing_year || '2024'})</strong></div>
+                  <div><span style={{ color: '#64748b' }}>Emergency Person:</span> <strong>{selectedRequest.emergency_name || selectedRequest.father_name || '—'} ({selectedRequest.emergency_phone || selectedRequest.phone || '—'})</strong></div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Finance Status:</span> 
+                    <strong style={{ color: selectedRequest.fee_status === 'paid' ? '#166534' : '#92400e', marginLeft: '6px' }}>
+                      {selectedRequest.fee_status === 'paid' ? '✓ Fee Paid (Rs. ' + (selectedRequest.admission_fee || 5000) + ')' : '● Fee Pending'}
+                    </strong>
+                  </div>
                 </div>
               </div>
 

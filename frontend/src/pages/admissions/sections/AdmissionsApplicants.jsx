@@ -3,11 +3,13 @@ import {
   MagnifyingGlass, Funnel, Receipt, Eye, CheckCircle, 
   Clock, GraduationCap, Buildings, Phone, User
 } from '@phosphor-icons/react';
+import ApplicantDetailsModal from './ApplicantDetailsModal';
 
 export default function AdmissionsApplicants({ applicants, onPrintChallan, onClearFee }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [gradeFilter, setGradeFilter] = useState('All');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
 
   const filteredApplicants = (applicants || []).filter(app => {
     const matchesSearch = 
@@ -247,6 +249,24 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', gap: '6px' }}>
                         <button
+                          onClick={() => setSelectedApplicant(app)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '8px',
+                            border: '1px solid #cbd5e1',
+                            background: '#f8fafc',
+                            color: '#1e293b',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                        >
+                          <Eye size={14} weight="bold" color="#4f46e5" /> Details
+                        </button>
+                        <button
                           onClick={() => onPrintChallan(app)}
                           style={{
                             padding: '6px 12px',
@@ -273,6 +293,16 @@ export default function AdmissionsApplicants({ applicants, onPrintChallan, onCle
           </table>
         </div>
       </div>
+
+      {/* FULL APPLICANT PROFILE MODAL */}
+      {selectedApplicant && (
+        <ApplicantDetailsModal
+          applicant={selectedApplicant}
+          onClose={() => setSelectedApplicant(null)}
+          onPrintChallan={onPrintChallan}
+          onClearFee={onClearFee}
+        />
+      )}
     </div>
   );
 }

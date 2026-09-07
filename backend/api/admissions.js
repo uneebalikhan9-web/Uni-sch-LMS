@@ -94,6 +94,7 @@ router.get('/pipeline', async (req, res) => {
 
     rows.forEach(r => {
       const item = {
+        ...r,
         id: r.id,
         full_name: r.full_name,
         father_name: r.father_name || '',
@@ -101,6 +102,7 @@ router.get('/pipeline', async (req, res) => {
         email: r.email || '',
         bform_number: r.bform_number || r.cnic || '',
         target_class: r.target_class || r.program || 'General',
+        program: r.program || r.target_class || 'General',
         admission_fee: r.admission_fee || 5000,
         fee_status: r.fee_status || 'pending',
         fee_paid_at: r.fee_paid_at,
