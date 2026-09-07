@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { 
   X, User, Phone, EnvelopeSimple, MapPin, GraduationCap, 
   Clock, ShieldCheck, Heartbeat, FileText, Receipt, CheckCircle, 
@@ -27,13 +28,13 @@ export default function ApplicantDetailsModal({ applicant, onClose, onPrintChall
     }
   };
 
-  return (
+  const modalContent = (
     <div style={{
       position: 'fixed',
       inset: 0,
       background: 'rgba(15, 23, 42, 0.75)',
       backdropFilter: 'blur(8px)',
-      zIndex: 9999,
+      zIndex: 999999,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -507,4 +508,6 @@ export default function ApplicantDetailsModal({ applicant, onClose, onPrintChall
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : modalContent;
 }
