@@ -169,18 +169,28 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
           {/* First show courses that are already enrolled or pending */}
           {courses && courses.length > 0 && courses.map(c => (
-            <div key={`enrolled-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
-              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: {c.class_name || 'General'}</p>
-              
-              {c.status === 'pending' ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#f59e0b', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fde68a' }}>
-                  <Clock size={20} weight="fill" /> Pending Approval
+            <div key={`enrolled-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#1e293b', fontWeight: 800 }}>{c.title}</h4>
+                {c.status === 'pending' ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#f59e0b', fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px', background: '#fffbeb', borderRadius: '6px', border: '1px solid #fde68a' }}>
+                    <Clock size={14} weight="fill" /> Pending
+                  </span>
+                ) : (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981', fontSize: '0.75rem', fontWeight: 700, padding: '4px 8px', background: '#f0fdf4', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                    <CheckCircle size={14} weight="fill" /> Enrolled
+                  </span>
+                )}
+              </div>
+              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Instructor: <strong>{c.teacher_name || 'TBD'}</strong></p>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: <strong>{c.class_name || 'General'}</strong></p>
+              {c.schedule_summary ? (
+                <div style={{ padding: '8px 12px', background: '#eef2ff', borderRadius: '8px', color: '#4338ca', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+                  <Clock size={16} weight="duotone" color="#4f46e5" /> {c.schedule_summary}
                 </div>
               ) : (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#10b981', fontSize: '0.85rem', fontWeight: 700, padding: '10px', background: '#f0fdf4', borderRadius: '8px', border: '1px solid #bbf7d0' }}>
-                  <CheckCircle size={20} weight="fill" /> Enrolled
+                <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '8px', color: '#94a3b8', fontSize: '0.75rem', fontStyle: 'italic', marginBottom: '12px' }}>
+                  Schedule: TBA (Set by HOD)
                 </div>
               )}
             </div>
@@ -188,24 +198,35 @@ function SchoolRegistration({ user, availableClasses, myClassInfo, myClassSubjec
 
           {/* Then show available courses that the student hasn't requested yet */}
           {availableCourses && availableCourses.length > 0 && availableCourses.map(c => (
-            <div key={`avail-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#1e293b' }}>{c.title}</h4>
-              <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Teacher: {c.teacher_name || 'TBD'}</p>
-              <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: {c.class_name || 'General'}</p>
+            <div key={`avail-${c.id}`} style={{ background: '#fff', padding: '20px', borderRadius: '14px', border: '1px solid #e2e8f0', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '1.1rem', color: '#1e293b', fontWeight: 800 }}>{c.title}</h4>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.85rem', color: '#64748b' }}>Instructor: <strong>{c.teacher_name || 'TBD'}</strong></p>
+                <p style={{ margin: '0 0 8px 0', fontSize: '0.85rem', color: '#64748b' }}>Class: <strong>{c.class_name || 'General'}</strong></p>
+                {c.schedule_summary ? (
+                  <div style={{ padding: '8px 12px', background: '#eef2ff', borderRadius: '8px', color: '#4338ca', fontSize: '0.8rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+                    <Clock size={16} weight="duotone" color="#4f46e5" /> {c.schedule_summary}
+                  </div>
+                ) : (
+                  <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '8px', color: '#94a3b8', fontSize: '0.75rem', fontStyle: 'italic', marginBottom: '16px' }}>
+                    Schedule: TBA (Set by HOD)
+                  </div>
+                )}
+              </div>
               <button 
                 onClick={() => handleEnrollCourse(c.id)}
                 disabled={enrolling}
                 style={{
-                  width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 600, cursor: 'pointer',
-                  opacity: enrolling ? 0.7 : 1
+                  width: '100%', padding: '10px', borderRadius: '8px', border: 'none', background: '#4f46e5', color: '#fff', fontWeight: 700, cursor: 'pointer',
+                  opacity: enrolling ? 0.7 : 1, transition: 'all 0.2s'
                 }}>
-                {enrolling ? 'Processing...' : 'Enroll Now'}
+                {enrolling ? 'Processing...' : 'Enroll in this Subject'}
               </button>
             </div>
           ))}
 
           {(!courses || courses.length === 0) && (!availableCourses || availableCourses.length === 0) && (
-            <p>No courses available.</p>
+            <p style={{ color: '#94a3b8' }}>No courses available for registration.</p>
           )}
         </div>
       )}

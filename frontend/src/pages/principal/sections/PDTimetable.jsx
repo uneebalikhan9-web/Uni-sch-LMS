@@ -7,26 +7,68 @@ export default function PDTimetable({
   setShowTimetableModal, setEditingItem, setNewTimetableEntry, onDelete,
 }) {
   const [timetableView, setTimetableView] = useState('schedule');
+  const [selectedSemester, setSelectedSemester] = useState('all');
 
   const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const filteredTimetables = selectedSemester === 'all' 
+    ? timetables 
+    : timetables.filter(t => (t.semester || '').toLowerCase().includes(selectedSemester.toLowerCase()) || (t.academic_year || '').toLowerCase().includes(selectedSemester.toLowerCase()));
 
   return (
     <div style={S.tableCard} className="table-container animate-fadeIn">
       <div style={S.tableHeader}>
         <div>
-          <h2 style={S.tableTitle}>Time Table</h2>
-          <p style={S.tableSubtitle}>{timetables.length} schedule entries</p>
+          <h2 style={S.tableTitle}>Semester Time Table & Schedules</h2>
+          <p style={S.tableSubtitle}>{filteredTimetables.length} scheduled lectures / lab entries</p>
         </div>
         <div style={S.tableActions}>
           <div style={S.tabToggle}>
-            <button onClick={() => setTimetableView('schedule')} style={{ ...S.toggleItem, ...(timetableView === 'schedule' ? S.toggleActive : {}) }}>Schedule</button>
+            <button onClick={() => setTimetableView('schedule')} style={{ ...S.toggleItem, ...(timetableView === 'schedule' ? S.toggleActive : {}) }}>Weekly Schedule</button>
             <button onClick={() => setTimetableView('history')}  style={{ ...S.toggleItem, ...(timetableView === 'history'  ? S.toggleActive : {}) }}>History</button>
           </div>
-          <button onClick={() => setShowTimetableModal(true)} style={S.addBtn} className="add-btn">
-            <Plus size={18} weight="bold" /> Add Entry
+          <button onClick={() => {
+            setEditingItem(null);
+            setNewTimetableEntry({
+              course_id: '',
+              class_id: '',
+              teacher_id: '',
+              day_of_week: [],
+              start_time: '09:00',
+              end_time: '10:30',
+              room_number: '',
+              academic_year: '2026-2027',
+              semester: selectedSemester !== 'all' ? selectedSemester : 'Semester 1'
+            });
+            setShowTimetableModal(true);
+          }} style={S.addBtn} className="add-btn">
+            <Plus size={18} weight="bold" /> Add Schedule Entry
           </button>
         </div>
       </div>
+
+      {/* Semester Filter Bar */}
+      {timetableView === 'schedule' && (
+        <div style={{ display: 'flex', gap: '8px', padding: '12px 24px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9', overflowX: 'auto', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginRight: '4px' }}>Semester:</span>
+          {['all', 'Semester 1', 'Semester 2', 'Semester 3', 'Semester 4', 'Semester 5', 'Semester 6', 'Semester 7', 'Semester 8'].map(sem => (
+            <button
+              key={sem}
+              onClick={() => setSelectedSemester(sem)}
+              style={{
+                padding: '6px 14px', borderRadius: '12px', border: 'none',
+                background: selectedSemester === sem ? '#7c3aed' : '#fff',
+                color: selectedSemester === sem ? '#fff' : '#64748b',
+                fontWeight: 700, fontSize: '0.8rem', cursor: 'pointer',
+                boxShadow: selectedSemester === sem ? '0 2px 8px rgba(124,58,237,0.25)' : '0 1px 3px rgba(0,0,0,0.05)',
+                whiteSpace: 'nowrap', transition: 'all 0.2s'
+              }}
+            >
+              {sem === 'all' ? '🌟 All Semesters' : sem}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div style={{ overflowX: 'auto' }}>
         {timetableView === 'schedule' ? (
@@ -36,7 +78,7 @@ export default function PDTimetable({
                 <div key={day} style={S.dayColumn}>
                   <h4 style={S.dayTitle}>{day}</h4>
                   <div style={S.dayEntries}>
-                    {timetables.filter(t => t.day_of_week === day).map(entry => (
+                    {filteredTimetables.filter(t => t.day_of_week === day).map(entry => (
                       <div
                         key={entry.id}
                         className="timetable-entry-card"

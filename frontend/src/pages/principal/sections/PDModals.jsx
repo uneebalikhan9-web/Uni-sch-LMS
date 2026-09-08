@@ -288,7 +288,7 @@ export function TimetableModal({ show, onClose, editingItem, newTimetableEntry, 
   if (!show) return null;
   return (
     <div style={S.modalOverlay} onClick={onClose}>
-      <div style={{ ...S.modal, width:'600px' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
+      <div style={{ ...S.modal, width:'620px' }} onClick={e => e.stopPropagation()} className="animate-slideUp">
         <div style={S.modalHeader}>
           <h3 style={S.modalTitle}>{editingItem ? 'Edit' : 'Add'} Timetable Entry</h3>
           <button onClick={onClose} style={S.modalClose}>×</button>
@@ -296,30 +296,47 @@ export function TimetableModal({ show, onClose, editingItem, newTimetableEntry, 
         <form onSubmit={onSubmit} style={S.modalForm}>
           <div style={S.row}>
             <div style={S.flex1}>
-              <label style={S.inputLabel}><Buildings size={14} /> Target Class</label>
+              <label style={S.inputLabel}><Buildings size={14} /> Target Class / Program</label>
               <select required value={newTimetableEntry.class_id} onChange={e => setNewTimetableEntry({...newTimetableEntry, class_id:e.target.value, course_id:'', teacher_id:''})} style={S.input}>
                 <option value="">Select Class...</option>
                 {classes.map(c => <option key={c.id} value={c.id}>{c.name} ({c.section})</option>)}
               </select>
             </div>
             <div style={S.flex1}>
-              <label style={S.inputLabel}><BookOpen size={14} /> Subject / Course</label>
+              <label style={S.inputLabel}><CalendarBlank size={14} /> Semester / Term</label>
+              <select value={newTimetableEntry.semester || 'Semester 1'} onChange={e => setNewTimetableEntry({...newTimetableEntry, semester:e.target.value})} style={S.input}>
+                <option value="Semester 1">Semester 1 (1st Sem)</option>
+                <option value="Semester 2">Semester 2 (2nd Sem)</option>
+                <option value="Semester 3">Semester 3 (3rd Sem)</option>
+                <option value="Semester 4">Semester 4 (4th Sem)</option>
+                <option value="Semester 5">Semester 5 (5th Sem)</option>
+                <option value="Semester 6">Semester 6 (6th Sem)</option>
+                <option value="Semester 7">Semester 7 (7th Sem)</option>
+                <option value="Semester 8">Semester 8 (8th Sem)</option>
+                <option value="Fall 2026">Fall 2026</option>
+                <option value="Spring 2027">Spring 2027</option>
+              </select>
+            </div>
+          </div>
+          <div style={S.row}>
+            <div style={S.flex1}>
+              <label style={S.inputLabel}><BookOpen size={14} /> Subject / Book / Course</label>
               <select required disabled={!newTimetableEntry.class_id} value={newTimetableEntry.course_id}
                 onChange={e => {
                   const course = courses.find(c => c.id === parseInt(e.target.value));
                   setNewTimetableEntry({...newTimetableEntry, course_id:e.target.value, teacher_id: course ? course.teacher_id : ''});
                 }} style={S.input}>
-                <option value="">Select Course...</option>
+                <option value="">Select Course/Subject...</option>
                 {courses.filter(c => c.class_id === parseInt(newTimetableEntry.class_id)).map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
             </div>
-          </div>
-          <div style={S.inputGroup}>
-            <label style={S.inputLabel}><ChalkboardTeacher size={14} /> Assigned Instructor</label>
-            <select disabled value={newTimetableEntry.teacher_id} style={{...S.input, background:'#f8fafc', border:'1px dashed #e2e8f0'}}>
-              <option value="">Teacher will be assigned automatically</option>
-              {teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}
-            </select>
+            <div style={S.flex1}>
+              <label style={S.inputLabel}><ChalkboardTeacher size={14} /> Assigned Instructor</label>
+              <select disabled value={newTimetableEntry.teacher_id} style={{...S.input, background:'#f8fafc', border:'1px dashed #e2e8f0'}}>
+                <option value="">Teacher auto-assigned with course</option>
+                {teachers.map(t => <option key={t.employee_id} value={t.employee_id}>{t.name}</option>)}
+              </select>
+            </div>
           </div>
           <div style={S.row}>
             <div style={S.flex1}>

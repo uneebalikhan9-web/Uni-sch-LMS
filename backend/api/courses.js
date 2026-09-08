@@ -16,7 +16,22 @@ router.get('/', verifyToken, async (req, res) => {
           (SELECT u.name FROM users u JOIN employees emp ON emp.user_id = u.id WHERE emp.id = c.teacher_id),
           (SELECT name FROM users WHERE id = c.teacher_id AND role = 'teacher')
         ) as teacher_name, 
-        cl.name as class_name 
+        cl.name as class_name,
+        (
+          SELECT GROUP_CONCAT(
+            CONCAT(t.day_of_week, ' ', TIME_FORMAT(t.start_time, '%h:%i %p'), '-', TIME_FORMAT(t.end_time, '%h:%i %p'), ' (Room: ', COALESCE(r.room_number, 'TBD'), ')')
+            SEPARATOR ' | '
+          )
+          FROM timetables t
+          LEFT JOIN rooms r ON t.room_id = r.id
+          WHERE t.course_id = c.id
+        ) as schedule_summary,
+        (
+          SELECT t.semester
+          FROM timetables t
+          WHERE t.course_id = c.id
+          LIMIT 1
+        ) as semester_name
       FROM courses c
       LEFT JOIN classes cl ON c.class_id = cl.id
     `;
