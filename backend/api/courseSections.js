@@ -27,8 +27,11 @@ router.get('/teachers', verifyToken, async (req, res) => {
 router.get('/', verifyToken, async (req, res) => {
   try {
     const campus_id = req.user.campus_id;
-    const [sections] = await pool.query(
-      `SELECT cs.*, c.title as course_title, c.code as course_code, c.credit_hours,
+    const isSuper = req.user.role === 'super_admin' || req.user.role === 'master_admin';
+    const { semester_id } = req.query;
+
+    let query = `
+      SELECT cs.*, c.title as course_title, c.code as course_code, c.credit_hours,
               s.name as semester_name, u.name as teacher_name, r.room_number, r.building
        FROM course_sections cs
        JOIN courses c ON cs.course_id = c.id
@@ -36,11 +39,21 @@ router.get('/', verifyToken, async (req, res) => {
        LEFT JOIN employees e ON cs.teacher_id = e.id
        LEFT JOIN users u ON e.user_id = u.id
        LEFT JOIN rooms r ON cs.room_id = r.id
-       WHERE c.campus_id = ?
-       ORDER BY s.start_date DESC, c.title, cs.section_label`,
-      [campus_id]
-    );
-    res.json({ success: true, courseSections: sections });
+       WHERE 1=1
+    `;
+    const params = [];
+    if (!isSuper && campus_id) {
+      query += ` AND c.campus_id = ?`;
+      params.push(campus_id);
+    }
+    if (semester_id) {
+      query += ` AND cs.semester_id = ?`;
+      params.push(semester_id);
+    }
+    query += ` ORDER BY s.start_date DESC, c.title, cs.section_label`;
+
+    const [sections] = await pool.query(query, params);
+    res.json({ success: true, courseSections: sections, data: sections });
   } catch (error) {
     console.error('Error fetching course sections:', error);
     res.status(500).json({ success: false, message: 'Server error while fetching course sections' });

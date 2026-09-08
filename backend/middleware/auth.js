@@ -153,10 +153,10 @@ const isHRManager = (req, res, next) => {
   next();
 };
 
-// Middleware to check if user is a Registrar
+// Middleware to check if user is a Registrar, HOD/Principal, or Admin
 const isRegistrar = (req, res, next) => {
-  if (!['registrar', 'super_admin'].includes(req.user.role)) {
-    return res.status(403).json({ success: false, message: 'Access denied. Registrar only.' });
+  if (!['registrar', 'principal', 'admin', 'super_admin', 'master_admin', 'rector'].includes(req.user.role)) {
+    return res.status(403).json({ success: false, message: 'Access denied. Registrar / Academic Admin only.' });
   }
   next();
 };
